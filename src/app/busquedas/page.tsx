@@ -16,24 +16,48 @@ interface SearchWithUser {
   created_by_email: string | null;
 }
 
+interface Stats {
+  total: {
+    searches: number;
+    businesses: number;
+    whatsapp: number;
+    called: number;
+    contacted: number;
+  };
+  today: {
+    searches: number;
+    whatsapp: number;
+    called: number;
+    contacted: number;
+  };
+}
+
 export default function BusquedasPage() {
   const [searches, setSearches] = useState<SearchWithUser[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchSearches() {
+    async function fetchData() {
       try {
-        const response = await fetch('/api/searches');
-        const data = await response.json();
-        setSearches(data.searches || []);
+        const [searchesRes, statsRes] = await Promise.all([
+          fetch('/api/searches'),
+          fetch('/api/stats'),
+        ]);
+
+        const searchesData = await searchesRes.json();
+        const statsData = await statsRes.json();
+
+        setSearches(searchesData.searches || []);
+        setStats(statsData);
       } catch (error) {
-        console.error('Error fetching searches:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchSearches();
+    fetchData();
   }, []);
 
   const formatDate = (date: string) => {
@@ -69,7 +93,7 @@ export default function BusquedasPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">
             Búsquedas del equipo
           </h1>
@@ -80,6 +104,52 @@ export default function BusquedasPage() {
             Nueva búsqueda
           </Link>
         </div>
+
+        {/* Stats Panel */}
+        {stats && (
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-3xl font-bold text-gray-900">{stats.total.searches}</p>
+                <p className="text-sm text-gray-500">Búsquedas totales</p>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <p className="text-3xl font-bold text-green-600">{stats.total.whatsapp}</p>
+                <p className="text-sm text-gray-500">WhatsApp enviados</p>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <p className="text-3xl font-bold text-blue-600">{stats.total.called}</p>
+                <p className="text-sm text-gray-500">Llamados</p>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <p className="text-3xl font-bold text-purple-600">{stats.total.contacted}</p>
+                <p className="text-sm text-gray-500">Contactados</p>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <p className="text-xs text-gray-500 uppercase font-medium mb-3">Hoy</p>
+              <div className="flex flex-wrap gap-4">
+                <span className="inline-flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  <strong>{stats.today.searches}</strong> búsquedas
+                </span>
+                <span className="inline-flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <strong>{stats.today.whatsapp}</strong> WhatsApp
+                </span>
+                <span className="inline-flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <strong>{stats.today.called}</strong> llamados
+                </span>
+                <span className="inline-flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                  <strong>{stats.today.contacted}</strong> contactados
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-12">

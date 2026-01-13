@@ -319,12 +319,12 @@ export default function BusinessCard({
         </div>
       )}
 
-      {/* Decision Makers */}
-      {business.decision_makers && business.decision_makers.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-xs font-medium text-gray-500 uppercase mb-2">
-            Contactos clave
-          </p>
+      {/* Decision Makers / Contactos */}
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <p className="text-xs font-medium text-gray-500 uppercase mb-2">
+          Contactos encontrados
+        </p>
+        {business.decision_makers && business.decision_makers.length > 0 ? (
           <div className="space-y-2">
             {business.decision_makers.map((dm, idx) => (
               <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
@@ -334,6 +334,9 @@ export default function BusinessCard({
                   </p>
                   {dm.position && (
                     <p className="text-xs text-gray-500 truncate">{dm.position}</p>
+                  )}
+                  {dm.phone && (
+                    <p className="text-xs text-gray-500">{dm.phone}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2 ml-2">
@@ -374,8 +377,12 @@ export default function BusinessCard({
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-400 italic">
+            No se encontraron emails en el sitio web
+          </p>
+        )}
+      </div>
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">

@@ -68,3 +68,56 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    // Obtener IDs de negocios para esta búsqueda
+    const { data: businesses } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('search_id', id);
+
+    const businessIds = businesses?.map(b => b.id) || [];
+
+    // Eliminar análisis de servicios
+    if (businessIds.length > 0) {
+      await supabase
+        .from('service_analyses')
+        .delete()
+        .in('business_id', businessIds);
+    }
+
+    // Eliminar negocios
+    await supabase
+      .from('businesses')
+      .delete()
+      .eq('search_id', id);
+
+    // Eliminar búsqueda
+    const { error } = await supabase
+      .from('searches')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting search:', error);
+      return NextResponse.json(
+        { error: 'Error al eliminar búsqueda' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete search error:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}

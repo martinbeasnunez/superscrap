@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { SearchWithResults, BusinessWithAnalysis } from '@/types';
 import BusinessCard from '@/components/BusinessCard';
 
@@ -11,6 +12,7 @@ export default function SearchDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const [data, setData] = useState<{
     search: SearchWithResults;
     businesses: BusinessWithAnalysis[];
@@ -18,6 +20,30 @@ export default function SearchDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'matching'>('all');
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm('¿Estás seguro de eliminar esta búsqueda? Se perderán todos los negocios encontrados.')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/searches/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        router.push('/busquedas');
+      } else {
+        alert('Error al eliminar la búsqueda');
+      }
+    } catch {
+      alert('Error al eliminar la búsqueda');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchSearchDetail() {
@@ -113,15 +139,24 @@ export default function SearchDetailPage({
             ))}
           </div>
 
-          <div className="flex items-center gap-6 text-gray-600">
-            <span>
-              <strong className="text-gray-900">{search.total_results}</strong>{' '}
-              negocios encontrados
-            </span>
-            <span>
-              <strong className="text-green-600">{search.matching_results}</strong>{' '}
-              coinciden con tus criterios
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6 text-gray-600">
+              <span>
+                <strong className="text-gray-900">{search.total_results}</strong>{' '}
+                negocios encontrados
+              </span>
+              <span>
+                <strong className="text-green-600">{search.matching_results}</strong>{' '}
+                coinciden con tus criterios
+              </span>
+            </div>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {deleting ? 'Eliminando...' : 'Eliminar búsqueda'}
+            </button>
           </div>
         </div>
 

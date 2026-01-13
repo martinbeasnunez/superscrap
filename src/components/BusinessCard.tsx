@@ -330,12 +330,15 @@ export default function BusinessCard({
               <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {dm.fullName || dm.email.split('@')[0]}
+                    {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contacto')}
                   </p>
+                  {dm.email && (
+                    <p className="text-xs text-gray-500 truncate">{dm.email}</p>
+                  )}
                   {dm.position && (
                     <p className="text-xs text-gray-500 truncate">{dm.position}</p>
                   )}
-                  {dm.phone && (
+                  {dm.phone && !dm.email && (
                     <p className="text-xs text-gray-500">{dm.phone}</p>
                   )}
                 </div>
@@ -353,15 +356,17 @@ export default function BusinessCard({
                       </svg>
                     </a>
                   )}
-                  <a
-                    href={`mailto:${dm.email}`}
-                    className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                    title={dm.email}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </a>
+                  {dm.email && (
+                    <a
+                      href={`mailto:${dm.email}`}
+                      className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
+                      title={dm.email}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </a>
+                  )}
                   {dm.phone && (
                     <a
                       href={`tel:${dm.phone}`}
@@ -379,7 +384,7 @@ export default function BusinessCard({
           </div>
         ) : (
           <p className="text-sm text-gray-400 italic">
-            No se encontraron emails en el sitio web
+            No se encontraron contactos en el sitio web
           </p>
         )}
       </div>

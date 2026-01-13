@@ -11,7 +11,7 @@ export interface Search {
 }
 
 export interface DecisionMaker {
-  email: string;
+  email: string | null;
   firstName: string | null;
   lastName: string | null;
   fullName: string | null;

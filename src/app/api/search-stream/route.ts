@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
 
         // Crear contactos desde emails y teléfonos scrapeados
         let decisionMakers = null;
-        if (scrapedEmails.length > 0 || scrapedPhones.length > 0) {
+        if (scrapedEmails.length > 0) {
           decisionMakers = scrapedEmails.map((email, idx) => ({
             email,
             firstName: null,
@@ -254,25 +254,22 @@ export async function POST(request: NextRequest) {
             linkedin: null,
             phone: scrapedPhones[idx] || null,
           }));
+        }
 
-          // Si hay más teléfonos que emails, agregarlos
-          if (scrapedPhones.length > scrapedEmails.length) {
-            const extraPhones = scrapedPhones.slice(scrapedEmails.length);
-            for (const phone of extraPhones) {
-              decisionMakers.push({
-                email: `contacto@${new URL(result.website).hostname}`,
-                firstName: null,
-                lastName: null,
-                fullName: null,
-                position: null,
-                seniority: null,
-                department: null,
-                confidence: 60,
-                linkedin: null,
-                phone,
-              });
-            }
-          }
+        // Si solo hay teléfonos (sin emails), guardarlos también
+        if (!decisionMakers && scrapedPhones.length > 0) {
+          decisionMakers = scrapedPhones.map((phone) => ({
+            email: null,
+            firstName: null,
+            lastName: null,
+            fullName: null,
+            position: null,
+            seniority: null,
+            department: null,
+            confidence: 70,
+            linkedin: null,
+            phone,
+          }));
         }
 
         // Guardar negocio

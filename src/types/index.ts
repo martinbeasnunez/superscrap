@@ -41,6 +41,7 @@ export interface Business {
   contacted_by: string | null;
   contacted_by_name?: string | null;
   decision_makers: DecisionMaker[] | null;
+  business_type: string | null;
   created_at: string;
 }
 

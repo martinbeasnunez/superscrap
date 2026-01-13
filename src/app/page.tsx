@@ -78,68 +78,105 @@ export default function Home() {
 
           {/* Guía de uso */}
           <div className="space-y-6">
-            {/* Objetivo */}
+            {/* Por qué usar esto vs Google */}
             <div className="bg-blue-50 rounded-xl p-6">
-              <h3 className="font-semibold text-blue-900 mb-2">Objetivo</h3>
-              <p className="text-sm text-blue-800">
-                Encontrar negocios que usen textiles en sus operaciones diarias
-                (toallas, sábanas, manteles, uniformes) y contactarlos para
-                ofrecer el servicio de GetLavado.
+              <h3 className="font-semibold text-blue-900 mb-2">Esto NO es Google</h3>
+              <p className="text-sm text-blue-800 mb-3">
+                Google te da una lista. SuperScrap te da <strong>leads calificados listos para contactar</strong>:
               </p>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li className="flex gap-2">
+                  <span className="text-blue-500">+</span>
+                  <span>Analiza si <strong>realmente usan</strong> los textiles que buscas</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-blue-500">+</span>
+                  <span>Extrae emails y celulares de sus webs (no solo el telefono de Google)</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-blue-500">+</span>
+                  <span>Genera mensaje de WhatsApp personalizado por industria</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-blue-500">+</span>
+                  <span>Ordena por % de match para priorizar los mejores</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Cómo funciona */}
+            {/* Cómo aprovecharlo */}
             <div className="bg-gray-50 rounded-xl p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Cómo funciona</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">Como aprovecharlo</h3>
               <ol className="text-sm text-gray-700 space-y-2">
                 <li className="flex gap-2">
                   <span className="font-medium text-gray-500">1.</span>
-                  <span>Buscamos negocios en Google Maps según tu criterio</span>
+                  <span><strong>Se especifico:</strong> &quot;spa con piscina&quot; en vez de solo &quot;spa&quot;</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-medium text-gray-500">2.</span>
-                  <span>Analizamos cada negocio para ver si usa los servicios textiles que buscas</span>
+                  <span><strong>Piensa en nichos:</strong> &quot;hostales en Barranco&quot;, &quot;clinicas esteticas&quot;</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-medium text-gray-500">3.</span>
-                  <span>Extraemos emails y teléfonos de sus sitios web</span>
+                  <span><strong>Filtra por nivel:</strong> &quot;hoteles 5 estrellas&quot; vs &quot;hoteles 3 estrellas&quot;</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="font-medium text-gray-500">4.</span>
-                  <span>Te mostramos los negocios ordenados por potencial</span>
+                  <span><strong>Contacta rapido:</strong> usa el boton de WhatsApp con mensaje listo</span>
                 </li>
               </ol>
             </div>
 
-            {/* Ejemplos de búsquedas efectivas */}
+            {/* Industrias que funcionan bien */}
             <div className="bg-green-50 rounded-xl p-6">
-              <h3 className="font-semibold text-green-900 mb-3">Búsquedas efectivas</h3>
-              <div className="space-y-3 text-sm">
-                <div className="bg-white rounded-lg p-3">
-                  <p className="font-medium text-green-800">Clínicas y hospitales</p>
-                  <p className="text-green-700 text-xs mt-1">
-                    Tipo: &quot;clínicas privadas&quot; → Servicios: sábanas, batas, toallas
-                  </p>
+              <h3 className="font-semibold text-green-900 mb-3">Funciona bien para</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-green-500">✓</span>
+                  <span className="text-green-800"><strong>Hoteles/Hostales</strong> - publican que tienen habitaciones</span>
                 </div>
-                <div className="bg-white rounded-lg p-3">
-                  <p className="font-medium text-green-800">Hoteles boutique</p>
-                  <p className="text-green-700 text-xs mt-1">
-                    Tipo: &quot;hoteles 4 estrellas&quot; → Servicios: sábanas, toallas, albornoces
-                  </p>
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-green-500">✓</span>
+                  <span className="text-green-800"><strong>Spas/Saunas</strong> - mencionan toallas y batas</span>
                 </div>
-                <div className="bg-white rounded-lg p-3">
-                  <p className="font-medium text-green-800">Spas y salones</p>
-                  <p className="text-green-700 text-xs mt-1">
-                    Tipo: &quot;spa masajes&quot; → Servicios: toallas, batas, sábanas
-                  </p>
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-green-500">✓</span>
+                  <span className="text-green-800"><strong>Clinicas/Hospitales</strong> - info de servicios en web</span>
                 </div>
-                <div className="bg-white rounded-lg p-3">
-                  <p className="font-medium text-green-800">Restaurantes premium</p>
-                  <p className="text-green-700 text-xs mt-1">
-                    Tipo: &quot;restaurantes miraflores&quot; → Servicios: manteles, servilletas, uniformes
-                  </p>
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-green-500">✓</span>
+                  <span className="text-green-800"><strong>Restaurantes premium</strong> - fotos con manteles</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-green-500">✓</span>
+                  <span className="text-green-800"><strong>Gimnasios/Clubs</strong> - mencionan amenities</span>
                 </div>
               </div>
+            </div>
+
+            {/* Directorio Industrial */}
+            <div className="bg-orange-50 rounded-xl p-6">
+              <h3 className="font-semibold text-orange-900 mb-3">Directorio Industrial</h3>
+              <p className="text-sm text-orange-800 mb-2">
+                Usa el boton &quot;Directorio Industrial&quot; para buscar:
+              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-orange-500">🏭</span>
+                  <span className="text-orange-800"><strong>Fabricas de uniformes</strong></span>
+                </div>
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-orange-500">🏭</span>
+                  <span className="text-orange-800"><strong>Confecciones industriales</strong></span>
+                </div>
+                <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                  <span className="text-orange-500">🏭</span>
+                  <span className="text-orange-800"><strong>Talleres de costura</strong></span>
+                </div>
+              </div>
+              <p className="text-xs text-orange-700 mt-3">
+                Busca en Paginas Amarillas Peru con emails y telefonos directos
+              </p>
             </div>
 
             {/* Tips */}
@@ -148,11 +185,15 @@ export default function Home() {
               <ul className="text-sm text-amber-800 space-y-2">
                 <li className="flex gap-2">
                   <span>•</span>
-                  <span>Sé específico en el tipo de negocio (mejor &quot;clínicas dermatológicas&quot; que solo &quot;clínicas&quot;)</span>
+                  <span>Incluye el nivel o categoría: &quot;hotel 5 estrellas&quot; encuentra diferentes resultados que &quot;hotel 3 estrellas&quot;</span>
                 </li>
                 <li className="flex gap-2">
                   <span>•</span>
-                  <span>Los negocios con sitio web tienen más probabilidad de tener contacto directo</span>
+                  <span>Usa palabras como &quot;premium&quot;, &quot;de lujo&quot;, &quot;boutique&quot; para filtrar por calidad</span>
+                </li>
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>Sé específico: &quot;clínica dermatológica&quot; es mejor que solo &quot;clínica&quot;</span>
                 </li>
                 <li className="flex gap-2">
                   <span>•</span>
@@ -160,7 +201,7 @@ export default function Home() {
                 </li>
                 <li className="flex gap-2">
                   <span>•</span>
-                  <span>Usa el botón de WhatsApp para contactar celulares directamente</span>
+                  <span>Negocios con sitio web tienen más probabilidad de tener contacto directo</span>
                 </li>
               </ul>
             </div>

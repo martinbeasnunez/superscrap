@@ -237,6 +237,9 @@ export default function BusinessCard({
           <h3 className="text-lg font-semibold text-gray-900">
             {business.name}
           </h3>
+          {business.business_type && (
+            <p className="text-xs text-gray-500 mt-0.5">{business.business_type}</p>
+          )}
           {business.address && (
             <a
               href={getGoogleMapsUrl(business.address, business.name)}

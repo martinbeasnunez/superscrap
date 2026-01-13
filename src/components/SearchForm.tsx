@@ -22,6 +22,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
   const [city, setCity] = useState('Lima');
   const [servicesInput, setServicesInput] = useState('');
   const [services, setServices] = useState<string[]>([]);
+  const [source, setSource] = useState<'google' | 'directorio'>('google');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<ProgressState | null>(null);
@@ -71,6 +72,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
           city: city.trim(),
           requiredServices: services,
           userId,
+          source,
         }),
       });
 
@@ -143,15 +145,58 @@ export default function SearchForm({ userId }: SearchFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Selector de fuente */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tipo de negocio
+          Buscar en
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setSource('google')}
+            disabled={loading}
+            className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+              source === 'google'
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            <span className="block text-lg mb-1">🗺️</span>
+            Google Maps
+            <span className="block text-xs font-normal text-gray-500 mt-1">
+              Hoteles, spas, restaurantes
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSource('directorio')}
+            disabled={loading}
+            className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+              source === 'directorio'
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+            }`}
+          >
+            <span className="block text-lg mb-1">🏭</span>
+            Directorio Industrial
+            <span className="block text-xs font-normal text-gray-500 mt-1">
+              Fabricas, talleres, empresas
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {source === 'google' ? 'Tipo de negocio' : 'Buscar empresas de'}
         </label>
         <input
           type="text"
           value={businessType}
           onChange={(e) => setBusinessType(e.target.value)}
-          placeholder="ej: gimnasios, restaurantes, spas..."
+          placeholder={source === 'google'
+            ? "ej: hoteles 5 estrellas, spas de lujo..."
+            : "ej: fabricas de uniformes, confecciones..."}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={loading}
         />

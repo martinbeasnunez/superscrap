@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { searchLocalBusinesses } from '@/lib/serpapi';
 import { analyzeBusinessServices } from '@/lib/openai';
 import { scrapeWebsiteForContacts, searchKeywordsInContent } from '@/lib/scraper';
+import { searchPaginasAmarillas, type PaginasAmarillasResult } from '@/lib/paginasAmarillas';
 
 // Distritos prioritarios de Lima
 const PRIORITY_DISTRICTS = [
@@ -53,7 +54,7 @@ function countMatchingServices(
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { businessType, city, requiredServices, userId } = body;
+  const { businessType, city, requiredServices, userId, source = 'google' } = body;
 
   if (!businessType || !city || !requiredServices?.length) {
     return new Response(
@@ -94,24 +95,59 @@ export async function POST(request: NextRequest) {
         return;
       }
 
+      const isDirectorio = source === 'directorio';
       await sendProgress({
         stage: 'searching',
-        message: 'Buscando negocios en Google Maps...',
+        message: isDirectorio
+          ? 'Buscando empresas en Paginas Amarillas...'
+          : 'Buscando negocios en Google Maps...',
         searchId: search.id
       });
 
-      // 2. Buscar negocios con SerpAPI
-      let localResults;
+      // 2. Buscar negocios según la fuente
+      let localResults: Array<{
+        place_id?: string;
+        title: string;
+        address: string;
+        phone: string;
+        rating?: number;
+        reviews?: number;
+        description?: string;
+        website?: string;
+        thumbnail?: string;
+        gps_coordinates?: { latitude: number; longitude: number };
+        type?: string;
+      }> = [];
+      let directorioResults: PaginasAmarillasResult[] = [];
+
       try {
-        localResults = await searchLocalBusinesses(businessType, city);
+        if (isDirectorio) {
+          // Buscar en Páginas Amarillas
+          const paResult = await searchPaginasAmarillas(businessType, city);
+          directorioResults = paResult.results;
+          // Convertir al formato común
+          localResults = directorioResults.map((r, idx) => ({
+            place_id: `pa-${idx}`,
+            title: r.name,
+            address: r.address || '',
+            phone: r.phone || '',
+            description: r.description || '',
+            website: r.website || '',
+            type: r.category || 'Empresa',
+          }));
+        } else {
+          // Buscar en Google Maps
+          localResults = await searchLocalBusinesses(businessType, city);
+        }
+
         await sendProgress({
           stage: 'found',
-          message: `Se encontraron ${localResults.length} negocios`,
+          message: `Se encontraron ${localResults.length} ${isDirectorio ? 'empresas' : 'negocios'}`,
           total: localResults.length,
           searchId: search.id
         });
       } catch (error) {
-        console.error('SerpAPI error:', error);
+        console.error('Search error:', error);
         await supabase
           .from('searches')
           .update({ status: 'failed' })
@@ -155,6 +191,7 @@ export async function POST(request: NextRequest) {
 
       for (let i = 0; i < localResults.length; i++) {
         const result = localResults[i];
+        const directorioItem = isDirectorio ? directorioResults[i] : null;
 
         await sendProgress({
           stage: 'analyzing',
@@ -170,6 +207,16 @@ export async function POST(request: NextRequest) {
         let websiteKeywordMatches: { service: string; found: boolean; keywords: string[] }[] = [];
         let scrapedEmails: string[] = [];
         let scrapedPhones: string[] = [];
+
+        // Para directorio industrial, usar datos directamente
+        if (isDirectorio && directorioItem) {
+          if (directorioItem.email) {
+            scrapedEmails = [directorioItem.email];
+          }
+          if (directorioItem.phone) {
+            scrapedPhones = [directorioItem.phone];
+          }
+        }
 
         if (result.website) {
           try {
@@ -200,36 +247,60 @@ export async function POST(request: NextRequest) {
             : '',
         ].join('');
 
-        // Analizar con OpenAI
+        // Analizar con OpenAI (o simplificado para directorios)
         let analysis;
-        try {
-          analysis = await analyzeBusinessServices(
-            result.title,
-            enrichedDescription,
-            result.type,
-            requiredServices
-          );
 
-          // Agregar servicios encontrados en web que OpenAI no detectó
-          for (const webService of servicesFoundInWebsite) {
-            const alreadyDetected = analysis.detected_services.some(
-              ds => ds.toLowerCase().includes(webService.toLowerCase()) ||
-                    webService.toLowerCase().includes(ds.toLowerCase())
-            );
-            if (!alreadyDetected) {
-              analysis.detected_services.push(webService);
-              analysis.evidence += ` [${webService} encontrado en sitio web]`;
+        if (isDirectorio) {
+          // Para directorios industriales, asumir que si buscan "fabricas de uniformes"
+          // y encontramos una, tiene 100% match con "uniformes"
+          const searchTermLower = businessType.toLowerCase();
+          const detectedFromSearch: string[] = [];
+
+          for (const service of requiredServices) {
+            const serviceLower = service.toLowerCase();
+            // Si el término de búsqueda contiene el servicio, asumimos match
+            if (searchTermLower.includes(serviceLower) ||
+                result.title.toLowerCase().includes(serviceLower) ||
+                (result.description || '').toLowerCase().includes(serviceLower)) {
+              detectedFromSearch.push(service);
             }
           }
-        } catch (error) {
-          console.error('OpenAI analysis error:', error);
+
           analysis = {
-            detected_services: servicesFoundInWebsite,
-            confidence: servicesFoundInWebsite.length > 0 ? 0.7 : 0,
-            evidence: servicesFoundInWebsite.length > 0
-              ? `Servicios encontrados en sitio web: ${servicesFoundInWebsite.join(', ')}`
-              : 'No se pudo analizar',
+            detected_services: detectedFromSearch.length > 0 ? detectedFromSearch : requiredServices,
+            confidence: 0.9,
+            evidence: `Empresa encontrada en directorio industrial buscando: ${businessType}`,
           };
+        } else {
+          try {
+            analysis = await analyzeBusinessServices(
+              result.title,
+              enrichedDescription,
+              result.type,
+              requiredServices
+            );
+
+            // Agregar servicios encontrados en web que OpenAI no detectó
+            for (const webService of servicesFoundInWebsite) {
+              const alreadyDetected = analysis.detected_services.some(
+                ds => ds.toLowerCase().includes(webService.toLowerCase()) ||
+                      webService.toLowerCase().includes(ds.toLowerCase())
+              );
+              if (!alreadyDetected) {
+                analysis.detected_services.push(webService);
+                analysis.evidence += ` [${webService} encontrado en sitio web]`;
+              }
+            }
+          } catch (error) {
+            console.error('OpenAI analysis error:', error);
+            analysis = {
+              detected_services: servicesFoundInWebsite,
+              confidence: servicesFoundInWebsite.length > 0 ? 0.7 : 0,
+              evidence: servicesFoundInWebsite.length > 0
+                ? `Servicios encontrados en sitio web: ${servicesFoundInWebsite.join(', ')}`
+                : 'No se pudo analizar',
+            };
+          }
         }
 
         const matchCount = countMatchingServices(
@@ -293,6 +364,7 @@ export async function POST(request: NextRequest) {
                 }
               : null,
             decision_makers: decisionMakers,
+            business_type: result.type || null,
           })
           .select()
           .single();

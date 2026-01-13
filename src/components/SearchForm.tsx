@@ -172,16 +172,19 @@ export default function SearchForm({ userId }: SearchFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Servicios requeridos
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Textiles que usan
         </label>
+        <p className="text-xs text-gray-500 mb-2">
+          Items que el negocio usa y necesita lavar (ej: gimnasio + toallas = cliente potencial)
+        </p>
         <div className="flex gap-2">
           <input
             type="text"
             value={servicesInput}
             onChange={(e) => setServicesInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="ej: sauna, masajes, toallas..."
+            placeholder="ej: toallas, ropa de cama, manteles..."
             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={loading}
           />

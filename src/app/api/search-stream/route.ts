@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { searchLocalBusinesses } from '@/lib/serpapi';
 import { analyzeBusinessServices } from '@/lib/openai';
-import { scrapeWebsiteDeep, searchKeywordsInContent } from '@/lib/scraper';
+import { scrapeWebsiteForContacts, searchKeywordsInContent } from '@/lib/scraper';
 
 // Distritos prioritarios de Lima
 const PRIORITY_DISTRICTS = [
@@ -165,13 +165,19 @@ export async function POST(request: NextRequest) {
           searchId: search.id
         });
 
-        // Intentar scraping del sitio web para más contexto
+        // Scraping del sitio web para contactos y contenido
         let websiteContent: string | null = null;
         let websiteKeywordMatches: { service: string; found: boolean; keywords: string[] }[] = [];
+        let scrapedEmails: string[] = [];
+        let scrapedPhones: string[] = [];
 
         if (result.website) {
           try {
-            websiteContent = await scrapeWebsiteDeep(result.website);
+            const scrapedData = await scrapeWebsiteForContacts(result.website);
+            websiteContent = scrapedData.content;
+            scrapedEmails = scrapedData.emails;
+            scrapedPhones = scrapedData.phones;
+
             if (websiteContent) {
               websiteKeywordMatches = searchKeywordsInContent(websiteContent, requiredServices);
             }
@@ -233,6 +239,42 @@ export async function POST(request: NextRequest) {
         const matchPercentage = matchCount / requiredServices.length;
         const matchesRequirements = matchPercentage >= 0.5;
 
+        // Crear contactos desde emails y teléfonos scrapeados
+        let decisionMakers = null;
+        if (scrapedEmails.length > 0 || scrapedPhones.length > 0) {
+          decisionMakers = scrapedEmails.map((email, idx) => ({
+            email,
+            firstName: null,
+            lastName: null,
+            fullName: null,
+            position: null,
+            seniority: null,
+            department: null,
+            confidence: 80,
+            linkedin: null,
+            phone: scrapedPhones[idx] || null,
+          }));
+
+          // Si hay más teléfonos que emails, agregarlos
+          if (scrapedPhones.length > scrapedEmails.length) {
+            const extraPhones = scrapedPhones.slice(scrapedEmails.length);
+            for (const phone of extraPhones) {
+              decisionMakers.push({
+                email: `contacto@${new URL(result.website).hostname}`,
+                firstName: null,
+                lastName: null,
+                fullName: null,
+                position: null,
+                seniority: null,
+                department: null,
+                confidence: 60,
+                linkedin: null,
+                phone,
+              });
+            }
+          }
+        }
+
         // Guardar negocio
         const { data: business, error: businessError } = await supabase
           .from('businesses')
@@ -253,6 +295,7 @@ export async function POST(request: NextRequest) {
                   lng: result.gps_coordinates.longitude,
                 }
               : null,
+            decision_makers: decisionMakers,
           })
           .select()
           .single();

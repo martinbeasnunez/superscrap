@@ -183,6 +183,128 @@ export function searchKeywordsInContent(
   return results;
 }
 
+// Extraer emails de contenido HTML
+export function extractEmails(content: string): string[] {
+  // Regex para emails - captura formatos comunes
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const matches = content.match(emailRegex) || [];
+
+  // Filtrar emails inválidos o genéricos
+  const invalidPatterns = [
+    'example.com',
+    'test.com',
+    'email.com',
+    'domain.com',
+    'yoursite.com',
+    'sentry.io',
+    'wixpress.com',
+    'w3.org',
+    'schema.org',
+    'googleapis.com',
+    'google.com',
+    'facebook.com',
+    'twitter.com',
+    '.png',
+    '.jpg',
+    '.gif',
+    '.webp',
+  ];
+
+  const validEmails = matches.filter(email => {
+    const lowerEmail = email.toLowerCase();
+    return !invalidPatterns.some(pattern => lowerEmail.includes(pattern));
+  });
+
+  // Eliminar duplicados y retornar únicos
+  return [...new Set(validEmails)];
+}
+
+// Extraer teléfonos de contenido (formato peruano)
+export function extractPhones(content: string): string[] {
+  // Patrones para teléfonos peruanos
+  const phonePatterns = [
+    /(?:\+51|51)?[\s.-]?9[\d]{8}/g,  // Celulares: 9XXXXXXXX
+    /(?:\+51|51)?[\s.-]?\(?\d{1,2}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g,  // Fijos con código de área
+    /\d{3}[\s.-]?\d{3}[\s.-]?\d{3}/g,  // 9 dígitos con separadores
+  ];
+
+  const phones: string[] = [];
+
+  for (const pattern of phonePatterns) {
+    const matches = content.match(pattern) || [];
+    phones.push(...matches);
+  }
+
+  // Limpiar y normalizar
+  const cleanedPhones = phones
+    .map(p => p.replace(/[\s.-]/g, ''))
+    .filter(p => p.length >= 7 && p.length <= 15)
+    .filter(p => !p.startsWith('0000'));  // Filtrar números inválidos
+
+  return [...new Set(cleanedPhones)];
+}
+
+// Scraping profundo con extracción de contactos
+export interface ScrapedContacts {
+  emails: string[];
+  phones: string[];
+  content: string;
+}
+
+export async function scrapeWebsiteForContacts(baseUrl: string): Promise<ScrapedContacts> {
+  const allEmails: string[] = [];
+  const allPhones: string[] = [];
+  let allContent = '';
+
+  // Páginas prioritarias para encontrar contactos
+  const contactPaths = [
+    '',  // Página principal
+    '/contacto',
+    '/contact',
+    '/contactenos',
+    '/nosotros',
+    '/about',
+    '/about-us',
+    '/equipo',
+    '/team',
+  ];
+
+  try {
+    const url = new URL(baseUrl);
+    const baseOrigin = url.origin;
+
+    for (const path of contactPaths) {
+      try {
+        const fullUrl = path ? `${baseOrigin}${path}` : baseUrl;
+        const content = await scrapeWebsite(fullUrl);
+
+        if (content && content.length > 100) {
+          allContent += '\n' + content;
+
+          const emails = extractEmails(content);
+          const phones = extractPhones(content);
+
+          allEmails.push(...emails);
+          allPhones.push(...phones);
+
+          // Si encontramos suficientes contactos, parar
+          if (allEmails.length >= 3) break;
+        }
+      } catch {
+        // Ignorar páginas que no existen
+      }
+    }
+  } catch {
+    // URL inválida
+  }
+
+  return {
+    emails: [...new Set(allEmails)].slice(0, 5),
+    phones: [...new Set(allPhones)].slice(0, 5),
+    content: allContent.substring(0, 6000),
+  };
+}
+
 // Función para intentar scraping de múltiples páginas del sitio
 export async function scrapeWebsiteDeep(baseUrl: string): Promise<string | null> {
   // Primero intentar la página principal

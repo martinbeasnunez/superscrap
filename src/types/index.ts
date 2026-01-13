@@ -10,6 +10,19 @@ export interface Search {
   completed_at: string | null;
 }
 
+export interface DecisionMaker {
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  fullName: string | null;
+  position: string | null;
+  seniority: string | null;
+  department: string | null;
+  confidence: number;
+  linkedin: string | null;
+  phone: string | null;
+}
+
 export interface Business {
   id: string;
   search_id: string;
@@ -25,6 +38,7 @@ export interface Business {
   coordinates: { lat: number; lng: number } | null;
   contact_status: 'whatsapp' | 'called' | 'contacted' | null;
   contacted_at: string | null;
+  decision_makers: DecisionMaker[] | null;
   created_at: string;
 }
 

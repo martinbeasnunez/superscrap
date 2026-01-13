@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
             analysis = await analyzeBusinessServices(
               result.title,
               enrichedDescription,
-              result.type,
+              result.type || null,
               requiredServices
             );
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BusinessWithAnalysis } from '@/types';
 
 interface BusinessCardProps {
@@ -8,6 +8,21 @@ interface BusinessCardProps {
   requiredServices: string[];
   businessType: string;
   userId?: string;
+}
+
+// Obtener userId del localStorage como fallback
+function getUserIdFromStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const savedUser = localStorage.getItem('superscrap_user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      return user.id || null;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
 }
 
 // Detecta si es número de celular peruano (9 dígitos empezando con 9)
@@ -156,24 +171,40 @@ export default function BusinessCard({
   business,
   requiredServices,
   businessType,
-  userId,
+  userId: userIdProp,
 }: BusinessCardProps) {
   const [contactStatus, setContactStatus] = useState<string | null>(
     business.contact_status || null
   );
   const [updating, setUpdating] = useState(false);
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(userIdProp || null);
+
+  // Obtener userId del localStorage como fallback si no se pasó como prop
+  useEffect(() => {
+    if (!userIdProp) {
+      const storageUserId = getUserIdFromStorage();
+      if (storageUserId) {
+        setResolvedUserId(storageUserId);
+      }
+    } else {
+      setResolvedUserId(userIdProp);
+    }
+  }, [userIdProp]);
 
   const analysis = business.analysis;
   const matchPercentage = analysis?.match_percentage || 0;
   const matchPercent = Math.round(matchPercentage * 100);
 
   const updateContactStatus = async (status: string | null) => {
+    // Siempre intentar obtener el userId más reciente
+    const currentUserId = resolvedUserId || getUserIdFromStorage();
+
     setUpdating(true);
     try {
       const response = await fetch(`/api/businesses/${business.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact_status: status, user_id: userId }),
+        body: JSON.stringify({ contact_status: status, user_id: currentUserId }),
       });
 
       if (response.ok) {

@@ -168,11 +168,50 @@ export default function SearchForm({ userId }: SearchFormProps) {
           value={businessType}
           onChange={(e) => setBusinessType(e.target.value)}
           placeholder={source === 'google'
-            ? "ej: hoteles 5 estrellas, spas de lujo..."
-            : "ej: fabricas de uniformes, confecciones..."}
+            ? "ej: hotel 5 estrellas, spa, clinica..."
+            : "ej: empresa de seguridad, limpieza..."}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={loading}
         />
+
+        {/* Sugerencias de búsqueda */}
+        <div className="mt-2">
+          <p className="text-xs text-gray-500 mb-1.5">Sugerencias:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {(source === 'google' ? [
+              'hotel 5 estrellas',
+              'hotel 4 estrellas',
+              'hostal',
+              'apart hotel',
+              'spa',
+              'clinica estetica',
+              'clinica dental',
+              'hospital',
+              'restaurante',
+              'country club',
+              'gimnasio premium',
+              'salon de eventos',
+            ] : [
+              'empresa de seguridad',
+              'empresa de limpieza',
+              'empresa de transporte',
+              'clinica',
+              'laboratorio',
+              'catering',
+              'constructora',
+            ]).map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => setBusinessType(suggestion)}
+                disabled={loading}
+                className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors disabled:opacity-50"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div>

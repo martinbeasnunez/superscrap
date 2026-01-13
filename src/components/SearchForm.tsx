@@ -176,29 +176,113 @@ export default function SearchForm({ userId }: SearchFormProps) {
 
         {/* Sugerencias de búsqueda */}
         <div className="mt-2">
-          <p className="text-xs text-gray-500 mb-1.5">Sugerencias:</p>
-          <div className="flex flex-wrap gap-1.5">
+          <p className="text-xs text-gray-500 mb-1.5">Sugerencias (ordenadas por potencial):</p>
+          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
             {(source === 'google' ? [
+              // ALTO POTENCIAL - Hospedaje grande
               'hotel 5 estrellas',
               'hotel 4 estrellas',
-              'hostal',
-              'apart hotel',
-              'spa',
+              'hotel boutique',
+              'resort',
+              'hotel spa',
+              // ALTO POTENCIAL - Salud
+              'hospital',
+              'clinica',
               'clinica estetica',
               'clinica dental',
-              'hospital',
-              'restaurante',
+              'centro medico',
+              'laboratorio clinico',
+              // ALTO POTENCIAL - Clubs/Deportivo
               'country club',
+              'club campestre',
+              'club deportivo',
               'gimnasio premium',
+              'bodytech',
+              // ALTO POTENCIAL - Eventos
               'salon de eventos',
+              'centro de convenciones',
+              'catering',
+              // MEDIO-ALTO - Hospedaje mediano
+              'hotel 3 estrellas',
+              'apart hotel',
+              'hostal',
+              'hospedaje',
+              'albergue',
+              'airbnb',
+              // MEDIO-ALTO - Bienestar
+              'spa',
+              'sauna',
+              'centro de masajes',
+              'salon de belleza',
+              'peluqueria',
+              // MEDIO - Gastronomia
+              'restaurante',
+              'restaurante gourmet',
+              'cevicheria',
+              'chifa',
+              'pizzeria',
+              'cafeteria',
+              // MEDIO - Otros servicios
+              'lavanderia',
+              'tintoreria',
+              'residencia universitaria',
+              'residencia adulto mayor',
+              'guarderia',
+              'colegio',
+              'universidad',
+              // BAJO - Retail/Otros
+              'tienda de ropa',
+              'boutique',
+              'floristeria',
             ] : [
+              // ALTO POTENCIAL - Servicios con uniformes
               'empresa de seguridad',
+              'vigilancia',
               'empresa de limpieza',
+              'servicios de limpieza',
               'empresa de transporte',
+              'transporte de personal',
+              'courier',
+              'delivery',
+              // ALTO POTENCIAL - Salud/Industrial
+              'hospital',
               'clinica',
               'laboratorio',
+              'laboratorio clinico',
+              'farmaceutica',
+              // ALTO POTENCIAL - Alimentos
               'catering',
+              'concesionario de alimentos',
+              'comedor industrial',
+              'restaurante industrial',
+              // MEDIO-ALTO - Construccion/Industria
               'constructora',
+              'empresa constructora',
+              'minera',
+              'fabrica',
+              'manufactura',
+              'textil',
+              'confecciones',
+              // MEDIO-ALTO - Servicios
+              'mantenimiento',
+              'fumigacion',
+              'control de plagas',
+              'jardineria',
+              'paisajismo',
+              // MEDIO - Automotriz/Mecanica
+              'taller mecanico',
+              'concesionario',
+              'lavado de autos',
+              // MEDIO - Logistica
+              'almacen',
+              'operador logistico',
+              'distribuidor',
+              // MEDIO - Educacion/Otros
+              'colegio',
+              'universidad',
+              'instituto',
+              'call center',
+              'bpo',
             ]).map((suggestion) => (
               <button
                 key={suggestion}

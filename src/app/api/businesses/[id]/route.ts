@@ -19,16 +19,14 @@ export async function PATCH(
       );
     }
 
-    // Build update data - contacted_by is optional (requires DB column)
+    // Build update data
     const updateData: Record<string, string | null> = {
       contact_status,
       contacted_at: contact_status ? new Date().toISOString() : null,
+      contacted_by: contact_status && user_id ? user_id : null,
     };
 
-    // Only include contacted_by if user_id is provided
-    if (user_id) {
-      updateData.contacted_by = contact_status ? user_id : null;
-    }
+    console.log('Updating business:', id, 'with data:', updateData);
 
     const { data, error } = await supabase
       .from('businesses')
@@ -38,6 +36,7 @@ export async function PATCH(
       .single();
 
     if (error) {
+      console.error('Supabase error:', error);
       console.error('Error updating business:', error);
       return NextResponse.json(
         { error: 'Error al actualizar negocio' },

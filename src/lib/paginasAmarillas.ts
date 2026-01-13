@@ -71,78 +71,50 @@ export async function searchPaginasAmarillas(
   }
 }
 
-// Parsear resultados de la búsqueda
+// Parsear resultados de la búsqueda - extrae datos de JSON-LD (schema.org)
 function parseSearchResults(html: string): PaginasAmarillasResult[] {
   const results: PaginasAmarillasResult[] = [];
 
-  // Buscar bloques de empresas usando regex
-  // Cada empresa está en un div con clase específica
-  const businessBlocks = html.match(/<article[^>]*class="[^"]*business[^"]*"[^>]*>[\s\S]*?<\/article>/gi) || [];
-
-  // Si no encontramos con article, intentar con div
-  const altBlocks = businessBlocks.length === 0
-    ? html.match(/<div[^>]*class="[^"]*result[^"]*"[^>]*>[\s\S]*?(?=<div[^>]*class="[^"]*result|$)/gi) || []
-    : businessBlocks;
-
-  // Extraer datos de cada bloque usando patrones comunes
-  const namePattern = /<h2[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>[\s\S]*?<\/h2>/gi;
-  const phonePattern = /(?:tel:|phone:|teléfono:|telefono:)?\s*(\+?51[\s.-]?\d{1,3}[\s.-]?\d{3}[\s.-]?\d{3,4}|\d{3}[\s.-]?\d{3}[\s.-]?\d{3,4})/gi;
-  const emailPattern = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
-  const addressPattern = /(?:dirección|direccion|address):\s*([^<]+)/gi;
-  const urlPattern = /href="(\/empresas\/[^"]+)"/gi;
-
-  // Método alternativo: buscar elementos específicos en todo el HTML
-  const allNames: string[] = [];
-  const allPhones: string[] = [];
-  const allEmails: string[] = [];
-  const allUrls: string[] = [];
-
-  // Extraer nombres de empresas
+  // Extraer todos los bloques JSON-LD de tipo LocalBusiness
+  const jsonLdPattern = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
   let match;
-  const h2Pattern = /<h2[^>]*>[\s\S]*?<a[^>]*href="(\/empresas\/[^"]+)"[^>]*>([^<]+)<\/a>/gi;
-  while ((match = h2Pattern.exec(html)) !== null) {
-    allUrls.push(match[1]);
-    allNames.push(match[2].trim());
-  }
 
-  // Extraer teléfonos
-  const phoneMatches = html.match(/(?:\d{3}[\s.-]?\d{3}[\s.-]?\d{3,4})/g) || [];
-  allPhones.push(...phoneMatches);
+  while ((match = jsonLdPattern.exec(html)) !== null) {
+    try {
+      const jsonData = JSON.parse(match[1]);
 
-  // Extraer emails
-  const emailMatches = html.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || [];
-  const filteredEmails = emailMatches.filter(e =>
-    !e.includes('paginasamarillas') &&
-    !e.includes('example') &&
-    !e.includes('sentry')
-  );
-  allEmails.push(...filteredEmails);
+      // Solo procesar LocalBusiness
+      if (jsonData['@type'] === 'LocalBusiness' && jsonData.name) {
+        const result: PaginasAmarillasResult = {
+          name: jsonData.name || '',
+          phone: jsonData.telephone || null,
+          email: jsonData.email || null,
+          address: jsonData.address || null,
+          description: jsonData.description ? jsonData.description.substring(0, 500) : null,
+          website: null,
+          category: null,
+          profileUrl: jsonData.url || '',
+        };
 
-  // Extraer direcciones
-  const addressMatches: string[] = [];
-  const addrPattern = /<p[^>]*class="[^"]*address[^"]*"[^>]*>([^<]+)<\/p>/gi;
-  while ((match = addrPattern.exec(html)) !== null) {
-    addressMatches.push(match[1].trim());
-  }
+        // Filtrar emails inválidos
+        if (result.email && (
+          result.email.includes('paginasamarillas') ||
+          result.email.includes('example') ||
+          result.email.includes('sentry')
+        )) {
+          result.email = null;
+        }
 
-  // Combinar datos
-  for (let i = 0; i < Math.min(allNames.length, 20); i++) {
-    const result: PaginasAmarillasResult = {
-      name: allNames[i] || '',
-      phone: allPhones[i] || null,
-      email: filteredEmails[i] || null,
-      address: addressMatches[i] || null,
-      description: null,
-      website: null,
-      category: null,
-      profileUrl: allUrls[i] ? `${BASE_URL}${allUrls[i]}` : '',
-    };
-
-    if (result.name) {
-      results.push(result);
+        if (result.name) {
+          results.push(result);
+        }
+      }
+    } catch {
+      // Ignorar JSON inválido
     }
   }
 
+  console.log(`Parsed ${results.length} results from JSON-LD`);
   return results;
 }
 

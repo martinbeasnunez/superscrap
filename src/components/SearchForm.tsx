@@ -179,110 +179,103 @@ export default function SearchForm({ userId }: SearchFormProps) {
           <p className="text-xs text-gray-500 mb-1.5">Sugerencias (ordenadas por potencial):</p>
           <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
             {(source === 'google' ? [
-              // ALTO POTENCIAL - Hospedaje grande
+              // TIER 1 - Hoteles grandes (ropa de cama + toallas en VOLUMEN)
               'hotel 5 estrellas',
               'hotel 4 estrellas',
               'hotel boutique',
               'resort',
               'hotel spa',
-              // ALTO POTENCIAL - Salud
+              'hotel casino',
+              'hotel miraflores',
+              'hotel san isidro',
+              // TIER 1 - Hospitales/Clinicas grandes (uniformes + ropa de cama)
               'hospital',
-              'clinica',
-              'clinica estetica',
-              'clinica dental',
+              'clinica internacional',
+              'clinica ricardo palma',
+              'clinica jockey',
+              'clinica san pablo',
               'centro medico',
-              'laboratorio clinico',
-              // ALTO POTENCIAL - Clubs/Deportivo
+              // TIER 1 - Country clubs (toallas + ropa de cama + manteles)
               'country club',
               'club campestre',
-              'club deportivo',
-              'gimnasio premium',
-              'bodytech',
-              // ALTO POTENCIAL - Eventos
+              'lima golf club',
+              'club regatas',
+              'los inkas golf club',
+              // TIER 2 - Hospedaje mediano
+              'hotel 3 estrellas',
+              'apart hotel',
+              'hostal miraflores',
+              'hostal barranco',
+              // TIER 2 - Spas y bienestar (toallas)
+              'spa',
+              'spa miraflores',
+              'spa san isidro',
+              'centro de masajes',
+              'sauna',
+              // TIER 2 - Gimnasios premium (toallas)
+              'gold gym',
+              'sportlife',
+              'athletic club',
+              // TIER 2 - Restaurantes formales (manteles + uniformes)
+              'restaurante miraflores',
+              'restaurante gourmet',
+              'restaurante san isidro',
+              'restaurante la mar',
+              // TIER 3 - Eventos (manteles + uniformes)
               'salon de eventos',
               'centro de convenciones',
               'catering',
-              // MEDIO-ALTO - Hospedaje mediano
-              'hotel 3 estrellas',
-              'apart hotel',
-              'hostal',
-              'hospedaje',
-              'albergue',
-              'airbnb',
-              // MEDIO-ALTO - Bienestar
-              'spa',
-              'sauna',
-              'centro de masajes',
-              'salon de belleza',
-              'peluqueria',
-              // MEDIO - Gastronomia
-              'restaurante',
-              'restaurante gourmet',
-              'cevicheria',
-              'chifa',
-              'pizzeria',
-              'cafeteria',
-              // MEDIO - Otros servicios
-              'lavanderia',
-              'tintoreria',
-              'residencia universitaria',
+              'club empresarial',
+              // TIER 3 - Residencias (ropa de cama + toallas)
               'residencia adulto mayor',
-              'guarderia',
-              'colegio',
-              'universidad',
-              // BAJO - Retail/Otros
-              'tienda de ropa',
-              'boutique',
-              'floristeria',
+              'casa de reposo',
+              'residencia universitaria',
             ] : [
-              // ALTO POTENCIAL - Servicios con uniformes
+              // TIER 1 - Empresas de seguridad (MUCHOS uniformes)
               'empresa de seguridad',
               'vigilancia',
+              'seguridad privada',
+              'prosegur',
+              'securitas',
+              'g4s',
+              // TIER 1 - Empresas de limpieza (uniformes en volumen)
               'empresa de limpieza',
               'servicios de limpieza',
+              'limpieza industrial',
+              'facility services',
+              'mantenimiento y limpieza',
+              // TIER 1 - Transporte/Logistica (uniformes choferes)
               'empresa de transporte',
               'transporte de personal',
               'courier',
-              'delivery',
-              // ALTO POTENCIAL - Salud/Industrial
+              'olva courier',
+              'urbano express',
+              // TIER 1 - Salud (uniformes medicos + ropa de cama)
               'hospital',
               'clinica',
-              'laboratorio',
               'laboratorio clinico',
               'farmaceutica',
-              // ALTO POTENCIAL - Alimentos
+              // TIER 2 - Alimentos industrial (uniformes + manteles)
               'catering',
               'concesionario de alimentos',
+              'sodexo',
+              'aramark',
               'comedor industrial',
-              'restaurante industrial',
-              // MEDIO-ALTO - Construccion/Industria
+              // TIER 2 - Construccion/Mineria (overoles)
               'constructora',
-              'empresa constructora',
               'minera',
+              'petrolera',
+              'empresa constructora',
+              // TIER 2 - Industria/Manufactura (uniformes operarios)
               'fabrica',
               'manufactura',
-              'textil',
-              'confecciones',
-              // MEDIO-ALTO - Servicios
-              'mantenimiento',
+              'planta industrial',
+              'agroindustria',
+              // TIER 3 - Servicios varios (uniformes)
               'fumigacion',
               'control de plagas',
-              'jardineria',
-              'paisajismo',
-              // MEDIO - Automotriz/Mecanica
-              'taller mecanico',
-              'concesionario',
-              'lavado de autos',
-              // MEDIO - Logistica
-              'almacen',
-              'operador logistico',
-              'distribuidor',
-              // MEDIO - Educacion/Otros
-              'colegio',
-              'universidad',
-              'instituto',
-              'call center',
-              'bpo',
+              'mantenimiento industrial',
+              'empresa de servicios',
             ]).map((suggestion) => (
               <button
                 key={suggestion}

@@ -7,6 +7,7 @@ interface BusinessCardProps {
   business: BusinessWithAnalysis;
   requiredServices: string[];
   businessType: string;
+  userId?: string;
 }
 
 // Detecta si es número de celular peruano (9 dígitos empezando con 9)
@@ -155,6 +156,7 @@ export default function BusinessCard({
   business,
   requiredServices,
   businessType,
+  userId,
 }: BusinessCardProps) {
   const [contactStatus, setContactStatus] = useState<string | null>(
     business.contact_status || null
@@ -171,7 +173,7 @@ export default function BusinessCard({
       const response = await fetch(`/api/businesses/${business.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact_status: status }),
+        body: JSON.stringify({ contact_status: status, user_id: userId }),
       });
 
       if (response.ok) {

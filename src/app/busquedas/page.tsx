@@ -16,6 +16,13 @@ interface SearchWithUser {
   created_by_email: string | null;
 }
 
+interface UserStats {
+  name: string;
+  whatsapp: number;
+  called: number;
+  contacted: number;
+}
+
 interface Stats {
   total: {
     searches: number;
@@ -29,6 +36,7 @@ interface Stats {
     whatsapp: number;
     called: number;
     contacted: number;
+    byUser: UserStats[];
   };
 }
 
@@ -129,7 +137,7 @@ export default function BusquedasPage() {
 
             <div className="border-t pt-4">
               <p className="text-xs text-gray-500 uppercase font-medium mb-3">Hoy</p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 mb-4">
                 <span className="inline-flex items-center gap-2 text-sm">
                   <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
                   <strong>{stats.today.searches}</strong> búsquedas
@@ -147,6 +155,37 @@ export default function BusquedasPage() {
                   <strong>{stats.today.contacted}</strong> contactados
                 </span>
               </div>
+
+              {/* Stats por usuario */}
+              {stats.today.byUser && stats.today.byUser.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-dashed">
+                  <p className="text-xs text-gray-500 uppercase font-medium mb-3">Por persona hoy</p>
+                  <div className="grid gap-2">
+                    {stats.today.byUser.map((user) => (
+                      <div key={user.name} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                        <span className="font-medium text-gray-700">{user.name}</span>
+                        <div className="flex gap-3 text-sm">
+                          {user.whatsapp > 0 && (
+                            <span className="text-green-600">
+                              <strong>{user.whatsapp}</strong> WhatsApp
+                            </span>
+                          )}
+                          {user.called > 0 && (
+                            <span className="text-blue-600">
+                              <strong>{user.called}</strong> llamados
+                            </span>
+                          )}
+                          {user.contacted > 0 && (
+                            <span className="text-purple-600">
+                              <strong>{user.contacted}</strong> contactados
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

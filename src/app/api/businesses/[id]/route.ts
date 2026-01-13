@@ -8,7 +8,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { contact_status } = body;
+    const { contact_status, user_id } = body;
 
     // Validar status
     const validStatuses = ['whatsapp', 'called', 'contacted', null];
@@ -19,9 +19,14 @@ export async function PATCH(
       );
     }
 
-    const updateData: { contact_status: string | null; contacted_at: string | null } = {
+    const updateData: {
+      contact_status: string | null;
+      contacted_at: string | null;
+      contacted_by: string | null;
+    } = {
       contact_status,
       contacted_at: contact_status ? new Date().toISOString() : null,
+      contacted_by: contact_status ? user_id || null : null,
     };
 
     const { data, error } = await supabase

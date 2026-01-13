@@ -2,10 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search } from '@/types';
+
+interface SearchWithUser {
+  id: string;
+  business_type: string;
+  city: string;
+  required_services: string[];
+  status: string;
+  total_results: number | null;
+  matching_results: number | null;
+  created_at: string;
+  created_by: string;
+  created_by_email: string | null;
+}
 
 export default function BusquedasPage() {
-  const [searches, setSearches] = useState<Search[]>([]);
+  const [searches, setSearches] = useState<SearchWithUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,7 +71,7 @@ export default function BusquedasPage() {
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            Historial de búsquedas
+            Búsquedas del equipo
           </h1>
           <Link
             href="/"
@@ -90,9 +102,9 @@ export default function BusquedasPage() {
           </div>
         ) : searches.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-            <p className="text-gray-500 mb-4">No tienes búsquedas anteriores</p>
+            <p className="text-gray-500 mb-4">No hay búsquedas aún</p>
             <Link href="/" className="text-blue-600 hover:text-blue-800 font-medium">
-              Crear tu primera búsqueda →
+              Crear la primera búsqueda →
             </Link>
           </div>
         ) : (
@@ -104,7 +116,7 @@ export default function BusquedasPage() {
                 className="block bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-start">
-                  <div>
+                  <div className="flex-1">
                     <h2 className="text-xl font-semibold text-gray-900">
                       {search.business_type} en {search.city}
                     </h2>
@@ -118,11 +130,18 @@ export default function BusquedasPage() {
                         </span>
                       ))}
                     </div>
-                    <p className="text-sm text-gray-500 mt-3">
-                      {formatDate(search.created_at)}
-                    </p>
+                    <div className="flex items-center gap-3 mt-3 text-sm text-gray-500">
+                      <span className="inline-flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {search.created_by}
+                      </span>
+                      <span>•</span>
+                      <span>{formatDate(search.created_at)}</span>
+                    </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right ml-4">
                     {getStatusBadge(search.status)}
                     {search.status === 'completed' && (
                       <p className="text-sm text-gray-600 mt-2">

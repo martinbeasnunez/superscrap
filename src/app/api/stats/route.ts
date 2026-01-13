@@ -10,10 +10,17 @@ interface UserStats {
 
 export async function GET() {
   try {
-    // Fecha de hoy (inicio del día)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayISO = today.toISOString();
+    // Fecha de hoy (inicio del día) en hora de Peru (UTC-5)
+    const now = new Date();
+    // Convertir a hora de Peru
+    const peruOffset = -5 * 60; // UTC-5 en minutos
+    const peruTime = new Date(now.getTime() + (peruOffset - now.getTimezoneOffset()) * 60000);
+    // Inicio del dia en Peru
+    const todayPeru = new Date(peruTime);
+    todayPeru.setHours(0, 0, 0, 0);
+    // Convertir de vuelta a UTC para comparar con la BD
+    const todayUTC = new Date(todayPeru.getTime() - peruOffset * 60000);
+    const todayISO = todayUTC.toISOString();
 
     // Total búsquedas
     const { count: totalSearches } = await supabase

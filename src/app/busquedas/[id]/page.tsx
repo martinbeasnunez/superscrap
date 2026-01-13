@@ -21,20 +21,6 @@ export default function SearchDetailPage({
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'matching'>('all');
   const [deleting, setDeleting] = useState(false);
-  const [userId, setUserId] = useState<string | undefined>(undefined);
-
-  // Obtener userId del localStorage
-  useEffect(() => {
-    const savedUser = localStorage.getItem('superscrap_user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setUserId(user.id);
-      } catch {
-        // Ignore parse errors
-      }
-    }
-  }, []);
 
   const handleDelete = async () => {
     if (!confirm('¿Estás seguro de eliminar esta búsqueda? Se perderán todos los negocios encontrados.')) {
@@ -216,7 +202,6 @@ export default function SearchDetailPage({
                 business={business}
                 requiredServices={search.required_services}
                 businessType={search.business_type}
-                userId={userId}
               />
             ))}
           </div>

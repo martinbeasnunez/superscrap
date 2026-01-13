@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BusinessWithAnalysis } from '@/types';
 
 interface BusinessCardProps {
   business: BusinessWithAnalysis;
   requiredServices: string[];
   businessType: string;
-  userId?: string;
 }
 
 // Obtener userId del localStorage como fallback
@@ -171,33 +170,25 @@ export default function BusinessCard({
   business,
   requiredServices,
   businessType,
-  userId: userIdProp,
 }: BusinessCardProps) {
   const [contactStatus, setContactStatus] = useState<string | null>(
     business.contact_status || null
   );
   const [updating, setUpdating] = useState(false);
-  const [resolvedUserId, setResolvedUserId] = useState<string | null>(userIdProp || null);
-
-  // Obtener userId del localStorage como fallback si no se pasó como prop
-  useEffect(() => {
-    if (!userIdProp) {
-      const storageUserId = getUserIdFromStorage();
-      if (storageUserId) {
-        setResolvedUserId(storageUserId);
-      }
-    } else {
-      setResolvedUserId(userIdProp);
-    }
-  }, [userIdProp]);
 
   const analysis = business.analysis;
   const matchPercentage = analysis?.match_percentage || 0;
   const matchPercent = Math.round(matchPercentage * 100);
 
   const updateContactStatus = async (status: string | null) => {
-    // Siempre intentar obtener el userId más reciente
-    const currentUserId = resolvedUserId || getUserIdFromStorage();
+    // SIEMPRE obtener userId fresco del localStorage
+    const currentUserId = getUserIdFromStorage();
+
+    if (!currentUserId) {
+      console.error('No se encontró userId en localStorage');
+      alert('Error: No se pudo identificar tu usuario. Por favor recarga la página.');
+      return;
+    }
 
     setUpdating(true);
     try {

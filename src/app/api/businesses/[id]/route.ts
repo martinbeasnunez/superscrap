@@ -19,15 +19,16 @@ export async function PATCH(
       );
     }
 
-    const updateData: {
-      contact_status: string | null;
-      contacted_at: string | null;
-      contacted_by: string | null;
-    } = {
+    // Build update data - contacted_by is optional (requires DB column)
+    const updateData: Record<string, string | null> = {
       contact_status,
       contacted_at: contact_status ? new Date().toISOString() : null,
-      contacted_by: contact_status ? user_id || null : null,
     };
+
+    // Only include contacted_by if user_id is provided
+    if (user_id) {
+      updateData.contacted_by = contact_status ? user_id : null;
+    }
 
     const { data, error } = await supabase
       .from('businesses')

@@ -40,6 +40,18 @@ EJEMPLOS DE DETECCIÓN CORRECTA:
 - Restaurante → TIENE "manteles"
 - Spa → TIENE "toallas", "ropa de cama" (camillas)
 
+EJEMPLOS PARA EMPRESAS INDUSTRIALES (Directorio Industrial):
+- Empresa de seguridad/vigilancia → TIENE "uniformes" (guardias usan uniformes que necesitan lavarse)
+- Fábrica de confecciones/textiles → TIENE "uniformes" (operarios usan uniformes)
+- Empresa de limpieza → TIENE "uniformes" (personal de limpieza usa uniformes)
+- Constructora → TIENE "uniformes" (obreros usan uniformes/overoles)
+- Empresa de transporte/logística → TIENE "uniformes" (choferes, repartidores)
+- Restaurante industrial/catering → TIENE "uniformes" y "manteles"
+- Clínica/laboratorio → TIENE "uniformes" (batas, scrubs médicos)
+- Empresa de fumigación/control de plagas → TIENE "uniformes" (técnicos usan uniformes)
+- Taller mecánico → TIENE "uniformes" (mecánicos usan overoles)
+- Cualquier empresa con personal de campo → probablemente TIENE "uniformes"
+
 INSTRUCCIONES:
 1. Analiza si el negocio UTILIZA estos items textiles en sus operaciones
 2. Busca indicios de: hospedaje, habitaciones, bungalows, piscina, vestuarios, duchas, restaurante, spa

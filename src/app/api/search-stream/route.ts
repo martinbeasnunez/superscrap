@@ -251,26 +251,37 @@ export async function POST(request: NextRequest) {
         let analysis;
 
         if (isDirectorio) {
-          // Para directorios industriales, asumir que si buscan "fabricas de uniformes"
-          // y encontramos una, tiene 100% match con "uniformes"
-          const searchTermLower = businessType.toLowerCase();
-          const detectedFromSearch: string[] = [];
+          // Para directorio industrial, usamos OpenAI para analizar si el negocio
+          // podría necesitar lavado de los textiles buscados basado en su descripción
+          try {
+            analysis = await analyzeBusinessServices(
+              result.title,
+              result.description || `Empresa de ${businessType}`,
+              'Directorio Industrial',
+              requiredServices
+            );
+          } catch (error) {
+            console.error('OpenAI analysis error for directorio:', error);
+            // Fallback: análisis básico por keywords
+            const searchTermLower = businessType.toLowerCase();
+            const descLower = (result.description || '').toLowerCase();
+            const detectedFromSearch: string[] = [];
 
-          for (const service of requiredServices) {
-            const serviceLower = service.toLowerCase();
-            // Si el término de búsqueda contiene el servicio, asumimos match
-            if (searchTermLower.includes(serviceLower) ||
-                result.title.toLowerCase().includes(serviceLower) ||
-                (result.description || '').toLowerCase().includes(serviceLower)) {
-              detectedFromSearch.push(service);
+            for (const service of requiredServices) {
+              const serviceLower = service.toLowerCase();
+              if (searchTermLower.includes(serviceLower) ||
+                  result.title.toLowerCase().includes(serviceLower) ||
+                  descLower.includes(serviceLower)) {
+                detectedFromSearch.push(service);
+              }
             }
-          }
 
-          analysis = {
-            detected_services: detectedFromSearch.length > 0 ? detectedFromSearch : requiredServices,
-            confidence: 0.9,
-            evidence: `Empresa encontrada en directorio industrial buscando: ${businessType}`,
-          };
+            analysis = {
+              detected_services: detectedFromSearch,
+              confidence: detectedFromSearch.length > 0 ? 0.6 : 0.3,
+              evidence: `Empresa de directorio industrial: ${businessType}`,
+            };
+          }
         } else {
           try {
             analysis = await analyzeBusinessServices(

@@ -215,7 +215,7 @@ export default function BusinessCard({
 
   return (
     <div
-      className={`p-5 rounded-xl border-2 ${getMatchColor(matchPercent)} transition-all hover:shadow-lg ${contactStatus ? 'opacity-60' : ''}`}
+      className={`p-5 rounded-xl border-2 ${getMatchColor(matchPercent)} transition-all hover:shadow-lg ${contactStatus ? 'opacity-80' : ''}`}
     >
       {/* Contact status indicator */}
       {contactStatus && (
@@ -226,6 +226,9 @@ export default function BusinessCard({
           {contactStatus === 'whatsapp' && 'WhatsApp enviado'}
           {contactStatus === 'called' && 'Llamado'}
           {contactStatus === 'contacted' && 'Contactado'}
+          {business.contacted_by_name && (
+            <span className="text-purple-600 ml-1">por {business.contacted_by_name}</span>
+          )}
         </div>
       )}
 

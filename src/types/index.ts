@@ -38,6 +38,8 @@ export interface Business {
   coordinates: { lat: number; lng: number } | null;
   contact_status: 'whatsapp' | 'called' | 'contacted' | null;
   contacted_at: string | null;
+  contacted_by: string | null;
+  contacted_by_name?: string | null;
   decision_makers: DecisionMaker[] | null;
   created_at: string;
 }

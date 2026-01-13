@@ -42,11 +42,17 @@ export async function GET(
       );
     }
 
+    // Obtener usuarios para mapear contacted_by a nombres
+    const { data: users } = await supabase.from('users').select('id, name');
+    const userMap = new Map<string, string>();
+    users?.forEach((u) => userMap.set(u.id, u.name));
+
     // Formatear respuesta
     const businessesWithAnalysis = businesses.map((b) => ({
       ...b,
       analysis: b.service_analyses?.[0] || null,
       service_analyses: undefined,
+      contacted_by_name: b.contacted_by ? userMap.get(b.contacted_by) || null : null,
     }));
 
     // Ordenar por match_percentage (los que más coinciden primero)

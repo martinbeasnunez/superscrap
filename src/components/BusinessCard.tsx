@@ -32,96 +32,96 @@ function getWhatsAppPitch(businessName: string, businessType: string): string {
   const typeLower = businessType.toLowerCase();
 
   const pitches: Record<string, string> = {
-    gimnasio: `Hola ${businessName}! 👋
+    gimnasio: `Hola ${businessName}!
 
-Soy de GetLavado, especialistas en lavandería industrial para gimnasios.
+Soy de GetLavado, especialistas en lavanderia industrial para gimnasios.
 
 Sabemos que mantener toallas frescas e impecables para tus clientes es clave para su experiencia. Nosotros nos encargamos de eso:
 
-✅ Toallas siempre blancas y sin manchas
-✅ Recojo y entrega en tu local
-✅ Puntualidad garantizada
-✅ +800 empresas confían en nosotros
+- Toallas siempre blancas y sin manchas
+- Recojo y entrega en tu local
+- Puntualidad garantizada
+- +800 empresas confian en nosotros
 
-¿Te gustaría una cotización sin compromiso?`,
+Te gustaria una cotizacion sin compromiso?`,
 
-    spa: `Hola ${businessName}! 👋
+    spa: `Hola ${businessName}!
 
-Soy de GetLavado, expertos en lavandería para Spas de lujo.
+Soy de GetLavado, expertos en lavanderia para Spas de lujo.
 
-Entendemos que cada toalla y bata debe transmitir pureza y relajación. Ofrecemos:
+Entendemos que cada toalla y bata debe transmitir pureza y relajacion. Ofrecemos:
 
-✅ Blancura inmaculada en cada pieza
-✅ Suavidad premium que tus clientes merecen
-✅ Servicio puntual sin preocupaciones
-✅ 8 años cuidando la imagen de spas premium
+- Blancura inmaculada en cada pieza
+- Suavidad premium que tus clientes merecen
+- Servicio puntual sin preocupaciones
+- 8 anos cuidando la imagen de spas premium
 
-¿Conversamos sobre cómo podemos elevar la experiencia de tus clientes?`,
+Conversamos sobre como podemos elevar la experiencia de tus clientes?`,
 
-    hotel: `Hola ${businessName}! 👋
+    hotel: `Hola ${businessName}!
 
-Soy de GetLavado, especialistas en lavandería hotelera.
+Soy de GetLavado, especialistas en lavanderia hotelera.
 
-Sabemos que la primera impresión cuenta: sábanas impecables, toallas suaves, uniformes impecables.
+Sabemos que la primera impresion cuenta: sabanas impecables, toallas suaves, uniformes impecables.
 
-✅ Blancura y confort en cada pieza
-✅ Capacidad para alto volumen
-✅ Entregas puntuales garantizadas
-✅ Hoteles líderes confían en nosotros
+- Blancura y confort en cada pieza
+- Capacidad para alto volumen
+- Entregas puntuales garantizadas
+- Hoteles lideres confian en nosotros
 
-¿Agendamos una llamada para cotizarte?`,
+Agendamos una llamada para cotizarte?`,
 
-    clinica: `Hola ${businessName}! 👋
+    clinica: `Hola ${businessName}!
 
-Soy de GetLavado, expertos en lavandería para el sector salud.
+Soy de GetLavado, expertos en lavanderia para el sector salud.
 
-Cumplimos con los más altos estándares de higiene y esterilización que tu clínica necesita:
+Cumplimos con los mas altos estandares de higiene y esterilizacion que tu clinica necesita:
 
-✅ Protocolos de esterilización certificados
-✅ Trazabilidad de cada pieza
-✅ Puntualidad crítica para tu operación
-✅ +8 años sirviendo al sector salud
+- Protocolos de esterilizacion certificados
+- Trazabilidad de cada pieza
+- Puntualidad critica para tu operacion
+- +8 anos sirviendo al sector salud
 
-¿Te envío información sobre nuestros protocolos?`,
+Te envio informacion sobre nuestros protocolos?`,
 
-    restaurante: `Hola ${businessName}! 👋
+    restaurante: `Hola ${businessName}!
 
-Soy de GetLavado, lavandería industrial para restaurantes.
+Soy de GetLavado, lavanderia industrial para restaurantes.
 
 Manteles impecables, servilletas perfectas, uniformes de cocina siempre listos:
 
-✅ Desmanchado profesional
-✅ Servicio diario disponible
-✅ Precios transparentes
-✅ +800 negocios satisfechos
+- Desmanchado profesional
+- Servicio diario disponible
+- Precios transparentes
+- +800 negocios satisfechos
 
-¿Te paso una cotización rápida?`,
+Te paso una cotizacion rapida?`,
 
-    club: `Hola ${businessName}! 👋
+    club: `Hola ${businessName}!
 
-Soy de GetLavado, especialistas en lavandería para clubs y centros recreativos.
+Soy de GetLavado, especialistas en lavanderia para clubs y centros recreativos.
 
-Entendemos las necesidades de clubs con hospedaje, piscinas y áreas deportivas:
+Entendemos las necesidades de clubs con hospedaje, piscinas y areas deportivas:
 
-✅ Ropa de cama impecable para sus bungalows
-✅ Toallas siempre frescas para sus socios
-✅ Uniformes del personal listos a tiempo
-✅ Servicio puntual y de alta calidad
+- Ropa de cama impecable para sus bungalows
+- Toallas siempre frescas para sus socios
+- Uniformes del personal listos a tiempo
+- Servicio puntual y de alta calidad
 
-¿Agendamos una llamada para conocer sus necesidades?`,
+Agendamos una llamada para conocer sus necesidades?`,
 
-    default: `Hola ${businessName}! 👋
+    default: `Hola ${businessName}!
 
-Soy de GetLavado, lavandería industrial con +8 años de experiencia.
+Soy de GetLavado, lavanderia industrial con +8 anos de experiencia.
 
 Nos especializamos en mantener la imagen de negocios como el tuyo impecable:
 
-✅ Calidad garantizada
-✅ Puntualidad en cada entrega
-✅ Precios competitivos
-✅ +800 empresas confían en nosotros
+- Calidad garantizada
+- Puntualidad en cada entrega
+- Precios competitivos
+- +800 empresas confian en nosotros
 
-¿Te gustaría una cotización personalizada?`
+Te gustaria una cotizacion personalizada?`
   };
 
   for (const [key, pitch] of Object.entries(pitches)) {

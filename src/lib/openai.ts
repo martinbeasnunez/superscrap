@@ -52,6 +52,23 @@ EJEMPLOS PARA EMPRESAS INDUSTRIALES (Directorio Industrial):
 - Taller mecánico → TIENE "uniformes" (mecánicos usan overoles)
 - Cualquier empresa con personal de campo → probablemente TIENE "uniformes"
 
+IMPORTANTE - ESCALA DEL NEGOCIO (afecta el confidence):
+Para lavandería industrial necesitamos VOLUMEN. Evalúa el tamaño probable del negocio:
+- ALTA confianza (0.8-1.0): Empresas grandes con muchos empleados (seguridad con múltiples contratos, cadenas de restaurantes, hospitales, hoteles, fábricas grandes, empresas de limpieza con contratos corporativos)
+- MEDIA confianza (0.5-0.7): Empresas medianas (restaurante individual, clínica pequeña, taller con 5-10 empleados)
+- BAJA confianza (0.1-0.4): Negocios pequeños/familiares (carpintería de 2 personas, taller unipersonal, negocio casero)
+
+Indicadores de ESCALA GRANDE:
+- Palabras como: SAC, SA, SRL, Corp, Group, cadena, sucursales, nacional, industrial, corporativo
+- Menciona múltiples servicios o ubicaciones
+- Menciona contratos con empresas grandes
+- Tiene RUC o es empresa formal
+
+Indicadores de ESCALA PEQUEÑA:
+- Palabras como: artesanal, familiar, personal, independiente, casero
+- Solo menciona servicios básicos sin escala
+- No hay indicios de estructura empresarial
+
 INSTRUCCIONES:
 1. Analiza si el negocio UTILIZA estos items textiles en sus operaciones
 2. Busca indicios de: hospedaje, habitaciones, bungalows, piscina, vestuarios, duchas, restaurante, spa

@@ -12,7 +12,11 @@ interface ProgressState {
   searchId?: string;
 }
 
-export default function SearchForm() {
+interface SearchFormProps {
+  userId?: string;
+}
+
+export default function SearchForm({ userId }: SearchFormProps) {
   const router = useRouter();
   const [businessType, setBusinessType] = useState('');
   const [city, setCity] = useState('Lima');
@@ -66,6 +70,7 @@ export default function SearchForm() {
           businessType: businessType.trim(),
           city: city.trim(),
           requiredServices: services,
+          userId,
         }),
       });
 

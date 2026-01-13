@@ -53,7 +53,7 @@ function countMatchingServices(
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { businessType, city, requiredServices } = body;
+  const { businessType, city, requiredServices, userId } = body;
 
   if (!businessType || !city || !requiredServices?.length) {
     return new Response(
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
           city,
           required_services: requiredServices,
           status: 'processing',
+          user_id: userId || null,
         })
         .select()
         .single();

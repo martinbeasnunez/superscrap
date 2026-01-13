@@ -179,103 +179,109 @@ export default function SearchForm({ userId }: SearchFormProps) {
           <p className="text-xs text-gray-500 mb-1.5">Sugerencias (ordenadas por potencial):</p>
           <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
             {(source === 'google' ? [
-              // TIER 1 - Hoteles grandes (ropa de cama + toallas en VOLUMEN)
+              // TIER 1 - Hoteles (ropa de cama + toallas)
               'hotel 5 estrellas',
               'hotel 4 estrellas',
-              'hotel boutique',
-              'resort',
-              'hotel spa',
-              'hotel casino',
-              'hotel miraflores',
-              'hotel san isidro',
-              // TIER 1 - Hospitales/Clinicas grandes (uniformes + ropa de cama)
-              'hospital',
-              'clinica internacional',
-              'clinica ricardo palma',
-              'clinica jockey',
-              'clinica san pablo',
-              'centro medico',
-              // TIER 1 - Country clubs (toallas + ropa de cama + manteles)
-              'country club',
-              'club campestre',
-              'lima golf club',
-              'club regatas',
-              'los inkas golf club',
-              // TIER 2 - Hospedaje mediano
               'hotel 3 estrellas',
+              'hotel boutique',
+              'hotel con piscina',
+              'hotel con spa',
+              'resort todo incluido',
               'apart hotel',
-              'hostal miraflores',
-              'hostal barranco',
+              'hotel ejecutivo',
+              'hospedaje turistico',
+              // TIER 1 - Salud (uniformes + ropa de cama)
+              'hospital privado',
+              'clinica estetica',
+              'clinica dental',
+              'clinica dermatologica',
+              'centro de rehabilitacion',
+              'clinica de maternidad',
+              'centro de dialisis',
+              // TIER 1 - Clubs (toallas + manteles)
+              'country club',
+              'club deportivo',
+              'club de tenis',
+              'club de golf',
+              'club nautico',
               // TIER 2 - Spas y bienestar (toallas)
-              'spa',
-              'spa miraflores',
-              'spa san isidro',
+              'spa urbano',
+              'day spa',
               'centro de masajes',
-              'sauna',
-              // TIER 2 - Gimnasios premium (toallas)
-              'gold gym',
-              'sportlife',
-              'athletic club',
-              // TIER 2 - Restaurantes formales (manteles + uniformes)
-              'restaurante miraflores',
+              'baños turcos',
+              'centro de relajacion',
+              // TIER 2 - Gimnasios (toallas)
+              'gimnasio premium',
+              'gimnasio con sauna',
+              'gimnasio con piscina',
+              'centro de crossfit',
+              'club de fitness',
+              // TIER 2 - Restaurantes (manteles + uniformes)
               'restaurante gourmet',
-              'restaurante san isidro',
-              'restaurante la mar',
+              'restaurante de autor',
+              'restaurante de hotel',
+              'cevicheria gourmet',
+              'restaurante japones',
+              'steakhouse',
               // TIER 3 - Eventos (manteles + uniformes)
-              'salon de eventos',
+              'salon de recepciones',
               'centro de convenciones',
-              'catering',
-              'club empresarial',
+              'local para eventos',
+              'servicio de banquetes',
+              'catering para bodas',
               // TIER 3 - Residencias (ropa de cama + toallas)
-              'residencia adulto mayor',
               'casa de reposo',
-              'residencia universitaria',
+              'residencia geriatrica',
+              'hogar de ancianos',
+              'hospicio',
             ] : [
-              // TIER 1 - Empresas de seguridad (MUCHOS uniformes)
+              // TIER 1 - Seguridad (uniformes en volumen)
               'empresa de seguridad',
-              'vigilancia',
-              'seguridad privada',
-              'prosegur',
-              'securitas',
-              'g4s',
-              // TIER 1 - Empresas de limpieza (uniformes en volumen)
+              'vigilancia privada',
+              'seguridad patrimonial',
+              'resguardo empresarial',
+              'seguridad industrial',
+              // TIER 1 - Limpieza (uniformes)
               'empresa de limpieza',
-              'servicios de limpieza',
               'limpieza industrial',
-              'facility services',
-              'mantenimiento y limpieza',
-              // TIER 1 - Transporte/Logistica (uniformes choferes)
-              'empresa de transporte',
+              'facility management',
+              'servicios de aseo',
+              'limpieza de oficinas',
+              // TIER 1 - Transporte (uniformes)
               'transporte de personal',
-              'courier',
-              'olva courier',
-              'urbano express',
-              // TIER 1 - Salud (uniformes medicos + ropa de cama)
-              'hospital',
-              'clinica',
+              'servicio de courier',
+              'logistica empresarial',
+              'transporte ejecutivo',
+              'empresa de delivery',
+              // TIER 1 - Salud (uniformes medicos)
               'laboratorio clinico',
-              'farmaceutica',
-              // TIER 2 - Alimentos industrial (uniformes + manteles)
-              'catering',
+              'clinica ocupacional',
+              'centro medico laboral',
+              'policlinico',
+              // TIER 2 - Alimentacion (uniformes + manteles)
               'concesionario de alimentos',
-              'sodexo',
-              'aramark',
               'comedor industrial',
+              'catering corporativo',
+              'servicio de cafeteria',
+              'alimentacion institucional',
               // TIER 2 - Construccion/Mineria (overoles)
-              'constructora',
-              'minera',
-              'petrolera',
               'empresa constructora',
-              // TIER 2 - Industria/Manufactura (uniformes operarios)
-              'fabrica',
-              'manufactura',
-              'planta industrial',
-              'agroindustria',
-              // TIER 3 - Servicios varios (uniformes)
-              'fumigacion',
+              'contratista de obras',
+              'empresa minera',
+              'petrolera',
+              'gaseoducto',
+              // TIER 2 - Manufactura (uniformes)
+              'planta de produccion',
+              'fabrica de alimentos',
+              'industria farmaceutica',
+              'ensambladora',
+              'procesadora',
+              // TIER 3 - Servicios (uniformes)
               'control de plagas',
-              'mantenimiento industrial',
-              'empresa de servicios',
+              'empresa de fumigacion',
+              'mantenimiento de edificios',
+              'jardineria corporativa',
+              'mudanzas empresariales',
             ]).map((suggestion) => (
               <button
                 key={suggestion}

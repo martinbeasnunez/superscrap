@@ -20,31 +20,10 @@ export default function SearchForm({ userId }: SearchFormProps) {
   const router = useRouter();
   const [businessType, setBusinessType] = useState('');
   const [city, setCity] = useState('Lima');
-  const [servicesInput, setServicesInput] = useState('');
-  const [services, setServices] = useState<string[]>([]);
   const [source, setSource] = useState<'google' | 'directorio'>('google');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<ProgressState | null>(null);
-
-  const addService = () => {
-    const trimmed = servicesInput.trim().toLowerCase();
-    if (trimmed && !services.includes(trimmed)) {
-      setServices([...services, trimmed]);
-      setServicesInput('');
-    }
-  };
-
-  const removeService = (service: string) => {
-    setServices(services.filter((s) => s !== service));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addService();
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,11 +32,6 @@ export default function SearchForm({ userId }: SearchFormProps) {
 
     if (!businessType.trim()) {
       setError('Ingresa el tipo de negocio');
-      return;
-    }
-
-    if (services.length === 0) {
-      setError('Agrega al menos un servicio requerido');
       return;
     }
 
@@ -70,7 +44,6 @@ export default function SearchForm({ userId }: SearchFormProps) {
         body: JSON.stringify({
           businessType: businessType.trim(),
           city: city.trim(),
-          requiredServices: services,
           userId,
           source,
         }),
@@ -216,53 +189,11 @@ export default function SearchForm({ userId }: SearchFormProps) {
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Textiles que usan
-        </label>
-        <p className="text-xs text-gray-500 mb-2">
-          Items que el negocio usa y necesita lavar (ej: gimnasio + toallas = cliente potencial)
+      {/* Info sobre detección automática */}
+      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-sm text-gray-600">
+          <span className="font-medium text-gray-800">Detección automática:</span> La IA analizará cada negocio para identificar si necesita servicios de lavandería (uniformes, toallas, manteles, ropa de cama).
         </p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={servicesInput}
-            onChange={(e) => setServicesInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="ej: toallas, ropa de cama, manteles..."
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={loading}
-          />
-          <button
-            type="button"
-            onClick={addService}
-            className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-            disabled={loading}
-          >
-            Agregar
-          </button>
-        </div>
-
-        {services.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {services.map((service) => (
-              <span
-                key={service}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-              >
-                {service}
-                <button
-                  type="button"
-                  onClick={() => removeService(service)}
-                  className="hover:text-blue-600"
-                  disabled={loading}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       {error && (

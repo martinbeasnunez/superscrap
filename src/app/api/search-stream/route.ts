@@ -54,9 +54,11 @@ function countMatchingServices(
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { businessType, city, requiredServices, userId, source = 'google' } = body;
+  const { businessType, city, userId, source = 'google' } = body;
+  // requiredServices ya no es requerido - OpenAI detecta automáticamente
+  const requiredServices = body.requiredServices || [];
 
-  if (!businessType || !city || !requiredServices?.length) {
+  if (!businessType || !city) {
     return new Response(
       JSON.stringify({ error: 'Faltan parámetros requeridos' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -314,12 +316,26 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const matchCount = countMatchingServices(
-          analysis.detected_services,
-          requiredServices
-        );
-        const matchPercentage = matchCount / requiredServices.length;
-        const matchesRequirements = matchPercentage >= 0.5;
+        // Si hay servicios requeridos, calcular match tradicional
+        // Si no, usar confidence del análisis como indicador de potencial
+        let matchPercentage: number;
+        let matchesRequirements: boolean;
+
+        if (requiredServices.length > 0) {
+          const matchCount = countMatchingServices(
+            analysis.detected_services,
+            requiredServices
+          );
+          matchPercentage = matchCount / requiredServices.length;
+          matchesRequirements = matchPercentage >= 0.5;
+        } else {
+          // Sin servicios requeridos: usar detección automática
+          // Si detectó servicios de lavandería, es un match potencial
+          matchPercentage = analysis.detected_services.length > 0
+            ? analysis.confidence
+            : 0;
+          matchesRequirements = analysis.detected_services.length > 0 && analysis.confidence >= 0.4;
+        }
 
         // Crear contactos desde emails y teléfonos scrapeados
         let decisionMakers = null;

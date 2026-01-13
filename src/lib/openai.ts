@@ -9,78 +9,72 @@ export async function analyzeBusinessServices(
   businessName: string,
   businessDescription: string | null,
   businessType: string | null,
-  requiredServices: string[]
+  _requiredServices?: string[] // Ya no se usa, detectamos automáticamente
 ): Promise<OpenAIAnalysisResponse> {
-  const servicesListText = requiredServices.join(', ');
+  // Ignoramos requiredServices - ahora detectamos automáticamente
+  void _requiredServices;
 
   const prompt = `CONTEXTO: Eres un analista de prospección B2B para una empresa de lavandería industrial (GetLavado/Laundryheap).
-Tu trabajo es identificar si un negocio UTILIZA o NECESITA ciertos items textiles en sus operaciones, NO si los vende.
+Tu trabajo es IDENTIFICAR AUTOMÁTICAMENTE si un negocio necesita servicios de lavandería industrial.
 
-OBJETIVO: Determinar si este negocio es un cliente potencial de lavandería industrial.
-
-Items/servicios textiles buscados: ${servicesListText}
+OBJETIVO: Determinar si este negocio es un cliente potencial de lavandería industrial analizando su descripción.
 
 Negocio a analizar:
 - Nombre: ${businessName}
-- Tipo: ${businessType || 'No especificado'}
+- Tipo de búsqueda: ${businessType || 'No especificado'}
 - Descripción/Contenido web: ${businessDescription || 'No disponible'}
 
-INTERPRETACIÓN CORRECTA DE LOS ITEMS:
-- "ropa de cama" = el negocio tiene habitaciones, bungalows, hospedaje, alojamiento donde usa sábanas, edredones, almohadas
-- "toallas" = el negocio tiene duchas, vestuarios, piscina, spa donde provee toallas a sus clientes/socios
-- "manteles" = el negocio tiene restaurante, comedor, eventos donde usa manteles en las mesas
-- "uniformes" = el negocio tiene empleados que usan uniformes que necesitan lavarse
-- "sauna/spa/masajes" = el negocio ofrece estos servicios y por tanto usa toallas, batas, sábanas de camilla
+TIPOS DE TEXTILES QUE BUSCA NUESTRA LAVANDERÍA:
+1. ROPA DE CAMA: sábanas, edredones, almohadas, cobertores, fundas
+2. TOALLAS: toallas de baño, de piscina, de gimnasio, batas
+3. MANTELES: manteles, servilletas de tela, individuales
+4. UNIFORMES: uniformes de trabajo, overoles, batas médicas, scrubs, delantales
 
-EJEMPLOS DE DETECCIÓN CORRECTA:
-- Club con hospedaje/bungalows → TIENE "ropa de cama" (usa sábanas en las habitaciones)
-- Club con piscina/vestuarios → TIENE "toallas" (provee toallas a socios)
-- Hotel → TIENE "ropa de cama" y "toallas"
-- Gimnasio con duchas → PUEDE TENER "toallas"
-- Restaurante → TIENE "manteles"
-- Spa → TIENE "toallas", "ropa de cama" (camillas)
+DETECTA NECESIDADES DE LAVANDERÍA SI EL NEGOCIO:
+- Tiene hospedaje/habitaciones → necesita ROPA DE CAMA y TOALLAS
+- Tiene restaurante formal → necesita MANTELES
+- Tiene spa/sauna/piscina → necesita TOALLAS
+- Tiene empleados uniformados → necesita lavado de UNIFORMES
+- Es hotel/hostal/airbnb → necesita ROPA DE CAMA y TOALLAS
+- Es clínica/hospital → necesita UNIFORMES (batas, scrubs)
+- Es empresa de seguridad → necesita UNIFORMES (guardias)
+- Es empresa de limpieza → necesita UNIFORMES
+- Es fábrica/industria → necesita UNIFORMES (operarios)
+- Es empresa de transporte → necesita UNIFORMES (choferes)
+- Es gimnasio premium → necesita TOALLAS
+- Es club deportivo/country club → necesita TOALLAS y posiblemente ROPA DE CAMA
 
-EJEMPLOS PARA EMPRESAS INDUSTRIALES (Directorio Industrial):
-- Empresa de seguridad/vigilancia → TIENE "uniformes" (guardias usan uniformes que necesitan lavarse)
-- Fábrica de confecciones/textiles → TIENE "uniformes" (operarios usan uniformes)
-- Empresa de limpieza → TIENE "uniformes" (personal de limpieza usa uniformes)
-- Constructora → TIENE "uniformes" (obreros usan uniformes/overoles)
-- Empresa de transporte/logística → TIENE "uniformes" (choferes, repartidores)
-- Restaurante industrial/catering → TIENE "uniformes" y "manteles"
-- Clínica/laboratorio → TIENE "uniformes" (batas, scrubs médicos)
-- Empresa de fumigación/control de plagas → TIENE "uniformes" (técnicos usan uniformes)
-- Taller mecánico → TIENE "uniformes" (mecánicos usan overoles)
-- Cualquier empresa con personal de campo → probablemente TIENE "uniformes"
+EJEMPLOS DE DETECCIÓN:
+- "Hotel Miraflores" → ["ropa de cama", "toallas"] - hoteles usan ambos
+- "Seguridad Orus SAC" → ["uniformes"] - guardias usan uniformes
+- "Restaurante La Rosa" → ["manteles", "uniformes"] - manteles en mesas, uniformes de mozos
+- "Spa Zen" → ["toallas"] - spas proveen toallas
+- "Country Club Los Incas" → ["toallas", "ropa de cama"] - piscina y hospedaje
+- "Clínica San Pablo" → ["uniformes", "ropa de cama"] - scrubs médicos y camas
+- "Smart Fit" → [] - gimnasios low-cost NO proveen toallas
 
 IMPORTANTE - ESCALA DEL NEGOCIO (afecta el confidence):
-Para lavandería industrial necesitamos VOLUMEN. Evalúa el tamaño probable del negocio:
-- ALTA confianza (0.8-1.0): Empresas grandes con muchos empleados (seguridad con múltiples contratos, cadenas de restaurantes, hospitales, hoteles, fábricas grandes, empresas de limpieza con contratos corporativos)
-- MEDIA confianza (0.5-0.7): Empresas medianas (restaurante individual, clínica pequeña, taller con 5-10 empleados)
-- BAJA confianza (0.1-0.4): Negocios pequeños/familiares (carpintería de 2 personas, taller unipersonal, negocio casero)
+Para lavandería industrial necesitamos VOLUMEN. Evalúa el tamaño probable:
+- ALTA confianza (0.7-1.0): Empresas grandes (SAC, SA, SRL, Corp, cadenas, hospitales, hoteles, fábricas)
+- MEDIA confianza (0.4-0.6): Empresas medianas (restaurante individual, clínica pequeña)
+- BAJA confianza (0.1-0.3): Negocios pequeños/familiares, o NO necesitan lavandería
 
-Indicadores de ESCALA GRANDE:
-- Palabras como: SAC, SA, SRL, Corp, Group, cadena, sucursales, nacional, industrial, corporativo
-- Menciona múltiples servicios o ubicaciones
-- Menciona contratos con empresas grandes
-- Tiene RUC o es empresa formal
-
-Indicadores de ESCALA PEQUEÑA:
-- Palabras como: artesanal, familiar, personal, independiente, casero
-- Solo menciona servicios básicos sin escala
-- No hay indicios de estructura empresarial
+Indicadores de ESCALA:
+- SAC, SA, SRL, Corp, Group = empresa formal grande
+- "cadena", "sucursales", "nacional" = múltiples locales
+- "artesanal", "familiar", "independiente" = pequeño
 
 INSTRUCCIONES:
-1. Analiza si el negocio UTILIZA estos items textiles en sus operaciones
-2. Busca indicios de: hospedaje, habitaciones, bungalows, piscina, vestuarios, duchas, restaurante, spa
-3. Si el contenido web menciona hospedaje, alojamiento, bungalows, habitaciones → tiene "ropa de cama"
-4. Si tiene piscina, gimnasio, spa, vestuarios → probablemente tiene "toallas"
-5. NO incluyas servicios de gimnasios LOW-COST como "Smart Fit" - estos NO proveen toallas
+1. Lee y analiza el nombre y descripción del negocio
+2. IDENTIFICA qué tipo de negocio es
+3. DEDUCE qué textiles necesitaría lavar basándote en su operación
+4. Si no hay indicios claros de necesidad de lavandería → detected_services vacío, confidence bajo
 
 Responde ÚNICAMENTE con JSON válido (sin markdown, sin backticks):
 {
-  "detected_services": ["items textiles que el negocio USA o NECESITA"],
+  "detected_services": ["textiles que el negocio PROBABLEMENTE necesita lavar"],
   "confidence": 0.0-1.0,
-  "evidence": "Breve explicación de por qué el negocio necesitaría lavandería para estos items"
+  "evidence": "Explicación de por qué este negocio necesitaría lavandería industrial"
 }`;
 
   const completion = await openai.chat.completions.create({

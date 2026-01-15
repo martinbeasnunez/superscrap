@@ -14,67 +14,51 @@ export async function analyzeBusinessServices(
   // Ignoramos requiredServices - ahora detectamos automáticamente
   void _requiredServices;
 
-  const prompt = `CONTEXTO: Eres un analista de prospección B2B para una empresa de lavandería industrial (GetLavado/Laundryheap).
-Tu trabajo es IDENTIFICAR AUTOMÁTICAMENTE si un negocio necesita servicios de lavandería industrial.
-
-OBJETIVO: Determinar si este negocio es un cliente potencial de lavandería industrial analizando su descripción.
+  const prompt = `CONTEXTO: Eres un vendedor agresivo de lavandería industrial (GetLavado). Tu trabajo es encontrar CUALQUIER razón para que un negocio sea cliente potencial.
 
 Negocio a analizar:
 - Nombre: ${businessName}
-- Tipo de búsqueda: ${businessType || 'No especificado'}
-- Descripción/Contenido web: ${businessDescription || 'No disponible'}
+- Tipo: ${businessType || 'No especificado'}
+- Info: ${businessDescription || 'No disponible'}
 
-TIPOS DE TEXTILES QUE BUSCA NUESTRA LAVANDERÍA:
-1. ROPA DE CAMA: sábanas, edredones, almohadas, cobertores, fundas
-2. TOALLAS: toallas de baño, de piscina, de gimnasio, batas
-3. MANTELES: manteles, servilletas de tela, individuales
-4. UNIFORMES: uniformes de trabajo, overoles, batas médicas, scrubs, delantales
+REGLA DE ORO: Si el negocio tiene empleados, NECESITA lavar uniformes. Punto.
 
-DETECTA NECESIDADES DE LAVANDERÍA SI EL NEGOCIO:
-- Tiene hospedaje/habitaciones → necesita ROPA DE CAMA y TOALLAS
-- Tiene restaurante formal → necesita MANTELES
-- Tiene spa/sauna/piscina → necesita TOALLAS
-- Tiene empleados uniformados → necesita lavado de UNIFORMES
-- Es hotel/hostal/airbnb → necesita ROPA DE CAMA y TOALLAS
-- Es clínica/hospital → necesita UNIFORMES (batas, scrubs)
-- Es empresa de seguridad → necesita UNIFORMES (guardias)
-- Es empresa de limpieza → necesita UNIFORMES
-- Es fábrica/industria → necesita UNIFORMES (operarios)
-- Es empresa de transporte → necesita UNIFORMES (choferes)
-- Es gimnasio premium → necesita TOALLAS
-- Es club deportivo/country club → necesita TOALLAS y posiblemente ROPA DE CAMA
+TIPOS DE TEXTILES:
+- UNIFORMES: cualquier empresa con empleados (operarios, guardias, choferes, médicos, mozos, técnicos)
+- ROPA DE CAMA: hoteles, hostales, clínicas, residencias
+- TOALLAS: hoteles, spas, gimnasios, clubes con piscina
+- MANTELES: restaurantes formales, eventos, hoteles
 
-EJEMPLOS DE DETECCIÓN:
-- "Hotel Miraflores" → ["ropa de cama", "toallas"] - hoteles usan ambos
-- "Seguridad Orus SAC" → ["uniformes"] - guardias usan uniformes
-- "Restaurante La Rosa" → ["manteles", "uniformes"] - manteles en mesas, uniformes de mozos
-- "Spa Zen" → ["toallas"] - spas proveen toallas
-- "Country Club Los Incas" → ["toallas", "ropa de cama"] - piscina y hospedaje
-- "Clínica San Pablo" → ["uniformes", "ropa de cama"] - scrubs médicos y camas
-- "Smart Fit" → [] - gimnasios low-cost NO proveen toallas
+INDUSTRIAS QUE SIEMPRE NECESITAN UNIFORMES (confidence alto):
+- Farmacéuticas/Laboratorios → operarios con batas, protocolos de higiene
+- Fábricas/Plantas → operarios con overoles
+- Empresas de seguridad → guardias uniformados
+- Empresas de limpieza → personal uniformado
+- Transporte/Logística → choferes uniformados
+- Salud (clínicas, hospitales) → scrubs, batas médicas
+- Alimentos/Restaurantes → uniformes de cocina y servicio
+- Minería/Construcción → overoles, ropa de trabajo
+- Retail/Supermercados → uniformes de empleados
 
-IMPORTANTE - ESCALA DEL NEGOCIO (afecta el confidence):
-Para lavandería industrial necesitamos VOLUMEN. Evalúa el tamaño probable:
-- ALTA confianza (0.7-1.0): Empresas grandes (SAC, SA, SRL, Corp, cadenas, hospitales, hoteles, fábricas)
-- MEDIA confianza (0.4-0.6): Empresas medianas (restaurante individual, clínica pequeña)
-- BAJA confianza (0.1-0.3): Negocios pequeños/familiares, o NO necesitan lavandería
+INDICADORES DE EMPRESA GRANDE (= más volumen = mejor prospecto):
+- SAC, SA, SRL, Corp, Group en el nombre
+- Marcas conocidas (AC Farma, Gloria, Alicorp, etc.)
+- "Laboratorios", "Industrias", "Corporación"
+- Ubicación en zona industrial (Ate, Lurín, Callao)
 
-Indicadores de ESCALA:
-- SAC, SA, SRL, Corp, Group = empresa formal grande
-- "cadena", "sucursales", "nacional" = múltiples locales
-- "artesanal", "familiar", "independiente" = pequeño
+SCORING:
+- Empresa grande + industria que usa uniformes = 0.8-1.0
+- Empresa mediana + industria que usa uniformes = 0.5-0.7
+- Hotel/Clínica/Spa = 0.7-0.9
+- Negocio pequeño o sin uniformes claros = 0.1-0.4
 
-INSTRUCCIONES:
-1. Lee y analiza el nombre y descripción del negocio
-2. IDENTIFICA qué tipo de negocio es
-3. DEDUCE qué textiles necesitaría lavar basándote en su operación
-4. Si no hay indicios claros de necesidad de lavandería → detected_services vacío, confidence bajo
+IMPORTANTE: Sé OPTIMISTA. Si hay CUALQUIER indicio de que podrían usar uniformes o textiles, dales el beneficio de la duda. Es mejor contactar de más que perder un cliente potencial.
 
-Responde ÚNICAMENTE con JSON válido (sin markdown, sin backticks):
+Responde SOLO JSON (sin markdown):
 {
-  "detected_services": ["textiles que el negocio PROBABLEMENTE necesita lavar"],
+  "detected_services": ["uniformes", "ropa de cama", "toallas", "manteles"],
   "confidence": 0.0-1.0,
-  "evidence": "Explicación de por qué este negocio necesitaría lavandería industrial"
+  "evidence": "Por qué este negocio necesita lavandería"
 }`;
 
   const completion = await openai.chat.completions.create({
@@ -83,7 +67,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown, sin backticks):
       {
         role: 'system',
         content:
-          'Eres un analista de prospección B2B para una empresa de lavandería industrial. Tu trabajo es identificar negocios que USAN textiles (ropa de cama, toallas, manteles, uniformes) y por tanto son clientes potenciales. Respondes solo en JSON puro sin markdown.',
+          'Eres un vendedor agresivo de lavandería industrial. Tu meta es encontrar CUALQUIER razón para que un negocio sea prospecto. Empresas grandes con empleados = SIEMPRE necesitan uniformes. Sé optimista. Respondes solo en JSON.',
       },
       {
         role: 'user',

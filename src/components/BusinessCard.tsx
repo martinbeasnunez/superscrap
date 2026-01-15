@@ -205,36 +205,46 @@ function getEmailPitch(businessName: string, businessType: string, detectedServi
     beneficio = 'mantener la imagen profesional de su equipo';
   }
 
-  const subject = `${businessName} - Propuesta lavandería industrial (ahorre hasta 40%)`;
+  // Asuntos killer que generan apertura
+  const subjects = [
+    `${businessName}: ¿Están perdiendo dinero en lavandería? (spoiler: probablemente sí)`,
+    `Pregunta rápida para ${businessName} sobre sus ${textiles}`,
+    `${businessName} - Lo que su competencia no quiere que sepan sobre lavandería`,
+    `¿${businessName} lava internamente? Tenemos que hablar...`,
+  ];
+  const subject = subjects[Math.floor(Math.random() * subjects.length)];
 
-  const body = `Estimado equipo de ${businessName},
+  const body = `Hola,
 
-Me dirijo a ustedes porque sabemos que como ${industria} de primer nivel, la presentación impecable de ${textiles} es fundamental para ${beneficio}.
+Les escribo porque ${businessName} apareció en nuestra lista de empresas que podrían estar PAGANDO DE MÁS por su lavandería.
 
-¿SABÍA QUE el 73% de empresas como la suya están pagando de más por su lavandería?
+Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... ¿cuánto les está costando mantenerlos impecables?
 
-En GetLavado hemos ayudado a +800 empresas en Perú a:
+LA REALIDAD QUE NADIE CUENTA:
+El 73% de empresas en Perú gastan hasta 40% más de lo necesario en lavandería. Ya sea con equipo interno o proveedores ineficientes.
 
-✅ REDUCIR COSTOS hasta 40% vs. lavandería interna
-✅ ELIMINAR PREOCUPACIONES de logística y calidad
-✅ GARANTIZAR disponibilidad - nunca se quedará sin stock limpio
-✅ CUMPLIR ESTÁNDARES de higiene certificados
+LO QUE OFRECEMOS:
+→ Lavandería industrial con capacidad para +2 toneladas diarias
+→ Recojo y entrega en SU local (ustedes no mueven un dedo)
+→ Precios hasta 40% menores que hacerlo internamente
+→ Estándares de higiene certificados (crítico para su industria)
 
-🏆 Empresas líderes ya confían en nosotros: hoteles 5 estrellas, clínicas premium y corporaciones multinacionales.
+¿POR QUÉ CONFIAR EN NOSOTROS?
++800 empresas en Perú ya lo hacen: hoteles 5 estrellas, clínicas, corporaciones multinacionales. No somos nuevos en esto.
 
-⚡ OFERTA ESPECIAL: Cotización + 1 semana de prueba GRATIS para evaluar nuestro servicio sin compromiso.
+MI PROPUESTA:
+Una llamada de 10 minutos. Si no les convence, habrán perdido 10 minutos. Si les convence, podrían ahorrar miles de soles al mes.
 
-👉 Más información: https://getlavado.com/industrial/
+¿Esta semana les funciona?
 
-¿Le parece si agendamos 15 minutos esta semana para mostrarle cómo podemos ayudarles?
+Más info: https://getlavado.com/industrial/
 
-Quedo atento a su respuesta.
+Saludos,
 
-Saludos cordiales,
-
-Equipo Comercial
+Alejandro Ramos
+Business Development Executive (B2B)
 GetLavado - Lavandería Industrial
-📞 Whatsapp: +51 999 999 999
+📱 +51 928 113 653
 🌐 getlavado.com/industrial`;
 
   return { subject, body };

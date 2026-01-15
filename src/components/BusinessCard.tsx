@@ -159,6 +159,93 @@ function getGoogleMapsUrl(address: string, businessName: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
+// Genera email pitch killer con FOMO y CTA
+function getEmailPitch(businessName: string, businessType: string, detectedServices: string[]): { subject: string; body: string } {
+  const typeLower = businessType.toLowerCase();
+
+  // Detectar industria
+  let industria = 'empresa';
+  let textiles = 'textiles';
+  let beneficio = 'optimizar sus costos de lavandería';
+
+  if (typeLower.includes('hotel') || typeLower.includes('hostal')) {
+    industria = 'hotel';
+    textiles = 'sábanas, toallas y uniformes';
+    beneficio = 'mantener la experiencia 5 estrellas que sus huéspedes merecen';
+  } else if (typeLower.includes('clinic') || typeLower.includes('hospital') || typeLower.includes('médic') || typeLower.includes('salud')) {
+    industria = 'centro de salud';
+    textiles = 'uniformes médicos, sábanas y batas';
+    beneficio = 'cumplir con los más altos estándares de higiene';
+  } else if (typeLower.includes('spa') || typeLower.includes('gym') || typeLower.includes('fitness')) {
+    industria = 'centro de bienestar';
+    textiles = 'toallas y batas';
+    beneficio = 'ofrecer la experiencia premium que sus clientes esperan';
+  } else if (typeLower.includes('restaurante') || typeLower.includes('comida')) {
+    industria = 'restaurante';
+    textiles = 'manteles, servilletas y uniformes';
+    beneficio = 'proyectar la imagen de calidad que su establecimiento merece';
+  } else if (typeLower.includes('seguridad') || typeLower.includes('vigilancia')) {
+    industria = 'empresa de seguridad';
+    textiles = 'uniformes de su personal';
+    beneficio = 'mantener la imagen profesional de sus guardias';
+  } else if (typeLower.includes('limpieza') || typeLower.includes('facility')) {
+    industria = 'empresa de limpieza';
+    textiles = 'uniformes de su equipo';
+    beneficio = 'proyectar profesionalismo en cada servicio';
+  } else if (typeLower.includes('farmac') || typeLower.includes('laboratorio')) {
+    industria = 'laboratorio farmacéutico';
+    textiles = 'batas, uniformes y ropa de trabajo';
+    beneficio = 'cumplir con los protocolos de higiene que su industria exige';
+  } else if (typeLower.includes('fabrica') || typeLower.includes('industria') || typeLower.includes('planta')) {
+    industria = 'planta industrial';
+    textiles = 'uniformes y overoles';
+    beneficio = 'mantener a su equipo con la imagen profesional que su empresa merece';
+  } else if (detectedServices.includes('uniformes')) {
+    textiles = 'uniformes de su personal';
+    beneficio = 'mantener la imagen profesional de su equipo';
+  }
+
+  const subject = `${businessName} - Propuesta lavandería industrial (ahorre hasta 40%)`;
+
+  const body = `Estimado equipo de ${businessName},
+
+Me dirijo a ustedes porque sabemos que como ${industria} de primer nivel, la presentación impecable de ${textiles} es fundamental para ${beneficio}.
+
+¿SABÍA QUE el 73% de empresas como la suya están pagando de más por su lavandería?
+
+En GetLavado hemos ayudado a +800 empresas en Perú a:
+
+✅ REDUCIR COSTOS hasta 40% vs. lavandería interna
+✅ ELIMINAR PREOCUPACIONES de logística y calidad
+✅ GARANTIZAR disponibilidad - nunca se quedará sin stock limpio
+✅ CUMPLIR ESTÁNDARES de higiene certificados
+
+🏆 Empresas líderes ya confían en nosotros: hoteles 5 estrellas, clínicas premium y corporaciones multinacionales.
+
+⚡ OFERTA ESPECIAL: Cotización + 1 semana de prueba GRATIS para evaluar nuestro servicio sin compromiso.
+
+👉 Más información: https://getlavado.com/industrial/
+
+¿Le parece si agendamos 15 minutos esta semana para mostrarle cómo podemos ayudarles?
+
+Quedo atento a su respuesta.
+
+Saludos cordiales,
+
+Equipo Comercial
+GetLavado - Lavandería Industrial
+📞 Whatsapp: +51 999 999 999
+🌐 getlavado.com/industrial`;
+
+  return { subject, body };
+}
+
+function getGmailComposeUrl(email: string, subject: string, body: string): string {
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedBody = encodeURIComponent(body);
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodedSubject}&body=${encodedBody}`;
+}
+
 function isValidWebsite(website: string | null): boolean {
   if (!website) return false;
   if (website.length < 10) return false;
@@ -387,18 +474,34 @@ export default function BusinessCard({
                     </a>
                   )}
                   {dm.email && (
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(dm.email!);
-                        alert('Email copiado: ' + dm.email);
-                      }}
-                      className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                      title={`Copiar: ${dm.email}`}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(dm.email!);
+                        }}
+                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
+                        title={`Copiar: ${dm.email}`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                      <a
+                        href={getGmailComposeUrl(
+                          dm.email!,
+                          getEmailPitch(business.name, businessType, analysis?.detected_services || []).subject,
+                          getEmailPitch(business.name, businessType, analysis?.detected_services || []).body
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                        title="Enviar email con pitch"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </a>
+                    </>
                   )}
                   {dm.phone && (
                     <a

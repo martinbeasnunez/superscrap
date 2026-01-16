@@ -24,6 +24,21 @@ function getUserIdFromStorage(): string | null {
   return null;
 }
 
+// Obtener email del usuario logueado
+function getUserEmailFromStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const savedUser = localStorage.getItem('superscrap_user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      return user.email || null;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
 // Detecta si es número de celular peruano (9 dígitos empezando con 9)
 function isPeruvianMobile(phone: string | null): boolean {
   if (!phone) return false;
@@ -260,12 +275,14 @@ Web: getlavado.com/industrial`;
   return { subject, body };
 }
 
-// Abre Gmail - sin hardcodear cuenta, usa la sesión activa del usuario
-function getGmailComposeUrl(email: string, subject: string, body: string): string {
-  const encodedSubject = encodeURIComponent(subject);
-  const encodedBody = encodeURIComponent(body);
-  // Sin authuser para que use la cuenta activa del navegador
-  return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodedSubject}&body=${encodedBody}`;
+// Copia email pitch al clipboard (asunto + cuerpo formateado)
+function copyEmailToClipboard(toEmail: string, subject: string, body: string): void {
+  const fullEmail = `Para: ${toEmail}
+Asunto: ${subject}
+
+${body}`;
+
+  navigator.clipboard.writeText(fullEmail);
 }
 
 function isValidWebsite(website: string | null): boolean {
@@ -500,29 +517,28 @@ export default function BusinessCard({
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(dm.email!);
+                          alert('Email copiado');
                         }}
                         className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                        title={`Copiar: ${dm.email}`}
+                        title={`Copiar solo email: ${dm.email}`}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                       </button>
-                      <a
-                        href={getGmailComposeUrl(
-                          dm.email!,
-                          getEmailPitch(business.name, businessType, analysis?.detected_services || []).subject,
-                          getEmailPitch(business.name, businessType, analysis?.detected_services || []).body
-                        )}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => {
+                          const pitch = getEmailPitch(business.name, businessType, analysis?.detected_services || []);
+                          copyEmailToClipboard(dm.email!, pitch.subject, pitch.body);
+                          alert('Email + pitch copiado al portapapeles');
+                        }}
                         className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                        title="Enviar email con pitch"
+                        title="Copiar email con pitch completo"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                      </a>
+                      </button>
                     </>
                   )}
                   {dm.phone && (

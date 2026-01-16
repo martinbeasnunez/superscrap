@@ -205,71 +205,67 @@ function getEmailPitch(businessName: string, businessType: string, detectedServi
     beneficio = 'mantener la imagen profesional de su equipo';
   }
 
-  // Asuntos killer que generan apertura
+  // Asuntos B2B profesionales - sin emojis (evita spam filters, más serio)
   const subjects = [
-    `🔥 ${businessName}: ¿Están perdiendo dinero en lavandería?`,
-    `💡 Pregunta rápida para ${businessName} sobre sus ${textiles}`,
-    `⚡ ${businessName} - Lo que su competencia NO quiere que sepan`,
-    `🤔 ¿${businessName} lava internamente? Tenemos que hablar...`,
+    `${businessName} - Propuesta de ahorro en lavandería industrial`,
+    `Pregunta rápida sobre ${textiles} - ${businessName}`,
+    `Re: Cotización lavandería industrial para ${businessName}`,
+    `${businessName} - ¿Cuánto están pagando por lavandería?`,
   ];
   const subject = subjects[Math.floor(Math.random() * subjects.length)];
 
-  const body = `Hola 👋
+  const body = `Hola,
 
-Les escribo porque *${businessName}* apareció en nuestra lista de empresas que podrían estar *PAGANDO DE MÁS* por su lavandería.
+Les escribo porque *${businessName}* apareció en nuestra lista de empresas que podrían estar pagando de más por su lavandería.
 
-Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... *¿cuánto les está costando mantenerlos impecables?*
+Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... ¿cuánto les está costando mantenerlos impecables?
 
-━━━━━━━━━━━━━━━━━━━━━━
-📊 *LA REALIDAD QUE NADIE CUENTA*
-━━━━━━━━━━━━━━━━━━━━━━
+---
+*LA REALIDAD QUE NADIE CUENTA*
 
-El *73% de empresas* en Perú gastan hasta *40% más* de lo necesario en lavandería (equipo interno o proveedores ineficientes).
+El 73% de empresas en Perú gastan hasta 40% más de lo necesario en lavandería (ya sea con equipo interno o proveedores ineficientes).
 
-━━━━━━━━━━━━━━━━━━━━━━
-✅ *LO QUE OFRECEMOS*
-━━━━━━━━━━━━━━━━━━━━━━
+---
+*LO QUE OFRECEMOS*
 
-• Lavandería industrial (+2 toneladas/día de capacidad)
+• Lavandería industrial con capacidad de +2 toneladas/día
 • Recojo y entrega en SU local (ustedes no mueven un dedo)
-• *Hasta 40% menos* que hacerlo internamente
+• Hasta 40% menos que hacerlo internamente
 • Estándares de higiene certificados
 
-━━━━━━━━━━━━━━━━━━━━━━
-🏆 *¿POR QUÉ CONFIAR EN NOSOTROS?*
-━━━━━━━━━━━━━━━━━━━━━━
+---
+*¿POR QUÉ CONFIAR EN NOSOTROS?*
 
-*+800 empresas* en Perú ya lo hacen: hoteles 5 estrellas, clínicas premium, corporaciones multinacionales.
++800 empresas en Perú ya lo hacen: hoteles 5 estrellas, clínicas premium, corporaciones multinacionales.
 
-━━━━━━━━━━━━━━━━━━━━━━
-🎯 *MI PROPUESTA*
-━━━━━━━━━━━━━━━━━━━━━━
+---
+*MI PROPUESTA*
 
-Una llamada de *10 minutos*.
-• Si no les convence → habrán perdido 10 minutos
-• Si les convence → podrían *ahorrar miles de soles/mes*
+Una llamada de 10 minutos.
+• Si no les convence: habrán perdido 10 minutos
+• Si les convence: podrían ahorrar miles de soles al mes
 
-*¿Esta semana les funciona?*
+¿Esta semana les funciona?
 
-👉 Más info: https://getlavado.com/industrial/
+Más info: https://getlavado.com/industrial/
 
 Saludos,
 
 *Alejandro Ramos*
 Business Development Executive (B2B)
 GetLavado - Lavandería Industrial
-📱 +51 928 113 653
-🌐 getlavado.com/industrial`;
+Tel: +51 928 113 653
+Web: getlavado.com/industrial`;
 
   return { subject, body };
 }
 
-// Abre Gmail con el dominio @getlavado.com
+// Abre Gmail - sin hardcodear cuenta, usa la sesión activa del usuario
 function getGmailComposeUrl(email: string, subject: string, body: string): string {
   const encodedSubject = encodeURIComponent(subject);
   const encodedBody = encodeURIComponent(body);
-  // authuser=1 suele ser la cuenta secundaria (trabajo), pero usamos el parámetro para forzar el dominio
-  return `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${email}&su=${encodedSubject}&body=${encodedBody}&authuser=alejandro.ramos@getlavado.com`;
+  // Sin authuser para que use la cuenta activa del navegador
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodedSubject}&body=${encodedBody}`;
 }
 
 function isValidWebsite(website: string | null): boolean {

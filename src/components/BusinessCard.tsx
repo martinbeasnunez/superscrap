@@ -207,41 +207,55 @@ function getEmailPitch(businessName: string, businessType: string, detectedServi
 
   // Asuntos killer que generan apertura
   const subjects = [
-    `${businessName}: ¿Están perdiendo dinero en lavandería? (spoiler: probablemente sí)`,
-    `Pregunta rápida para ${businessName} sobre sus ${textiles}`,
-    `${businessName} - Lo que su competencia no quiere que sepan sobre lavandería`,
-    `¿${businessName} lava internamente? Tenemos que hablar...`,
+    `🔥 ${businessName}: ¿Están perdiendo dinero en lavandería?`,
+    `💡 Pregunta rápida para ${businessName} sobre sus ${textiles}`,
+    `⚡ ${businessName} - Lo que su competencia NO quiere que sepan`,
+    `🤔 ¿${businessName} lava internamente? Tenemos que hablar...`,
   ];
   const subject = subjects[Math.floor(Math.random() * subjects.length)];
 
-  const body = `Hola,
+  const body = `Hola 👋
 
-Les escribo porque ${businessName} apareció en nuestra lista de empresas que podrían estar PAGANDO DE MÁS por su lavandería.
+Les escribo porque *${businessName}* apareció en nuestra lista de empresas que podrían estar *PAGANDO DE MÁS* por su lavandería.
 
-Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... ¿cuánto les está costando mantenerlos impecables?
+Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... *¿cuánto les está costando mantenerlos impecables?*
 
-LA REALIDAD QUE NADIE CUENTA:
-El 73% de empresas en Perú gastan hasta 40% más de lo necesario en lavandería. Ya sea con equipo interno o proveedores ineficientes.
+━━━━━━━━━━━━━━━━━━━━━━
+📊 *LA REALIDAD QUE NADIE CUENTA*
+━━━━━━━━━━━━━━━━━━━━━━
 
-LO QUE OFRECEMOS:
-→ Lavandería industrial con capacidad para +2 toneladas diarias
-→ Recojo y entrega en SU local (ustedes no mueven un dedo)
-→ Precios hasta 40% menores que hacerlo internamente
-→ Estándares de higiene certificados (crítico para su industria)
+El *73% de empresas* en Perú gastan hasta *40% más* de lo necesario en lavandería (equipo interno o proveedores ineficientes).
 
-¿POR QUÉ CONFIAR EN NOSOTROS?
-+800 empresas en Perú ya lo hacen: hoteles 5 estrellas, clínicas, corporaciones multinacionales. No somos nuevos en esto.
+━━━━━━━━━━━━━━━━━━━━━━
+✅ *LO QUE OFRECEMOS*
+━━━━━━━━━━━━━━━━━━━━━━
 
-MI PROPUESTA:
-Una llamada de 10 minutos. Si no les convence, habrán perdido 10 minutos. Si les convence, podrían ahorrar miles de soles al mes.
+• Lavandería industrial (+2 toneladas/día de capacidad)
+• Recojo y entrega en SU local (ustedes no mueven un dedo)
+• *Hasta 40% menos* que hacerlo internamente
+• Estándares de higiene certificados
 
-¿Esta semana les funciona?
+━━━━━━━━━━━━━━━━━━━━━━
+🏆 *¿POR QUÉ CONFIAR EN NOSOTROS?*
+━━━━━━━━━━━━━━━━━━━━━━
 
-Más info: https://getlavado.com/industrial/
+*+800 empresas* en Perú ya lo hacen: hoteles 5 estrellas, clínicas premium, corporaciones multinacionales.
+
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 *MI PROPUESTA*
+━━━━━━━━━━━━━━━━━━━━━━
+
+Una llamada de *10 minutos*.
+• Si no les convence → habrán perdido 10 minutos
+• Si les convence → podrían *ahorrar miles de soles/mes*
+
+*¿Esta semana les funciona?*
+
+👉 Más info: https://getlavado.com/industrial/
 
 Saludos,
 
-Alejandro Ramos
+*Alejandro Ramos*
 Business Development Executive (B2B)
 GetLavado - Lavandería Industrial
 📱 +51 928 113 653
@@ -250,10 +264,12 @@ GetLavado - Lavandería Industrial
   return { subject, body };
 }
 
+// Abre Gmail con el dominio @getlavado.com
 function getGmailComposeUrl(email: string, subject: string, body: string): string {
   const encodedSubject = encodeURIComponent(subject);
   const encodedBody = encodeURIComponent(body);
-  return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodedSubject}&body=${encodedBody}`;
+  // authuser=1 suele ser la cuenta secundaria (trabajo), pero usamos el parámetro para forzar el dominio
+  return `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${email}&su=${encodedSubject}&body=${encodedBody}&authuser=alejandro.ramos@getlavado.com`;
 }
 
 function isValidWebsite(website: string | null): boolean {

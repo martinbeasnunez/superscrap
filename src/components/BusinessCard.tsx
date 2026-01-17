@@ -220,57 +220,59 @@ function getEmailPitch(businessName: string, businessType: string, detectedServi
     beneficio = 'mantener la imagen profesional de su equipo';
   }
 
-  // Asuntos B2B profesionales - sin emojis (evita spam filters, más serio)
+  // Asuntos killer - sin nombre de empresa al inicio, generan curiosidad
   const subjects = [
-    `${businessName} - Propuesta de ahorro en lavandería industrial`,
-    `Pregunta rápida sobre ${textiles} - ${businessName}`,
-    `Re: Cotización lavandería industrial para ${businessName}`,
-    `${businessName} - ¿Cuánto están pagando por lavandería?`,
+    `¿Están pagando de más por lavandería? (pregunta seria)`,
+    `Propuesta para reducir 40% en costos de ${textiles}`,
+    `Re: Cotización lavandería industrial - propuesta especial`,
+    `Pregunta rápida sobre sus ${textiles}`,
+    `¿10 min esta semana? Tengo algo que mostrarles`,
+    `El error que comete el 73% de empresas con su lavandería`,
   ];
   const subject = subjects[Math.floor(Math.random() * subjects.length)];
 
-  const body = `Hola,
+  const body = `Hola equipo de *${businessName}* 👋
 
-Les escribo porque *${businessName}* apareció en nuestra lista de empresas que podrían estar pagando de más por su lavandería.
+Les escribo porque aparecieron en nuestra lista de empresas que podrían estar *pagando de más* por su lavandería.
 
-Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... ¿cuánto les está costando mantenerlos impecables?
-
----
-*LA REALIDAD QUE NADIE CUENTA*
-
-El 73% de empresas en Perú gastan hasta 40% más de lo necesario en lavandería (ya sea con equipo interno o proveedores ineficientes).
+Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... ¿cuánto les está costando mantenerlos impecables? 🤔
 
 ---
-*LO QUE OFRECEMOS*
+*⚠️ LA REALIDAD QUE NADIE CUENTA*
 
-• Lavandería industrial con capacidad de +2 toneladas/día
-• Recojo y entrega en SU local (ustedes no mueven un dedo)
-• Hasta 40% menos que hacerlo internamente
-• Estándares de higiene certificados
+El 73% de empresas en Perú gastan hasta *40% más* de lo necesario en lavandería (ya sea con equipo interno o proveedores ineficientes).
 
 ---
-*¿POR QUÉ CONFIAR EN NOSOTROS?*
+*✅ LO QUE OFRECEMOS*
+
+• 🏭 Lavandería industrial con capacidad de +2 toneladas/día
+• 🚚 Recojo y entrega en SU local (ustedes no mueven un dedo)
+• 💰 Hasta 40% menos que hacerlo internamente
+• 🛡️ Estándares de higiene certificados
+
+---
+*🏆 ¿POR QUÉ CONFIAR EN NOSOTROS?*
 
 +800 empresas en Perú ya lo hacen: hoteles 5 estrellas, clínicas premium, corporaciones multinacionales.
 
 ---
-*MI PROPUESTA*
+*🎯 MI PROPUESTA*
 
-Una llamada de 10 minutos.
-• Si no les convence: habrán perdido 10 minutos
-• Si les convence: podrían ahorrar miles de soles al mes
+Una llamada de *10 minutos*.
+• ❌ Si no les conviene: habrán perdido 10 minutos
+• ✅ Si les conviene: podrían ahorrar *miles de soles* al mes
 
-¿Esta semana les funciona?
+¿Esta semana les funciona? 📅
 
-Más info: https://getlavado.com/industrial/
+---
 
 Saludos,
 
 *Alejandro Ramos*
 Business Development Executive (B2B)
-GetLavado - Lavandería Industrial
-Tel: +51 928 113 653
-Web: getlavado.com/industrial`;
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653
+🌐 getlavado.com/industrial`;
 
   return { subject, body };
 }
@@ -650,15 +652,39 @@ export default function BusinessCard({
             </div>
             <div className="p-4 overflow-y-auto max-h-[70vh]">
               <div className="mb-4">
-                <p className="text-xs text-gray-500 uppercase mb-1">Para:</p>
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-xs text-gray-500 uppercase">Para:</p>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(emailModal.to); alert('Email copiado'); }}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Copiar
+                  </button>
+                </div>
                 <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.to}</p>
               </div>
               <div className="mb-4">
-                <p className="text-xs text-gray-500 uppercase mb-1">Asunto:</p>
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-xs text-gray-500 uppercase">Asunto:</p>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(emailModal.subject); alert('Asunto copiado'); }}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Copiar
+                  </button>
+                </div>
                 <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.subject}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase mb-1">Cuerpo:</p>
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-xs text-gray-500 uppercase">Cuerpo:</p>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(emailModal.body); alert('Cuerpo copiado'); }}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Copiar
+                  </button>
+                </div>
                 <div
                   className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{

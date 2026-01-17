@@ -33,10 +33,10 @@ export async function GET() {
       .from('businesses')
       .select('*', { count: 'exact', head: true });
 
-    // Stats de contactos - nuevo sistema
+    // Stats de contactos - nuevo sistema + legacy
     const { data: contactStats } = await supabase
       .from('businesses')
-      .select('contact_actions, lead_status, contacted_at, contacted_by');
+      .select('contact_actions, lead_status, contact_status, contacted_at, contacted_by');
 
     // Obtener usuarios para mapear IDs a nombres
     const { data: users } = await supabase
@@ -61,8 +61,20 @@ export async function GET() {
       const isToday = b.contacted_at && b.contacted_at >= todayISO;
       const userId = b.contacted_by;
       const userName = userId ? userMap.get(userId) || 'Desconocido' : null;
-      const actions: ContactAction[] = b.contact_actions || [];
-      const status: LeadStatus = b.lead_status || 'no_contact';
+
+      // Migrar datos legacy a nuevo formato
+      let actions: ContactAction[] = b.contact_actions || [];
+      let status: LeadStatus = b.lead_status || 'no_contact';
+
+      // Si no hay nuevo formato pero hay legacy, migrar
+      if (actions.length === 0 && b.contact_status) {
+        if (b.contact_status === 'whatsapp') actions = ['whatsapp'];
+        else if (b.contact_status === 'called') actions = ['call'];
+        else if (b.contact_status === 'contacted') actions = ['whatsapp'];
+      }
+      if (status === 'no_contact' && b.contact_status) {
+        status = 'contacted';
+      }
 
       // Contar acciones
       if (actions.includes('whatsapp')) {

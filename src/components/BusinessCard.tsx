@@ -294,16 +294,43 @@ function isValidWebsite(website: string | null): boolean {
   return true;
 }
 
+// Migrar datos legacy a nuevo formato
+function migrateContactStatus(business: BusinessWithAnalysis): ContactAction[] {
+  // Si ya tiene el nuevo formato, usarlo
+  if (business.contact_actions && business.contact_actions.length > 0) {
+    return business.contact_actions;
+  }
+  // Si tiene el formato legacy, migrar
+  if (business.contact_status) {
+    if (business.contact_status === 'whatsapp') return ['whatsapp'];
+    if (business.contact_status === 'called') return ['call'];
+    if (business.contact_status === 'contacted') return ['whatsapp']; // asumimos whatsapp
+  }
+  return [];
+}
+
+function migrateleadStatus(business: BusinessWithAnalysis): LeadStatus {
+  // Si ya tiene el nuevo formato, usarlo
+  if (business.lead_status) {
+    return business.lead_status;
+  }
+  // Si tiene el formato legacy con algún contacto, marcar como contactado
+  if (business.contact_status) {
+    return 'contacted';
+  }
+  return 'no_contact';
+}
+
 export default function BusinessCard({
   business,
   requiredServices,
   businessType,
 }: BusinessCardProps) {
   const [contactActions, setContactActions] = useState<ContactAction[]>(
-    business.contact_actions || []
+    migrateContactStatus(business)
   );
   const [leadStatus, setLeadStatus] = useState<LeadStatus>(
-    business.lead_status || 'no_contact'
+    migrateleadStatus(business)
   );
   const [updating, setUpdating] = useState(false);
   const [emailModal, setEmailModal] = useState<{ to: string; subject: string; body: string } | null>(null);

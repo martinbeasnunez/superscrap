@@ -301,6 +301,7 @@ export default function BusinessCard({
     business.contact_status || null
   );
   const [updating, setUpdating] = useState(false);
+  const [emailModal, setEmailModal] = useState<{ to: string; subject: string; body: string } | null>(null);
 
   const analysis = business.analysis;
   const matchPercentage = analysis?.match_percentage || 0;
@@ -529,11 +530,10 @@ export default function BusinessCard({
                       <button
                         onClick={() => {
                           const pitch = getEmailPitch(business.name, businessType, analysis?.detected_services || []);
-                          copyEmailToClipboard(dm.email!, pitch.subject, pitch.body);
-                          alert('Email + pitch copiado al portapapeles');
+                          setEmailModal({ to: dm.email!, subject: pitch.subject, body: pitch.body });
                         }}
                         className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                        title="Copiar email con pitch completo"
+                        title="Ver pitch de email"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -632,6 +632,64 @@ export default function BusinessCard({
           <span className="text-xs text-gray-700">Contactado</span>
         </label>
       </div>
+
+      {/* Email Modal */}
+      {emailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="font-semibold text-gray-900">Email Pitch</h3>
+              <button
+                onClick={() => setEmailModal(null)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[70vh]">
+              <div className="mb-4">
+                <p className="text-xs text-gray-500 uppercase mb-1">Para:</p>
+                <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.to}</p>
+              </div>
+              <div className="mb-4">
+                <p className="text-xs text-gray-500 uppercase mb-1">Asunto:</p>
+                <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.subject}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase mb-1">Cuerpo:</p>
+                <div
+                  className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: emailModal.body
+                      .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
+                      .replace(/^• /gm, '<span class="text-blue-600">&#8226;</span> ')
+                      .replace(/---/g, '<hr class="my-3 border-gray-300">')
+                  }}
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200 flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`Para: ${emailModal.to}\nAsunto: ${emailModal.subject}\n\n${emailModal.body}`);
+                  alert('Copiado al portapapeles');
+                }}
+                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Copiar todo
+              </button>
+              <button
+                onClick={() => setEmailModal(null)}
+                className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

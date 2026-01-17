@@ -23,6 +23,12 @@ export interface DecisionMaker {
   phone: string | null;
 }
 
+// Acciones de contacto (múltiples posibles)
+export type ContactAction = 'whatsapp' | 'email' | 'call';
+
+// Estado del lead (solo uno)
+export type LeadStatus = 'no_contact' | 'contacted' | 'lead' | 'discarded';
+
 export interface Business {
   id: string;
   search_id: string;
@@ -36,6 +42,10 @@ export interface Business {
   website: string | null;
   thumbnail_url: string | null;
   coordinates: { lat: number; lng: number } | null;
+  // Nuevo sistema de tracking
+  contact_actions: ContactAction[] | null; // ['whatsapp', 'email', 'call']
+  lead_status: LeadStatus | null; // 'no_contact' | 'contacted' | 'lead' | 'discarded'
+  // Legacy (mantener por compatibilidad)
   contact_status: 'whatsapp' | 'called' | 'contacted' | null;
   contacted_at: string | null;
   contacted_by: string | null;

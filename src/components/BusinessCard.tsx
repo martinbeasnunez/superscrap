@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BusinessWithAnalysis } from '@/types';
+import { BusinessWithAnalysis, ContactAction, LeadStatus } from '@/types';
 
 interface BusinessCardProps {
   business: BusinessWithAnalysis;
@@ -299,8 +299,11 @@ export default function BusinessCard({
   requiredServices,
   businessType,
 }: BusinessCardProps) {
-  const [contactStatus, setContactStatus] = useState<string | null>(
-    business.contact_status || null
+  const [contactActions, setContactActions] = useState<ContactAction[]>(
+    business.contact_actions || []
+  );
+  const [leadStatus, setLeadStatus] = useState<LeadStatus>(
+    business.lead_status || 'no_contact'
   );
   const [updating, setUpdating] = useState(false);
   const [emailModal, setEmailModal] = useState<{ to: string; subject: string; body: string } | null>(null);
@@ -309,8 +312,7 @@ export default function BusinessCard({
   const matchPercentage = analysis?.match_percentage || 0;
   const matchPercent = Math.round(matchPercentage * 100);
 
-  const updateContactStatus = async (status: string | null) => {
-    // SIEMPRE obtener userId fresco del localStorage
+  const updateBusiness = async (actions: ContactAction[], status: LeadStatus) => {
     const currentUserId = getUserIdFromStorage();
 
     if (!currentUserId) {
@@ -324,25 +326,33 @@ export default function BusinessCard({
       const response = await fetch(`/api/businesses/${business.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact_status: status, user_id: currentUserId }),
+        body: JSON.stringify({
+          contact_actions: actions,
+          lead_status: status,
+          user_id: currentUserId
+        }),
       });
 
       if (response.ok) {
-        setContactStatus(status);
+        setContactActions(actions);
+        setLeadStatus(status);
       }
     } catch (error) {
-      console.error('Error updating contact status:', error);
+      console.error('Error updating business:', error);
     } finally {
       setUpdating(false);
     }
   };
 
-  const toggleContactStatus = (status: string) => {
-    if (contactStatus === status) {
-      updateContactStatus(null);
-    } else {
-      updateContactStatus(status);
-    }
+  const toggleContactAction = (action: ContactAction) => {
+    const newActions = contactActions.includes(action)
+      ? contactActions.filter(a => a !== action)
+      : [...contactActions, action];
+    updateBusiness(newActions, leadStatus);
+  };
+
+  const updateLeadStatus = (status: LeadStatus) => {
+    updateBusiness(contactActions, status);
   };
 
   const getMatchColor = (percent: number) => {
@@ -364,24 +374,57 @@ export default function BusinessCard({
     ? encodeURIComponent(getWhatsAppPitch(business.name, businessType))
     : '';
 
+  // Colores del estado del lead
+  const getLeadStatusStyle = () => {
+    switch (leadStatus) {
+      case 'lead': return 'bg-green-100 text-green-800 border-green-300';
+      case 'contacted': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'discarded': return 'bg-gray-200 text-gray-500 border-gray-300';
+      default: return '';
+    }
+  };
+
+  const getLeadStatusLabel = () => {
+    switch (leadStatus) {
+      case 'lead': return 'Lead';
+      case 'contacted': return 'Contactado';
+      case 'discarded': return 'Descartado';
+      default: return null;
+    }
+  };
+
   return (
     <div
-      className={`p-5 rounded-xl border-2 ${getMatchColor(matchPercent)} transition-all hover:shadow-lg ${contactStatus ? 'opacity-80' : ''}`}
+      className={`p-5 rounded-xl border-2 ${getMatchColor(matchPercent)} transition-all hover:shadow-lg ${leadStatus === 'discarded' ? 'opacity-50' : ''}`}
     >
-      {/* Contact status indicator */}
-      {contactStatus && (
-        <div className="mb-3 px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium inline-flex items-center gap-1">
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          {contactStatus === 'whatsapp' && 'WhatsApp enviado'}
-          {contactStatus === 'called' && 'Llamado'}
-          {contactStatus === 'contacted' && 'Contactado'}
-          {business.contacted_by_name && (
-            <span className="text-purple-600 ml-1">por {business.contacted_by_name}</span>
-          )}
-        </div>
-      )}
+      {/* Lead status + contact actions indicator */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {getLeadStatusLabel() && (
+          <span className={`px-2 py-1 rounded text-xs font-medium border ${getLeadStatusStyle()}`}>
+            {getLeadStatusLabel()}
+          </span>
+        )}
+        {contactActions.includes('whatsapp') && (
+          <span className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
+            📱 WhatsApp
+          </span>
+        )}
+        {contactActions.includes('email') && (
+          <span className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-medium">
+            📧 Email
+          </span>
+        )}
+        {contactActions.includes('call') && (
+          <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+            📞 Llamada
+          </span>
+        )}
+        {business.contacted_by_name && contactActions.length > 0 && (
+          <span className="text-xs text-gray-500 self-center">
+            por {business.contacted_by_name}
+          </span>
+        )}
+      </div>
 
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
@@ -600,39 +643,95 @@ export default function BusinessCard({
         )}
       </div>
 
-      {/* Contact status checkboxes */}
-      <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500 w-full">Marcar como:</p>
-        <label className={`inline-flex items-center gap-1.5 cursor-pointer ${updating ? 'opacity-50' : ''}`}>
-          <input
-            type="checkbox"
-            checked={contactStatus === 'whatsapp'}
-            onChange={() => toggleContactStatus('whatsapp')}
+      {/* Contact actions (múltiples) */}
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <p className="text-xs text-gray-500 mb-2">Acciones realizadas:</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => toggleContactAction('whatsapp')}
             disabled={updating}
-            className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-          />
-          <span className="text-xs text-gray-700">WhatsApp enviado</span>
-        </label>
-        <label className={`inline-flex items-center gap-1.5 cursor-pointer ${updating ? 'opacity-50' : ''}`}>
-          <input
-            type="checkbox"
-            checked={contactStatus === 'called'}
-            onChange={() => toggleContactStatus('called')}
+            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+              contactActions.includes('whatsapp')
+                ? 'bg-green-500 text-white border-green-500'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'
+            } ${updating ? 'opacity-50' : ''}`}
+          >
+            📱 WhatsApp
+          </button>
+          <button
+            onClick={() => toggleContactAction('email')}
             disabled={updating}
-            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <span className="text-xs text-gray-700">Llamado</span>
-        </label>
-        <label className={`inline-flex items-center gap-1.5 cursor-pointer ${updating ? 'opacity-50' : ''}`}>
-          <input
-            type="checkbox"
-            checked={contactStatus === 'contacted'}
-            onChange={() => toggleContactStatus('contacted')}
+            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+              contactActions.includes('email')
+                ? 'bg-red-500 text-white border-red-500'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-red-400'
+            } ${updating ? 'opacity-50' : ''}`}
+          >
+            📧 Email
+          </button>
+          <button
+            onClick={() => toggleContactAction('call')}
             disabled={updating}
-            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-          />
-          <span className="text-xs text-gray-700">Contactado</span>
-        </label>
+            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+              contactActions.includes('call')
+                ? 'bg-blue-500 text-white border-blue-500'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+            } ${updating ? 'opacity-50' : ''}`}
+          >
+            📞 Llamada
+          </button>
+        </div>
+      </div>
+
+      {/* Lead status (único) */}
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <p className="text-xs text-gray-500 mb-2">Estado:</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => updateLeadStatus('no_contact')}
+            disabled={updating}
+            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+              leadStatus === 'no_contact'
+                ? 'bg-gray-500 text-white border-gray-500'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+            } ${updating ? 'opacity-50' : ''}`}
+          >
+            Sin contactar
+          </button>
+          <button
+            onClick={() => updateLeadStatus('contacted')}
+            disabled={updating}
+            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+              leadStatus === 'contacted'
+                ? 'bg-yellow-500 text-white border-yellow-500'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-yellow-400'
+            } ${updating ? 'opacity-50' : ''}`}
+          >
+            🟡 Contactado
+          </button>
+          <button
+            onClick={() => updateLeadStatus('lead')}
+            disabled={updating}
+            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+              leadStatus === 'lead'
+                ? 'bg-green-600 text-white border-green-600'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'
+            } ${updating ? 'opacity-50' : ''}`}
+          >
+            🟢 Lead
+          </button>
+          <button
+            onClick={() => updateLeadStatus('discarded')}
+            disabled={updating}
+            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+              leadStatus === 'discarded'
+                ? 'bg-gray-400 text-white border-gray-400'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+            } ${updating ? 'opacity-50' : ''}`}
+          >
+            ⚫ Descartado
+          </button>
+        </div>
       </div>
 
       {/* Email Modal */}
@@ -652,37 +751,46 @@ export default function BusinessCard({
             </div>
             <div className="p-4 overflow-y-auto max-h-[70vh]">
               <div className="mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <p className="text-xs text-gray-500 uppercase">Para:</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs text-gray-500 uppercase flex-1">Para:</p>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(emailModal.to); alert('Email copiado'); }}
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    onClick={() => { navigator.clipboard.writeText(emailModal.to); }}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                    title="Copiar email"
                   >
-                    Copiar
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                   </button>
                 </div>
                 <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.to}</p>
               </div>
               <div className="mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <p className="text-xs text-gray-500 uppercase">Asunto:</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs text-gray-500 uppercase flex-1">Asunto:</p>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(emailModal.subject); alert('Asunto copiado'); }}
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    onClick={() => { navigator.clipboard.writeText(emailModal.subject); }}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                    title="Copiar asunto"
                   >
-                    Copiar
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                   </button>
                 </div>
                 <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.subject}</p>
               </div>
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <p className="text-xs text-gray-500 uppercase">Cuerpo:</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs text-gray-500 uppercase flex-1">Cuerpo:</p>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(emailModal.body); alert('Cuerpo copiado'); }}
-                    className="text-xs text-blue-600 hover:text-blue-800"
+                    onClick={() => { navigator.clipboard.writeText(emailModal.body); }}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                    title="Copiar cuerpo"
                   >
-                    Copiar
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                   </button>
                 </div>
                 <div

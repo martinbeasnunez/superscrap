@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { ContactAction, LeadStatus } from '@/types';
+
+const validContactActions: ContactAction[] = ['whatsapp', 'email', 'call'];
+const validLeadStatuses: LeadStatus[] = ['no_contact', 'contacted', 'lead', 'discarded'];
 
 export async function PATCH(
   request: NextRequest,
@@ -8,23 +12,48 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { contact_status, user_id } = body;
+    const { contact_actions, lead_status, user_id } = body;
 
-    // Validar status
-    const validStatuses = ['whatsapp', 'called', 'contacted', null];
-    if (!validStatuses.includes(contact_status)) {
-      return NextResponse.json(
-        { error: 'Estado de contacto inválido' },
-        { status: 400 }
-      );
+    // Validar contact_actions (array de acciones)
+    if (contact_actions !== undefined) {
+      if (!Array.isArray(contact_actions)) {
+        return NextResponse.json(
+          { error: 'contact_actions debe ser un array' },
+          { status: 400 }
+        );
+      }
+      for (const action of contact_actions) {
+        if (!validContactActions.includes(action)) {
+          return NextResponse.json(
+            { error: `Acción de contacto inválida: ${action}` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // Validar lead_status
+    if (lead_status !== undefined && lead_status !== null) {
+      if (!validLeadStatuses.includes(lead_status)) {
+        return NextResponse.json(
+          { error: 'Estado de lead inválido' },
+          { status: 400 }
+        );
+      }
     }
 
     // Build update data
-    const updateData: Record<string, string | null> = {
-      contact_status,
-      contacted_at: contact_status ? new Date().toISOString() : null,
-      contacted_by: contact_status && user_id ? user_id : null,
-    };
+    const updateData: Record<string, unknown> = {};
+
+    if (contact_actions !== undefined) {
+      updateData.contact_actions = contact_actions;
+      updateData.contacted_at = contact_actions.length > 0 ? new Date().toISOString() : null;
+      updateData.contacted_by = contact_actions.length > 0 && user_id ? user_id : null;
+    }
+
+    if (lead_status !== undefined) {
+      updateData.lead_status = lead_status;
+    }
 
     console.log('Updating business:', id, 'with data:', updateData);
 
@@ -37,7 +66,6 @@ export async function PATCH(
 
     if (error) {
       console.error('Supabase error:', error);
-      console.error('Error updating business:', error);
       return NextResponse.json(
         { error: 'Error al actualizar negocio' },
         { status: 500 }

@@ -19,8 +19,10 @@ interface SearchWithUser {
 interface UserStats {
   name: string;
   whatsapp: number;
-  called: number;
-  contacted: number;
+  email: number;
+  call: number;
+  prospects: number;
+  discarded: number;
 }
 
 interface Stats {
@@ -28,14 +30,18 @@ interface Stats {
     searches: number;
     businesses: number;
     whatsapp: number;
-    called: number;
-    contacted: number;
+    email: number;
+    call: number;
+    prospects: number;
+    discarded: number;
   };
   today: {
     searches: number;
     whatsapp: number;
-    called: number;
-    contacted: number;
+    email: number;
+    call: number;
+    prospects: number;
+    discarded: number;
     byUser: UserStats[];
   };
 }
@@ -116,22 +122,30 @@ export default function BusquedasPage() {
         {/* Stats Panel */}
         {stats && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-3xl font-bold text-gray-900">{stats.total.searches}</p>
-                <p className="text-sm text-gray-500">Búsquedas totales</p>
+                <p className="text-sm text-gray-500">Busquedas</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <p className="text-3xl font-bold text-green-600">{stats.total.whatsapp}</p>
-                <p className="text-sm text-gray-500">WhatsApp enviados</p>
+                <p className="text-sm text-gray-500">WhatsApp</p>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <p className="text-3xl font-bold text-red-600">{stats.total.email}</p>
+                <p className="text-sm text-gray-500">Emails</p>
               </div>
               <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <p className="text-3xl font-bold text-blue-600">{stats.total.called}</p>
-                <p className="text-sm text-gray-500">Llamados</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.total.call}</p>
+                <p className="text-sm text-gray-500">Llamadas</p>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <p className="text-3xl font-bold text-purple-600">{stats.total.contacted}</p>
-                <p className="text-sm text-gray-500">Contactados</p>
+              <div className="text-center p-4 bg-emerald-50 rounded-lg">
+                <p className="text-3xl font-bold text-emerald-600">{stats.total.prospects}</p>
+                <p className="text-sm text-gray-500">Prospectos</p>
+              </div>
+              <div className="text-center p-4 bg-gray-100 rounded-lg">
+                <p className="text-3xl font-bold text-gray-500">{stats.total.discarded}</p>
+                <p className="text-sm text-gray-500">Descartados</p>
               </div>
             </div>
 
@@ -140,19 +154,27 @@ export default function BusquedasPage() {
               <div className="flex flex-wrap gap-4 mb-4">
                 <span className="inline-flex items-center gap-2 text-sm">
                   <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                  <strong>{stats.today.searches}</strong> búsquedas
+                  <strong>{stats.today.searches}</strong> busquedas
                 </span>
                 <span className="inline-flex items-center gap-2 text-sm">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   <strong>{stats.today.whatsapp}</strong> WhatsApp
                 </span>
                 <span className="inline-flex items-center gap-2 text-sm">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  <strong>{stats.today.called}</strong> llamados
+                  <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                  <strong>{stats.today.email}</strong> emails
                 </span>
                 <span className="inline-flex items-center gap-2 text-sm">
-                  <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                  <strong>{stats.today.contacted}</strong> contactados
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <strong>{stats.today.call}</strong> llamadas
+                </span>
+                <span className="inline-flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  <strong>{stats.today.prospects}</strong> prospectos
+                </span>
+                <span className="inline-flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  <strong>{stats.today.discarded}</strong> descartados
                 </span>
               </div>
 
@@ -167,17 +189,27 @@ export default function BusquedasPage() {
                         <div className="flex gap-3 text-sm">
                           {user.whatsapp > 0 && (
                             <span className="text-green-600">
-                              <strong>{user.whatsapp}</strong> WhatsApp
+                              <strong>{user.whatsapp}</strong> WA
                             </span>
                           )}
-                          {user.called > 0 && (
+                          {user.email > 0 && (
+                            <span className="text-red-600">
+                              <strong>{user.email}</strong> email
+                            </span>
+                          )}
+                          {user.call > 0 && (
                             <span className="text-blue-600">
-                              <strong>{user.called}</strong> llamados
+                              <strong>{user.call}</strong> llamadas
                             </span>
                           )}
-                          {user.contacted > 0 && (
-                            <span className="text-purple-600">
-                              <strong>{user.contacted}</strong> contactados
+                          {user.prospects > 0 && (
+                            <span className="text-emerald-600">
+                              <strong>{user.prospects}</strong> prospectos
+                            </span>
+                          )}
+                          {user.discarded > 0 && (
+                            <span className="text-gray-500">
+                              <strong>{user.discarded}</strong> descart.
                             </span>
                           )}
                         </div>

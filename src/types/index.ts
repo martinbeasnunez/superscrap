@@ -26,8 +26,11 @@ export interface DecisionMaker {
 // Acciones de contacto (múltiples posibles)
 export type ContactAction = 'whatsapp' | 'email' | 'call';
 
-// Estado del lead (solo uno)
-export type LeadStatus = 'no_contact' | 'contacted' | 'lead' | 'discarded';
+// Estado del negocio (solo uno)
+// - null/no_contact = sin estado especial (las acciones indican si fue contactado)
+// - prospect = respondió con interés
+// - discarded = no le interesa
+export type LeadStatus = 'no_contact' | 'prospect' | 'discarded';
 
 export interface Business {
   id: string;

@@ -312,11 +312,12 @@ function migrateContactStatus(business: BusinessWithAnalysis): ContactAction[] {
 function migrateleadStatus(business: BusinessWithAnalysis): LeadStatus {
   // Si ya tiene el nuevo formato, usarlo
   if (business.lead_status) {
-    return business.lead_status;
-  }
-  // Si tiene el formato legacy con algún contacto, marcar como contactado
-  if (business.contact_status) {
-    return 'contacted';
+    const rawStatus = business.lead_status as string;
+    // Migrar 'lead' a 'prospect' y 'contacted' a 'no_contact'
+    if (rawStatus === 'lead') return 'prospect';
+    if (rawStatus === 'contacted') return 'no_contact';
+    if (rawStatus === 'prospect') return 'prospect';
+    if (rawStatus === 'discarded') return 'discarded';
   }
   return 'no_contact';
 }
@@ -404,8 +405,7 @@ export default function BusinessCard({
   // Colores del estado del lead
   const getLeadStatusStyle = () => {
     switch (leadStatus) {
-      case 'lead': return 'bg-green-100 text-green-800 border-green-300';
-      case 'contacted': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'prospect': return 'bg-green-100 text-green-800 border-green-300';
       case 'discarded': return 'bg-gray-200 text-gray-500 border-gray-300';
       default: return '';
     }
@@ -413,8 +413,7 @@ export default function BusinessCard({
 
   const getLeadStatusLabel = () => {
     switch (leadStatus) {
-      case 'lead': return 'Lead';
-      case 'contacted': return 'Contactado';
+      case 'prospect': return 'Prospecto';
       case 'discarded': return 'Descartado';
       default: return null;
     }
@@ -710,42 +709,20 @@ export default function BusinessCard({
         </div>
       </div>
 
-      {/* Lead status (único) */}
+      {/* Lead status (único) - Solo Prospecto y Descartado */}
       <div className="mt-3 pt-3 border-t border-gray-200">
         <p className="text-xs text-gray-500 mb-2">Estado:</p>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => updateLeadStatus('no_contact')}
+            onClick={() => updateLeadStatus('prospect')}
             disabled={updating}
             className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-              leadStatus === 'no_contact'
-                ? 'bg-gray-500 text-white border-gray-500'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
-            } ${updating ? 'opacity-50' : ''}`}
-          >
-            Sin contactar
-          </button>
-          <button
-            onClick={() => updateLeadStatus('contacted')}
-            disabled={updating}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-              leadStatus === 'contacted'
-                ? 'bg-yellow-500 text-white border-yellow-500'
-                : 'bg-white text-gray-600 border-gray-300 hover:border-yellow-400'
-            } ${updating ? 'opacity-50' : ''}`}
-          >
-            🟡 Contactado
-          </button>
-          <button
-            onClick={() => updateLeadStatus('lead')}
-            disabled={updating}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-              leadStatus === 'lead'
+              leadStatus === 'prospect'
                 ? 'bg-green-600 text-white border-green-600'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            🟢 Lead
+            🟢 Prospecto
           </button>
           <button
             onClick={() => updateLeadStatus('discarded')}

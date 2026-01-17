@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { ContactAction, LeadStatus } from '@/types';
 
 const validContactActions: ContactAction[] = ['whatsapp', 'email', 'call'];
-const validLeadStatuses: LeadStatus[] = ['no_contact', 'contacted', 'lead', 'discarded'];
+const validLeadStatuses: LeadStatus[] = ['no_contact', 'prospect', 'discarded'];
 
 export async function PATCH(
   request: NextRequest,

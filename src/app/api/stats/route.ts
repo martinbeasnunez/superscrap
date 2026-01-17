@@ -7,8 +7,7 @@ interface UserStats {
   whatsapp: number;
   email: number;
   call: number;
-  leads: number;
-  contacted: number;
+  prospects: number;
   discarded: number;
 }
 
@@ -48,11 +47,11 @@ export async function GET() {
 
     // Contadores totales
     let whatsappTotal = 0, emailTotal = 0, callTotal = 0;
-    let leadsTotal = 0, contactedTotal = 0, discardedTotal = 0;
+    let prospectsTotal = 0, discardedTotal = 0;
 
     // Contadores de hoy
     let whatsappToday = 0, emailToday = 0, callToday = 0;
-    let leadsToday = 0, contactedToday = 0, discardedToday = 0;
+    let prospectsToday = 0, discardedToday = 0;
 
     // Stats por usuario (solo hoy)
     const userStatsToday = new Map<string, UserStats>();
@@ -64,16 +63,20 @@ export async function GET() {
 
       // Migrar datos legacy a nuevo formato
       let actions: ContactAction[] = b.contact_actions || [];
-      let status: LeadStatus = b.lead_status || 'no_contact';
+      const rawStatus = b.lead_status as string || 'no_contact';
+
+      // Migrar estados legacy a nuevos valores
+      let status: LeadStatus = 'no_contact';
+      if (rawStatus === 'prospect') status = 'prospect';
+      else if (rawStatus === 'discarded') status = 'discarded';
+      else if (rawStatus === 'lead') status = 'prospect'; // legacy
+      // 'contacted' y 'no_contact' -> 'no_contact'
 
       // Si no hay nuevo formato pero hay legacy, migrar
       if (actions.length === 0 && b.contact_status) {
         if (b.contact_status === 'whatsapp') actions = ['whatsapp'];
         else if (b.contact_status === 'called') actions = ['call'];
         else if (b.contact_status === 'contacted') actions = ['whatsapp'];
-      }
-      if (status === 'no_contact' && b.contact_status) {
-        status = 'contacted';
       }
 
       // Contar acciones
@@ -91,12 +94,9 @@ export async function GET() {
       }
 
       // Contar estados
-      if (status === 'lead') {
-        leadsTotal++;
-        if (isToday) leadsToday++;
-      } else if (status === 'contacted') {
-        contactedTotal++;
-        if (isToday) contactedToday++;
+      if (status === 'prospect') {
+        prospectsTotal++;
+        if (isToday) prospectsToday++;
       } else if (status === 'discarded') {
         discardedTotal++;
         if (isToday) discardedToday++;
@@ -105,13 +105,12 @@ export async function GET() {
       // Stats por usuario (hoy)
       if (isToday && userName) {
         const stats = userStatsToday.get(userName) || {
-          name: userName, whatsapp: 0, email: 0, call: 0, leads: 0, contacted: 0, discarded: 0
+          name: userName, whatsapp: 0, email: 0, call: 0, prospects: 0, discarded: 0
         };
         if (actions.includes('whatsapp')) stats.whatsapp++;
         if (actions.includes('email')) stats.email++;
         if (actions.includes('call')) stats.call++;
-        if (status === 'lead') stats.leads++;
-        if (status === 'contacted') stats.contacted++;
+        if (status === 'prospect') stats.prospects++;
         if (status === 'discarded') stats.discarded++;
         userStatsToday.set(userName, stats);
       }
@@ -130,8 +129,7 @@ export async function GET() {
         whatsapp: whatsappTotal,
         email: emailTotal,
         call: callTotal,
-        leads: leadsTotal,
-        contacted: contactedTotal,
+        prospects: prospectsTotal,
         discarded: discardedTotal,
       },
       today: {
@@ -139,8 +137,7 @@ export async function GET() {
         whatsapp: whatsappToday,
         email: emailToday,
         call: callToday,
-        leads: leadsToday,
-        contacted: contactedToday,
+        prospects: prospectsToday,
         discarded: discardedToday,
         byUser: Array.from(userStatsToday.values()),
       },

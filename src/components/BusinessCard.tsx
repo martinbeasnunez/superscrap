@@ -61,107 +61,107 @@ function getWhatsAppPitch(businessName: string, businessType: string): string {
   const typeLower = businessType.toLowerCase();
 
   const pitches: Record<string, string> = {
-    gimnasio: `¿Cuanto estan pagando por mantener las toallas impecables? 🏋️
+    gimnasio: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta rapida: Cuanto estan pagando por mantener las toallas impecables?
 
-El 73% de gimnasios en Peru gastan *40% de mas* en lavanderia (equipo interno o proveedores caros) 😱
+El 73% de gimnasios en Peru gastan *40% de mas* en lavanderia (equipo interno o proveedores caros).
 
 Nosotros lavamos para +800 empresas incluyendo gimnasios top:
-✅ Toallas siempre blancas, suaves, sin olor
-✅ Recojo y entrega en TU local
-✅ Hasta 40% menos que hacerlo ustedes
+- Toallas siempre blancas, suaves, sin olor
+- Recojo y entrega en TU local
+- Hasta 40% menos que hacerlo ustedes
 
-¿Les paso una cotizacion rapida? Solo necesito saber cuantas toallas manejan aprox 🧺`,
+Les paso una cotizacion rapida? Solo necesito saber cuantas toallas manejan aprox`,
 
-    spa: `¿Sus toallas y batas transmiten la experiencia premium que sus clientes esperan? 🧖‍♀️
+    spa: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta: Sus toallas y batas transmiten la experiencia premium que sus clientes esperan?
 
 El secreto de los spas 5 estrellas: *tercerizan su lavanderia* con expertos.
 
-Llevamos 8 años cuidando la imagen de spas premium:
-✅ Blancura y suavidad de hotel de lujo
-✅ Sin preocupaciones, nosotros recogemos y entregamos
-✅ +800 empresas confian en nosotros
+Llevamos 8 anos cuidando la imagen de spas premium:
+- Blancura y suavidad de hotel de lujo
+- Sin preocupaciones, nosotros recogemos y entregamos
+- +800 empresas confian en nosotros
 
-¿10 min para contarles como elevamos la experiencia de sus clientes? 💆‍♀️`,
+10 min para contarles como elevamos la experiencia de sus clientes?`,
 
-    hotel: `¿Estan 100% satisfechos con su servicio de lavanderia actual? 🏨
+    hotel: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta: Estan 100% satisfechos con su servicio de lavanderia actual?
 
 Los hoteles que mas crecen en Peru tienen algo en comun: *no pierden tiempo lavando*.
 
 Lo que ofrecemos:
-✅ Sabanas y toallas impecables, siempre a tiempo
-✅ Capacidad para alto volumen (2+ toneladas/dia)
-✅ Hoteles lideres ya trabajan con nosotros
+- Sabanas y toallas impecables, siempre a tiempo
+- Capacidad para alto volumen (2+ toneladas/dia)
+- Hoteles lideres ya trabajan con nosotros
 
-¿Les interesa una cotizacion sin compromiso? Solo me dicen cuantas habitaciones tienen 🛏️`,
+Les interesa una cotizacion sin compromiso? Solo me dicen cuantas habitaciones tienen`,
 
-    clinica: `¿Su proveedor de lavanderia cumple con protocolos de higiene certificados? 🏥
+    clinica: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta importante: Su proveedor de lavanderia cumple con protocolos de higiene certificados?
 
 En el sector salud, *no hay margen de error* con la limpieza.
 
-Llevamos +8 años sirviendo a clinicas y hospitales:
-✅ Protocolos de esterilizacion certificados
-✅ Trazabilidad de cada pieza
-✅ Cumplimiento garantizado
+Llevamos +8 anos sirviendo a clinicas y hospitales:
+- Protocolos de esterilizacion certificados
+- Trazabilidad de cada pieza
+- Cumplimiento garantizado
 
-¿Les comparto nuestros protocolos y certificaciones? 🩺`,
+Les comparto nuestros protocolos y certificaciones?`,
 
-    restaurante: `¿Cuanto tiempo pierde su equipo lavando manteles y uniformes? 🍽️
+    restaurante: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta: Cuanto tiempo pierde su equipo lavando manteles y uniformes?
 
-El 80% de restaurantes exitosos *tercerizan la lavanderia*. ¿Por que? Mas tiempo para lo que importa: la comida.
+El 80% de restaurantes exitosos *tercerizan la lavanderia*. Por que? Mas tiempo para lo que importa: la comida.
 
 Lo que hacemos:
-✅ Manteles impecables, sin manchas imposibles
-✅ Uniformes listos cuando los necesitan
-✅ Servicio diario disponible
+- Manteles impecables, sin manchas imposibles
+- Uniformes listos cuando los necesitan
+- Servicio diario disponible
 
-¿Hablamos 5 min sobre como simplificar su operacion? 👨‍🍳`,
+Hablamos 5 min sobre como simplificar su operacion?`,
 
-    club: `¿Como manejan la lavanderia de toallas, ropa de cama y uniformes? ⛳
+    club: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta: Como manejan la lavanderia de toallas, ropa de cama y uniformes?
 
 Los mejores clubs del Peru nos confian sus textiles:
-✅ Toallas frescas para socios exigentes
-✅ Ropa de cama impecable para bungalows
-✅ Uniformes del staff siempre listos
+- Toallas frescas para socios exigentes
+- Ropa de cama impecable para bungalows
+- Uniformes del staff siempre listos
 
-¿Les cuento como podemos ayudarlos? Solo 10 min 🏊‍♂️`,
+Les cuento como podemos ayudarlos? Solo 10 min`,
 
-    seguridad: `¿Sus guardias proyectan la imagen profesional que sus clientes esperan? 👮
+    seguridad: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta: Sus guardias proyectan la imagen profesional que sus clientes esperan?
 
 Un uniforme impecable = *confianza instantanea*.
 
 Lavamos uniformes para empresas de seguridad lideres:
-✅ Uniformes siempre limpios y planchados
-✅ Recojo y entrega en sus locales
-✅ Precios corporativos
+- Uniformes siempre limpios y planchados
+- Recojo y entrega en sus locales
+- Precios corporativos
 
-¿Les paso una cotizacion? Solo necesito saber cuantos uniformes manejan 🛡️`,
+Les paso una cotizacion? Solo necesito saber cuantos uniformes manejan`,
 
-    default: `¿Estan pagando de mas por su lavanderia? 🤔
+    default: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Hola! Les escribo de GetLavado a *${businessName}*
+Pregunta rapida: Estan pagando de mas por su lavanderia?
 
-El 73% de empresas en Peru gastan *hasta 40% extra* en lavanderia sin saberlo 😱
+El 73% de empresas en Peru gastan *hasta 40% extra* en lavanderia sin saberlo.
 
 Somos GetLavado, lavanderia industrial con +800 clientes:
-✅ Recojo y entrega en tu local
-✅ Hasta 40% menos que hacerlo internamente
-✅ 8 años de experiencia
+- Recojo y entrega en tu local
+- Hasta 40% menos que hacerlo internamente
+- 8 anos de experiencia
 
-¿Les interesa una cotizacion rapida sin compromiso? 🧺`
+Les interesa una cotizacion rapida sin compromiso?`
   };
 
   for (const [key, pitch] of Object.entries(pitches)) {

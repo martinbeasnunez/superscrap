@@ -186,6 +186,37 @@ function getGoogleMapsUrl(address: string, businessName: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
+// Distritos prioritarios donde GetLavado tiene mejor conversion
+const PRIORITY_DISTRICTS = [
+  'miraflores',
+  'surco',
+  'santiago de surco',
+  'san borja',
+  'la molina',
+  'barranco',
+  'san isidro',
+];
+
+// Detecta si la direccion esta en un distrito prioritario
+export function isPriorityDistrict(address: string | null): boolean {
+  if (!address) return false;
+  const addressLower = address.toLowerCase();
+  return PRIORITY_DISTRICTS.some(district => addressLower.includes(district));
+}
+
+// Obtiene el nombre del distrito de la direccion
+export function getDistrict(address: string | null): string | null {
+  if (!address) return null;
+  const addressLower = address.toLowerCase();
+  for (const district of PRIORITY_DISTRICTS) {
+    if (addressLower.includes(district)) {
+      // Capitalizar
+      return district.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+  }
+  return null;
+}
+
 // Genera email pitch killer con FOMO y CTA
 function getEmailPitch(businessName: string, businessType: string, detectedServices: string[]): { subject: string; body: string } {
   const typeLower = businessType.toLowerCase();
@@ -437,6 +468,11 @@ export default function BusinessCard({
     >
       {/* Lead status + contact actions indicator */}
       <div className="flex flex-wrap gap-2 mb-3">
+        {isPriorityDistrict(business.address) && (
+          <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-medium border border-amber-300">
+            ⭐ Zona top
+          </span>
+        )}
         {getLeadStatusLabel() && (
           <span className={`px-2 py-1 rounded text-xs font-medium border ${getLeadStatusStyle()}`}>
             {getLeadStatusLabel()}

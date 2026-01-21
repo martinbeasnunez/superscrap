@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SearchWithResults, BusinessWithAnalysis } from '@/types';
-import BusinessCard from '@/components/BusinessCard';
+import BusinessCard, { isPriorityDistrict } from '@/components/BusinessCard';
 
 export default function SearchDetailPage({
   params,
@@ -112,6 +112,13 @@ export default function SearchDetailPage({
       ? businesses.filter((b) => b.analysis?.matches_requirements)
       : businesses;
 
+  // Sort by priority district (top zones first)
+  const sortedBusinesses = [...filteredBusinesses].sort((a, b) => {
+    const aPriority = isPriorityDistrict(a.address) ? 1 : 0;
+    const bPriority = isPriorityDistrict(b.address) ? 1 : 0;
+    return bPriority - aPriority;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-12">
@@ -186,7 +193,7 @@ export default function SearchDetailPage({
           </div>
         </div>
 
-        {filteredBusinesses.length === 0 ? (
+        {sortedBusinesses.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl">
             <p className="text-gray-500">
               {filter === 'matching'
@@ -196,7 +203,7 @@ export default function SearchDetailPage({
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {filteredBusinesses.map((business) => (
+            {sortedBusinesses.map((business) => (
               <BusinessCard
                 key={business.id}
                 business={business}

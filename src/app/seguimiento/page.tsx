@@ -208,12 +208,27 @@ export default function SeguimientoPage() {
         }),
       });
 
-      // Actualizar el contactCount local
-      setNeedsFollowUp(prev => prev.map(b =>
-        b.id === business.id
-          ? { ...b, contactCount: b.contactCount + 1, lastContactDate: new Date().toISOString(), daysSinceContact: 0 }
-          : b
-      ));
+      // Mover de "Necesitan Follow Up" a "Contactados Hoy"
+      const updatedBusiness = {
+        ...business,
+        contactCount: business.contactCount + 1,
+        lastContactDate: new Date().toISOString(),
+        daysSinceContact: 0,
+        lastAction: action,
+      };
+
+      // Remover de needsFollowUp
+      setNeedsFollowUp(prev => prev.filter(b => b.id !== business.id));
+
+      // Agregar a contactedToday (al inicio)
+      setContactedToday(prev => [updatedBusiness, ...prev.filter(b => b.id !== business.id)]);
+
+      // Actualizar stats
+      setStats(prev => prev ? {
+        ...prev,
+        needsFollowUp: prev.needsFollowUp - 1,
+        contactedToday: prev.contactedToday + 1,
+      } : null);
     } catch (error) {
       console.error('Error registering follow-up:', error);
     }

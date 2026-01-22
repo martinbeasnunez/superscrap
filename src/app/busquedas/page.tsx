@@ -33,6 +33,7 @@ interface UserStats {
   call: number;
   prospects: number;
   discarded: number;
+  followUps: number;
 }
 
 interface Stats {
@@ -231,6 +232,11 @@ export default function BusquedasPage() {
                           {user.prospects > 0 && (
                             <span className="text-emerald-600">
                               <strong>{user.prospects}</strong> prospectos
+                            </span>
+                          )}
+                          {user.followUps > 0 && (
+                            <span className="text-orange-600">
+                              <strong>{user.followUps}</strong> seguim.
                             </span>
                           )}
                           {user.discarded > 0 && (

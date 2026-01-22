@@ -11,6 +11,7 @@ interface UserStats {
   call: number;
   prospects: number;
   discarded: number;
+  followUps: number;
 }
 
 export async function GET() {
@@ -107,7 +108,7 @@ export async function GET() {
       // Stats por usuario (hoy)
       if (isToday && userName) {
         const stats = userStatsToday.get(userName) || {
-          name: userName, whatsapp: 0, email: 0, call: 0, prospects: 0, discarded: 0
+          name: userName, whatsapp: 0, email: 0, call: 0, prospects: 0, discarded: 0, followUps: 0
         };
         if (actions.includes('whatsapp')) stats.whatsapp++;
         if (actions.includes('email')) stats.email++;
@@ -123,6 +124,39 @@ export async function GET() {
       .from('searches')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', todayISO);
+
+    // Obtener follow-ups de hoy desde contact_history
+    // Un follow-up es cuando un negocio ya tenia contactos previos
+    const { data: todayHistory } = await supabase
+      .from('contact_history')
+      .select('business_id, user_id, created_at')
+      .gte('created_at', todayISO);
+
+    // Obtener todos los contactos previos para determinar cuales son follow-ups
+    const todayBusinessIds = [...new Set(todayHistory?.map(h => h.business_id) || [])];
+
+    const { data: allHistoryForToday } = await supabase
+      .from('contact_history')
+      .select('business_id, created_at')
+      .in('business_id', todayBusinessIds)
+      .lt('created_at', todayISO);
+
+    // Negocios que ya tenian contactos antes de hoy
+    const businessesWithPriorContact = new Set(allHistoryForToday?.map(h => h.business_id) || []);
+
+    // Contar follow-ups por usuario hoy
+    todayHistory?.forEach((h: any) => {
+      if (businessesWithPriorContact.has(h.business_id)) {
+        const userName = h.user_id ? userMap.get(h.user_id) || 'Desconocido' : null;
+        if (userName) {
+          const stats = userStatsToday.get(userName) || {
+            name: userName, whatsapp: 0, email: 0, call: 0, prospects: 0, discarded: 0, followUps: 0
+          };
+          stats.followUps++;
+          userStatsToday.set(userName, stats);
+        }
+      }
+    });
 
     // Follow-up stats: negocios que necesitan seguimiento (3+ dias sin contacto)
     const daysThreshold = 3;

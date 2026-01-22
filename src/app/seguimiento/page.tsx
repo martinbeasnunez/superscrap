@@ -50,30 +50,42 @@ function getWhatsAppNumber(phone: string): string {
   return `51${cleaned}`;
 }
 
-// Genera el pitch de WhatsApp para follow up
+// Genera el pitch de WhatsApp para follow up - optimizado por etapa
 function getFollowUpPitch(businessName: string, contactCount: number): string {
   if (contactCount === 1) {
-    return `Hola! Soy de GetLavado, les escribi hace unos dias sobre el servicio de lavanderia para *${businessName}*.
+    // 1er Follow up (3-5 dias) - Recordatorio amigable + pregunta directa
+    return `Hola! De GetLavado para *${businessName}*
 
-Queria saber si tuvieron chance de revisar la propuesta?
+Les escribi hace unos dias sobre como podemos ayudarles a reducir hasta 40% en costos de lavanderia.
 
-Estamos con disponibilidad esta semana para una llamada rapida de 10 min. Que dia les funciona?`;
+Pregunta rapida: Ya tienen proveedor de lavanderia o lo manejan internamente?
+
+Solo quiero saber si tiene sentido conversar o si no es prioridad ahora (sin problema!)`;
   } else if (contactCount === 2) {
-    return `Hola! De nuevo de GetLavado para *${businessName}*.
+    // 2do Follow up (5-7 dias) - Agregar valor con caso de exito
+    return `Hola de nuevo! De GetLavado para *${businessName}*
 
-Se que estan ocupados, pero no queria dejar pasar la oportunidad de ayudarles a optimizar sus costos de lavanderia.
+Dato rapido: Un gimnasio en Miraflores paso de gastar S/4,200 a S/2,500 mensuales en lavanderia con nosotros. Mismo volumen, mejor calidad.
 
-Ultima vez que les escribo por este medio. Si prefieren una llamada rapida, me dicen y los contacto yo.
+Se que estan ocupados, pero si les interesa saber como lo logramos, me toma 5 min explicarles.
 
-Que dicen?`;
-  } else {
+Les funciona una llamada corta esta semana?`;
+  } else if (contactCount === 3) {
+    // 3er Follow up (10+ dias) - Ultimo intento con salida elegante
     return `Hola *${businessName}*!
 
-Solo un ultimo follow up de GetLavado. Si no es buen momento, sin problema.
+Ultimo mensaje de mi parte (promesa!)
 
-Pero si en algun momento necesitan cotizar lavanderia industrial, aqui estamos.
+Si la lavanderia no es prioridad ahora, lo entiendo perfecto. Pero si en algun momento quieren cotizar, aqui les dejo mi contacto directo: 928 113 653
 
-Saludos!`;
+Exitos!`;
+  } else {
+    // 4+ contactos - Ya no insistir, solo dejar puerta abierta
+    return `Hola *${businessName}*!
+
+Solo un saludo rapido de GetLavado. Si alguna vez necesitan cotizar lavanderia industrial, aqui estamos.
+
+Que tengan buen dia!`;
   }
 }
 
@@ -251,6 +263,12 @@ export default function SeguimientoPage() {
             <p className="text-xs text-gray-500 mt-1">
               {business.contactCount === 1 ? '1er contacto' : `${business.contactCount} contactos`}
             </p>
+            <p className="text-xs mt-1">
+              {business.contactCount === 1 && <span className="text-blue-600 font-medium">Toca: 1er follow up</span>}
+              {business.contactCount === 2 && <span className="text-amber-600 font-medium">Toca: 2do follow up</span>}
+              {business.contactCount === 3 && <span className="text-red-600 font-medium">Toca: Ultimo intento</span>}
+              {business.contactCount >= 4 && <span className="text-gray-400">Considerar descartar</span>}
+            </p>
           </div>
         </div>
 
@@ -362,6 +380,50 @@ export default function SeguimientoPage() {
             >
               Nueva busqueda
             </Link>
+          </div>
+        </div>
+
+        {/* Panel educativo - Por qué hacer follow up */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 mb-6 text-white">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-white/20 rounded-xl">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold mb-2">El secreto de los top sellers: persistencia inteligente</h2>
+              <div className="grid md:grid-cols-3 gap-4 mt-4">
+                <div className="bg-white/10 rounded-xl p-4">
+                  <p className="text-3xl font-bold">80%</p>
+                  <p className="text-sm text-blue-100">de las ventas requieren 5+ contactos</p>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4">
+                  <p className="text-3xl font-bold">44%</p>
+                  <p className="text-sm text-blue-100">de vendedores abandonan despues del 1er intento</p>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4">
+                  <p className="text-3xl font-bold">3-5 dias</p>
+                  <p className="text-sm text-blue-100">es el momento ideal para follow up</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tips del dia */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <p className="font-semibold text-amber-900">Tips para tu follow up de hoy:</p>
+              <ul className="mt-2 space-y-1 text-sm text-amber-800">
+                <li>• <strong>1er follow up (3 dias):</strong> Pregunta si vieron tu mensaje. Se breve y amigable.</li>
+                <li>• <strong>2do follow up (5-7 dias):</strong> Agrega valor - comparte un caso de exito o dato relevante.</li>
+                <li>• <strong>3er follow up (10+ dias):</strong> Ultimo intento - ofrece una salida elegante pero deja la puerta abierta.</li>
+                <li>• <strong>Pro tip:</strong> Las llamadas tienen 3x mas respuesta que WhatsApp en el 2do contacto.</li>
+              </ul>
+            </div>
           </div>
         </div>
 

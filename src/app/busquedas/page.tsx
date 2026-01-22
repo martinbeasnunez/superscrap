@@ -165,9 +165,9 @@ export default function BusquedasPage() {
                 <p className="text-3xl font-bold text-emerald-600">{stats.total.prospects}</p>
                 <p className="text-sm text-gray-500">Prospectos</p>
               </div>
-              <Link href="/seguimiento" className="text-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+              <Link href="/seguimiento" className="text-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors border-2 border-orange-200">
                 <p className="text-3xl font-bold text-orange-600">{stats.total.needsFollowUp}</p>
-                <p className="text-sm text-gray-500">Follow Up</p>
+                <p className="text-sm text-orange-700 font-medium">Pendientes</p>
               </Link>
               <div className="text-center p-4 bg-gray-100 rounded-lg">
                 <p className="text-3xl font-bold text-gray-500">{stats.total.discarded}</p>

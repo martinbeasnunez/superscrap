@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { BusinessWithAnalysis, ContactAction, LeadStatus } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 interface BusinessCardProps {
   business: BusinessWithAnalysis;
@@ -416,29 +417,40 @@ export default function BusinessCard({
   };
 
   const toggleContactAction = async (action: ContactAction) => {
-    const isAdding = !contactActions.includes(action);
-    const newActions = isAdding
-      ? [...contactActions, action]
-      : contactActions.filter(a => a !== action);
+    const isAlreadyMarked = contactActions.includes(action);
+    const currentUserId = getUserIdFromStorage();
 
-    // Si estamos agregando una acción, registrar en historial
-    if (isAdding) {
-      const currentUserId = getUserIdFromStorage();
-      try {
-        await fetch('/api/contact-history', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            businessId: business.id,
-            userId: currentUserId,
-            actionType: action,
-          }),
-        });
-      } catch (error) {
-        console.error('Error registering contact history:', error);
-      }
+    // Siempre registrar en historial (primer contacto o follow-up)
+    try {
+      await fetch('/api/contact-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          userId: currentUserId,
+          actionType: action,
+        }),
+      });
+    } catch (error) {
+      console.error('Error registering contact history:', error);
     }
 
+    // Si ya estaba marcado, solo registramos el follow-up (no desmarcamos)
+    if (isAlreadyMarked) {
+      // Actualizar contacted_at para reflejar el nuevo contacto
+      try {
+        await supabase
+          .from('businesses')
+          .update({ contacted_at: new Date().toISOString(), contacted_by: currentUserId })
+          .eq('id', business.id);
+      } catch (error) {
+        console.error('Error updating contacted_at:', error);
+      }
+      return; // No cambiar el estado del botón
+    }
+
+    // Si no estaba marcado, agregarlo
+    const newActions = [...contactActions, action];
     updateBusiness(newActions, leadStatus);
   };
 

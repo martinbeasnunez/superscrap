@@ -490,73 +490,113 @@ export default function BusquedasPage() {
                           )}
                         </div>
 
-                        {/* Insight clave: no es cantidad, es calidad */}
-                        {totalContacts >= 20 && (
-                          <div className="border-t border-indigo-200 pt-3">
-                            <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
-                              <p className="text-xs font-bold text-amber-900 mb-2 flex items-center gap-1">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                El juego NO es mandar mas mensajes
-                              </p>
-                              <p className="text-xs text-amber-800 mb-2">
-                                La clave es <strong>hablar con decision makers</strong> (duenos, gerentes, admin) y obtener respuestas.
-                              </p>
+                        {/* Insight diario del vendedor */}
+                        {totalContacts >= 10 && (
+                          (() => {
+                            // Escenario mejorado
+                            const improvedRate = Math.min(conversionPercent < BENCHMARK_AVERAGE ? BENCHMARK_AVERAGE : conversionPercent + 1.5, BENCHMARK_GOOD);
+                            const improvedContactsNeeded = Math.ceil(targetProspects / (improvedRate / 100));
+                            const contactsSaved = Math.max(0, contactsNeeded - improvedContactsNeeded);
+                            const daysSaved = avgContactsPerDay > 0 ? Math.floor(contactsSaved / avgContactsPerDay) : 0;
 
-                              {conversionPercent < BENCHMARK_AVERAGE ? (
-                                <div className="space-y-2 text-xs">
-                                  <p className="text-amber-900 font-medium">Para mejorar tu conversion:</p>
-                                  <ul className="space-y-1 text-amber-800">
-                                    <li className="flex items-start gap-1">
-                                      <span className="text-amber-500 font-bold">1.</span>
-                                      <span><strong>Llama</strong> en vez de solo WhatsApp - las llamadas tienen 3x mas respuesta</span>
-                                    </li>
-                                    <li className="flex items-start gap-1">
-                                      <span className="text-amber-500 font-bold">2.</span>
-                                      <span><strong>Pregunta por el dueno/encargado</strong> - no dejes el mensaje con recepcion</span>
-                                    </li>
-                                    <li className="flex items-start gap-1">
-                                      <span className="text-amber-500 font-bold">3.</span>
-                                      <span><strong>Busca obtener un "si" o "no"</strong> - una respuesta es mejor que silencio</span>
-                                    </li>
-                                  </ul>
-                                </div>
-                              ) : (
-                                <div className="space-y-2 text-xs">
-                                  <p className="text-amber-900 font-medium">Vas bien! Siguientes pasos:</p>
-                                  <ul className="space-y-1 text-amber-800">
-                                    <li className="flex items-start gap-1">
-                                      <span className="text-amber-500 font-bold">*</span>
-                                      <span>Prioriza distritos premium (Miraflores, San Isidro, Surco)</span>
-                                    </li>
-                                    <li className="flex items-start gap-1">
-                                      <span className="text-amber-500 font-bold">*</span>
-                                      <span>Haz follow-up a los que no respondieron - el 80% de ventas requieren 5+ contactos</span>
-                                    </li>
-                                  </ul>
-                                </div>
-                              )}
+                            // Calcular que canal funciona mejor
+                            const waRate = stats.total.whatsapp > 0 ? (stats.total.prospects / stats.total.whatsapp * 100) : 0;
+                            const callRate = stats.total.call > 0 ? (stats.total.prospects / stats.total.call * 100) : 0;
+                            const emailRate = stats.total.email > 0 ? (stats.total.prospects / stats.total.email * 100) : 0;
 
-                              {(() => {
-                                // Escenario mejorado
-                                const improvedRate = Math.min(conversionPercent + 2, BENCHMARK_GOOD);
-                                const improvedContactsNeeded = Math.ceil(targetProspects / (improvedRate / 100));
-                                const contactsSaved = contactsNeeded - improvedContactsNeeded;
+                            const bestChannel = callRate >= waRate && callRate >= emailRate && stats.total.call >= 5
+                              ? { name: 'Llamadas', rate: callRate, icon: '📞' }
+                              : waRate >= emailRate && stats.total.whatsapp >= 5
+                              ? { name: 'WhatsApp', rate: waRate, icon: '💬' }
+                              : stats.total.email >= 5
+                              ? { name: 'Email', rate: emailRate, icon: '📧' }
+                              : null;
 
-                                if (contactsSaved > 10 && conversionPercent < BENCHMARK_GOOD) {
-                                  return (
-                                    <div className="mt-2 pt-2 border-t border-amber-200">
-                                      <p className="text-xs text-emerald-700 font-medium">
-                                        Si subes a {improvedRate.toFixed(1)}% hablando con decisores: necesitas solo {improvedContactsNeeded} contactos (te ahorras {contactsSaved})
+                            // Tips rotativos basados en el dia de la semana con colores
+                            const dayOfWeek = new Date().getDay();
+                            const rotatingTips = [
+                              { tip: 'Los domingos son para descansar, pero los lunes a las 9am tienen 23% mas respuesta', focus: 'Prepara tu lista para manana', color: 'purple' },
+                              { tip: 'Lunes 9-11am: el mejor momento para llamadas. Los duenos revisan pendientes', focus: 'Prioriza llamadas hoy', color: 'blue' },
+                              { tip: 'El 80% de ventas B2B requieren 5+ contactos. No es spam, es persistencia', focus: 'Revisa tu lista de follow-ups', color: 'amber' },
+                              { tip: 'Miercoles es el mejor dia para cerrar reuniones. La semana ya arranco', focus: 'Pide la reunion, no solo "info"', color: 'teal' },
+                              { tip: 'Pregunta directa > mensaje largo. "Tienen proveedor o lo hacen interno?" abre conversaciones', focus: 'Se directo hoy', color: 'indigo' },
+                              { tip: 'Viernes PM: decision makers relajados. Buen momento para llamadas cortas', focus: 'Llama, no escribas', color: 'rose' },
+                              { tip: 'Sabado algunos negocios trabajan. Los que contestan sabado son los que deciden', focus: 'Contacta negocios 24/7', color: 'orange' },
+                            ];
+                            const todayTip = rotatingTips[dayOfWeek];
+
+                            // Estilos de color por dia
+                            const tipColors: Record<string, { bg: string; border: string; text: string; textLight: string }> = {
+                              purple: { bg: 'bg-purple-100/50', border: 'border-purple-200', text: 'text-purple-900', textLight: 'text-purple-700' },
+                              blue: { bg: 'bg-blue-100/50', border: 'border-blue-200', text: 'text-blue-900', textLight: 'text-blue-700' },
+                              amber: { bg: 'bg-amber-100/50', border: 'border-amber-200', text: 'text-amber-900', textLight: 'text-amber-700' },
+                              teal: { bg: 'bg-teal-100/50', border: 'border-teal-200', text: 'text-teal-900', textLight: 'text-teal-700' },
+                              indigo: { bg: 'bg-indigo-100/50', border: 'border-indigo-200', text: 'text-indigo-900', textLight: 'text-indigo-700' },
+                              rose: { bg: 'bg-rose-100/50', border: 'border-rose-200', text: 'text-rose-900', textLight: 'text-rose-700' },
+                              orange: { bg: 'bg-orange-100/50', border: 'border-orange-200', text: 'text-orange-900', textLight: 'text-orange-700' },
+                            };
+                            const tipStyle = tipColors[todayTip.color];
+
+                            // Calcular velocidad: prospectos por semana
+                            const prospectsPerWeek = stats.total.prospects; // asumiendo datos de ~1 semana
+                            const weeksToTen = prospectsPerWeek > 0 ? Math.ceil(10 / prospectsPerWeek) : 0;
+
+                            return (
+                              <div className="border-t border-indigo-200 pt-3">
+                                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                                  {/* Insight principal con calculo */}
+                                  {conversionPercent < BENCHMARK_GOOD && contactsSaved > 5 ? (
+                                    <>
+                                      <p className="text-sm font-semibold text-emerald-800 mb-2 flex items-center gap-1">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                        Si subes tu conversion a {improvedRate.toFixed(1)}%:
+                                      </p>
+                                      <p className="text-sm text-emerald-900">
+                                        Necesitarias solo <strong>{improvedContactsNeeded}</strong> contactos para {targetProspects} prospectos
+                                      </p>
+                                      <p className="text-xs text-emerald-700 mt-1">
+                                        Te ahorras <strong>{contactsSaved}</strong> contactos
+                                        {daysSaved > 0 && <span> (~{daysSaved} dias de trabajo)</span>}
+                                      </p>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <p className="text-sm font-semibold text-emerald-800 mb-2 flex items-center gap-1">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Vas bien! Tu conversion esta en buen nivel
+                                      </p>
+                                      <p className="text-sm text-emerald-900">
+                                        A este ritmo: <strong>{weeksToTen > 1 ? `${weeksToTen} semanas` : 'menos de 1 semana'}</strong> para 10 prospectos
+                                      </p>
+                                    </>
+                                  )}
+
+                                  {/* Data del mejor canal */}
+                                  {bestChannel && bestChannel.rate > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-emerald-200">
+                                      <p className="text-xs text-emerald-800">
+                                        <strong>Tu mejor canal:</strong> {bestChannel.icon} {bestChannel.name} ({bestChannel.rate.toFixed(1)}% conversion)
                                       </p>
                                     </div>
-                                  );
-                                }
-                                return null;
-                              })()}
-                            </div>
-                          </div>
+                                  )}
+
+                                  {/* Tip del dia - color dinamico */}
+                                  <div className={`mt-2 pt-2 border-t ${tipStyle.border} ${tipStyle.bg} -mx-3 -mb-3 px-3 py-2 rounded-b-lg`}>
+                                    <p className={`text-xs ${tipStyle.text}`}>
+                                      <strong>Tip de hoy:</strong> {todayTip.tip}
+                                    </p>
+                                    <p className={`text-xs ${tipStyle.textLight} mt-1 font-medium`}>
+                                      → {todayTip.focus}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()
                         )}
                       </div>
                     );

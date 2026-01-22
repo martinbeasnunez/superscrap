@@ -58,111 +58,102 @@ function getWhatsAppNumber(phone: string): string {
 }
 
 // Genera el pitch de WhatsApp killer seller según la industria
+// Con casos de exito locales y numeros especificos
 function getWhatsAppPitch(businessName: string, businessType: string): string {
   const typeLower = businessType.toLowerCase();
 
   const pitches: Record<string, string> = {
     gimnasio: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta rapida: Cuanto estan pagando por mantener las toallas impecables?
+Caso real: Un gimnasio en Miraflores paso de gastar S/4,200 a S/2,500 mensuales con nosotros. Mismo volumen de toallas, mejor calidad.
 
-El 73% de gimnasios en Peru gastan *40% de mas* en lavanderia (equipo interno o proveedores caros).
+Lo que hacemos diferente:
+- Toallas siempre blancas y suaves (sin olor a humedad)
+- Recojo y entrega en tu local, tu solo apilas
+- *40% menos* que hacerlo internamente
 
-Nosotros lavamos para +800 empresas incluyendo gimnasios top:
-- Toallas siempre blancas, suaves, sin olor
-- Recojo y entrega en TU local
-- Hasta 40% menos que hacerlo ustedes
-
-Les paso una cotizacion rapida? Solo necesito saber cuantas toallas manejan aprox`,
+Pregunta rapida: Cuantas toallas manejan aprox? Les paso cotizacion en 24h`,
 
     spa: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta: Sus toallas y batas transmiten la experiencia premium que sus clientes esperan?
+Dato: Un spa en San Isidro nos dijo que sus clientes ahora comentan lo suave de las toallas. Antes las lavaban ellos, ahora nosotros.
 
-El secreto de los spas 5 estrellas: *tercerizan su lavanderia* con expertos.
+El secreto de los spas premium: *tercerizan su lavanderia*.
 
-Llevamos 8 anos cuidando la imagen de spas premium:
-- Blancura y suavidad de hotel de lujo
-- Sin preocupaciones, nosotros recogemos y entregamos
-- +800 empresas confian en nosotros
+Lo que ofrecemos:
+- Blancura y suavidad de hotel 5 estrellas
+- Sin preocupaciones, recogemos y entregamos
+- +800 empresas confian en nosotros (8 anos en el mercado)
 
 10 min para contarles como elevamos la experiencia de sus clientes?`,
 
     hotel: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta: Estan 100% satisfechos con su servicio de lavanderia actual?
+Caso real: Un hotel boutique en Barranco (32 hab) redujo su costo de lavanderia 35% y ahora tiene mejor calidad. Antes tenian 2 personas lavando, ahora nadie.
 
-Los hoteles que mas crecen en Peru tienen algo en comun: *no pierden tiempo lavando*.
-
-Lo que ofrecemos:
+Lo que hacemos:
 - Sabanas y toallas impecables, siempre a tiempo
-- Capacidad para alto volumen (2+ toneladas/dia)
-- Hoteles lideres ya trabajan con nosotros
+- Capacidad para alto volumen (manejamos 2+ ton/dia)
+- Servicio diario si lo necesitan
 
-Les interesa una cotizacion sin compromiso? Solo me dicen cuantas habitaciones tienen`,
+Cuantas habitaciones tienen? Les paso cotizacion sin compromiso`,
 
     clinica: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta importante: Su proveedor de lavanderia cumple con protocolos de higiene certificados?
+Caso: Una clinica en Surco nos eligio porque su proveedor anterior fallaba en entregas. Con nosotros: *cero fallas en 18 meses*.
 
-En el sector salud, *no hay margen de error* con la limpieza.
-
-Llevamos +8 anos sirviendo a clinicas y hospitales:
+En salud no hay margen de error:
 - Protocolos de esterilizacion certificados
 - Trazabilidad de cada pieza
-- Cumplimiento garantizado
+- Entregas puntuales garantizadas
 
-Les comparto nuestros protocolos y certificaciones?`,
+Les comparto nuestros protocolos y referencias de otras clinicas?`,
 
     restaurante: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta: Cuanto tiempo pierde su equipo lavando manteles y uniformes?
-
-El 80% de restaurantes exitosos *tercerizan la lavanderia*. Por que? Mas tiempo para lo que importa: la comida.
+Dato real: Un restaurante en Miraflores ahorraba S/800/mes haciendo lavanderia interna. Pero perdia 15 horas semanales de un cocinero. Ahora nos paga S/600 y tiene mas manos en cocina.
 
 Lo que hacemos:
-- Manteles impecables, sin manchas imposibles
+- Manteles impecables, quitamos manchas dificiles
 - Uniformes listos cuando los necesitan
 - Servicio diario disponible
 
-Hablamos 5 min sobre como simplificar su operacion?`,
+Cuantos manteles/uniformes manejan? Les paso numeros`,
 
     club: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta: Como manejan la lavanderia de toallas, ropa de cama y uniformes?
+Caso: Un club en La Molina tercerizo su lavanderia con nosotros y sus socios notaron la diferencia en las toallas del gimnasio. Ahorro: 30% vs hacerlo interno.
 
-Los mejores clubs del Peru nos confian sus textiles:
+Lo que ofrecemos:
 - Toallas frescas para socios exigentes
-- Ropa de cama impecable para bungalows
+- Ropa de cama impecable para hospedaje
 - Uniformes del staff siempre listos
 
-Les cuento como podemos ayudarlos? Solo 10 min`,
+Les cuento mas detalles? Solo toma 10 min`,
 
     seguridad: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta: Sus guardias proyectan la imagen profesional que sus clientes esperan?
+Caso: Una empresa de seguridad con 200 guardias paso de lavar interno a nosotros. Ahorro: S/3,500/mes. Y ahora todos los uniformes estan *siempre* listos.
 
-Un uniforme impecable = *confianza instantanea*.
+Un uniforme impecable = confianza instantanea para sus clientes.
 
-Lavamos uniformes para empresas de seguridad lideres:
-- Uniformes siempre limpios y planchados
+Ofrecemos:
+- Uniformes limpios y planchados
 - Recojo y entrega en sus locales
-- Precios corporativos
+- Precios corporativos por volumen
 
 Les paso una cotizacion? Solo necesito saber cuantos uniformes manejan`,
 
     default: `Hola! Les escribo de GetLavado a *${businessName}*
 
-Pregunta rapida: Estan pagando de mas por su lavanderia?
+Dato real: Una empresa en Surco redujo 40% sus costos de lavanderia con nosotros. Antes gastaban S/3,200/mes, ahora S/1,900. Mejor calidad y cero preocupaciones.
 
-El 73% de empresas en Peru gastan *hasta 40% extra* en lavanderia sin saberlo.
-
-Somos GetLavado, lavanderia industrial con +800 clientes:
+Somos lavanderia industrial con +800 clientes y 8 anos en el mercado:
 - Recojo y entrega en tu local
-- Hasta 40% menos que hacerlo internamente
-- 8 anos de experiencia
+- Tu solo apilas, nosotros hacemos el resto
+- Cotizacion en 24 horas
 
-Les interesa una cotizacion rapida sin compromiso?`
+Manejan toallas, uniformes, sabanas o manteles? Cuentenme y les paso numeros`
   };
 
   for (const [key, pitch] of Object.entries(pitches)) {

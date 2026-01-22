@@ -69,6 +69,10 @@ interface Stats {
     discarded: number;
     byUser: UserStats[];
   };
+  insights?: {
+    bestType: { name: string; rate: number; prospects: number } | null;
+    topDistricts: { name: string; prospects: number }[];
+  };
 }
 
 export default function BusquedasPage() {
@@ -499,33 +503,50 @@ export default function BusquedasPage() {
                             const contactsSaved = Math.max(0, contactsNeeded - improvedContactsNeeded);
                             const daysSaved = avgContactsPerDay > 0 ? Math.floor(contactsSaved / avgContactsPerDay) : 0;
 
-                            // Calcular que canal funciona mejor
-                            const waRate = stats.total.whatsapp > 0 ? (stats.total.prospects / stats.total.whatsapp * 100) : 0;
-                            const callRate = stats.total.call > 0 ? (stats.total.prospects / stats.total.call * 100) : 0;
-                            const emailRate = stats.total.email > 0 ? (stats.total.prospects / stats.total.email * 100) : 0;
+                            // Insights basados en data real del proyecto
+                            const bestType = stats.insights?.bestType;
+                            const topDistricts = stats.insights?.topDistricts || [];
 
-                            const bestChannel = callRate >= waRate && callRate >= emailRate && stats.total.call >= 5
-                              ? { name: 'Llamadas', rate: callRate, icon: '📞' }
-                              : waRate >= emailRate && stats.total.whatsapp >= 5
-                              ? { name: 'WhatsApp', rate: waRate, icon: '💬' }
-                              : stats.total.email >= 5
-                              ? { name: 'Email', rate: emailRate, icon: '📧' }
-                              : null;
-
-                            // Tips rotativos basados en el dia de la semana con colores
+                            // Tips basados en la data real del proyecto
                             const dayOfWeek = new Date().getDay();
-                            const rotatingTips = [
-                              { tip: 'Los domingos son para descansar, pero los lunes a las 9am tienen 23% mas respuesta', focus: 'Prepara tu lista para manana', color: 'purple' },
-                              { tip: 'Lunes 9-11am: el mejor momento para llamadas. Los duenos revisan pendientes', focus: 'Prioriza llamadas hoy', color: 'blue' },
-                              { tip: 'El 80% de ventas B2B requieren 5+ contactos. No es spam, es persistencia', focus: 'Revisa tu lista de follow-ups', color: 'amber' },
-                              { tip: 'Miercoles es el mejor dia para cerrar reuniones. La semana ya arranco', focus: 'Pide la reunion, no solo "info"', color: 'teal' },
-                              { tip: 'Pregunta directa > mensaje largo. "Tienen proveedor o lo hacen interno?" abre conversaciones', focus: 'Se directo hoy', color: 'indigo' },
-                              { tip: 'Viernes PM: decision makers relajados. Buen momento para llamadas cortas', focus: 'Llama, no escribas', color: 'rose' },
-                              { tip: 'Sabado algunos negocios trabajan. Los que contestan sabado son los que deciden', focus: 'Contacta negocios 24/7', color: 'orange' },
-                            ];
-                            const todayTip = rotatingTips[dayOfWeek];
 
-                            // Estilos de color por dia
+                            // Generar tip basado en data real
+                            const getDataDrivenTip = () => {
+                              // Si hay un tipo de negocio que funciona mejor
+                              if (bestType && bestType.rate > conversionPercent * 1.5) {
+                                return {
+                                  tip: `Los "${bestType.name}" tienen ${bestType.rate.toFixed(0)}% de conversion - ${(bestType.rate / Math.max(conversionPercent, 0.1)).toFixed(1)}x mejor que tu promedio`,
+                                  focus: `Busca mas ${bestType.name.toLowerCase()}`,
+                                  color: 'emerald'
+                                };
+                              }
+
+                              // Si hay distritos que funcionan
+                              if (topDistricts.length > 0 && topDistricts[0].prospects >= 1) {
+                                const districtList = topDistricts.slice(0, 2).map(d => d.name).join(' y ');
+                                return {
+                                  tip: `Tus prospectos vienen de: ${topDistricts.map(d => `${d.name} (${d.prospects})`).join(', ')}`,
+                                  focus: `Prioriza busquedas en ${districtList}`,
+                                  color: 'blue'
+                                };
+                              }
+
+                              // Tips por dia de la semana (fallback)
+                              const weekdayTips = [
+                                { tip: 'Domingo: planifica tu semana. Revisa que negocios contactar manana', focus: 'Prepara tu lista para manana', color: 'purple' },
+                                { tip: 'Lunes 9-11am: mejor momento para llamadas. Los duenos revisan pendientes', focus: 'Prioriza llamadas hoy', color: 'blue' },
+                                { tip: 'El 80% de ventas B2B requieren 5+ contactos. Revisa tus follow-ups', focus: 'Haz follow-up a los que no respondieron', color: 'amber' },
+                                { tip: 'Miercoles: buen dia para cerrar reuniones. La semana ya arranco', focus: 'Pide la reunion, no solo "info"', color: 'teal' },
+                                { tip: 'Pregunta directa > mensaje largo. "Tienen proveedor o lo hacen interno?"', focus: 'Se directo y breve', color: 'indigo' },
+                                { tip: 'Viernes PM: decision makers mas relajados. Buen momento para llamadas', focus: 'Llama en vez de escribir', color: 'rose' },
+                                { tip: 'Sabado: los que contestan son los que deciden', focus: 'Contacta negocios que trabajan fines de semana', color: 'orange' },
+                              ];
+                              return weekdayTips[dayOfWeek];
+                            };
+
+                            const todayTip = getDataDrivenTip();
+
+                            // Estilos de color
                             const tipColors: Record<string, { bg: string; border: string; text: string; textLight: string }> = {
                               purple: { bg: 'bg-purple-100/50', border: 'border-purple-200', text: 'text-purple-900', textLight: 'text-purple-700' },
                               blue: { bg: 'bg-blue-100/50', border: 'border-blue-200', text: 'text-blue-900', textLight: 'text-blue-700' },
@@ -534,6 +555,7 @@ export default function BusquedasPage() {
                               indigo: { bg: 'bg-indigo-100/50', border: 'border-indigo-200', text: 'text-indigo-900', textLight: 'text-indigo-700' },
                               rose: { bg: 'bg-rose-100/50', border: 'border-rose-200', text: 'text-rose-900', textLight: 'text-rose-700' },
                               orange: { bg: 'bg-orange-100/50', border: 'border-orange-200', text: 'text-orange-900', textLight: 'text-orange-700' },
+                              emerald: { bg: 'bg-emerald-100/50', border: 'border-emerald-200', text: 'text-emerald-900', textLight: 'text-emerald-700' },
                             };
                             const tipStyle = tipColors[todayTip.color];
 
@@ -575,11 +597,12 @@ export default function BusquedasPage() {
                                     </>
                                   )}
 
-                                  {/* Data del mejor canal */}
-                                  {bestChannel && bestChannel.rate > 0 && (
+                                  {/* Insight de data real: mejor tipo de negocio */}
+                                  {bestType && bestType.prospects >= 1 && (
                                     <div className="mt-2 pt-2 border-t border-emerald-200">
                                       <p className="text-xs text-emerald-800">
-                                        <strong>Tu mejor canal:</strong> {bestChannel.icon} {bestChannel.name} ({bestChannel.rate.toFixed(1)}% conversion)
+                                        <strong>Lo que funciona:</strong> {bestType.prospects} de tus prospectos son {bestType.name.toLowerCase()}
+                                        {bestType.rate > 0 && <span> ({bestType.rate.toFixed(0)}% conversion)</span>}
                                       </p>
                                     </div>
                                   )}

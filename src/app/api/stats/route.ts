@@ -190,6 +190,84 @@ export async function GET() {
       }
     });
 
+    // Insights: obtener datos de prospectos con su tipo de negocio y distrito
+    const { data: prospectsData } = await supabase
+      .from('businesses')
+      .select(`
+        id,
+        address,
+        search_id,
+        searches (
+          business_type,
+          city
+        )
+      `)
+      .eq('lead_status', 'prospect');
+
+    // Analizar qué tipos de negocio convierten mejor
+    const typeStats: Record<string, { prospects: number; total: number }> = {};
+    const districtStats: Record<string, { prospects: number }> = {};
+
+    // Contar prospectos por tipo
+    prospectsData?.forEach((p: any) => {
+      const businessType = p.searches?.business_type || 'Desconocido';
+      if (!typeStats[businessType]) {
+        typeStats[businessType] = { prospects: 0, total: 0 };
+      }
+      typeStats[businessType].prospects++;
+
+      // Extraer distrito de la direccion
+      const address = (p.address || '').toLowerCase();
+      const districts = ['miraflores', 'san isidro', 'surco', 'santiago de surco', 'san borja', 'la molina', 'barranco'];
+      for (const d of districts) {
+        if (address.includes(d)) {
+          const districtName = d === 'santiago de surco' ? 'surco' : d;
+          if (!districtStats[districtName]) {
+            districtStats[districtName] = { prospects: 0 };
+          }
+          districtStats[districtName].prospects++;
+          break;
+        }
+      }
+    });
+
+    // Contar totales por tipo de negocio (contactados)
+    const { data: businessesByType } = await supabase
+      .from('businesses')
+      .select(`
+        search_id,
+        contact_actions,
+        searches (
+          business_type
+        )
+      `)
+      .not('contact_actions', 'eq', '[]');
+
+    businessesByType?.forEach((b: any) => {
+      const businessType = b.searches?.business_type || 'Desconocido';
+      if (!typeStats[businessType]) {
+        typeStats[businessType] = { prospects: 0, total: 0 };
+      }
+      typeStats[businessType].total++;
+    });
+
+    // Encontrar el mejor tipo de negocio (con al menos 3 contactados)
+    let bestType: { name: string; rate: number; prospects: number } | null = null;
+    for (const [type, stats] of Object.entries(typeStats)) {
+      if (stats.total >= 3) {
+        const rate = (stats.prospects / stats.total) * 100;
+        if (!bestType || rate > bestType.rate) {
+          bestType = { name: type, rate, prospects: stats.prospects };
+        }
+      }
+    }
+
+    // Top distritos con prospectos
+    const topDistricts = Object.entries(districtStats)
+      .sort((a, b) => b[1].prospects - a[1].prospects)
+      .slice(0, 3)
+      .map(([name, stats]) => ({ name, prospects: stats.prospects }));
+
     return NextResponse.json({
       total: {
         searches: totalSearches || 0,
@@ -209,6 +287,10 @@ export async function GET() {
         prospects: prospectsToday,
         discarded: discardedToday,
         byUser: Array.from(userStatsToday.values()),
+      },
+      insights: {
+        bestType,
+        topDistricts,
       },
     });
   } catch (error) {

@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 // POST - Registrar nueva acción de contacto
 export async function POST(request: Request) {
   try {
-    const { businessId, userId, actionType, notes } = await request.json();
+    const { businessId, userId, actionType, notes, isFollowUp } = await request.json();
 
     if (!businessId || !actionType) {
       return NextResponse.json(
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
         user_id: userId || null,
         action_type: actionType,
         notes: notes || null,
+        is_follow_up: isFollowUp || false,
       })
       .select()
       .single();

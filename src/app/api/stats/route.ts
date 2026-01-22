@@ -126,40 +126,16 @@ export async function GET() {
       .gte('created_at', todayISO);
 
     // Obtener follow-ups de hoy desde contact_history
-    // Un follow-up es cuando un negocio ya tenia contactos previos
+    // Incluimos is_follow_up si existe la columna
     const { data: todayHistory } = await supabase
       .from('contact_history')
-      .select('business_id, user_id, created_at')
+      .select('business_id, user_id, created_at, is_follow_up')
       .gte('created_at', todayISO);
 
-    // Obtener todos los contactos previos para determinar cuales son follow-ups
-    const todayBusinessIds = [...new Set(todayHistory?.map(h => h.business_id) || [])];
-
-    // Verificar si tienen historial previo en contact_history
-    const { data: allHistoryForToday } = await supabase
-      .from('contact_history')
-      .select('business_id, created_at')
-      .in('business_id', todayBusinessIds)
-      .lt('created_at', todayISO);
-
-    // Negocios que ya tenian contactos antes de hoy (en contact_history)
-    const businessesWithPriorContact = new Set(allHistoryForToday?.map(h => h.business_id) || []);
-
-    // TAMBIÉN verificar contacted_at en businesses (datos legacy antes del historial)
-    const { data: businessesContactedBefore } = await supabase
-      .from('businesses')
-      .select('id, contacted_at')
-      .in('id', todayBusinessIds)
-      .lt('contacted_at', todayISO);
-
-    // Agregar negocios con contacted_at antes de hoy
-    businessesContactedBefore?.forEach((b: any) => {
-      businessesWithPriorContact.add(b.id);
-    });
-
-    // Contar follow-ups por usuario hoy
+    // Contar follow-ups por usuario hoy usando el flag is_follow_up
     todayHistory?.forEach((h: any) => {
-      if (businessesWithPriorContact.has(h.business_id)) {
+      // Solo contar si is_follow_up es true
+      if (h.is_follow_up === true) {
         const userName = h.user_id ? userMap.get(h.user_id) || 'Desconocido' : null;
         if (userName) {
           const stats = userStatsToday.get(userName) || {

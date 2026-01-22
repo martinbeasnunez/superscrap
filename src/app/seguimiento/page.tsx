@@ -205,6 +205,7 @@ export default function SeguimientoPage() {
           businessId: business.id,
           userId,
           actionType: action,
+          isFollowUp: true,
         }),
       });
 

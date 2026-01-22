@@ -3,6 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
+// Interfaz para prospectos detallados
+interface ProspectBusiness {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  contact_actions: string[];
+  contacted_by_name: string | null;
+  contacted_at: string | null;
+  search_type: string;
+  search_city: string;
+}
+
 interface ContactStats {
   whatsapp: number;
   email: number;
@@ -62,6 +75,9 @@ export default function BusquedasPage() {
   const [searches, setSearches] = useState<SearchWithUser[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showProspectsModal, setShowProspectsModal] = useState(false);
+  const [prospects, setProspects] = useState<ProspectBusiness[]>([]);
+  const [loadingProspects, setLoadingProspects] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -85,6 +101,24 @@ export default function BusquedasPage() {
 
     fetchData();
   }, []);
+
+  const fetchProspects = async () => {
+    setLoadingProspects(true);
+    try {
+      const res = await fetch('/api/prospects');
+      const data = await res.json();
+      setProspects(data.prospects || []);
+    } catch (error) {
+      console.error('Error fetching prospects:', error);
+    } finally {
+      setLoadingProspects(false);
+    }
+  };
+
+  const openProspectsModal = () => {
+    setShowProspectsModal(true);
+    fetchProspects();
+  };
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('es-PE', {
@@ -162,10 +196,13 @@ export default function BusquedasPage() {
                 <p className="text-3xl font-bold text-blue-600">{stats.total.call}</p>
                 <p className="text-sm text-gray-500">Llamadas</p>
               </div>
-              <div className="text-center p-4 bg-emerald-50 rounded-lg">
+              <button
+                onClick={openProspectsModal}
+                className="text-center p-4 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors border-2 border-emerald-200 cursor-pointer"
+              >
                 <p className="text-3xl font-bold text-emerald-600">{stats.total.prospects}</p>
-                <p className="text-sm text-gray-500">Prospectos</p>
-              </div>
+                <p className="text-sm text-emerald-700 font-medium">Prospectos</p>
+              </button>
               <Link href="/seguimiento" className="text-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors border-2 border-orange-200">
                 <p className="text-3xl font-bold text-orange-600">{stats.total.needsFollowUp}</p>
                 <p className="text-sm text-orange-700 font-medium">Pendientes</p>
@@ -250,6 +287,122 @@ export default function BusquedasPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Funnel & Insights Panel */}
+            <div className="border-t pt-4 mt-4">
+              <p className="text-xs text-gray-500 uppercase font-medium mb-3">Funnel de Conversion</p>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Funnel Visual */}
+                <div className="space-y-2">
+                  {(() => {
+                    const totalContacts = stats.total.whatsapp + stats.total.email + stats.total.call;
+                    const prospectRate = totalContacts > 0 ? ((stats.total.prospects / totalContacts) * 100).toFixed(1) : '0';
+                    const discardRate = totalContacts > 0 ? ((stats.total.discarded / totalContacts) * 100).toFixed(1) : '0';
+                    const pendingRate = totalContacts > 0 ? (((totalContacts - stats.total.prospects - stats.total.discarded) / totalContacts) * 100).toFixed(1) : '0';
+
+                    return (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <div className="w-24 text-right text-sm text-gray-600">Contactados</div>
+                          <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-blue-500 rounded-full" style={{ width: '100%' }}></div>
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">{totalContacts}</span>
+                          </div>
+                          <div className="w-16 text-sm text-gray-500">100%</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-24 text-right text-sm text-gray-600">En proceso</div>
+                          <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-amber-500 rounded-full" style={{ width: `${pendingRate}%` }}></div>
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700">{totalContacts - stats.total.prospects - stats.total.discarded}</span>
+                          </div>
+                          <div className="w-16 text-sm text-amber-600 font-medium">{pendingRate}%</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-24 text-right text-sm text-gray-600">Prospectos</div>
+                          <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-emerald-500 rounded-full" style={{ width: `${prospectRate}%` }}></div>
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700">{stats.total.prospects}</span>
+                          </div>
+                          <div className="w-16 text-sm text-emerald-600 font-medium">{prospectRate}%</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-24 text-right text-sm text-gray-600">Descartados</div>
+                          <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gray-400 rounded-full" style={{ width: `${discardRate}%` }}></div>
+                            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700">{stats.total.discarded}</span>
+                          </div>
+                          <div className="w-16 text-sm text-gray-500">{discardRate}%</div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Insights & Projections */}
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100">
+                  <p className="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    Proyecciones
+                  </p>
+                  {(() => {
+                    const totalContacts = stats.total.whatsapp + stats.total.email + stats.total.call;
+                    const conversionRate = totalContacts > 0 ? stats.total.prospects / totalContacts : 0;
+                    const targetProspects = 10;
+                    const contactsNeeded = conversionRate > 0 ? Math.ceil(targetProspects / conversionRate) : 0;
+                    const contactsToGo = Math.max(0, contactsNeeded - totalContacts);
+
+                    // Contactos por dia promedio (asumiendo datos de los ultimos 7 dias)
+                    const avgContactsPerDay = Math.round(totalContacts / 7);
+                    const daysToTarget = avgContactsPerDay > 0 ? Math.ceil(contactsToGo / avgContactsPerDay) : 0;
+
+                    return (
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Tasa de conversion:</span>
+                          <span className="font-bold text-indigo-700">{(conversionRate * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="border-t border-indigo-200 pt-3">
+                          <p className="text-gray-700 mb-2">
+                            Para <span className="font-bold text-emerald-600">{targetProspects} prospectos</span>:
+                          </p>
+                          {conversionRate > 0 ? (
+                            <>
+                              <p className="text-indigo-800">
+                                Necesitas <strong>{contactsNeeded}</strong> contactos totales
+                              </p>
+                              {contactsToGo > 0 ? (
+                                <p className="text-amber-700 mt-1">
+                                  Te faltan <strong>{contactsToGo}</strong> contactos mas
+                                  {daysToTarget > 0 && avgContactsPerDay > 0 && (
+                                    <span className="text-gray-500"> (~{daysToTarget} dias al ritmo actual)</span>
+                                  )}
+                                </p>
+                              ) : (
+                                <p className="text-emerald-700 mt-1 font-medium">
+                                  Ya tienes suficientes contactos para esta meta
+                                </p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              Aun no hay suficientes datos para proyectar
+                            </p>
+                          )}
+                        </div>
+                        {stats.total.prospects > 0 && (
+                          <div className="border-t border-indigo-200 pt-3 text-xs text-gray-500">
+                            Tip: Por cada {conversionRate > 0 ? Math.round(1/conversionRate) : '?'} contactos, obtienes 1 prospecto
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -367,6 +520,108 @@ export default function BusquedasPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Prospectos */}
+      {showProspectsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-xl">
+            <div className="p-4 border-b flex justify-between items-center bg-emerald-50">
+              <h2 className="text-lg font-bold text-emerald-900 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Prospectos ({prospects.length})
+              </h2>
+              <button
+                onClick={() => setShowProspectsModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="overflow-y-auto max-h-[60vh] p-4">
+              {loadingProspects ? (
+                <div className="flex justify-center py-8">
+                  <svg className="animate-spin h-8 w-8 text-emerald-600" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                </div>
+              ) : prospects.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No hay prospectos aun</p>
+                  <p className="text-sm mt-2">Los negocios marcados como "Prospecto" apareceran aqui</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {prospects.map((prospect) => (
+                    <div key={prospect.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">{prospect.name}</h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {prospect.search_type} - {prospect.search_city}
+                          </p>
+                          {prospect.address && (
+                            <p className="text-xs text-gray-400 mt-1 truncate">{prospect.address}</p>
+                          )}
+                        </div>
+                        <div className="text-right ml-4 flex-shrink-0">
+                          <div className="flex items-center gap-1 text-xs">
+                            {prospect.contact_actions.includes('whatsapp') && (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded">WA</span>
+                            )}
+                            {prospect.contact_actions.includes('email') && (
+                              <span className="px-2 py-1 bg-red-100 text-red-700 rounded">Email</span>
+                            )}
+                            {prospect.contact_actions.includes('call') && (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">Llamada</span>
+                            )}
+                          </div>
+                          {prospect.contacted_by_name && (
+                            <p className="text-xs text-gray-400 mt-2">por {prospect.contacted_by_name}</p>
+                          )}
+                        </div>
+                      </div>
+                      {prospect.phone && (
+                        <div className="mt-3 pt-3 border-t border-gray-200 flex items-center gap-3">
+                          <a
+                            href={`https://wa.me/51${prospect.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola! Soy de GetLavado, como va todo?`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700"
+                          >
+                            WhatsApp
+                          </a>
+                          <a
+                            href={`tel:${prospect.phone}`}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
+                          >
+                            Llamar
+                          </a>
+                          <span className="text-xs text-gray-400">{prospect.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setShowProspectsModal(false)}
+                className="w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

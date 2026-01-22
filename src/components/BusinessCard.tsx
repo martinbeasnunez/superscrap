@@ -418,7 +418,11 @@ export default function BusinessCard({
 
   const toggleContactAction = async (action: ContactAction) => {
     const isAlreadyMarked = contactActions.includes(action);
+    const hasAnyContact = contactActions.length > 0;
     const currentUserId = getUserIdFromStorage();
+
+    // Es follow-up si el negocio ya fue contactado antes (por cualquier método)
+    const isFollowUp = hasAnyContact;
 
     // Siempre registrar en historial (primer contacto o follow-up)
     try {
@@ -429,6 +433,7 @@ export default function BusinessCard({
           businessId: business.id,
           userId: currentUserId,
           actionType: action,
+          isFollowUp,
         }),
       });
     } catch (error) {

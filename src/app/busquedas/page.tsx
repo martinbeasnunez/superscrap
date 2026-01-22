@@ -44,6 +44,7 @@ interface Stats {
     call: number;
     prospects: number;
     discarded: number;
+    needsFollowUp: number;
   };
   today: {
     searches: number;
@@ -143,7 +144,7 @@ export default function BusquedasPage() {
         {/* Stats Panel */}
         {stats && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-3xl font-bold text-gray-900">{stats.total.searches}</p>
                 <p className="text-sm text-gray-500">Busquedas</p>
@@ -164,6 +165,10 @@ export default function BusquedasPage() {
                 <p className="text-3xl font-bold text-emerald-600">{stats.total.prospects}</p>
                 <p className="text-sm text-gray-500">Prospectos</p>
               </div>
+              <Link href="/seguimiento" className="text-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+                <p className="text-3xl font-bold text-orange-600">{stats.total.needsFollowUp}</p>
+                <p className="text-sm text-gray-500">Follow Up</p>
+              </Link>
               <div className="text-center p-4 bg-gray-100 rounded-lg">
                 <p className="text-3xl font-bold text-gray-500">{stats.total.discarded}</p>
                 <p className="text-sm text-gray-500">Descartados</p>

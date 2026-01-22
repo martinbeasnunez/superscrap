@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ContactAction, LeadStatus } from '@/types';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 interface UserStats {
   name: string;
   whatsapp: number;
@@ -122,6 +124,49 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .gte('created_at', todayISO);
 
+    // Follow-up stats: negocios que necesitan seguimiento (3+ dias sin contacto)
+    const daysThreshold = 3;
+    const thresholdDate = new Date(now.getTime() - daysThreshold * 24 * 60 * 60 * 1000);
+
+    // Obtener historial de contactos para calcular ultimo contacto
+    const businessIds = contactStats?.map((b: any) => b.id) || [];
+
+    // Obtener negocios con sus IDs
+    const { data: businessesWithIds } = await supabase
+      .from('businesses')
+      .select('id, contact_actions, lead_status, contacted_at')
+      .not('contact_actions', 'is', null)
+      .neq('lead_status', 'discarded')
+      .neq('lead_status', 'prospect');
+
+    const validBusinessIds = businessesWithIds?.map((b: any) => b.id) || [];
+
+    const { data: history } = await supabase
+      .from('contact_history')
+      .select('business_id, created_at')
+      .in('business_id', validBusinessIds)
+      .order('created_at', { ascending: false });
+
+    // Agrupar ultimo contacto por negocio
+    const lastContactByBusiness: Record<string, string> = {};
+    history?.forEach((h: any) => {
+      if (!lastContactByBusiness[h.business_id]) {
+        lastContactByBusiness[h.business_id] = h.created_at;
+      }
+    });
+
+    // Contar negocios que necesitan follow-up
+    let needsFollowUp = 0;
+    businessesWithIds?.forEach((b: any) => {
+      const lastContact = lastContactByBusiness[b.id] || b.contacted_at;
+      if (lastContact) {
+        const lastContactDate = new Date(lastContact);
+        if (lastContactDate < thresholdDate) {
+          needsFollowUp++;
+        }
+      }
+    });
+
     return NextResponse.json({
       total: {
         searches: totalSearches || 0,
@@ -131,6 +176,7 @@ export async function GET() {
         call: callTotal,
         prospects: prospectsTotal,
         discarded: discardedTotal,
+        needsFollowUp,
       },
       today: {
         searches: searchesToday || 0,

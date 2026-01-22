@@ -490,18 +490,65 @@ export default function BusquedasPage() {
                           )}
                         </div>
 
-                        {/* Consejos contextuales */}
-                        {totalContacts >= 20 && (
+                        {/* Escenario de mejora */}
+                        {totalContacts >= 20 && conversionPercent < BENCHMARK_GOOD && (
                           <div className="border-t border-indigo-200 pt-3">
-                            <p className="text-xs font-semibold text-indigo-800 mb-2">Consejos para mejorar:</p>
-                            <ul className="space-y-1">
-                              {getTips().map((tip, i) => (
-                                <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                                  <span className="text-indigo-400 mt-0.5">*</span>
-                                  {tip}
-                                </li>
-                              ))}
-                            </ul>
+                            {(() => {
+                              // Calcular escenario mejorado
+                              const improvedRate = Math.min(conversionPercent + 1.5, BENCHMARK_GOOD); // Subir 1.5% o llegar a 5%
+                              const improvedContactsNeeded = Math.ceil(targetProspects / (improvedRate / 100));
+                              const contactsSaved = contactsNeeded - improvedContactsNeeded;
+                              const daysSaved = avgContactsPerDay > 0 ? Math.floor(contactsSaved / avgContactsPerDay) : 0;
+
+                              // Tips especificos segun el nivel
+                              const getMainTip = () => {
+                                if (conversionPercent < BENCHMARK_LOW) {
+                                  return 'Mejora tu pitch con casos de exito locales (ya incluidos en los mensajes)';
+                                } else if (conversionPercent < BENCHMARK_AVERAGE) {
+                                  return 'Haz follow-up a los 3 dias - el 80% de ventas requieren 5+ contactos';
+                                } else {
+                                  return 'Prioriza distritos con mejor respuesta (Miraflores, San Isidro, Surco)';
+                                }
+                              };
+
+                              return (
+                                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                                  <p className="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                    Si subes tu conversion a {improvedRate.toFixed(1)}%:
+                                  </p>
+                                  <p className="text-sm text-emerald-900">
+                                    Necesitarias solo <strong>{improvedContactsNeeded}</strong> contactos para {targetProspects} prospectos
+                                  </p>
+                                  <p className="text-xs text-emerald-700 mt-1">
+                                    Te ahorras <strong>{contactsSaved}</strong> contactos
+                                    {daysSaved > 0 && <span> (~{daysSaved} dias de trabajo)</span>}
+                                  </p>
+                                  <div className="mt-2 pt-2 border-t border-emerald-200">
+                                    <p className="text-xs text-emerald-800">
+                                      <strong>Como lograrlo:</strong> {getMainTip()}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Mensaje para los que ya estan bien */}
+                        {totalContacts >= 20 && conversionPercent >= BENCHMARK_GOOD && (
+                          <div className="border-t border-indigo-200 pt-3">
+                            <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                              <p className="text-xs font-semibold text-purple-800 mb-1">
+                                Excelente conversion! Ahora enfocate en volumen.
+                              </p>
+                              <p className="text-xs text-purple-700">
+                                Con tu tasa actual, cada {Math.round(1/conversionRate)} contactos = 1 prospecto.
+                                Duplica tus contactos diarios para duplicar resultados.
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>

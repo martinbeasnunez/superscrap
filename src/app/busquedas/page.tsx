@@ -346,11 +346,12 @@ export default function BusquedasPage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
-                    Proyecciones
+                    Proyecciones y Benchmarks
                   </p>
                   {(() => {
                     const totalContacts = stats.total.whatsapp + stats.total.email + stats.total.call;
                     const conversionRate = totalContacts > 0 ? stats.total.prospects / totalContacts : 0;
+                    const conversionPercent = conversionRate * 100;
                     const targetProspects = 10;
                     const contactsNeeded = conversionRate > 0 ? Math.ceil(targetProspects / conversionRate) : 0;
                     const contactsToGo = Math.max(0, contactsNeeded - totalContacts);
@@ -359,12 +360,107 @@ export default function BusquedasPage() {
                     const avgContactsPerDay = Math.round(totalContacts / 7);
                     const daysToTarget = avgContactsPerDay > 0 ? Math.ceil(contactsToGo / avgContactsPerDay) : 0;
 
+                    // Benchmarks de la industria B2B cold outreach
+                    // Fuente: HubSpot, Salesforce, industry standards
+                    const BENCHMARK_LOW = 1; // 1% - por debajo necesita mejora urgente
+                    const BENCHMARK_AVERAGE = 2.5; // 2.5% - promedio de la industria
+                    const BENCHMARK_GOOD = 5; // 5% - buen desempeno
+                    const BENCHMARK_EXCELLENT = 10; // 10%+ - excelente
+
+                    // Determinar nivel y color
+                    let levelLabel = '';
+                    let levelColor = '';
+                    let levelBg = '';
+                    if (conversionPercent < BENCHMARK_LOW) {
+                      levelLabel = 'Necesita mejora';
+                      levelColor = 'text-red-600';
+                      levelBg = 'bg-red-100';
+                    } else if (conversionPercent < BENCHMARK_AVERAGE) {
+                      levelLabel = 'Por debajo del promedio';
+                      levelColor = 'text-amber-600';
+                      levelBg = 'bg-amber-100';
+                    } else if (conversionPercent < BENCHMARK_GOOD) {
+                      levelLabel = 'En el promedio';
+                      levelColor = 'text-blue-600';
+                      levelBg = 'bg-blue-100';
+                    } else if (conversionPercent < BENCHMARK_EXCELLENT) {
+                      levelLabel = 'Buen desempeno';
+                      levelColor = 'text-emerald-600';
+                      levelBg = 'bg-emerald-100';
+                    } else {
+                      levelLabel = 'Excelente';
+                      levelColor = 'text-purple-600';
+                      levelBg = 'bg-purple-100';
+                    }
+
+                    // Consejos basados en la tasa actual
+                    const getTips = () => {
+                      if (conversionPercent < BENCHMARK_LOW) {
+                        return [
+                          'Revisa la calidad de tus leads - busca negocios mas relevantes',
+                          'Mejora tu pitch inicial - se mas especifico con el beneficio',
+                          'Contacta en horarios optimos (9-11am o 2-4pm)',
+                        ];
+                      } else if (conversionPercent < BENCHMARK_AVERAGE) {
+                        return [
+                          'Agrega casos de exito locales en tu primer mensaje',
+                          'Haz follow-up consistente (el 80% de ventas requieren 5+ contactos)',
+                          'Prueba llamadas en vez de solo WhatsApp',
+                        ];
+                      } else if (conversionPercent < BENCHMARK_GOOD) {
+                        return [
+                          'Vas bien! Enfocate en hacer mas volumen',
+                          'Experimenta con diferentes pitches para A/B testing',
+                          'Prioriza distritos con mejor respuesta',
+                        ];
+                      } else {
+                        return [
+                          'Excelente trabajo! Mantiene la consistencia',
+                          'Documenta que esta funcionando para replicarlo',
+                          'Considera aumentar el volumen de contactos',
+                        ];
+                      }
+                    };
+
                     return (
                       <div className="space-y-3 text-sm">
+                        {/* Tasa con benchmark visual */}
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Tasa de conversion:</span>
-                          <span className="font-bold text-indigo-700">{(conversionRate * 100).toFixed(1)}%</span>
+                          <span className="text-gray-600">Tu tasa de conversion:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-indigo-700">{conversionPercent.toFixed(1)}%</span>
+                            {totalContacts >= 50 && (
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${levelBg} ${levelColor}`}>
+                                {levelLabel}
+                              </span>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Benchmark visual */}
+                        <div className="relative pt-1">
+                          <div className="flex text-xs text-gray-400 justify-between mb-1">
+                            <span>0%</span>
+                            <span>2.5%</span>
+                            <span>5%</span>
+                            <span>10%+</span>
+                          </div>
+                          <div className="h-2 bg-gradient-to-r from-red-200 via-amber-200 via-blue-200 to-emerald-200 rounded-full relative">
+                            {/* Marcador de posicion actual */}
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-indigo-600 rounded-full border-2 border-white shadow"
+                              style={{ left: `${Math.min(conversionPercent * 10, 100)}%` }}
+                            />
+                          </div>
+                          <div className="flex text-xs text-gray-400 justify-between mt-1">
+                            <span>Bajo</span>
+                            <span>Promedio</span>
+                            <span>Bueno</span>
+                            <span>Top</span>
+                          </div>
+                        </div>
+
+                        {/* Proyeccion */}
                         <div className="border-t border-indigo-200 pt-3">
                           <p className="text-gray-700 mb-2">
                             Para <span className="font-bold text-emerald-600">{targetProspects} prospectos</span>:
@@ -393,9 +489,19 @@ export default function BusquedasPage() {
                             </p>
                           )}
                         </div>
-                        {stats.total.prospects > 0 && (
-                          <div className="border-t border-indigo-200 pt-3 text-xs text-gray-500">
-                            Tip: Por cada {conversionRate > 0 ? Math.round(1/conversionRate) : '?'} contactos, obtienes 1 prospecto
+
+                        {/* Consejos contextuales */}
+                        {totalContacts >= 20 && (
+                          <div className="border-t border-indigo-200 pt-3">
+                            <p className="text-xs font-semibold text-indigo-800 mb-2">Consejos para mejorar:</p>
+                            <ul className="space-y-1">
+                              {getTips().map((tip, i) => (
+                                <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
+                                  <span className="text-indigo-400 mt-0.5">*</span>
+                                  {tip}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                       </div>

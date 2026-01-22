@@ -490,64 +490,71 @@ export default function BusquedasPage() {
                           )}
                         </div>
 
-                        {/* Escenario de mejora */}
-                        {totalContacts >= 20 && conversionPercent < BENCHMARK_GOOD && (
+                        {/* Insight clave: no es cantidad, es calidad */}
+                        {totalContacts >= 20 && (
                           <div className="border-t border-indigo-200 pt-3">
-                            {(() => {
-                              // Calcular escenario mejorado
-                              const improvedRate = Math.min(conversionPercent + 1.5, BENCHMARK_GOOD); // Subir 1.5% o llegar a 5%
-                              const improvedContactsNeeded = Math.ceil(targetProspects / (improvedRate / 100));
-                              const contactsSaved = contactsNeeded - improvedContactsNeeded;
-                              const daysSaved = avgContactsPerDay > 0 ? Math.floor(contactsSaved / avgContactsPerDay) : 0;
+                            <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                              <p className="text-xs font-bold text-amber-900 mb-2 flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                El juego NO es mandar mas mensajes
+                              </p>
+                              <p className="text-xs text-amber-800 mb-2">
+                                La clave es <strong>hablar con decision makers</strong> (duenos, gerentes, admin) y obtener respuestas.
+                              </p>
 
-                              // Tips especificos segun el nivel
-                              const getMainTip = () => {
-                                if (conversionPercent < BENCHMARK_LOW) {
-                                  return 'Mejora tu pitch con casos de exito locales (ya incluidos en los mensajes)';
-                                } else if (conversionPercent < BENCHMARK_AVERAGE) {
-                                  return 'Haz follow-up a los 3 dias - el 80% de ventas requieren 5+ contactos';
-                                } else {
-                                  return 'Prioriza distritos con mejor respuesta (Miraflores, San Isidro, Surco)';
-                                }
-                              };
-
-                              return (
-                                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
-                                  <p className="text-xs font-semibold text-emerald-800 mb-2 flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                    Si subes tu conversion a {improvedRate.toFixed(1)}%:
-                                  </p>
-                                  <p className="text-sm text-emerald-900">
-                                    Necesitarias solo <strong>{improvedContactsNeeded}</strong> contactos para {targetProspects} prospectos
-                                  </p>
-                                  <p className="text-xs text-emerald-700 mt-1">
-                                    Te ahorras <strong>{contactsSaved}</strong> contactos
-                                    {daysSaved > 0 && <span> (~{daysSaved} dias de trabajo)</span>}
-                                  </p>
-                                  <div className="mt-2 pt-2 border-t border-emerald-200">
-                                    <p className="text-xs text-emerald-800">
-                                      <strong>Como lograrlo:</strong> {getMainTip()}
-                                    </p>
-                                  </div>
+                              {conversionPercent < BENCHMARK_AVERAGE ? (
+                                <div className="space-y-2 text-xs">
+                                  <p className="text-amber-900 font-medium">Para mejorar tu conversion:</p>
+                                  <ul className="space-y-1 text-amber-800">
+                                    <li className="flex items-start gap-1">
+                                      <span className="text-amber-500 font-bold">1.</span>
+                                      <span><strong>Llama</strong> en vez de solo WhatsApp - las llamadas tienen 3x mas respuesta</span>
+                                    </li>
+                                    <li className="flex items-start gap-1">
+                                      <span className="text-amber-500 font-bold">2.</span>
+                                      <span><strong>Pregunta por el dueno/encargado</strong> - no dejes el mensaje con recepcion</span>
+                                    </li>
+                                    <li className="flex items-start gap-1">
+                                      <span className="text-amber-500 font-bold">3.</span>
+                                      <span><strong>Busca obtener un "si" o "no"</strong> - una respuesta es mejor que silencio</span>
+                                    </li>
+                                  </ul>
                                 </div>
-                              );
-                            })()}
-                          </div>
-                        )}
+                              ) : (
+                                <div className="space-y-2 text-xs">
+                                  <p className="text-amber-900 font-medium">Vas bien! Siguientes pasos:</p>
+                                  <ul className="space-y-1 text-amber-800">
+                                    <li className="flex items-start gap-1">
+                                      <span className="text-amber-500 font-bold">*</span>
+                                      <span>Prioriza distritos premium (Miraflores, San Isidro, Surco)</span>
+                                    </li>
+                                    <li className="flex items-start gap-1">
+                                      <span className="text-amber-500 font-bold">*</span>
+                                      <span>Haz follow-up a los que no respondieron - el 80% de ventas requieren 5+ contactos</span>
+                                    </li>
+                                  </ul>
+                                </div>
+                              )}
 
-                        {/* Mensaje para los que ya estan bien */}
-                        {totalContacts >= 20 && conversionPercent >= BENCHMARK_GOOD && (
-                          <div className="border-t border-indigo-200 pt-3">
-                            <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                              <p className="text-xs font-semibold text-purple-800 mb-1">
-                                Excelente conversion! Ahora enfocate en volumen.
-                              </p>
-                              <p className="text-xs text-purple-700">
-                                Con tu tasa actual, cada {Math.round(1/conversionRate)} contactos = 1 prospecto.
-                                Duplica tus contactos diarios para duplicar resultados.
-                              </p>
+                              {(() => {
+                                // Escenario mejorado
+                                const improvedRate = Math.min(conversionPercent + 2, BENCHMARK_GOOD);
+                                const improvedContactsNeeded = Math.ceil(targetProspects / (improvedRate / 100));
+                                const contactsSaved = contactsNeeded - improvedContactsNeeded;
+
+                                if (contactsSaved > 10 && conversionPercent < BENCHMARK_GOOD) {
+                                  return (
+                                    <div className="mt-2 pt-2 border-t border-amber-200">
+                                      <p className="text-xs text-emerald-700 font-medium">
+                                        Si subes a {improvedRate.toFixed(1)}% hablando con decisores: necesitas solo {improvedContactsNeeded} contactos (te ahorras {contactsSaved})
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </div>
                           </div>
                         )}

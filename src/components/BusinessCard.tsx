@@ -442,8 +442,10 @@ export default function BusinessCard({
     updateBusiness(newActions, leadStatus);
   };
 
-  const updateLeadStatus = (status: LeadStatus) => {
-    updateBusiness(contactActions, status);
+  const toggleLeadStatus = (status: LeadStatus) => {
+    // Si ya tiene ese estado, quitarlo (volver a no_contact)
+    const newStatus = leadStatus === status ? 'no_contact' : status;
+    updateBusiness(contactActions, newStatus);
   };
 
   const getMatchColor = (percent: number) => {
@@ -804,7 +806,7 @@ export default function BusinessCard({
         <p className="text-xs text-gray-500 mb-2">Estado:</p>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => updateLeadStatus('prospect')}
+            onClick={() => toggleLeadStatus('prospect')}
             disabled={updating}
             className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
               leadStatus === 'prospect'
@@ -815,7 +817,7 @@ export default function BusinessCard({
             🟢 Prospecto
           </button>
           <button
-            onClick={() => updateLeadStatus('discarded')}
+            onClick={() => toggleLeadStatus('discarded')}
             disabled={updating}
             className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
               leadStatus === 'discarded'

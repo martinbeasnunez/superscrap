@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const daysThreshold = parseInt(searchParams.get('days') || '3');
 
     // Obtener todos los negocios que han sido contactados
@@ -60,13 +61,13 @@ export async function GET(request: Request) {
       contacts: Array<{ date: string; action: string; userName: string | null }>;
     }> = {};
 
-    history?.forEach(h => {
+    history?.forEach((h: any) => {
       if (!historyByBusiness[h.business_id]) {
         historyByBusiness[h.business_id] = {
           lastContact: h.created_at,
           contactCount: 0,
           lastAction: h.action_type,
-          lastContactedBy: (h.users as { name: string } | null)?.name || null,
+          lastContactedBy: h.users?.name || null,
           contacts: [],
         };
       }
@@ -74,13 +75,13 @@ export async function GET(request: Request) {
       historyByBusiness[h.business_id].contacts.push({
         date: h.created_at,
         action: h.action_type,
-        userName: (h.users as { name: string } | null)?.name || null,
+        userName: h.users?.name || null,
       });
     });
 
     // Calcular días desde último contacto y filtrar
     const now = new Date();
-    const followUps = businesses?.map(b => {
+    const followUps = businesses?.map((b: any) => {
       const historyInfo = historyByBusiness[b.id];
       const lastContactDate = historyInfo?.lastContact || b.contacted_at;
       const daysSinceContact = lastContactDate
@@ -89,20 +90,20 @@ export async function GET(request: Request) {
 
       return {
         ...b,
-        businessType: (b.searches as { business_type: string } | null)?.business_type || 'Negocio',
-        city: (b.searches as { city: string } | null)?.city || '',
-        contactedByName: (b.users as { name: string } | null)?.name || null,
+        businessType: b.searches?.business_type || 'Negocio',
+        city: b.searches?.city || '',
+        contactedByName: b.users?.name || null,
         lastContactDate,
         daysSinceContact,
         contactCount: historyInfo?.contactCount || 1,
         lastAction: historyInfo?.lastAction || b.contact_actions?.[0] || 'whatsapp',
         contactHistory: historyInfo?.contacts || [],
       };
-    }).filter(b => {
+    }).filter((b: any) => {
       // Filtrar por días sin contacto
       if (b.daysSinceContact === null) return false;
       return b.daysSinceContact >= daysThreshold;
-    }).sort((a, b) => {
+    }).sort((a: any, b: any) => {
       // Ordenar por días sin contacto (más urgentes primero)
       return (b.daysSinceContact || 0) - (a.daysSinceContact || 0);
     });
@@ -111,25 +112,25 @@ export async function GET(request: Request) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const contactedToday = businesses?.map(b => {
+    const contactedToday = businesses?.map((b: any) => {
       const historyInfo = historyByBusiness[b.id];
       const lastContactDate = historyInfo?.lastContact || b.contacted_at;
 
       return {
         ...b,
-        businessType: (b.searches as { business_type: string } | null)?.business_type || 'Negocio',
-        city: (b.searches as { city: string } | null)?.city || '',
-        contactedByName: (b.users as { name: string } | null)?.name || null,
+        businessType: b.searches?.business_type || 'Negocio',
+        city: b.searches?.city || '',
+        contactedByName: b.users?.name || null,
         lastContactDate,
         contactCount: historyInfo?.contactCount || 1,
         lastAction: historyInfo?.lastAction || b.contact_actions?.[0] || 'whatsapp',
         contactHistory: historyInfo?.contacts || [],
       };
-    }).filter(b => {
+    }).filter((b: any) => {
       if (!b.lastContactDate) return false;
       const contactDate = new Date(b.lastContactDate);
       return contactDate >= today;
-    }).sort((a, b) => {
+    }).sort((a: any, b: any) => {
       // Más recientes primero
       return new Date(b.lastContactDate!).getTime() - new Date(a.lastContactDate!).getTime();
     });

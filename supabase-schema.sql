@@ -54,7 +54,26 @@ ALTER TABLE searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service_analyses ENABLE ROW LEVEL SECURITY;
 
+-- Tabla de historial de contactos (para tracking de follow-ups)
+CREATE TABLE contact_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id),
+  action_type TEXT NOT NULL CHECK (action_type IN ('whatsapp', 'email', 'call')),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índices para contact_history
+CREATE INDEX idx_contact_history_business ON contact_history(business_id);
+CREATE INDEX idx_contact_history_user ON contact_history(user_id);
+CREATE INDEX idx_contact_history_created ON contact_history(created_at DESC);
+
+-- Habilitar RLS para contact_history
+ALTER TABLE contact_history ENABLE ROW LEVEL SECURITY;
+
 -- Políticas permisivas para desarrollo (acceso público con anon key)
 CREATE POLICY "Allow all for searches" ON searches FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all for businesses" ON businesses FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all for service_analyses" ON service_analyses FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all for contact_history" ON contact_history FOR ALL USING (true) WITH CHECK (true);

@@ -415,10 +415,30 @@ export default function BusinessCard({
     }
   };
 
-  const toggleContactAction = (action: ContactAction) => {
-    const newActions = contactActions.includes(action)
-      ? contactActions.filter(a => a !== action)
-      : [...contactActions, action];
+  const toggleContactAction = async (action: ContactAction) => {
+    const isAdding = !contactActions.includes(action);
+    const newActions = isAdding
+      ? [...contactActions, action]
+      : contactActions.filter(a => a !== action);
+
+    // Si estamos agregando una acción, registrar en historial
+    if (isAdding) {
+      const currentUserId = getUserIdFromStorage();
+      try {
+        await fetch('/api/contact-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            businessId: business.id,
+            userId: currentUserId,
+            actionType: action,
+          }),
+        });
+      } catch (error) {
+        console.error('Error registering contact history:', error);
+      }
+    }
+
     updateBusiness(newActions, leadStatus);
   };
 

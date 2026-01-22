@@ -135,14 +135,27 @@ export async function GET() {
     // Obtener todos los contactos previos para determinar cuales son follow-ups
     const todayBusinessIds = [...new Set(todayHistory?.map(h => h.business_id) || [])];
 
+    // Verificar si tienen historial previo en contact_history
     const { data: allHistoryForToday } = await supabase
       .from('contact_history')
       .select('business_id, created_at')
       .in('business_id', todayBusinessIds)
       .lt('created_at', todayISO);
 
-    // Negocios que ya tenian contactos antes de hoy
+    // Negocios que ya tenian contactos antes de hoy (en contact_history)
     const businessesWithPriorContact = new Set(allHistoryForToday?.map(h => h.business_id) || []);
+
+    // TAMBIÉN verificar contacted_at en businesses (datos legacy antes del historial)
+    const { data: businessesContactedBefore } = await supabase
+      .from('businesses')
+      .select('id, contacted_at')
+      .in('id', todayBusinessIds)
+      .lt('contacted_at', todayISO);
+
+    // Agregar negocios con contacted_at antes de hoy
+    businessesContactedBefore?.forEach((b: any) => {
+      businessesWithPriorContact.add(b.id);
+    });
 
     // Contar follow-ups por usuario hoy
     todayHistory?.forEach((h: any) => {

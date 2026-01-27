@@ -68,63 +68,77 @@ export default function SeguimientoPage() {
 
           {showTips && (
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-              <div className="grid md:grid-cols-6 gap-3 text-sm">
+              <div className="grid md:grid-cols-4 gap-3 text-sm mb-3">
                 <div className="flex items-start gap-2">
                   <span className="text-lg">📋</span>
                   <div>
                     <p className="font-medium text-gray-800">Nuevos</p>
-                    <p className="text-gray-600 text-xs">Leads de busquedas. Contactalos!</p>
+                    <p className="text-gray-600 text-xs">Sin contactar. Haz el primer contacto!</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-lg">💬</span>
                   <div>
-                    <p className="font-medium text-blue-700">Contactados</p>
-                    <p className="text-gray-600 text-xs">Les escribiste, esperando respuesta</p>
+                    <p className="font-medium text-blue-700">1er Contacto</p>
+                    <p className="text-gray-600 text-xs">Contactados hace 0-2 días</p>
                   </div>
                 </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">⏰</span>
+                  <div>
+                    <p className="font-medium text-orange-700">Seguimiento 1</p>
+                    <p className="text-gray-600 text-xs">3-5 días sin respuesta. Haz follow-up!</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">🔥</span>
+                  <div>
+                    <p className="font-medium text-red-700">Seguimiento 2</p>
+                    <p className="text-gray-600 text-xs">6+ días. URGENTE - actúa hoy!</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-4 gap-3 text-sm">
                 <div className="flex items-start gap-2">
                   <span className="text-lg">⭐</span>
                   <div>
                     <p className="font-medium text-amber-700">Interesados</p>
-                    <p className="text-gray-600 text-xs">Respondieron con interes. Enviales cotizacion!</p>
+                    <p className="text-gray-600 text-xs">Respondieron con interés</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-lg">💰</span>
                   <div>
                     <p className="font-medium text-purple-700">Cotizados</p>
-                    <p className="text-gray-600 text-xs">Tienen precio. Cierra la venta!</p>
+                    <p className="text-gray-600 text-xs">Tienen cotización. Cierra!</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-lg">🎉</span>
                   <div>
                     <p className="font-medium text-green-700">Clientes</p>
-                    <p className="text-gray-600 text-xs">Cerraron! Manten la relacion</p>
+                    <p className="text-gray-600 text-xs">¡Venta cerrada!</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-lg">❌</span>
                   <div>
-                    <p className="font-medium text-red-700">Perdidos</p>
-                    <p className="text-gray-600 text-xs">No interesados o no califican</p>
+                    <p className="font-medium text-gray-500">Perdidos</p>
+                    <p className="text-gray-600 text-xs">No interesados</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-blue-200 grid md:grid-cols-3 gap-4 text-xs text-gray-600">
-                <div>
-                  <span className="font-medium text-gray-700">Nuevo → Contactado:</span>
-                  <span className="ml-1">Enviar 1er mensaje</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Contactado → Interesado:</span>
-                  <span className="ml-1">Respondio con interes</span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Interesado → Cotizado:</span>
-                  <span className="ml-1">Enviar propuesta de precio</span>
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <p className="text-xs text-gray-700 font-medium mb-2">🎯 LA CLAVE DEL ÉXITO: El seguimiento</p>
+                <div className="grid md:grid-cols-2 gap-2 text-xs text-gray-600">
+                  <div className="bg-white/50 rounded p-2">
+                    <span className="font-medium text-orange-700">80% de ventas</span> requieren 5+ follow-ups
+                  </div>
+                  <div className="bg-white/50 rounded p-2">
+                    <span className="font-medium text-red-700">44% de vendedores</span> se rinden después de 1 contacto
+                  </div>
                 </div>
               </div>
             </div>

@@ -2,8 +2,29 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { SalesStage } from '@/types';
 
-// Columnas del pipeline comercial
-export type KanbanColumnId = 'nuevo' | 'contactado' | 'interesado' | 'cotizado' | 'cliente' | 'perdido';
+// Columnas del pipeline comercial con seguimiento
+export type KanbanColumnId =
+  | 'nuevo'
+  | 'contactado'
+  | 'seguimiento_1'  // 3-5 días sin respuesta
+  | 'seguimiento_2'  // 6+ días sin respuesta
+  | 'interesado'
+  | 'cotizado'
+  | 'cliente'
+  | 'perdido';
+
+export interface DecisionMaker {
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  fullName: string | null;
+  position: string | null;
+  seniority: string | null;
+  department: string | null;
+  confidence: number;
+  linkedin: string | null;
+  phone: string | null;
+}
 
 export interface KanbanBusiness {
   id: string;
@@ -11,7 +32,10 @@ export interface KanbanBusiness {
   address: string | null;
   phone: string | null;
   rating: number | null;
+  reviews_count: number | null;
+  description: string | null;
   website: string | null;
+  thumbnail_url: string | null;
   contact_actions: string[] | null;
   lead_status: string | null;
   sales_stage: SalesStage | null;
@@ -21,6 +45,7 @@ export interface KanbanBusiness {
   city: string | null;
   daysSinceContact: number | null;
   contactCount: number;
+  decision_makers: DecisionMaker[] | null;
 }
 
 export interface KanbanResponse {
@@ -28,33 +53,38 @@ export interface KanbanResponse {
   counts: Record<KanbanColumnId, number>;
 }
 
-// Clasificar negocio en columna basado en sales_stage o inferido de datos existentes
+// Clasificar negocio en columna basado en sales_stage Y días sin contacto
 function classifyBusiness(business: KanbanBusiness): KanbanColumnId {
-  // Si tiene sales_stage definido, usarlo
-  if (business.sales_stage) {
-    return business.sales_stage as KanbanColumnId;
-  }
-
-  // Inferir de datos existentes para migración suave
   const hasContacts = business.contact_actions && business.contact_actions.length > 0;
   const leadStatus = business.lead_status;
+  const salesStage = business.sales_stage;
+  const daysSince = business.daysSinceContact;
 
-  // Perdido = discarded
-  if (leadStatus === 'discarded') {
-    return 'perdido';
-  }
+  // Estados finales - siempre respetarlos
+  if (salesStage === 'cliente' || leadStatus === 'cliente') return 'cliente';
+  if (salesStage === 'perdido' || leadStatus === 'discarded') return 'perdido';
 
-  // Interesado = prospect
-  if (leadStatus === 'prospect') {
+  // Cotizado - respetarlo
+  if (salesStage === 'cotizado') return 'cotizado';
+
+  // Interesado/Prospect - pero verificar si necesita seguimiento
+  if (salesStage === 'interesado' || leadStatus === 'prospect') {
+    // Si es interesado pero hace mucho que no lo contactamos, moverlo a seguimiento
+    if (daysSince !== null && daysSince >= 6) return 'seguimiento_2';
+    if (daysSince !== null && daysSince >= 3) return 'seguimiento_1';
     return 'interesado';
   }
 
   // Sin contactar = nuevo
-  if (!hasContacts) {
-    return 'nuevo';
+  if (!hasContacts) return 'nuevo';
+
+  // Tiene contactos - clasificar por tiempo sin contacto
+  if (daysSince !== null) {
+    if (daysSince >= 6) return 'seguimiento_2';
+    if (daysSince >= 3) return 'seguimiento_1';
   }
 
-  // Con contactos pero sin estado = contactado
+  // Contactado recientemente (0-2 días)
   return 'contactado';
 }
 
@@ -69,7 +99,11 @@ export async function GET() {
         address,
         phone,
         rating,
+        reviews_count,
+        description,
         website,
+        thumbnail_url,
+        decision_makers,
         contact_actions,
         lead_status,
         sales_stage,
@@ -104,6 +138,8 @@ export async function GET() {
     const columns: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [],
       contactado: [],
+      seguimiento_1: [],
+      seguimiento_2: [],
       interesado: [],
       cotizado: [],
       cliente: [],
@@ -123,7 +159,11 @@ export async function GET() {
         address: b.address,
         phone: b.phone,
         rating: b.rating,
+        reviews_count: b.reviews_count,
+        description: b.description,
         website: b.website,
+        thumbnail_url: b.thumbnail_url,
+        decision_makers: b.decision_makers,
         contact_actions: b.contact_actions,
         lead_status: b.lead_status,
         sales_stage: b.sales_stage,
@@ -142,8 +182,12 @@ export async function GET() {
     // Ordenar cada columna
     // Nuevos: por nombre
     columns.nuevo.sort((a, b) => a.name.localeCompare(b.name));
-    // Contactados: más antiguos primero (necesitan follow up)
+    // Contactados: más antiguos primero (pronto pasarán a seguimiento)
     columns.contactado.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
+    // Seguimiento 1: más antiguos primero (más urgente)
+    columns.seguimiento_1.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
+    // Seguimiento 2: más antiguos primero (crítico)
+    columns.seguimiento_2.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
     // Interesados: más recientes primero
     columns.interesado.sort((a, b) => (a.daysSinceContact || 0) - (b.daysSinceContact || 0));
     // Cotizados: más recientes primero
@@ -156,6 +200,8 @@ export async function GET() {
     const counts: Record<KanbanColumnId, number> = {
       nuevo: columns.nuevo.length,
       contactado: columns.contactado.length,
+      seguimiento_1: columns.seguimiento_1.length,
+      seguimiento_2: columns.seguimiento_2.length,
       interesado: columns.interesado.length,
       cotizado: columns.cotizado.length,
       cliente: columns.cliente.length,

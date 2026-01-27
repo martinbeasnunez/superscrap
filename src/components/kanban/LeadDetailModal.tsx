@@ -282,17 +282,26 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
         }),
       });
 
-      // Actualizar contact_actions
+      // Actualizar contact_actions y sales_stage si es primer contacto
       const currentActions = business.contact_actions || [];
-      if (!currentActions.includes(action)) {
-        await fetch(`/api/businesses/${business.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contact_actions: [...currentActions, action],
-          }),
-        });
+      const isFirstContact = currentActions.length === 0;
+      const newActions = currentActions.includes(action) ? currentActions : [...currentActions, action];
+
+      // Si es primer contacto y está en "nuevo", mover a "contactado"
+      const updateData: Record<string, unknown> = {
+        contact_actions: newActions,
+        user_id: userId,
+      };
+
+      if (isFirstContact && (!business.sales_stage || business.sales_stage === 'nuevo')) {
+        updateData.sales_stage = 'contactado';
       }
+
+      await fetch(`/api/businesses/${business.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
 
       // Refrescar historial y notificar
       await fetchContactHistory();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface ProgressState {
@@ -24,6 +24,23 @@ export default function SearchForm({ userId }: SearchFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<ProgressState | null>(null);
+  const [searchedTypes, setSearchedTypes] = useState<Set<string>>(new Set());
+
+  // Cargar tipos ya buscados
+  useEffect(() => {
+    async function fetchSearchedTypes() {
+      try {
+        const res = await fetch('/api/searches/types');
+        if (res.ok) {
+          const data = await res.json();
+          setSearchedTypes(new Set(data.searchedTypes || []));
+        }
+      } catch (err) {
+        console.error('Error fetching searched types:', err);
+      }
+    }
+    fetchSearchedTypes();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,9 +193,8 @@ export default function SearchForm({ userId }: SearchFormProps) {
 
         {/* Sugerencias de búsqueda */}
         <div className="mt-2">
-          <p className="text-xs text-gray-500 mb-1.5">Sugerencias (ordenadas por potencial):</p>
-          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
-            {(source === 'google' ? [
+          {(() => {
+            const suggestions = source === 'google' ? [
               // TIER 1 - Hoteles (ropa de cama + toallas)
               'hotel 5 estrellas',
               'hotel 4 estrellas',
@@ -282,18 +298,59 @@ export default function SearchForm({ userId }: SearchFormProps) {
               'mantenimiento de edificios',
               'jardineria corporativa',
               'mudanzas empresariales',
-            ]).map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => setBusinessType(suggestion)}
-                disabled={loading}
-                className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors disabled:opacity-50"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
+            ];
+
+            const usedCount = suggestions.filter(s => searchedTypes.has(s.toLowerCase())).length;
+            const pendingCount = suggestions.length - usedCount;
+
+            return (
+              <>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs text-gray-500">Sugerencias (ordenadas por potencial):</p>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                      <span className="text-green-700">{usedCount} buscadas</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                      <span className="text-blue-700">{pendingCount} pendientes</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Barra de progreso */}
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                  <div
+                    className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${(usedCount / suggestions.length) * 100}%` }}
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                  {suggestions.map((suggestion) => {
+                    const isUsed = searchedTypes.has(suggestion.toLowerCase());
+                    return (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setBusinessType(suggestion)}
+                        disabled={loading}
+                        className={`px-2 py-1 text-xs rounded transition-colors disabled:opacity-50 flex items-center gap-1 ${
+                          isUsed
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200 line-through opacity-60'
+                            : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        {isUsed && <span>✓</span>}
+                        {suggestion}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 

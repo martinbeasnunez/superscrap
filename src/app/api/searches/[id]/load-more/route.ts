@@ -273,6 +273,7 @@ export async function POST(
       added: savedCount,
       matching: matchingCount,
       total: newTotal,
+      loadedAt: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Load more error:', error);

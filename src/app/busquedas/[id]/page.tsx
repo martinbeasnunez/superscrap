@@ -260,16 +260,70 @@ export default function SearchDetailPage({
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {sortedBusinesses.map((business) => (
-              <BusinessCard
-                key={business.id}
-                business={business}
-                requiredServices={search.required_services}
-                businessType={search.business_type}
-              />
-            ))}
-          </div>
+          (() => {
+            // Agrupar negocios por fecha (dia)
+            const groupedByDate: Record<string, typeof sortedBusinesses> = {};
+            sortedBusinesses.forEach((business) => {
+              const date = new Date(business.created_at).toLocaleDateString('es-PE', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+              // Agrupar por hora redondeada (para separar cargas del mismo dia)
+              const hourKey = new Date(business.created_at).toISOString().slice(0, 13); // YYYY-MM-DDTHH
+              if (!groupedByDate[hourKey]) {
+                groupedByDate[hourKey] = [];
+              }
+              groupedByDate[hourKey].push(business);
+            });
+
+            const dateGroups = Object.entries(groupedByDate).sort((a, b) => a[0].localeCompare(b[0]));
+
+            return (
+              <div className="space-y-6">
+                {dateGroups.map(([hourKey, groupBusinesses], groupIndex) => {
+                  const firstBusiness = groupBusinesses[0];
+                  const groupDate = new Date(firstBusiness.created_at);
+                  const isToday = new Date().toDateString() === groupDate.toDateString();
+                  const timeLabel = groupDate.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+                  const dateLabel = isToday
+                    ? `Hoy ${timeLabel}`
+                    : groupDate.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }) + ` ${timeLabel}`;
+
+                  return (
+                    <div key={hourKey}>
+                      {/* Mostrar separador si hay mas de un grupo */}
+                      {dateGroups.length > 1 && (
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                          <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                            groupIndex === dateGroups.length - 1
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {groupIndex === dateGroups.length - 1 && dateGroups.length > 1 ? '🆕 ' : ''}
+                            {dateLabel} ({groupBusinesses.length})
+                          </span>
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                        </div>
+                      )}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {groupBusinesses.map((business) => (
+                          <BusinessCard
+                            key={business.id}
+                            business={business}
+                            requiredServices={search.required_services}
+                            businessType={search.business_type}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()
         )}
       </div>
     </div>

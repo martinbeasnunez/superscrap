@@ -25,6 +25,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
   const [error, setError] = useState('');
   const [progress, setProgress] = useState<ProgressState | null>(null);
   const [searchedTypes, setSearchedTypes] = useState<Set<string>>(new Set());
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false);
 
   // Cargar tipos ya buscados
   useEffect(() => {
@@ -307,9 +308,10 @@ export default function SearchForm({ userId }: SearchFormProps) {
             const pendingSuggestions = suggestions.filter(s => !searchedTypes.has(s.toLowerCase()));
             const usedSuggestions = suggestions.filter(s => searchedTypes.has(s.toLowerCase()));
 
-            // Mostrar max 50 pendientes a la vez para no saturar
-            const visiblePending = pendingSuggestions.slice(0, 50);
-            const hiddenPendingCount = pendingSuggestions.length - visiblePending.length;
+            // Mostrar todas o solo 50 segun toggle
+            const visiblePending = showAllSuggestions ? pendingSuggestions : pendingSuggestions.slice(0, 50);
+            const hiddenPendingCount = pendingSuggestions.length - (showAllSuggestions ? pendingSuggestions.length : 50);
+            const canShowMore = hiddenPendingCount > 0 && !showAllSuggestions;
 
             return (
               <>
@@ -335,7 +337,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                <div className={`flex flex-wrap gap-1.5 overflow-y-auto pr-1 ${showAllSuggestions ? 'max-h-80' : 'max-h-40'}`}>
                   {/* Pendientes primero */}
                   {visiblePending.map((suggestion) => (
                     <button
@@ -349,11 +351,24 @@ export default function SearchForm({ userId }: SearchFormProps) {
                     </button>
                   ))}
 
-                  {/* Indicador de mas pendientes */}
-                  {hiddenPendingCount > 0 && (
-                    <span className="px-2 py-1 text-xs text-gray-400 italic">
-                      +{hiddenPendingCount} mas...
-                    </span>
+                  {/* Toggle para ver mas/menos pendientes */}
+                  {canShowMore && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllSuggestions(true)}
+                      className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors font-medium"
+                    >
+                      +{hiddenPendingCount} mas →
+                    </button>
+                  )}
+                  {showAllSuggestions && pendingSuggestions.length > 50 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllSuggestions(false)}
+                      className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                    >
+                      ← Mostrar menos
+                    </button>
                   )}
 
                   {/* Separador si hay usadas */}

@@ -9,7 +9,8 @@ interface SerpAPIResponse {
 
 export async function searchLocalBusinesses(
   businessType: string,
-  city: string
+  city: string,
+  start: number = 0
 ): Promise<SerpAPILocalResult[]> {
   const query = `${businessType} en ${city}`;
 
@@ -22,6 +23,11 @@ export async function searchLocalBusinesses(
     hl: 'es',
     gl: 'pe',
   });
+
+  // Agregar start para paginacion (0, 20, 40, etc)
+  if (start > 0) {
+    params.append('start', start.toString());
+  }
 
   const response = await fetch(`https://serpapi.com/search.json?${params}`);
 

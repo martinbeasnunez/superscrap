@@ -194,7 +194,11 @@ export default function SearchForm({ userId }: SearchFormProps) {
         {/* Sugerencias de búsqueda */}
         <div className="mt-2">
           {(() => {
-            const suggestions = source === 'google' ? [
+            // Distritos premium para multiplicar sugerencias
+            const premiumDistricts = ['miraflores', 'san isidro', 'surco', 'san borja', 'la molina', 'barranco'];
+
+            // Tipos base de negocio
+            const baseTypes = source === 'google' ? [
               // TIER 1 - Hoteles (ropa de cama + toallas)
               'hotel 5 estrellas',
               'hotel 4 estrellas',
@@ -202,97 +206,81 @@ export default function SearchForm({ userId }: SearchFormProps) {
               'hotel boutique',
               'hotel con piscina',
               'hotel con spa',
-              'resort todo incluido',
+              'resort',
               'apart hotel',
-              'hotel ejecutivo',
-              'hospedaje turistico',
+              'hostal turistico',
               // TIER 1 - Salud (uniformes + ropa de cama)
               'hospital privado',
               'clinica estetica',
               'clinica dental',
               'clinica dermatologica',
-              'centro de rehabilitacion',
-              'clinica de maternidad',
-              'centro de dialisis',
+              'centro medico',
+              'policlinico',
               // TIER 1 - Clubs (toallas + manteles)
               'country club',
               'club deportivo',
               'club de tenis',
               'club de golf',
-              'club nautico',
               // TIER 2 - Spas y bienestar (toallas)
-              'spa urbano',
+              'spa',
               'day spa',
               'centro de masajes',
-              'baños turcos',
-              'centro de relajacion',
+              'sauna',
               // TIER 2 - Gimnasios (toallas)
+              'gimnasio',
               'gimnasio premium',
-              'gimnasio con sauna',
-              'gimnasio con piscina',
-              'centro de crossfit',
-              'club de fitness',
+              'crossfit',
+              'pilates',
               // TIER 2 - Restaurantes (manteles + uniformes)
               'restaurante gourmet',
               'restaurante de autor',
-              'restaurante de hotel',
-              'cevicheria gourmet',
-              'restaurante japones',
+              'cevicheria',
               'steakhouse',
+              'restaurante japones',
+              'restaurante italiano',
               // TIER 3 - Eventos (manteles + uniformes)
-              'salon de recepciones',
+              'salon de eventos',
               'centro de convenciones',
-              'local para eventos',
-              'servicio de banquetes',
-              'catering para bodas',
+              'catering',
               // TIER 3 - Residencias (ropa de cama + toallas)
               'casa de reposo',
               'residencia geriatrica',
               'hogar de ancianos',
-              'hospicio',
             ] : [
-              // TIER 1 - Seguridad (uniformes en volumen)
+              // Directorio no necesita multiplicar por distrito
               'empresa de seguridad',
               'vigilancia privada',
               'seguridad patrimonial',
               'resguardo empresarial',
               'seguridad industrial',
-              // TIER 1 - Limpieza (uniformes)
               'empresa de limpieza',
               'limpieza industrial',
               'facility management',
               'servicios de aseo',
               'limpieza de oficinas',
-              // TIER 1 - Transporte (uniformes)
               'transporte de personal',
               'servicio de courier',
               'logistica empresarial',
               'transporte ejecutivo',
               'empresa de delivery',
-              // TIER 1 - Salud (uniformes medicos)
               'laboratorio clinico',
               'clinica ocupacional',
               'centro medico laboral',
               'policlinico',
-              // TIER 2 - Alimentacion (uniformes + manteles)
               'concesionario de alimentos',
               'comedor industrial',
               'catering corporativo',
               'servicio de cafeteria',
               'alimentacion institucional',
-              // TIER 2 - Construccion/Mineria (overoles)
               'empresa constructora',
               'contratista de obras',
               'empresa minera',
               'petrolera',
-              'gaseoducto',
-              // TIER 2 - Manufactura (uniformes)
               'planta de produccion',
               'fabrica de alimentos',
               'industria farmaceutica',
               'ensambladora',
               'procesadora',
-              // TIER 3 - Servicios (uniformes)
               'control de plagas',
               'empresa de fumigacion',
               'mantenimiento de edificios',
@@ -300,13 +288,33 @@ export default function SearchForm({ userId }: SearchFormProps) {
               'mudanzas empresariales',
             ];
 
+            // Para Google Maps: generar combinaciones tipo + distrito
+            const suggestions = source === 'google'
+              ? [
+                  // Primero los tipos sin distrito (busqueda general en Lima)
+                  ...baseTypes,
+                  // Luego combinaciones con distritos premium
+                  ...baseTypes.flatMap(type =>
+                    premiumDistricts.map(district => `${type} ${district}`)
+                  ),
+                ]
+              : baseTypes;
+
             const usedCount = suggestions.filter(s => searchedTypes.has(s.toLowerCase())).length;
             const pendingCount = suggestions.length - usedCount;
+
+            // Separar en pendientes primero, usadas despues
+            const pendingSuggestions = suggestions.filter(s => !searchedTypes.has(s.toLowerCase()));
+            const usedSuggestions = suggestions.filter(s => searchedTypes.has(s.toLowerCase()));
+
+            // Mostrar max 50 pendientes a la vez para no saturar
+            const visiblePending = pendingSuggestions.slice(0, 50);
+            const hiddenPendingCount = pendingSuggestions.length - visiblePending.length;
 
             return (
               <>
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-xs text-gray-500">Sugerencias (ordenadas por potencial):</p>
+                  <p className="text-xs text-gray-500">Sugerencias ({suggestions.length} combinaciones):</p>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 bg-green-400 rounded-full"></span>
@@ -327,26 +335,47 @@ export default function SearchForm({ userId }: SearchFormProps) {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
-                  {suggestions.map((suggestion) => {
-                    const isUsed = searchedTypes.has(suggestion.toLowerCase());
-                    return (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => setBusinessType(suggestion)}
-                        disabled={loading}
-                        className={`px-2 py-1 text-xs rounded transition-colors disabled:opacity-50 flex items-center gap-1 ${
-                          isUsed
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200 line-through opacity-60'
-                            : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                        }`}
-                      >
-                        {isUsed && <span>✓</span>}
-                        {suggestion}
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+                  {/* Pendientes primero */}
+                  {visiblePending.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => setBusinessType(suggestion)}
+                      disabled={loading}
+                      className="px-2 py-1 text-xs rounded transition-colors disabled:opacity-50 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+
+                  {/* Indicador de mas pendientes */}
+                  {hiddenPendingCount > 0 && (
+                    <span className="px-2 py-1 text-xs text-gray-400 italic">
+                      +{hiddenPendingCount} mas...
+                    </span>
+                  )}
+
+                  {/* Separador si hay usadas */}
+                  {usedSuggestions.length > 0 && visiblePending.length > 0 && (
+                    <div className="w-full border-t border-gray-200 my-1 pt-1">
+                      <span className="text-xs text-gray-400">Ya buscadas:</span>
+                    </div>
+                  )}
+
+                  {/* Usadas al final */}
+                  {usedSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => setBusinessType(suggestion)}
+                      disabled={loading}
+                      className="px-2 py-1 text-xs rounded transition-colors disabled:opacity-50 bg-green-100 text-green-700 hover:bg-green-200 line-through opacity-60 flex items-center gap-1"
+                    >
+                      <span>✓</span>
+                      {suggestion}
+                    </button>
+                  ))}
                 </div>
               </>
             );

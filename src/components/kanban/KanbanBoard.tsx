@@ -4,34 +4,29 @@ import { useState, useEffect, useCallback } from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { KanbanBusiness, KanbanColumnId, KanbanResponse } from '@/app/api/kanban/route';
 import KanbanColumn from './KanbanColumn';
+import LeadDetailModal from './LeadDetailModal';
 
 const COLUMN_ORDER: KanbanColumnId[] = [
-  'sin_contactar',
-  'contactados',
-  'interesados',
-  'follow_up',
-  'descartados',
+  'nuevo',
+  'contactado',
+  'interesado',
+  'cotizado',
+  'cliente',
+  'perdido',
 ];
-
-// Mapeo de columna destino a lead_status
-const COLUMN_TO_STATUS: Record<KanbanColumnId, string | null> = {
-  sin_contactar: 'no_contact',
-  contactados: 'no_contact',
-  interesados: 'prospect',
-  follow_up: 'no_contact',
-  descartados: 'discarded',
-};
 
 export default function KanbanBoard() {
   const [columns, setColumns] = useState<Record<KanbanColumnId, KanbanBusiness[]>>({
-    sin_contactar: [],
-    contactados: [],
-    interesados: [],
-    follow_up: [],
-    descartados: [],
+    nuevo: [],
+    contactado: [],
+    interesado: [],
+    cotizado: [],
+    cliente: [],
+    perdido: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedBusiness, setSelectedBusiness] = useState<KanbanBusiness | null>(null);
 
   const fetchKanbanData = useCallback(async () => {
     try {
@@ -50,18 +45,18 @@ export default function KanbanBoard() {
     fetchKanbanData();
   }, [fetchKanbanData]);
 
-  const updateBusinessStatus = async (businessId: string, newStatus: string) => {
+  const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId) => {
     try {
       const response = await fetch(`/api/businesses/${businessId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead_status: newStatus }),
+        body: JSON.stringify({ sales_stage: newStage }),
       });
       if (!response.ok) {
-        throw new Error('Error al actualizar estado');
+        throw new Error('Error al actualizar etapa');
       }
     } catch (err) {
-      console.error('Error updating business status:', err);
+      console.error('Error updating business stage:', err);
       // Revertir cambios recargando datos
       fetchKanbanData();
     }
@@ -97,7 +92,7 @@ export default function KanbanBoard() {
       const destItems = [...prev[destColumn].filter((b) => b.id !== draggableId)];
       destItems.splice(destination.index, 0, {
         ...business,
-        lead_status: COLUMN_TO_STATUS[destColumn],
+        sales_stage: destColumn,
       });
       newColumns[destColumn] = destItems;
 
@@ -106,15 +101,16 @@ export default function KanbanBoard() {
 
     // Actualizar en la base de datos si cambió la columna
     if (sourceColumn !== destColumn) {
-      const newStatus = COLUMN_TO_STATUS[destColumn];
-      if (newStatus) {
-        updateBusinessStatus(draggableId, newStatus);
-      }
+      updateBusinessStage(draggableId, destColumn);
     }
   };
 
-  const handleAction = async (businessId: string, action: 'whatsapp' | 'email' | 'call') => {
-    // Encontrar el negocio
+  const handleCardClick = (business: KanbanBusiness) => {
+    setSelectedBusiness(business);
+  };
+
+  const handleStageChange = (businessId: string, newStage: KanbanColumnId) => {
+    // Encontrar el negocio y su columna actual
     let business: KanbanBusiness | undefined;
     let sourceColumn: KanbanColumnId | undefined;
 
@@ -127,54 +123,26 @@ export default function KanbanBoard() {
       }
     }
 
-    if (!business || !sourceColumn) return;
+    if (!business || !sourceColumn || sourceColumn === newStage) return;
 
-    // Actualizar contact_actions optimistamente
-    const currentActions = business.contact_actions || [];
-    if (!currentActions.includes(action)) {
-      setColumns((prev) => {
-        const newColumns = { ...prev };
-        newColumns[sourceColumn!] = prev[sourceColumn!].map((b) => {
-          if (b.id === businessId) {
-            return {
-              ...b,
-              contact_actions: [...currentActions, action],
-              daysSinceContact: 0,
-            };
-          }
-          return b;
-        });
-        return newColumns;
-      });
+    // Actualizar estado optimistamente
+    setColumns((prev) => {
+      const newColumns = { ...prev };
+      newColumns[sourceColumn!] = prev[sourceColumn!].filter((b) => b.id !== businessId);
+      newColumns[newStage] = [{ ...business!, sales_stage: newStage }, ...prev[newStage]];
+      return newColumns;
+    });
 
-      // Registrar acción en la API
-      try {
-        await fetch('/api/contact-history', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            businessId,
-            actionType: action,
-            isFollowUp: currentActions.length > 0,
-          }),
-        });
+    // Actualizar el negocio seleccionado
+    setSelectedBusiness((prev) => prev ? { ...prev, sales_stage: newStage } : null);
 
-        // Actualizar contact_actions en el negocio
-        await fetch(`/api/businesses/${businessId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contact_actions: [...currentActions, action],
-          }),
-        });
+    // Actualizar en DB
+    updateBusinessStage(businessId, newStage);
+  };
 
-        // Recargar para reclasificar si es necesario
-        setTimeout(() => fetchKanbanData(), 500);
-      } catch (err) {
-        console.error('Error registering action:', err);
-        fetchKanbanData();
-      }
-    }
+  const handleActionRegistered = () => {
+    // Refrescar datos después de registrar una acción
+    setTimeout(() => fetchKanbanData(), 500);
   };
 
   if (loading) {
@@ -208,29 +176,41 @@ export default function KanbanBoard() {
   }
 
   const totalLeads = COLUMN_ORDER.reduce((sum, col) => sum + columns[col].length, 0);
+  const activeLeads = columns.nuevo.length + columns.contactado.length + columns.interesado.length + columns.cotizado.length;
 
   return (
     <div className="h-full">
       {/* Stats rápidos */}
-      <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-        <span><strong>{totalLeads}</strong> leads en total</span>
-        <span className="text-green-600"><strong>{columns.interesados.length}</strong> interesados</span>
-        <span className="text-amber-600"><strong>{columns.follow_up.length}</strong> necesitan follow-up</span>
+      <div className="flex items-center gap-6 mb-4 text-sm">
+        <span className="text-gray-600"><strong>{totalLeads}</strong> leads en total</span>
+        <span className="text-blue-600"><strong>{activeLeads}</strong> en pipeline activo</span>
+        <span className="text-green-600"><strong>{columns.cliente.length}</strong> clientes</span>
+        <span className="text-amber-600"><strong>{columns.interesado.length + columns.cotizado.length}</strong> por cerrar</span>
       </div>
 
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-3 overflow-x-auto pb-4">
           {COLUMN_ORDER.map((columnId) => (
             <KanbanColumn
               key={columnId}
               columnId={columnId}
               businesses={columns[columnId]}
-              onAction={handleAction}
+              onCardClick={handleCardClick}
             />
           ))}
         </div>
       </DragDropContext>
+
+      {/* Modal de detalle */}
+      {selectedBusiness && (
+        <LeadDetailModal
+          business={selectedBusiness}
+          onClose={() => setSelectedBusiness(null)}
+          onStageChange={handleStageChange}
+          onActionRegistered={handleActionRegistered}
+        />
+      )}
     </div>
   );
 }

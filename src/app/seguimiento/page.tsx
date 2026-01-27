@@ -21,19 +21,18 @@ const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
 });
 
 export default function SeguimientoPage() {
-  const [showTips, setShowTips] = useState(true);
+  const [showTips, setShowTips] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[1600px] mx-auto px-4 py-6">
+      <div className="max-w-[1800px] mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <span className="text-3xl">📊</span>
+            <h1 className="text-2xl font-bold text-gray-900">
               Pipeline de Ventas
             </h1>
-            <p className="text-gray-500 mt-0.5 text-sm">Arrastra los leads entre columnas para cambiar su estado</p>
+            <p className="text-gray-500 mt-0.5 text-sm">Arrastra leads entre etapas o haz click para ver detalles</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -64,54 +63,69 @@ export default function SeguimientoPage() {
             >
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-            {showTips ? 'Ocultar tips' : 'Ver tips de uso'}
+            {showTips ? 'Ocultar guia' : 'Ver guia del pipeline'}
           </button>
 
           {showTips && (
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-              <div className="grid md:grid-cols-5 gap-4 text-sm">
+              <div className="grid md:grid-cols-6 gap-3 text-sm">
                 <div className="flex items-start gap-2">
                   <span className="text-lg">📋</span>
                   <div>
-                    <p className="font-medium text-gray-800">Sin Contactar</p>
-                    <p className="text-gray-600 text-xs">Leads nuevos que aun no has contactado</p>
+                    <p className="font-medium text-gray-800">Nuevos</p>
+                    <p className="text-gray-600 text-xs">Leads de busquedas. Contactalos!</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-lg">💬</span>
                   <div>
-                    <p className="font-medium text-gray-800">Contactados</p>
-                    <p className="text-gray-600 text-xs">Ya escribiste/llamaste, esperando respuesta</p>
+                    <p className="font-medium text-blue-700">Contactados</p>
+                    <p className="text-gray-600 text-xs">Les escribiste, esperando respuesta</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-lg">⭐</span>
                   <div>
-                    <p className="font-medium text-green-700">Interesados</p>
-                    <p className="text-gray-600 text-xs">Mostraron interes, son prospectos reales</p>
+                    <p className="font-medium text-amber-700">Interesados</p>
+                    <p className="text-gray-600 text-xs">Respondieron con interes. Enviales cotizacion!</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-lg">⏰</span>
+                  <span className="text-lg">💰</span>
                   <div>
-                    <p className="font-medium text-amber-700">Follow Up</p>
-                    <p className="text-gray-600 text-xs">Contactados hace 3+ dias sin respuesta</p>
+                    <p className="font-medium text-purple-700">Cotizados</p>
+                    <p className="text-gray-600 text-xs">Tienen precio. Cierra la venta!</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">🎉</span>
+                  <div>
+                    <p className="font-medium text-green-700">Clientes</p>
+                    <p className="text-gray-600 text-xs">Cerraron! Manten la relacion</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-lg">❌</span>
                   <div>
-                    <p className="font-medium text-red-700">Descartados</p>
+                    <p className="font-medium text-red-700">Perdidos</p>
                     <p className="text-gray-600 text-xs">No interesados o no califican</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-blue-200 flex items-center gap-4 text-xs text-gray-600">
-                <span className="font-medium">Pro tips:</span>
-                <span>• 80% de ventas requieren 5+ contactos</span>
-                <span>• El mejor momento para follow up es 3-5 dias</span>
-                <span>• Llamadas tienen 3x mas respuesta que WhatsApp</span>
+              <div className="mt-3 pt-3 border-t border-blue-200 grid md:grid-cols-3 gap-4 text-xs text-gray-600">
+                <div>
+                  <span className="font-medium text-gray-700">Nuevo → Contactado:</span>
+                  <span className="ml-1">Enviar 1er mensaje</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Contactado → Interesado:</span>
+                  <span className="ml-1">Respondio con interes</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Interesado → Cotizado:</span>
+                  <span className="ml-1">Enviar propuesta de precio</span>
+                </div>
               </div>
             </div>
           )}

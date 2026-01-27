@@ -26,11 +26,20 @@ export interface DecisionMaker {
 // Acciones de contacto (múltiples posibles)
 export type ContactAction = 'whatsapp' | 'email' | 'call';
 
-// Estado del negocio (solo uno)
+// Estado del negocio (solo uno) - Legacy
 // - null/no_contact = sin estado especial (las acciones indican si fue contactado)
 // - prospect = respondió con interés
 // - discarded = no le interesa
 export type LeadStatus = 'no_contact' | 'prospect' | 'discarded';
+
+// Etapa de venta (pipeline comercial)
+// - nuevo = sin contactar
+// - contactado = esperando respuesta
+// - interesado = respondió con interés
+// - cotizado = tiene cotización
+// - cliente = cerró la venta
+// - perdido = no le interesa o no califica
+export type SalesStage = 'nuevo' | 'contactado' | 'interesado' | 'cotizado' | 'cliente' | 'perdido';
 
 export interface Business {
   id: string;
@@ -47,7 +56,8 @@ export interface Business {
   coordinates: { lat: number; lng: number } | null;
   // Nuevo sistema de tracking
   contact_actions: ContactAction[] | null; // ['whatsapp', 'email', 'call']
-  lead_status: LeadStatus | null; // 'no_contact' | 'contacted' | 'lead' | 'discarded'
+  lead_status: LeadStatus | null; // 'no_contact' | 'prospect' | 'discarded'
+  sales_stage: SalesStage | null; // Pipeline comercial
   // Legacy (mantener por compatibilidad)
   contact_status: 'whatsapp' | 'called' | 'contacted' | null;
   contacted_at: string | null;

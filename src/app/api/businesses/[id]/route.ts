@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { ContactAction, LeadStatus } from '@/types';
+import { ContactAction, LeadStatus, SalesStage } from '@/types';
 
 const validContactActions: ContactAction[] = ['whatsapp', 'email', 'call'];
 const validLeadStatuses: LeadStatus[] = ['no_contact', 'prospect', 'discarded'];
+const validSalesStages: SalesStage[] = ['nuevo', 'contactado', 'interesado', 'cotizado', 'cliente', 'perdido'];
 
 export async function PATCH(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { contact_actions, lead_status, user_id } = body;
+    const { contact_actions, lead_status, sales_stage, user_id } = body;
 
     // Validar contact_actions (array de acciones)
     if (contact_actions !== undefined) {
@@ -42,6 +43,16 @@ export async function PATCH(
       }
     }
 
+    // Validar sales_stage
+    if (sales_stage !== undefined && sales_stage !== null) {
+      if (!validSalesStages.includes(sales_stage)) {
+        return NextResponse.json(
+          { error: 'Etapa de venta inválida' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Build update data
     const updateData: Record<string, unknown> = {};
 
@@ -53,6 +64,10 @@ export async function PATCH(
 
     if (lead_status !== undefined) {
       updateData.lead_status = lead_status;
+    }
+
+    if (sales_stage !== undefined) {
+      updateData.sales_stage = sales_stage;
     }
 
     console.log('Updating business:', id, 'with data:', updateData);

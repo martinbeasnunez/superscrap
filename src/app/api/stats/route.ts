@@ -78,9 +78,9 @@ export async function GET() {
       const salesStage = b.sales_stage as string | null;
       const leadStatus = b.lead_status as string | null;
 
-      // Determinar si es prospecto (interesado) o descartado
-      // Prospecto = sales_stage 'interesado' O lead_status 'prospect' (legacy)
-      const isProspect = salesStage === 'interesado' || (!salesStage && leadStatus === 'prospect');
+      // Determinar si es prospecto (en negociación activa) o descartado
+      // Prospecto = interesado + cotizado (están en el pipeline activo)
+      const isProspect = salesStage === 'interesado' || salesStage === 'cotizado' || (!salesStage && leadStatus === 'prospect');
       // Descartado = sales_stage 'perdido' O lead_status 'discarded' (legacy)
       const isDiscarded = salesStage === 'perdido' || (!salesStage && leadStatus === 'discarded');
 
@@ -193,7 +193,7 @@ export async function GET() {
     });
 
     // Insights: obtener datos de prospectos con su tipo de negocio y distrito
-    // Usar sales_stage = 'interesado' como fuente principal, con fallback a lead_status
+    // Prospectos = interesado + cotizado (pipeline activo)
     const { data: prospectsData } = await supabase
       .from('businesses')
       .select(`
@@ -207,7 +207,7 @@ export async function GET() {
           city
         )
       `)
-      .or('sales_stage.eq.interesado,and(sales_stage.is.null,lead_status.eq.prospect)');
+      .or('sales_stage.eq.interesado,sales_stage.eq.cotizado,and(sales_stage.is.null,lead_status.eq.prospect)');
 
     // Analizar qué tipos de negocio convierten mejor
     const typeStats: Record<string, { prospects: number; total: number }> = {};

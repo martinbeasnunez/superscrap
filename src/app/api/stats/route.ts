@@ -35,10 +35,10 @@ export async function GET() {
       .from('businesses')
       .select('*', { count: 'exact', head: true });
 
-    // Stats de contactos - nuevo sistema + legacy
+    // Stats de contactos - usando sales_stage como fuente de verdad
     const { data: contactStats } = await supabase
       .from('businesses')
-      .select('contact_actions, lead_status, contact_status, contacted_at, contacted_by');
+      .select('contact_actions, lead_status, sales_stage, contact_status, contacted_at, contacted_by');
 
     // Obtener usuarios para mapear IDs a nombres
     const { data: users } = await supabase
@@ -66,14 +66,6 @@ export async function GET() {
 
       // Migrar datos legacy a nuevo formato
       let actions: ContactAction[] = b.contact_actions || [];
-      const rawStatus = b.lead_status as string || 'no_contact';
-
-      // Migrar estados legacy a nuevos valores
-      let status: LeadStatus = 'no_contact';
-      if (rawStatus === 'prospect') status = 'prospect';
-      else if (rawStatus === 'discarded') status = 'discarded';
-      else if (rawStatus === 'lead') status = 'prospect'; // legacy
-      // 'contacted' y 'no_contact' -> 'no_contact'
 
       // Si no hay nuevo formato pero hay legacy, migrar
       if (actions.length === 0 && b.contact_status) {
@@ -81,6 +73,16 @@ export async function GET() {
         else if (b.contact_status === 'called') actions = ['call'];
         else if (b.contact_status === 'contacted') actions = ['whatsapp'];
       }
+
+      // Usar sales_stage como fuente de verdad, con fallback a lead_status
+      const salesStage = b.sales_stage as string | null;
+      const leadStatus = b.lead_status as string | null;
+
+      // Determinar si es prospecto (interesado) o descartado
+      // Prospecto = sales_stage 'interesado' O lead_status 'prospect' (legacy)
+      const isProspect = salesStage === 'interesado' || (!salesStage && leadStatus === 'prospect');
+      // Descartado = sales_stage 'perdido' O lead_status 'discarded' (legacy)
+      const isDiscarded = salesStage === 'perdido' || (!salesStage && leadStatus === 'discarded');
 
       // Contar acciones
       if (actions.includes('whatsapp')) {
@@ -96,11 +98,11 @@ export async function GET() {
         if (isToday) callToday++;
       }
 
-      // Contar estados
-      if (status === 'prospect') {
+      // Contar estados usando sales_stage
+      if (isProspect) {
         prospectsTotal++;
         if (isToday) prospectsToday++;
-      } else if (status === 'discarded') {
+      } else if (isDiscarded) {
         discardedTotal++;
         if (isToday) discardedToday++;
       }
@@ -113,8 +115,8 @@ export async function GET() {
         if (actions.includes('whatsapp')) stats.whatsapp++;
         if (actions.includes('email')) stats.email++;
         if (actions.includes('call')) stats.call++;
-        if (status === 'prospect') stats.prospects++;
-        if (status === 'discarded') stats.discarded++;
+        if (isProspect) stats.prospects++;
+        if (isDiscarded) stats.discarded++;
         userStatsToday.set(userName, stats);
       }
     });
@@ -191,18 +193,21 @@ export async function GET() {
     });
 
     // Insights: obtener datos de prospectos con su tipo de negocio y distrito
+    // Usar sales_stage = 'interesado' como fuente principal, con fallback a lead_status
     const { data: prospectsData } = await supabase
       .from('businesses')
       .select(`
         id,
         address,
         search_id,
+        sales_stage,
+        lead_status,
         searches (
           business_type,
           city
         )
       `)
-      .eq('lead_status', 'prospect');
+      .or('sales_stage.eq.interesado,and(sales_stage.is.null,lead_status.eq.prospect)');
 
     // Analizar qué tipos de negocio convierten mejor
     const typeStats: Record<string, { prospects: number; total: number }> = {};

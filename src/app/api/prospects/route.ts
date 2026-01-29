@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
+    // Prospectos = interesado + cotizado (pipeline activo) + legacy lead_status='prospect'
     const { data: prospects, error } = await supabase
       .from('businesses')
       .select(`
@@ -16,6 +17,7 @@ export async function GET() {
         contacted_at,
         contacted_by,
         search_id,
+        sales_stage,
         searches (
           business_type,
           city
@@ -24,7 +26,7 @@ export async function GET() {
           name
         )
       `)
-      .eq('lead_status', 'prospect')
+      .or('sales_stage.eq.interesado,sales_stage.eq.cotizado,and(sales_stage.is.null,lead_status.eq.prospect)')
       .order('contacted_at', { ascending: false });
 
     if (error) {

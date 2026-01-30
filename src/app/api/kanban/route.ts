@@ -30,6 +30,7 @@ export interface AICallResult {
   outcome: 'wants_quote' | 'interested' | 'not_interested' | 'callback' | 'completed' | 'no_answer' | 'voicemail' | null;
   contactName: string | null;
   hasAICall: boolean;
+  conversationId: string | null; // Para reproducir el audio de la llamada
 }
 
 export interface KanbanBusiness {
@@ -164,10 +165,15 @@ export async function GET() {
         const nameMatch = c.notes.match(/👤 Contacto: ([^\n]+)/);
         const contactName = nameMatch ? nameMatch[1] : null;
 
+        // Extraer conversation_id para reproducir audio
+        const convIdMatch = c.notes.match(/conv_[a-z0-9]+/);
+        const conversationId = convIdMatch ? convIdMatch[0] : null;
+
         aiCallMap[c.business_id] = {
           hasAICall: true,
           outcome,
           contactName,
+          conversationId,
         };
       }
     });

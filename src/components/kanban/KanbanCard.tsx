@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { KanbanBusiness } from '@/app/api/kanban/route';
 
@@ -101,21 +102,63 @@ function getAICallLabel(outcome: string | null): { text: string; color: string; 
       return { text: '📅 Llamar después', color: 'text-amber-700', bg: 'bg-amber-100' };
     case 'no_answer':
       return { text: '📵 No contestó', color: 'text-red-600', bg: 'bg-red-50' };
+    case 'voicemail':
+      return { text: '📭 Buzón de voz', color: 'text-gray-500', bg: 'bg-gray-50' };
     default:
       return { text: '🤖 Llamada IA', color: 'text-purple-700', bg: 'bg-purple-100' };
   }
 }
 
 export default function KanbanCard({ business, index, onClick }: KanbanCardProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const district = extractDistrict(business.address);
   const hasWhatsapp = business.contact_actions?.includes('whatsapp');
   const hasEmail = business.contact_actions?.includes('email');
   const hasCall = business.contact_actions?.includes('call');
   const hasAnyContact = business.contact_actions && business.contact_actions.length > 0;
   const hasAICall = business.aiCallResult?.hasAICall;
+  const conversationId = business.aiCallResult?.conversationId;
 
   const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount);
   const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null) : null;
+
+  // Manejar reproducción de audio
+  const handlePlayAudio = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Evitar que se abra el modal
+
+    if (!conversationId) return;
+
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(`/api/ai-call/audio?conversationId=${conversationId}`);
+      audioRef.current.onended = () => setIsPlaying(false);
+      audioRef.current.oncanplaythrough = () => {
+        setIsLoading(false);
+        audioRef.current?.play();
+        setIsPlaying(true);
+      };
+      audioRef.current.onerror = () => {
+        setIsLoading(false);
+        setIsPlaying(false);
+        alert('Error al cargar el audio');
+      };
+    } else {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+      setIsPlaying(true);
+      setIsLoading(false);
+    }
+  };
 
   // Borde especial según urgencia
   const getBorderStyle = () => {
@@ -182,10 +225,40 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
 
           {/* Resultado de llamada IA */}
           {hasAICall && aiLabel && (
-            <div className={`mt-1.5 px-2 py-1 rounded text-xs font-medium ${aiLabel.bg} ${aiLabel.color}`}>
-              {aiLabel.text}
-              {business.aiCallResult?.contactName && (
-                <span className="font-normal opacity-80"> • {business.aiCallResult.contactName}</span>
+            <div className={`mt-1.5 px-2 py-1 rounded text-xs font-medium flex items-center justify-between ${aiLabel.bg} ${aiLabel.color}`}>
+              <div className="truncate">
+                {aiLabel.text}
+                {business.aiCallResult?.contactName && (
+                  <span className="font-normal opacity-80"> • {business.aiCallResult.contactName}</span>
+                )}
+              </div>
+              {conversationId && (
+                <button
+                  onClick={handlePlayAudio}
+                  disabled={isLoading}
+                  className={`ml-2 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                    isPlaying
+                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      : 'bg-white/80 hover:bg-white text-gray-700'
+                  } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
+                  title={isPlaying ? 'Pausar' : 'Escuchar llamada'}
+                >
+                  {isLoading ? (
+                    <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : isPlaying ? (
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="4" width="4" height="16" />
+                      <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  )}
+                </button>
               )}
             </div>
           )}

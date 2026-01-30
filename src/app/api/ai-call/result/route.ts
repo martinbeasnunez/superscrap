@@ -148,13 +148,16 @@ export async function POST(request: Request) {
 
     // Actualizar registro si existe businessId
     if (businessId) {
+      // Generar insights en español para el vendedor
+      const salesInsights = generateSalesInsights(transcript, outcome, summary);
+
       // Guardar en contact_history como llamada (con nota de que fue IA)
       const aiCallNote = `🤖 LLAMADA IA (${duration}s)\n\nResultado: ${
-        outcome === 'wants_quote' ? '💰 Quiere cotización' :
-        outcome === 'interested' ? '🎯 Interesado' :
+        outcome === 'wants_quote' ? '💰 ¡QUIERE COTIZACIÓN!' :
+        outcome === 'interested' ? '🎯 INTERESADO' :
         outcome === 'not_interested' ? '❌ No interesado' :
         outcome === 'callback' ? '📅 Llamar después' : '📞 Completada'
-      }\n\nResumen: ${summary}`;
+      }\n\n${salesInsights}`;
 
       const { error: insertError } = await supabase
         .from('contact_history')
@@ -261,6 +264,65 @@ function determineOutcome(transcript: string, analysis: Record<string, unknown>)
   }
 
   return 'completed';
+}
+
+// Generar insights en español para el vendedor
+function generateSalesInsights(transcript: string, outcome: string, englishSummary: string): string {
+  const lower = transcript.toLowerCase();
+  const insights: string[] = [];
+
+  // Detectar nombre del contacto
+  const nameMatch = transcript.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚa-záéíóú]+)/i);
+  if (nameMatch) {
+    insights.push(`👤 Contacto: ${nameMatch[1]}`);
+  }
+
+  // Detectar si tienen proveedor actual
+  if (lower.includes('proveedor') || lower.includes('ya tenemos') || lower.includes('trabajamos con')) {
+    if (lower.includes('no estoy contento') || lower.includes('no estamos contentos') ||
+        lower.includes('problemas') || lower.includes('mal servicio') || lower.includes('insatisfecho')) {
+      insights.push(`🔥 OPORTUNIDAD: Insatisfecho con proveedor actual`);
+    } else if (lower.includes('contento') || lower.includes('bien')) {
+      insights.push(`⚠️ Tiene proveedor pero mostró apertura`);
+    } else {
+      insights.push(`📋 Ya tiene proveedor de lavandería`);
+    }
+  }
+
+  // Detectar precio/costo mencionado
+  const priceMatch = transcript.match(/(\d+(?:[.,]\d+)?)\s*(?:soles|sol|s\/\.?|pen)/i);
+  if (priceMatch) {
+    insights.push(`💵 Precio actual: S/${priceMatch[1]} por kilo`);
+  }
+
+  // Detectar pain points específicos
+  if (lower.includes('mancha') || lower.includes('manchas')) {
+    insights.push(`🎯 Pain point: Problemas con manchas`);
+  }
+  if (lower.includes('demora') || lower.includes('retraso') || lower.includes('tarde')) {
+    insights.push(`🎯 Pain point: Demoras en entrega`);
+  }
+  if (lower.includes('caro') || lower.includes('costoso') || lower.includes('precio alto')) {
+    insights.push(`🎯 Pain point: Precio alto actual`);
+  }
+
+  // Acción recomendada según outcome
+  if (outcome === 'wants_quote') {
+    insights.push(`\n⚡ ACCIÓN: Enviar cotización por WhatsApp AHORA`);
+  } else if (outcome === 'interested') {
+    insights.push(`\n⚡ ACCIÓN: Hacer seguimiento en 24h`);
+  } else if (outcome === 'callback') {
+    insights.push(`\n⚡ ACCIÓN: Reprogramar llamada`);
+  } else if (outcome === 'not_interested') {
+    insights.push(`\n📝 Nota: Guardar para recontactar en 3 meses`);
+  }
+
+  // Si no encontramos insights específicos, dar un resumen general
+  if (insights.length === 0) {
+    return `📝 Llamada completada. Revisar grabación para más detalles.`;
+  }
+
+  return insights.join('\n');
 }
 
 // Generar resumen básico

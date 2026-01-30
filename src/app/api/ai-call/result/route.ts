@@ -271,10 +271,25 @@ function generateSalesInsights(transcript: string, outcome: string, englishSumma
   const lower = transcript.toLowerCase();
   const insights: string[] = [];
 
-  // Detectar nombre del contacto
-  const nameMatch = transcript.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚa-záéíóú]+)/i);
+  // Extraer solo lo que dijo el cliente (líneas que empiezan con "Cliente:")
+  const clientLines = transcript
+    .split('\n')
+    .filter(line => line.startsWith('Cliente:'))
+    .join('\n')
+    .toLowerCase();
+
+  // Detectar nombre del contacto (en lo que dijo el cliente)
+  const nameMatch = clientLines.match(/(?:mi nombre es|me llamo|soy)\s+([a-záéíóú]+)/i);
   if (nameMatch) {
-    insights.push(`👤 Contacto: ${nameMatch[1]}`);
+    // Capitalizar primera letra
+    const name = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+    insights.push(`👤 Contacto: ${name}`);
+  } else {
+    // Intentar extraer del resumen en inglés
+    const englishNameMatch = englishSummary.match(/contacted\s+([A-Za-z]+)/i);
+    if (englishNameMatch && englishNameMatch[1] !== 'Alejandro') {
+      insights.push(`👤 Contacto: ${englishNameMatch[1]}`);
+    }
   }
 
   // Detectar si tienen proveedor actual

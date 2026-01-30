@@ -101,7 +101,8 @@ export default function KanbanBoard() {
       interested: allLeads.filter(l => l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote').length,
       notInterested: allLeads.filter(l => l.aiCallResult?.outcome === 'not_interested').length,
       noAnswer: allLeads.filter(l => l.aiCallResult?.outcome === 'no_answer').length,
-      other: allLeads.filter(l => l.aiCallResult?.hasAICall && !['interested', 'wants_quote', 'not_interested', 'no_answer'].includes(l.aiCallResult?.outcome || '')).length,
+      voicemail: allLeads.filter(l => l.aiCallResult?.outcome === 'voicemail').length,
+      other: allLeads.filter(l => l.aiCallResult?.hasAICall && !['interested', 'wants_quote', 'not_interested', 'no_answer', 'voicemail'].includes(l.aiCallResult?.outcome || '')).length,
     };
 
     return {
@@ -340,6 +341,11 @@ export default function KanbanBoard() {
             {followUpMetrics.aiOutcomes.interested > 0 && (
               <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs" title="Leads interesados por llamada IA">
                 🎯 {followUpMetrics.aiOutcomes.interested} interesados
+              </span>
+            )}
+            {followUpMetrics.aiOutcomes.voicemail > 0 && (
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs" title="Buzón de voz - no cuenta">
+                📭 {followUpMetrics.aiOutcomes.voicemail} buzón
               </span>
             )}
           </>

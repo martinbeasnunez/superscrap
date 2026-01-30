@@ -23,8 +23,14 @@ export async function POST(request: Request) {
 
     // Extraer insights del análisis si existe
     const summary = analysis?.summary || null;
-    const outcome = analysis?.outcome || determineOutcome(transcript);
+    const outcome = analysis?.outcome || determineOutcome(transcript, summary);
     const extractedData = analysis?.data_collection || {};
+
+    // Si es buzón de voz, no hacer nada especial (no mover el lead)
+    const isVoicemailCall = isVoicemail(transcript, summary);
+    if (isVoicemailCall) {
+      console.log('Voicemail detected for conversation:', conversation_id);
+    }
 
     // Actualizar el registro de la llamada
     const { error: updateError } = await supabase
@@ -44,8 +50,9 @@ export async function POST(request: Request) {
       console.error('Error updating ai_call:', updateError);
     }
 
-    // Si hay outcome positivo, actualizar el lead
-    if (outcome === 'interested' || outcome === 'wants_quote') {
+    // Si hay outcome positivo Y NO es voicemail, actualizar el lead
+    // El voicemail NO cuenta como interesado - es pérdida de tiempo
+    if ((outcome === 'interested' || outcome === 'wants_quote') && !isVoicemailCall) {
       // Buscar el business_id de esta llamada
       const { data: callData } = await supabase
         .from('ai_calls')
@@ -72,8 +79,46 @@ export async function POST(request: Request) {
   }
 }
 
+// Detectar si es buzón de voz / voicemail
+function isVoicemail(transcript: string | null, summary: string | null): boolean {
+  const textToCheck = ((transcript || '') + ' ' + (summary || '')).toLowerCase();
+
+  // Patrones comunes de buzón de voz
+  const voicemailPatterns = [
+    'voicemail',
+    'buzón de voz',
+    'buzon de voz',
+    'casilla de voz',
+    'deje su mensaje',
+    'deja tu mensaje',
+    'después del tono',
+    'despues del tono',
+    'leave a message',
+    'leave your message',
+    'not available',
+    'no está disponible',
+    'no esta disponible',
+    'mensaje de voz',
+    'correo de voz',
+    'entelev',  // Sistema de mensajes automáticos
+    'mailbox',
+    'beep',
+    'grabar mensaje',
+    'tone',
+    'mensaje después',
+    'mensaje despues',
+  ];
+
+  return voicemailPatterns.some(pattern => textToCheck.includes(pattern));
+}
+
 // Determinar outcome basado en el transcript
-function determineOutcome(transcript: string | null): string {
+function determineOutcome(transcript: string | null, summary: string | null = null): string {
+  // Primero verificar si es buzón de voz - esto tiene prioridad
+  if (isVoicemail(transcript, summary)) {
+    return 'voicemail';
+  }
+
   if (!transcript) return 'no_answer';
 
   const lower = transcript.toLowerCase();

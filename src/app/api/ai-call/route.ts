@@ -108,8 +108,9 @@ export async function POST(request: Request) {
             call_objective: callContext.call_objective,
             opening_script: callContext.opening_script,
             key_points: callContext.key_points,
-            // Instrucción de silencio (el agente la leerá del prompt)
+            // Instrucciones especiales
             silence_instruction: 'Si el cliente guarda silencio por más de 30 segundos, despídete amablemente.',
+            voicemail_instruction: 'IMPORTANTE: Si detectas que es un buzón de voz, contestadora automática, o sistema de mensajes (escuchas "deje su mensaje", "después del tono", "no está disponible", "voicemail", etc.), cuelga INMEDIATAMENTE sin dejar mensaje. No pierdas tiempo con buzones de voz.',
           },
         },
       }),

@@ -27,7 +27,7 @@ export interface DecisionMaker {
 }
 
 export interface AICallResult {
-  outcome: 'wants_quote' | 'interested' | 'not_interested' | 'callback' | 'completed' | 'no_answer' | null;
+  outcome: 'wants_quote' | 'interested' | 'not_interested' | 'callback' | 'completed' | 'no_answer' | 'voicemail' | null;
   contactName: string | null;
   hasAICall: boolean;
 }
@@ -145,7 +145,15 @@ export async function GET() {
       if (c.notes?.startsWith('🤖')) {
         // Extraer outcome de las notas
         let outcome: AICallResult['outcome'] = null;
-        if (c.notes.includes('¡QUIERE COTIZACIÓN!')) outcome = 'wants_quote';
+        const notesLower = c.notes.toLowerCase();
+
+        // Primero detectar voicemail (tiene prioridad)
+        if (notesLower.includes('voicemail') || notesLower.includes('buzón de voz') ||
+            notesLower.includes('casilla de voz') || notesLower.includes('contestadora') ||
+            notesLower.includes('deje su mensaje') || notesLower.includes('entelev')) {
+          outcome = 'voicemail';
+        }
+        else if (c.notes.includes('¡QUIERE COTIZACIÓN!')) outcome = 'wants_quote';
         else if (c.notes.includes('INTERESADO')) outcome = 'interested';
         else if (c.notes.includes('No interesado')) outcome = 'not_interested';
         else if (c.notes.includes('Llamar después')) outcome = 'callback';

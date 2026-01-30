@@ -280,25 +280,43 @@ function generateSalesInsights(transcript: string, outcome: string, englishSumma
 
   const clientLinesLower = clientLines.toLowerCase();
 
-  // Detectar nombre del contacto (en lo que dijo el cliente)
-  const nameMatch = clientLinesLower.match(/(?:mi nombre es|me llamo|soy)\s+([a-záéíóú]+)/i);
-  if (nameMatch) {
-    const name = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+  // Detectar nombre del contacto
+  // 1. Buscar en lo que dijo el cliente
+  const nameMatch = clientLines.match(/(?:mi nombre es|me llamo|soy)\s+([A-ZÁÉÍÓÚa-záéíóú]{2,})/i);
+  if (nameMatch && nameMatch[1].length >= 2) {
+    const name = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1).toLowerCase();
     insights.push(`👤 Contacto: ${name}`);
   } else {
-    const englishNameMatch = englishSummary.match(/contacted\s+([A-Za-z]+)/i);
-    if (englishNameMatch && englishNameMatch[1] !== 'Alejandro') {
+    // 2. Buscar en el summary de ElevenLabs (ej: "contacted a user named Alejandro")
+    const englishNameMatch = englishSummary.match(/(?:user named|contacted)\s+([A-Za-zÁÉÍÓÚáéíóú]{2,})/i);
+    if (englishNameMatch && !['Alejandro', 'GetLavado', 'a', 'an', 'the'].includes(englishNameMatch[1])) {
       insights.push(`👤 Contacto: ${englishNameMatch[1]}`);
+    } else {
+      // 3. Buscar donde el agente confirma el nombre (ej: "Gracias, Alejandro")
+      const agentConfirmMatch = transcript.match(/(?:Gracias,|Perfecto,|Entendido,|Anotado,)\s+([A-ZÁÉÍÓÚa-záéíóú]{2,})/i);
+      if (agentConfirmMatch && agentConfirmMatch[1].length >= 2) {
+        const name = agentConfirmMatch[1].charAt(0).toUpperCase() + agentConfirmMatch[1].slice(1).toLowerCase();
+        insights.push(`👤 Contacto: ${name}`);
+      }
     }
   }
 
-  // Detectar si tienen proveedor actual
+  // Detectar si tienen proveedor actual y su satisfacción
   if (lower.includes('proveedor') || lower.includes('ya tenemos') || lower.includes('trabajamos con') || lower.includes('internamente')) {
-    if (clientLinesLower.includes('no estoy contento') || clientLinesLower.includes('no estamos contentos') ||
-        clientLinesLower.includes('no, no') || clientLinesLower.includes('problemas') ||
-        clientLinesLower.includes('mal servicio') || clientLinesLower.includes('insatisfecho')) {
+    // Buscar señales de insatisfacción en lo que dijo el cliente
+    const dissatisfactionSignals = [
+      'no estoy contento', 'no estamos contentos', 'no, no',
+      'problemas', 'mal servicio', 'insatisfecho',
+      'no, porque', 'no porque', // "No, porque hace manchas"
+      'manchas', 'daña', 'rompe', 'pierde', 'demora', 'retrasa',
+      'caro', 'costoso', 'muy caro'
+    ];
+
+    const isUnhappy = dissatisfactionSignals.some(signal => clientLinesLower.includes(signal));
+
+    if (isUnhappy) {
       insights.push(`🔥 OPORTUNIDAD: Insatisfecho con proveedor actual`);
-    } else if (clientLinesLower.includes('contento') || clientLinesLower.includes('bien')) {
+    } else if (clientLinesLower.includes('contento') || clientLinesLower.includes('bien') || clientLinesLower.includes('conforme')) {
       insights.push(`⚠️ Tiene proveedor pero mostró apertura`);
     } else {
       insights.push(`📋 Ya tiene proveedor de lavandería`);

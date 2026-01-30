@@ -237,6 +237,7 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
   const [showStageMenu, setShowStageMenu] = useState(false);
   const [emailModal, setEmailModal] = useState<EmailModal | null>(null);
   const [aiCallStatus, setAiCallStatus] = useState<'idle' | 'calling' | 'success' | 'error'>('idle');
+  const [aiCallResult, setAiCallResult] = useState<{summary?: string; outcome?: string} | null>(null);
 
   useEffect(() => {
     if (business) {

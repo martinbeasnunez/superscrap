@@ -346,6 +346,7 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
   const handleAICall = async () => {
     if (!business?.phone) return;
     setAiCallStatus('calling');
+    setAiCallResult(null);
 
     try {
       const res = await fetch('/api/ai-call', {
@@ -366,8 +367,13 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
         // Registrar como acción de contacto
         await fetchContactHistory();
         onActionRegistered();
-        // Reset después de 3 segundos
-        setTimeout(() => setAiCallStatus('idle'), 3000);
+
+        // Esperar y consultar resultado después de que termine la llamada
+        // Consultar cada 30 segundos por 5 minutos max
+        const conversationId = data.conversation_id;
+        if (conversationId) {
+          pollForResult(conversationId);
+        }
       } else {
         console.error('AI Call error:', data);
         setAiCallStatus('error');
@@ -378,6 +384,54 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
       setAiCallStatus('error');
       setTimeout(() => setAiCallStatus('idle'), 3000);
     }
+  };
+
+  // Consultar resultado de la llamada periódicamente
+  const pollForResult = async (conversationId: string) => {
+    let attempts = 0;
+    const maxAttempts = 10; // 5 minutos (30s x 10)
+
+    const checkResult = async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/ai-call/result`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId,
+            businessId: business?.id,
+          }),
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          if (result.status === 'done' || result.status === 'completed' || result.outcome) {
+            setAiCallResult({
+              summary: result.summary,
+              outcome: result.outcome,
+            });
+            // Refrescar datos si se actualizó el stage
+            if (result.salesStageUpdated) {
+              onActionRegistered();
+            }
+            return; // Parar polling
+          }
+        }
+
+        // Continuar polling si no ha terminado
+        if (attempts < maxAttempts) {
+          setTimeout(checkResult, 30000); // 30 segundos
+        }
+      } catch (err) {
+        console.error('Error polling result:', err);
+        if (attempts < maxAttempts) {
+          setTimeout(checkResult, 30000);
+        }
+      }
+    };
+
+    // Primera consulta después de 30 segundos
+    setTimeout(checkResult, 30000);
   };
 
   if (!business) return null;
@@ -680,6 +734,37 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                 <p className="text-xs text-gray-500 text-center mt-1">
                   El agente IA llamará y calificará este lead automáticamente
                 </p>
+
+                {/* Resultado de la llamada IA */}
+                {aiCallResult && (
+                  <div className={`mt-3 p-3 rounded-lg border-2 ${
+                    aiCallResult.outcome === 'interested' || aiCallResult.outcome === 'wants_quote'
+                      ? 'bg-green-50 border-green-300'
+                      : aiCallResult.outcome === 'not_interested'
+                        ? 'bg-red-50 border-red-300'
+                        : 'bg-gray-50 border-gray-300'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span>
+                        {aiCallResult.outcome === 'interested' && '🎯'}
+                        {aiCallResult.outcome === 'wants_quote' && '💰'}
+                        {aiCallResult.outcome === 'not_interested' && '❌'}
+                        {aiCallResult.outcome === 'callback' && '📅'}
+                        {!['interested', 'wants_quote', 'not_interested', 'callback'].includes(aiCallResult.outcome || '') && '📞'}
+                      </span>
+                      <span className="font-medium text-sm">
+                        {aiCallResult.outcome === 'interested' && '¡Interesado!'}
+                        {aiCallResult.outcome === 'wants_quote' && '¡Quiere cotización!'}
+                        {aiCallResult.outcome === 'not_interested' && 'No interesado'}
+                        {aiCallResult.outcome === 'callback' && 'Llamar después'}
+                        {aiCallResult.outcome === 'completed' && 'Llamada completada'}
+                      </span>
+                    </div>
+                    {aiCallResult.summary && (
+                      <p className="text-xs text-gray-600">{aiCallResult.summary}</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

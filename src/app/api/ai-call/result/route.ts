@@ -148,22 +148,26 @@ export async function POST(request: Request) {
 
     // Actualizar registro si existe businessId
     if (businessId) {
-      // Guardar en contact_history como llamada IA
-      const aiCallNote = `🤖 Llamada IA (${duration}s)\n\nResultado: ${
+      // Guardar en contact_history como llamada (con nota de que fue IA)
+      const aiCallNote = `🤖 LLAMADA IA (${duration}s)\n\nResultado: ${
         outcome === 'wants_quote' ? '💰 Quiere cotización' :
         outcome === 'interested' ? '🎯 Interesado' :
         outcome === 'not_interested' ? '❌ No interesado' :
         outcome === 'callback' ? '📅 Llamar después' : '📞 Completada'
       }\n\nResumen: ${summary}`;
 
-      await supabase
+      const { error: insertError } = await supabase
         .from('contact_history')
         .insert({
           business_id: businessId,
-          action_type: 'ai_call',
+          action_type: 'call', // Usamos 'call' porque contact_history tiene check constraint
           notes: aiCallNote,
           created_at: new Date().toISOString(),
         });
+
+      if (insertError) {
+        console.error('Error inserting contact_history:', insertError);
+      }
 
       // Actualizar sales_stage del lead según outcome
       const updateData: Record<string, unknown> = {

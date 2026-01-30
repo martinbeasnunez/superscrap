@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { KanbanBusiness, KanbanColumnId, KanbanResponse } from '@/app/api/kanban/route';
 import KanbanColumn from './KanbanColumn';
 import LeadDetailModal from './LeadDetailModal';
+import { COLUMN_CONFIG } from './KanbanColumn';
 
 const COLUMN_ORDER: KanbanColumnId[] = [
   'nuevo',
@@ -54,6 +55,12 @@ export default function KanbanBoard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<KanbanBusiness | null>(null);
+  const [showAIInsights, setShowAIInsights] = useState(false);
+
+  // Audio player for AI insights modal
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Seleccionar una frase motivacional random (pero estable durante la sesión)
   const [quoteIndex] = useState(() => Math.floor(Math.random() * FOLLOW_UP_QUOTES.length));
@@ -232,6 +239,85 @@ export default function KanbanBoard() {
     setTimeout(() => fetchKanbanData(), 500);
   };
 
+  // Obtener todos los leads con llamadas IA para el modal de insights
+  const aiCallLeadsList = useMemo(() => {
+    const allLeads = COLUMN_ORDER.flatMap(col =>
+      columns[col].map(lead => ({ ...lead, currentColumn: col }))
+    );
+    return allLeads
+      .filter(l => l.aiCallResult?.hasAICall)
+      .sort((a, b) => {
+        // Ordenar por outcome: interesados primero, luego otros, voicemail al final
+        const priority: Record<string, number> = {
+          'wants_quote': 1,
+          'interested': 2,
+          'callback': 3,
+          'not_interested': 4,
+          'completed': 5,
+          'no_answer': 6,
+          'voicemail': 7,
+        };
+        const aPriority = priority[a.aiCallResult?.outcome || 'completed'] || 5;
+        const bPriority = priority[b.aiCallResult?.outcome || 'completed'] || 5;
+        return aPriority - bPriority;
+      });
+  }, [columns]);
+
+  // Reproducir audio de llamada IA
+  const handlePlayAudio = (conversationId: string) => {
+    if (playingAudioId === conversationId && audioRef.current) {
+      audioRef.current.pause();
+      setPlayingAudioId(null);
+      return;
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    setAudioLoading(conversationId);
+
+    const audio = new Audio(`/api/ai-call/audio?conversationId=${conversationId}`);
+    audioRef.current = audio;
+
+    audio.oncanplaythrough = () => {
+      setAudioLoading(null);
+      audio.play();
+      setPlayingAudioId(conversationId);
+    };
+
+    audio.onended = () => {
+      setPlayingAudioId(null);
+    };
+
+    audio.onerror = () => {
+      setAudioLoading(null);
+      setPlayingAudioId(null);
+    };
+
+    audio.load();
+  };
+
+  // Obtener label y color del outcome
+  const getOutcomeInfo = (outcome: string | null) => {
+    switch (outcome) {
+      case 'wants_quote':
+        return { label: '💰 Quiere cotización', color: 'text-green-700', bg: 'bg-green-100' };
+      case 'interested':
+        return { label: '🎯 Interesado', color: 'text-blue-700', bg: 'bg-blue-100' };
+      case 'not_interested':
+        return { label: '❌ No interesado', color: 'text-gray-600', bg: 'bg-gray-100' };
+      case 'callback':
+        return { label: '📅 Llamar después', color: 'text-amber-700', bg: 'bg-amber-100' };
+      case 'no_answer':
+        return { label: '📵 No contestó', color: 'text-red-600', bg: 'bg-red-50' };
+      case 'voicemail':
+        return { label: '📭 Buzón de voz', color: 'text-gray-500', bg: 'bg-gray-50' };
+      default:
+        return { label: '🤖 Completada', color: 'text-purple-700', bg: 'bg-purple-100' };
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -331,22 +417,34 @@ export default function KanbanBoard() {
           </span>
         )}
 
-        {/* Métricas de llamadas IA */}
+        {/* Métricas de llamadas IA - Clickeable para ver insights */}
         {followUpMetrics.aiCallLeads > 0 && (
           <>
             <span className="border-l border-gray-300 h-4 mx-1"></span>
-            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium" title="Total de leads contactados por Agente IA">
+            <button
+              onClick={() => setShowAIInsights(true)}
+              className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-200 transition-colors cursor-pointer"
+              title="Click para ver detalles de llamadas IA"
+            >
               🤖 {followUpMetrics.aiCallLeads} llamadas IA
-            </span>
+            </button>
             {followUpMetrics.aiOutcomes.interested > 0 && (
-              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs" title="Leads interesados por llamada IA">
+              <button
+                onClick={() => setShowAIInsights(true)}
+                className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors cursor-pointer"
+                title="Click para ver leads interesados"
+              >
                 🎯 {followUpMetrics.aiOutcomes.interested} interesados
-              </span>
+              </button>
             )}
             {followUpMetrics.aiOutcomes.voicemail > 0 && (
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs" title="Buzón de voz - no cuenta">
+              <button
+                onClick={() => setShowAIInsights(true)}
+                className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200 transition-colors cursor-pointer"
+                title="Click para ver buzones de voz"
+              >
                 📭 {followUpMetrics.aiOutcomes.voicemail} buzón
-              </span>
+              </button>
             )}
           </>
         )}
@@ -374,6 +472,186 @@ export default function KanbanBoard() {
           onStageChange={handleStageChange}
           onActionRegistered={handleActionRegistered}
         />
+      )}
+
+      {/* Modal de AI Insights */}
+      {showAIInsights && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAIInsights(false)}>
+          <div
+            className="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    🤖 Insights de Llamadas IA
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {aiCallLeadsList.length} leads contactados por el agente IA
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAIInsights(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-white/50"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Resumen de resultados */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                  🎯 {followUpMetrics.aiOutcomes.interested} interesados
+                </span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
+                  ❌ {followUpMetrics.aiOutcomes.notInterested} no interesados
+                </span>
+                <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm">
+                  📵 {followUpMetrics.aiOutcomes.noAnswer} no contestaron
+                </span>
+                <span className="px-3 py-1 bg-gray-50 text-gray-500 rounded-full text-sm">
+                  📭 {followUpMetrics.aiOutcomes.voicemail} buzón de voz
+                </span>
+                {followUpMetrics.aiOutcomes.other > 0 && (
+                  <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">
+                    📞 {followUpMetrics.aiOutcomes.other} otros
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Lista de llamadas */}
+            <div className="px-6 py-4 overflow-y-auto max-h-[calc(85vh-180px)]">
+              <div className="space-y-3">
+                {aiCallLeadsList.map((lead) => {
+                  const outcomeInfo = getOutcomeInfo(lead.aiCallResult?.outcome || null);
+                  const columnConfig = COLUMN_CONFIG[lead.currentColumn as KanbanColumnId];
+                  const conversationId = lead.aiCallResult?.conversationId;
+                  const isPlaying = playingAudioId === conversationId;
+                  const isLoading = audioLoading === conversationId;
+
+                  return (
+                    <div
+                      key={lead.id}
+                      className={`p-4 rounded-xl border-2 ${
+                        lead.aiCallResult?.outcome === 'wants_quote' || lead.aiCallResult?.outcome === 'interested'
+                          ? 'border-green-200 bg-green-50/50'
+                          : lead.aiCallResult?.outcome === 'voicemail'
+                            ? 'border-gray-200 bg-gray-50/50'
+                            : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          {/* Nombre y etapa */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-gray-900 truncate">{lead.name}</h3>
+                            <span className={`px-2 py-0.5 rounded text-xs ${columnConfig?.bgColor || 'bg-gray-100'} ${columnConfig?.color || 'text-gray-600'}`}>
+                              {columnConfig?.icon} {columnConfig?.title || lead.currentColumn}
+                            </span>
+                          </div>
+
+                          {/* Tipo de negocio y distrito */}
+                          <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                            {lead.business_type && <span>{lead.business_type}</span>}
+                            {lead.city && <span>📍 {lead.city}</span>}
+                          </div>
+
+                          {/* Resultado de la llamada */}
+                          <div className="mt-2">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium ${outcomeInfo.bg} ${outcomeInfo.color}`}>
+                              {outcomeInfo.label}
+                              {lead.aiCallResult?.contactName && (
+                                <span className="ml-2 font-normal opacity-75">
+                                  • Contacto: {lead.aiCallResult.contactName}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Botón de reproducir */}
+                        {conversationId && (
+                          <button
+                            onClick={() => handlePlayAudio(conversationId)}
+                            disabled={isLoading}
+                            className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-md ${
+                              isPlaying
+                                ? 'bg-red-500 text-white hover:bg-red-600'
+                                : 'bg-purple-600 text-white hover:bg-purple-700'
+                            } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
+                            title={isPlaying ? 'Pausar' : 'Escuchar llamada'}
+                          >
+                            {isLoading ? (
+                              <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            ) : isPlaying ? (
+                              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="4" width="4" height="16" />
+                                <rect x="14" y="4" width="4" height="16" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Botón para ver detalle */}
+                      <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                        <span className="text-xs text-gray-400">
+                          {lead.phone}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setShowAIInsights(false);
+                            setSelectedBusiness(lead);
+                          }}
+                          className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+                        >
+                          Ver detalle →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {aiCallLeadsList.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <span className="text-4xl mb-4 block">🤖</span>
+                  <p className="font-medium">No hay llamadas IA registradas</p>
+                  <p className="text-sm mt-1">Las llamadas del agente IA aparecerán aquí</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+              <span className="text-sm text-gray-500">
+                Tasa de éxito: <strong className="text-green-600">
+                  {aiCallLeadsList.length > 0
+                    ? Math.round((followUpMetrics.aiOutcomes.interested / aiCallLeadsList.length) * 100)
+                    : 0}%
+                </strong> interesados
+              </span>
+              <button
+                onClick={() => setShowAIInsights(false)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

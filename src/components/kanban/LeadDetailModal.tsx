@@ -236,6 +236,7 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showStageMenu, setShowStageMenu] = useState(false);
   const [emailModal, setEmailModal] = useState<EmailModal | null>(null);
+  const [aiCallStatus, setAiCallStatus] = useState<'idle' | 'calling' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     if (business) {
@@ -339,6 +340,43 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
     if (!business) return;
     onStageChange(business.id, newStage);
     setShowStageMenu(false);
+  };
+
+  const handleAICall = async () => {
+    if (!business?.phone) return;
+    setAiCallStatus('calling');
+
+    try {
+      const res = await fetch('/api/ai-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          phoneNumber: business.phone,
+          businessName: business.name,
+          businessType: business.business_type,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setAiCallStatus('success');
+        // Registrar como acción de contacto
+        await fetchContactHistory();
+        onActionRegistered();
+        // Reset después de 3 segundos
+        setTimeout(() => setAiCallStatus('idle'), 3000);
+      } else {
+        console.error('AI Call error:', data);
+        setAiCallStatus('error');
+        setTimeout(() => setAiCallStatus('idle'), 3000);
+      }
+    } catch (err) {
+      console.error('AI Call error:', err);
+      setAiCallStatus('error');
+      setTimeout(() => setAiCallStatus('idle'), 3000);
+    }
   };
 
   if (!business) return null;
@@ -598,6 +636,51 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                 )}
               </button>
             </div>
+
+            {/* Botón de Llamada con IA */}
+            {business.phone && (
+              <div className="mt-3">
+                <button
+                  onClick={handleAICall}
+                  disabled={aiCallStatus === 'calling'}
+                  className={`w-full px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                    aiCallStatus === 'success'
+                      ? 'bg-green-100 text-green-700 border-2 border-green-300'
+                      : aiCallStatus === 'error'
+                        ? 'bg-red-100 text-red-700 border-2 border-red-300'
+                        : aiCallStatus === 'calling'
+                          ? 'bg-purple-100 text-purple-700 border-2 border-purple-300 animate-pulse'
+                          : 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-lg hover:shadow-xl'
+                  }`}
+                >
+                  {aiCallStatus === 'calling' ? (
+                    <>
+                      <span className="animate-spin">🤖</span>
+                      <span>Llamando con IA...</span>
+                    </>
+                  ) : aiCallStatus === 'success' ? (
+                    <>
+                      <span>✅</span>
+                      <span>¡Llamada iniciada!</span>
+                    </>
+                  ) : aiCallStatus === 'error' ? (
+                    <>
+                      <span>❌</span>
+                      <span>Error - Reintentar</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🤖</span>
+                      <span>Llamar con Agente IA</span>
+                      <span className="text-xs opacity-75">(Automático)</span>
+                    </>
+                  )}
+                </button>
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  El agente IA llamará y calificará este lead automáticamente
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Historial de contactos */}

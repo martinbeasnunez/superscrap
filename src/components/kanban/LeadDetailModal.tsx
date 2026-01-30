@@ -226,6 +226,7 @@ function getActionIcon(action: string): string {
     case 'whatsapp': return '📱';
     case 'email': return '📧';
     case 'call': return '📞';
+    case 'ai_call': return '🤖';
     default: return '📝';
   }
 }
@@ -812,13 +813,24 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                   </div>
                 )}
 
-                <div className="space-y-2 max-h-40 overflow-y-auto">
+                <div className="space-y-2 max-h-60 overflow-y-auto">
                   {contactHistory.map((h, idx) => (
-                    <div key={h.id} className="flex items-center gap-2 text-sm bg-gray-50 rounded-lg px-3 py-2">
-                      <span className="text-gray-400 text-xs font-medium">#{contactHistory.length - idx}</span>
-                      <span>{getActionIcon(h.action_type)}</span>
-                      <span className="text-gray-700 capitalize">{h.action_type}</span>
-                      <span className="text-gray-400 text-xs ml-auto">{formatTimeAgo(h.created_at)}</span>
+                    <div key={h.id} className={`text-sm rounded-lg px-3 py-2 ${
+                      h.action_type === 'ai_call' ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 text-xs font-medium">#{contactHistory.length - idx}</span>
+                        <span>{getActionIcon(h.action_type)}</span>
+                        <span className="text-gray-700 capitalize">
+                          {h.action_type === 'ai_call' ? 'Llamada IA' : h.action_type}
+                        </span>
+                        <span className="text-gray-400 text-xs ml-auto">{formatTimeAgo(h.created_at)}</span>
+                      </div>
+                      {h.notes && h.action_type === 'ai_call' && (
+                        <div className="mt-2 text-xs text-gray-600 whitespace-pre-line border-t border-purple-200 pt-2">
+                          {h.notes.split('\n').slice(2).join('\n')}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

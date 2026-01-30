@@ -146,25 +146,27 @@ export async function POST(request: Request) {
                    analysis.summary ||
                    generateSummary(transcript, outcome);
 
-    // Actualizar registro de llamada si existe businessId
+    // Actualizar registro si existe businessId
     if (businessId) {
-      // Actualizar ai_calls si existe la tabla
-      await supabase
-        .from('ai_calls')
-        .update({
-          status,
-          duration_seconds: duration,
-          transcript,
-          summary,
-          outcome,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('conversation_id', conversationId);
+      // Guardar en contact_history como llamada IA
+      const aiCallNote = `🤖 Llamada IA (${duration}s)\n\nResultado: ${
+        outcome === 'wants_quote' ? '💰 Quiere cotización' :
+        outcome === 'interested' ? '🎯 Interesado' :
+        outcome === 'not_interested' ? '❌ No interesado' :
+        outcome === 'callback' ? '📅 Llamar después' : '📞 Completada'
+      }\n\nResumen: ${summary}`;
 
-      // Actualizar el lead según el outcome
+      await supabase
+        .from('contact_history')
+        .insert({
+          business_id: businessId,
+          action_type: 'ai_call',
+          notes: aiCallNote,
+          created_at: new Date().toISOString(),
+        });
+
+      // Actualizar sales_stage del lead según outcome
       const updateData: Record<string, unknown> = {
-        ai_call_summary: summary,
-        ai_call_outcome: outcome,
         contacted_at: new Date().toISOString(),
       };
 
@@ -175,10 +177,14 @@ export async function POST(request: Request) {
         updateData.sales_stage = 'perdido';
       }
 
-      await supabase
+      const { error } = await supabase
         .from('businesses')
         .update(updateData)
         .eq('id', businessId);
+
+      if (error) {
+        console.error('Error updating business:', error);
+      }
     }
 
     return NextResponse.json({

@@ -92,6 +92,18 @@ export default function KanbanBoard() {
     ];
     const singleContactLeads = allActiveLeads.filter(l => l.contactCount === 1).length;
 
+    // Contar leads que tuvieron llamada con IA
+    const allLeads = COLUMN_ORDER.flatMap(col => columns[col]);
+    const aiCallLeads = allLeads.filter(l => l.aiCallResult?.hasAICall).length;
+
+    // Contar por outcome de llamadas IA
+    const aiOutcomes = {
+      interested: allLeads.filter(l => l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote').length,
+      notInterested: allLeads.filter(l => l.aiCallResult?.outcome === 'not_interested').length,
+      noAnswer: allLeads.filter(l => l.aiCallResult?.outcome === 'no_answer').length,
+      other: allLeads.filter(l => l.aiCallResult?.hasAICall && !['interested', 'wants_quote', 'not_interested', 'no_answer'].includes(l.aiCallResult?.outcome || '')).length,
+    };
+
     return {
       urgentCount: seguimiento1Count,
       criticalCount: seguimiento2Count,
@@ -99,6 +111,8 @@ export default function KanbanBoard() {
       totalContactedLeads: allActiveLeads.length,
       singleContactLeads,
       needsAttention: seguimiento1Count + seguimiento2Count,
+      aiCallLeads,
+      aiOutcomes,
     };
   }, [columns]);
 
@@ -314,6 +328,21 @@ export default function KanbanBoard() {
           <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs" title="Leads con solo 1 contacto - considera hacer follow-up">
             💬 {followUpMetrics.singleContactLeads} con 1 solo contacto
           </span>
+        )}
+
+        {/* Métricas de llamadas IA */}
+        {followUpMetrics.aiCallLeads > 0 && (
+          <>
+            <span className="border-l border-gray-300 h-4 mx-1"></span>
+            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium" title="Total de leads contactados por Agente IA">
+              🤖 {followUpMetrics.aiCallLeads} llamadas IA
+            </span>
+            {followUpMetrics.aiOutcomes.interested > 0 && (
+              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs" title="Leads interesados por llamada IA">
+                🎯 {followUpMetrics.aiOutcomes.interested} interesados
+              </span>
+            )}
+          </>
         )}
       </div>
 

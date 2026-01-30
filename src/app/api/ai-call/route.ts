@@ -100,14 +100,29 @@ export async function POST(request: Request) {
         agent_phone_number_id: ELEVENLABS_PHONE_NUMBER_ID,
         to_number: formattedNumber,
         conversation_initiation_client_data: {
+          // Configuración de conversación - timeout por silencio
+          conversation_config_override: {
+            agent: {
+              prompt: {
+                // Instrucción para colgar si hay silencio prolongado
+                prompt: `IMPORTANTE: Si el cliente no responde o hay silencio por más de 20 segundos, despídete cortésmente y termina la llamada diciendo "Parece que no es buen momento, lo llamaré en otro horario. Que tenga buen día."`,
+              },
+            },
+            conversation: {
+              // Timeout máximo de silencio antes de que el agente actúe (30 segundos)
+              client_events: ['agent_response', 'user_transcript'],
+            },
+          },
           dynamic_variables: {
             business_name: businessName || 'la empresa',
             business_type: businessType || 'negocio',
-            // Nuevas variables para el contexto de la llamada
+            // Contexto de la llamada según el stage
             call_type: callContext.call_type,
             call_objective: callContext.call_objective,
             opening_script: callContext.opening_script,
             key_points: callContext.key_points,
+            // Instrucción de silencio
+            silence_instruction: 'Si el cliente guarda silencio por más de 20 segundos o no responde, despídete amablemente y termina la llamada.',
           },
         },
       }),

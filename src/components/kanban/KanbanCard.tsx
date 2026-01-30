@@ -173,9 +173,10 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
 
             {/* Indicadores de acción */}
             <div className="flex items-center gap-1 flex-shrink-0">
+              {hasAICall && <span className="text-sm" title="Llamada con Agente IA">🤖</span>}
               {hasWhatsapp && <span className="text-xs opacity-70" title="WhatsApp enviado">📱</span>}
               {hasEmail && <span className="text-xs opacity-70" title="Email enviado">📧</span>}
-              {hasCall && <span className="text-xs opacity-70" title="Llamada realizada">📞</span>}
+              {hasCall && !hasAICall && <span className="text-xs opacity-70" title="Llamada realizada">📞</span>}
             </div>
           </div>
 
@@ -193,13 +194,13 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
           <div className="mt-1.5 flex items-center justify-between">
             {business.contactCount > 0 ? (
               <span className="text-xs text-gray-500">
-                {hasAICall ? '🤖' : ''} {business.contactCount} {business.contactCount === 1 ? 'contacto' : 'contactos'}
+                {business.contactCount} {business.contactCount === 1 ? 'contacto' : 'contactos'}
               </span>
             ) : (
               <span className="text-xs text-gray-400 italic">Sin contactar</span>
             )}
 
-            {urgency.level === 'ok' && hasAnyContact && !hasAICall && (
+            {urgency.level === 'ok' && hasAnyContact && (
               <span className={`text-xs px-1.5 py-0.5 rounded ${urgency.bgColor} ${urgency.color}`}>
                 ✓ {urgency.message}
               </span>

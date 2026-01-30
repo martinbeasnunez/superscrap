@@ -26,6 +26,12 @@ export interface DecisionMaker {
   phone: string | null;
 }
 
+export interface AICallResult {
+  outcome: 'wants_quote' | 'interested' | 'not_interested' | 'callback' | 'completed' | null;
+  contactName: string | null;
+  hasAICall: boolean;
+}
+
 export interface KanbanBusiness {
   id: string;
   name: string;
@@ -46,6 +52,7 @@ export interface KanbanBusiness {
   daysSinceContact: number | null;
   contactCount: number;
   decision_makers: DecisionMaker[] | null;
+  aiCallResult: AICallResult | null;
 }
 
 export interface KanbanResponse {
@@ -121,16 +128,39 @@ export async function GET() {
       return NextResponse.json({ error: 'Error al obtener negocios' }, { status: 500 });
     }
 
-    // Obtener conteo de contactos por negocio
+    // Obtener conteo de contactos y llamadas IA por negocio
     const businessIds = businesses?.map(b => b.id) || [];
-    const { data: contactCounts } = await supabase
+    const { data: contactHistory } = await supabase
       .from('contact_history')
-      .select('business_id')
+      .select('business_id, notes')
       .in('business_id', businessIds);
 
     const contactCountMap: Record<string, number> = {};
-    contactCounts?.forEach(c => {
+    const aiCallMap: Record<string, AICallResult> = {};
+
+    contactHistory?.forEach(c => {
       contactCountMap[c.business_id] = (contactCountMap[c.business_id] || 0) + 1;
+
+      // Detectar llamadas IA (empiezan con 🤖)
+      if (c.notes?.startsWith('🤖')) {
+        // Extraer outcome de las notas
+        let outcome: AICallResult['outcome'] = null;
+        if (c.notes.includes('¡QUIERE COTIZACIÓN!')) outcome = 'wants_quote';
+        else if (c.notes.includes('INTERESADO')) outcome = 'interested';
+        else if (c.notes.includes('No interesado')) outcome = 'not_interested';
+        else if (c.notes.includes('Llamar después')) outcome = 'callback';
+        else outcome = 'completed';
+
+        // Extraer nombre del contacto
+        const nameMatch = c.notes.match(/👤 Contacto: ([^\n]+)/);
+        const contactName = nameMatch ? nameMatch[1] : null;
+
+        aiCallMap[c.business_id] = {
+          hasAICall: true,
+          outcome,
+          contactName,
+        };
+      }
     });
 
     // Calcular días desde último contacto y clasificar
@@ -173,6 +203,7 @@ export async function GET() {
         city: b.searches?.city || null,
         daysSinceContact,
         contactCount: contactCountMap[b.id] || 0,
+        aiCallResult: aiCallMap[b.id] || null,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

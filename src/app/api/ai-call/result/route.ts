@@ -275,17 +275,17 @@ function generateSalesInsights(transcript: string, outcome: string, englishSumma
   const clientLines = transcript
     .split('\n')
     .filter(line => line.startsWith('Cliente:'))
-    .join('\n')
-    .toLowerCase();
+    .map(line => line.replace('Cliente: ', ''))
+    .join(' ');
+
+  const clientLinesLower = clientLines.toLowerCase();
 
   // Detectar nombre del contacto (en lo que dijo el cliente)
-  const nameMatch = clientLines.match(/(?:mi nombre es|me llamo|soy)\s+([a-záéíóú]+)/i);
+  const nameMatch = clientLinesLower.match(/(?:mi nombre es|me llamo|soy)\s+([a-záéíóú]+)/i);
   if (nameMatch) {
-    // Capitalizar primera letra
     const name = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
     insights.push(`👤 Contacto: ${name}`);
   } else {
-    // Intentar extraer del resumen en inglés
     const englishNameMatch = englishSummary.match(/contacted\s+([A-Za-z]+)/i);
     if (englishNameMatch && englishNameMatch[1] !== 'Alejandro') {
       insights.push(`👤 Contacto: ${englishNameMatch[1]}`);
@@ -293,11 +293,12 @@ function generateSalesInsights(transcript: string, outcome: string, englishSumma
   }
 
   // Detectar si tienen proveedor actual
-  if (lower.includes('proveedor') || lower.includes('ya tenemos') || lower.includes('trabajamos con')) {
-    if (lower.includes('no estoy contento') || lower.includes('no estamos contentos') ||
-        lower.includes('problemas') || lower.includes('mal servicio') || lower.includes('insatisfecho')) {
+  if (lower.includes('proveedor') || lower.includes('ya tenemos') || lower.includes('trabajamos con') || lower.includes('internamente')) {
+    if (clientLinesLower.includes('no estoy contento') || clientLinesLower.includes('no estamos contentos') ||
+        clientLinesLower.includes('no, no') || clientLinesLower.includes('problemas') ||
+        clientLinesLower.includes('mal servicio') || clientLinesLower.includes('insatisfecho')) {
       insights.push(`🔥 OPORTUNIDAD: Insatisfecho con proveedor actual`);
-    } else if (lower.includes('contento') || lower.includes('bien')) {
+    } else if (clientLinesLower.includes('contento') || clientLinesLower.includes('bien')) {
       insights.push(`⚠️ Tiene proveedor pero mostró apertura`);
     } else {
       insights.push(`📋 Ya tiene proveedor de lavandería`);
@@ -319,6 +320,34 @@ function generateSalesInsights(transcript: string, outcome: string, englishSumma
   }
   if (lower.includes('caro') || lower.includes('costoso') || lower.includes('precio alto')) {
     insights.push(`🎯 Pain point: Precio alto actual`);
+  }
+
+  // Agregar fragmentos clave de lo que dijo el cliente
+  const clientQuotes = transcript
+    .split('\n')
+    .filter(line => line.startsWith('Cliente:'))
+    .map(line => line.replace('Cliente: ', '').trim())
+    .filter(line => line.length > 10 && line.length < 150);
+
+  if (clientQuotes.length > 0) {
+    // Seleccionar las frases más relevantes (máximo 3)
+    const relevantQuotes = clientQuotes
+      .filter(q => {
+        const ql = q.toLowerCase();
+        return ql.includes('cotización') || ql.includes('interesado') ||
+               ql.includes('contento') || ql.includes('proveedor') ||
+               ql.includes('precio') || ql.includes('problema') ||
+               ql.includes('whatsapp') || ql.includes('ocupado') ||
+               ql.includes('no me interesa') || ql.includes('mandar');
+      })
+      .slice(0, 2);
+
+    if (relevantQuotes.length > 0) {
+      insights.push(`\n💬 Lo que dijo el cliente:`);
+      relevantQuotes.forEach(q => {
+        insights.push(`   "${q}"`);
+      });
+    }
   }
 
   // Acción recomendada según outcome

@@ -88,14 +88,32 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   };
 }
 
+// Obtener label corto del resultado de llamada IA
+function getAICallLabel(outcome: string | null): { text: string; color: string; bg: string } {
+  switch (outcome) {
+    case 'wants_quote':
+      return { text: '💰 Quiere cotización', color: 'text-green-700', bg: 'bg-green-100' };
+    case 'interested':
+      return { text: '🎯 Interesado', color: 'text-blue-700', bg: 'bg-blue-100' };
+    case 'not_interested':
+      return { text: '❌ No interesado', color: 'text-gray-600', bg: 'bg-gray-100' };
+    case 'callback':
+      return { text: '📅 Llamar después', color: 'text-amber-700', bg: 'bg-amber-100' };
+    default:
+      return { text: '🤖 Llamada IA', color: 'text-purple-700', bg: 'bg-purple-100' };
+  }
+}
+
 export default function KanbanCard({ business, index, onClick }: KanbanCardProps) {
   const district = extractDistrict(business.address);
   const hasWhatsapp = business.contact_actions?.includes('whatsapp');
   const hasEmail = business.contact_actions?.includes('email');
   const hasCall = business.contact_actions?.includes('call');
   const hasAnyContact = business.contact_actions && business.contact_actions.length > 0;
+  const hasAICall = business.aiCallResult?.hasAICall;
 
   const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount);
+  const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null) : null;
 
   // Borde especial según urgencia
   const getBorderStyle = () => {
@@ -159,17 +177,27 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
             </div>
           </div>
 
+          {/* Resultado de llamada IA */}
+          {hasAICall && aiLabel && (
+            <div className={`mt-1.5 px-2 py-1 rounded text-xs font-medium ${aiLabel.bg} ${aiLabel.color}`}>
+              {aiLabel.text}
+              {business.aiCallResult?.contactName && (
+                <span className="font-normal opacity-80"> • {business.aiCallResult.contactName}</span>
+              )}
+            </div>
+          )}
+
           {/* Contador de contactos + tiempo desde último */}
           <div className="mt-1.5 flex items-center justify-between">
             {business.contactCount > 0 ? (
               <span className="text-xs text-gray-500">
-                {business.contactCount} {business.contactCount === 1 ? 'contacto' : 'contactos'}
+                {hasAICall ? '🤖' : ''} {business.contactCount} {business.contactCount === 1 ? 'contacto' : 'contactos'}
               </span>
             ) : (
               <span className="text-xs text-gray-400 italic">Sin contactar</span>
             )}
 
-            {urgency.level === 'ok' && hasAnyContact && (
+            {urgency.level === 'ok' && hasAnyContact && !hasAICall && (
               <span className={`text-xs px-1.5 py-0.5 rounded ${urgency.bgColor} ${urgency.color}`}>
                 ✓ {urgency.message}
               </span>

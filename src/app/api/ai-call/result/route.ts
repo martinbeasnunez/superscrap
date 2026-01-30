@@ -3,6 +3,23 @@ import { supabase } from '@/lib/supabase';
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 
+// Tipo para mensajes del transcript de ElevenLabs
+interface TranscriptMessage {
+  role: string;
+  message: string;
+  time_in_call_secs?: number;
+}
+
+// Convertir array de transcript a string legible
+function transcriptToString(transcript: TranscriptMessage[] | string): string {
+  if (typeof transcript === 'string') return transcript;
+  if (!Array.isArray(transcript)) return '';
+
+  return transcript
+    .map((msg) => `${msg.role === 'agent' ? 'Agente' : 'Cliente'}: ${msg.message}`)
+    .join('\n');
+}
+
 // GET: Consultar resultado de una conversación de ElevenLabs
 export async function GET(request: Request) {
   try {
@@ -30,33 +47,65 @@ export async function GET(request: Request) {
     }
 
     const conversation = await response.json();
+    console.log('ElevenLabs conversation response:', JSON.stringify(conversation, null, 2));
 
-    // Extraer datos relevantes
-    const transcript = conversation.transcript || '';
+    // Extraer datos relevantes - formato correcto de ElevenLabs
+    const transcriptArray = conversation.transcript || [];
+    const transcriptString = transcriptToString(transcriptArray);
     const analysis = conversation.analysis || {};
     const status = conversation.status || 'unknown';
     const duration = conversation.metadata?.call_duration_secs || 0;
 
-    // Determinar outcome basado en transcript
-    const outcome = determineOutcome(transcript, analysis);
+    // ElevenLabs usa call_successful y transcript_summary
+    const callSuccessful = analysis.call_successful || conversation.call_successful;
 
-    // Generar resumen
-    const summary = analysis.summary || generateSummary(transcript, outcome);
+    // Determinar outcome basado en análisis de ElevenLabs
+    const outcome = determineOutcomeFromAnalysis(analysis, transcriptString, callSuccessful);
+
+    // El summary viene en transcript_summary o evaluation_criteria_results
+    const summary = analysis.transcript_summary ||
+                   analysis.summary ||
+                   generateSummary(transcriptString, outcome);
 
     return NextResponse.json({
       success: true,
       conversation_id: conversationId,
       status,
       duration,
-      transcript,
+      transcript: transcriptString,
       summary,
       outcome,
+      call_successful: callSuccessful,
       analysis,
     });
   } catch (error) {
     console.error('AI Call result error:', error);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
+}
+
+// Determinar outcome basado en el análisis de ElevenLabs
+function determineOutcomeFromAnalysis(
+  analysis: Record<string, unknown>,
+  transcript: string,
+  callSuccessful: string | undefined
+): string {
+  // Si ElevenLabs dice que fue exitosa, es interesado
+  if (callSuccessful === 'success') {
+    // Verificar si pidió cotización específicamente
+    const lower = transcript.toLowerCase();
+    if (lower.includes('cotización') || lower.includes('presupuesto') || lower.includes('whatsapp')) {
+      return 'wants_quote';
+    }
+    return 'interested';
+  }
+
+  if (callSuccessful === 'failure') {
+    return 'not_interested';
+  }
+
+  // Fallback al análisis por transcript
+  return determineOutcome(transcript, analysis);
 }
 
 // POST: Guardar resultado y actualizar lead
@@ -83,14 +132,19 @@ export async function POST(request: Request) {
     }
 
     const conversation = await response.json();
+    console.log('ElevenLabs POST conversation:', JSON.stringify(conversation, null, 2));
 
-    // Extraer datos
-    const transcript = conversation.transcript || '';
+    // Extraer datos - formato correcto de ElevenLabs
+    const transcriptArray = conversation.transcript || [];
+    const transcript = transcriptToString(transcriptArray);
     const analysis = conversation.analysis || {};
     const status = conversation.status || 'completed';
     const duration = conversation.metadata?.call_duration_secs || 0;
-    const outcome = determineOutcome(transcript, analysis);
-    const summary = analysis.summary || generateSummary(transcript, outcome);
+    const callSuccessful = analysis.call_successful || conversation.call_successful;
+    const outcome = determineOutcomeFromAnalysis(analysis, transcript, callSuccessful);
+    const summary = analysis.transcript_summary ||
+                   analysis.summary ||
+                   generateSummary(transcript, outcome);
 
     // Actualizar registro de llamada si existe businessId
     if (businessId) {

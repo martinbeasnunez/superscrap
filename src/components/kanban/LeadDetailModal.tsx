@@ -389,10 +389,12 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
   // Consultar resultado de la llamada periódicamente
   const pollForResult = async (conversationId: string) => {
     let attempts = 0;
-    const maxAttempts = 10; // 5 minutos (30s x 10)
+    const maxAttempts = 20; // 10 minutos (30s x 20)
 
     const checkResult = async () => {
       attempts++;
+      console.log(`[AI Call] Polling attempt ${attempts} for conversation ${conversationId}`);
+
       try {
         const res = await fetch(`/api/ai-call/result`, {
           method: 'POST',
@@ -403,9 +405,13 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
           }),
         });
 
+        const result = await res.json();
+        console.log('[AI Call] Poll result:', result);
+
         if (res.ok) {
-          const result = await res.json();
-          if (result.status === 'done' || result.status === 'completed' || result.outcome) {
+          // La llamada terminó si tiene status done/completed o tiene outcome
+          if (result.status === 'done' || result.status === 'completed' || result.success) {
+            console.log('[AI Call] Call completed! Outcome:', result.outcome);
             setAiCallResult({
               summary: result.summary,
               outcome: result.outcome,
@@ -418,20 +424,25 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
           }
         }
 
+        // Si hubo error 404, la conversación aún está en progreso
         // Continuar polling si no ha terminado
         if (attempts < maxAttempts) {
-          setTimeout(checkResult, 30000); // 30 segundos
+          const delay = attempts < 4 ? 15000 : 30000; // Más rápido al inicio
+          console.log(`[AI Call] Will retry in ${delay/1000}s`);
+          setTimeout(checkResult, delay);
+        } else {
+          console.log('[AI Call] Max attempts reached, stopping poll');
         }
       } catch (err) {
-        console.error('Error polling result:', err);
+        console.error('[AI Call] Error polling result:', err);
         if (attempts < maxAttempts) {
           setTimeout(checkResult, 30000);
         }
       }
     };
 
-    // Primera consulta después de 30 segundos
-    setTimeout(checkResult, 30000);
+    // Primera consulta después de 15 segundos (las llamadas pueden ser cortas)
+    setTimeout(checkResult, 15000);
   };
 
   if (!business) return null;

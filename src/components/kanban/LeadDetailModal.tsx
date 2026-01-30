@@ -212,13 +212,21 @@ function formatTimeAgo(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffHours < 1) return 'hace menos de 1 hora';
-  if (diffHours < 24) return `hace ${diffHours}h`;
-  if (diffDays === 1) return 'hace 1 día';
-  return `hace ${diffDays} días`;
+  if (diffSecs < 60) return 'ahora';
+  if (diffMins < 2) return 'hace 1 min';
+  if (diffMins < 60) return `hace ${diffMins} min`;
+  if (diffHours === 1) return 'hace 1 hora';
+  if (diffHours < 24) return `hace ${diffHours} horas`;
+  if (diffDays === 1) return 'ayer';
+  if (diffDays < 7) return `hace ${diffDays} días`;
+  if (diffDays < 14) return 'hace 1 semana';
+  if (diffDays < 30) return `hace ${Math.floor(diffDays / 7)} semanas`;
+  return `hace ${Math.floor(diffDays / 30)} mes${Math.floor(diffDays / 30) > 1 ? 'es' : ''}`;
 }
 
 function getActionIcon(action: string): string {
@@ -349,6 +357,10 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
     setAiCallStatus('calling');
     setAiCallResult(null);
 
+    // Buscar si hay resumen de llamada IA anterior
+    const lastAICall = contactHistory.find(h => h.notes?.startsWith('🤖'));
+    const lastAICallSummary = lastAICall?.notes || null;
+
     try {
       const res = await fetch('/api/ai-call', {
         method: 'POST',
@@ -358,6 +370,10 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
           phoneNumber: business.phone,
           businessName: business.name,
           businessType: business.business_type,
+          // Pasar contexto para adaptar el pitch
+          salesStage: business.sales_stage,
+          contactCount: business.contactCount,
+          lastAICallSummary,
         }),
       });
 
@@ -409,20 +425,24 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
         const result = await res.json();
         console.log('[AI Call] Poll result:', result);
 
-        if (res.ok) {
-          // La llamada terminó si tiene status done/completed o tiene outcome
-          if (result.status === 'done' || result.status === 'completed' || result.success) {
-            console.log('[AI Call] Call completed! Outcome:', result.outcome);
-            setAiCallResult({
-              summary: result.summary,
-              outcome: result.outcome,
-            });
-            // Refrescar datos si se actualizó el stage
-            if (result.salesStageUpdated) {
-              onActionRegistered();
-            }
-            return; // Parar polling
+        if (res.ok && result.success) {
+          // La llamada terminó exitosamente
+          console.log('[AI Call] Call completed! Outcome:', result.outcome);
+          setAiCallResult({
+            summary: result.summary,
+            outcome: result.outcome,
+          });
+          // Refrescar historial y datos
+          await fetchContactHistory();
+          if (result.salesStageUpdated) {
+            onActionRegistered();
           }
+          return; // Parar polling
+        }
+
+        // Si la API dice que aún está en progreso, continuar polling
+        if (result.message === 'Conversación aún en progreso') {
+          console.log('[AI Call] Conversation still in progress...');
         }
 
         // Si hubo error 404, la conversación aún está en progreso
@@ -762,13 +782,15 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                         {aiCallResult.outcome === 'wants_quote' && '💰'}
                         {aiCallResult.outcome === 'not_interested' && '❌'}
                         {aiCallResult.outcome === 'callback' && '📅'}
-                        {!['interested', 'wants_quote', 'not_interested', 'callback'].includes(aiCallResult.outcome || '') && '📞'}
+                        {aiCallResult.outcome === 'no_answer' && '📵'}
+                        {!['interested', 'wants_quote', 'not_interested', 'callback', 'no_answer'].includes(aiCallResult.outcome || '') && '📞'}
                       </span>
                       <span className="font-medium text-sm">
                         {aiCallResult.outcome === 'interested' && '¡Interesado!'}
                         {aiCallResult.outcome === 'wants_quote' && '¡Quiere cotización!'}
                         {aiCallResult.outcome === 'not_interested' && 'No interesado'}
                         {aiCallResult.outcome === 'callback' && 'Llamar después'}
+                        {aiCallResult.outcome === 'no_answer' && 'No contestó / Colgó'}
                         {aiCallResult.outcome === 'completed' && 'Llamada completada'}
                       </span>
                     </div>

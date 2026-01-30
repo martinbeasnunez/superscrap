@@ -6,9 +6,71 @@ const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '955wp4k1';
 const ELEVENLABS_PHONE_NUMBER_ID = process.env.ELEVENLABS_PHONE_NUMBER_ID || 'phnum_6101kg6k9e1kewdv2vf5rqpv99h6';
 
+// Generar contexto de llamada según el stage del lead
+function getCallContext(salesStage: string | null, contactCount: number, lastContactInfo?: string): {
+  call_type: string;
+  call_objective: string;
+  opening_script: string;
+  key_points: string;
+} {
+  const stage = salesStage || 'nuevo';
+
+  switch (stage) {
+    case 'contactado':
+    case 'seguimiento_1':
+    case 'seguimiento_2':
+      return {
+        call_type: 'SEGUIMIENTO',
+        call_objective: 'Retomar conversación anterior y conseguir que acepten recibir cotización',
+        opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te llamo porque hace unos días conversamos sobre sus servicios de lavandería. ¿Tienes un momento para continuar la conversación?`,
+        key_points: `- Recordarle la conversación anterior
+- Preguntar si evaluaron la propuesta
+- Ofrecer resolver dudas
+- Insistir en enviar cotización sin compromiso
+- Si dicen que ya tienen proveedor, preguntar si están 100% satisfechos`,
+      };
+
+    case 'interesado':
+      return {
+        call_type: 'CIERRE',
+        call_objective: 'Cerrar la venta o conseguir una reunión presencial',
+        opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te llamo porque mostraste interés en nuestros servicios de lavandería industrial. ¿Recibiste la cotización que te enviamos?`,
+        key_points: `- Confirmar que recibieron cotización
+- Resolver objeciones de precio (mencionar ahorro de 30-40%)
+- Ofrecer prueba gratuita de 1 semana
+- Crear urgencia: "Tenemos cupo para nuevos clientes esta semana"
+- Cerrar: "¿Cuándo podemos hacer la primera recogida?"`,
+      };
+
+    case 'cotizado':
+      return {
+        call_type: 'CIERRE URGENTE',
+        call_objective: 'Cerrar la venta - ya tienen cotización',
+        opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te llamo para dar seguimiento a la cotización que te enviamos. ¿Tuvieron oportunidad de revisarla?`,
+        key_points: `- Preguntar qué les pareció la cotización
+- Resolver objeciones específicas
+- Ofrecer mejora en precio si es necesario
+- Prueba gratuita como último recurso
+- Cierre directo: "¿Empezamos este lunes?"`,
+      };
+
+    default: // nuevo
+      return {
+        call_type: 'PRIMER CONTACTO',
+        call_objective: 'Calificar el lead y conseguir que acepten recibir una cotización',
+        opening_script: `Hola, buenos días. Mi nombre es Alejandro de GetLavado. ¿Me comunico con alguien del área administrativa?`,
+        key_points: `- Preguntar si manejan lavandería interna o con proveedor
+- Si tienen proveedor: preguntar si están satisfechos
+- Detectar pain points (precio, calidad, demoras)
+- Ofrecer cotización sin compromiso por WhatsApp
+- Obtener nombre del contacto`,
+      };
+  }
+}
+
 export async function POST(request: Request) {
   try {
-    const { businessId, phoneNumber, businessName, businessType } = await request.json();
+    const { businessId, phoneNumber, businessName, businessType, salesStage, contactCount, lastAICallSummary } = await request.json();
 
     if (!phoneNumber) {
       return NextResponse.json({ error: 'Número de teléfono requerido' }, { status: 400 });
@@ -22,6 +84,9 @@ export async function POST(request: Request) {
     if (!formattedNumber.startsWith('+')) {
       formattedNumber = '+' + formattedNumber;
     }
+
+    // Obtener contexto de llamada según el stage
+    const callContext = getCallContext(salesStage, contactCount || 0, lastAICallSummary);
 
     // Hacer llamada via ElevenLabs
     const response = await fetch('https://api.elevenlabs.io/v1/convai/twilio/outbound-call', {
@@ -38,6 +103,11 @@ export async function POST(request: Request) {
           dynamic_variables: {
             business_name: businessName || 'la empresa',
             business_type: businessType || 'negocio',
+            // Nuevas variables para el contexto de la llamada
+            call_type: callContext.call_type,
+            call_objective: callContext.call_objective,
+            opening_script: callContext.opening_script,
+            key_points: callContext.key_points,
           },
         },
       }),

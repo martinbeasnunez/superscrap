@@ -27,7 +27,7 @@ export interface DecisionMaker {
 }
 
 export interface AICallResult {
-  outcome: 'wants_quote' | 'interested' | 'not_interested' | 'callback' | 'completed' | null;
+  outcome: 'wants_quote' | 'interested' | 'not_interested' | 'callback' | 'completed' | 'no_answer' | null;
   contactName: string | null;
   hasAICall: boolean;
 }
@@ -149,6 +149,7 @@ export async function GET() {
         else if (c.notes.includes('INTERESADO')) outcome = 'interested';
         else if (c.notes.includes('No interesado')) outcome = 'not_interested';
         else if (c.notes.includes('Llamar después')) outcome = 'callback';
+        else if (c.notes.includes('No contestó') || c.notes.includes('Colgó')) outcome = 'no_answer';
         else outcome = 'completed';
 
         // Extraer nombre del contacto

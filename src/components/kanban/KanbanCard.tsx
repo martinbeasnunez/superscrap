@@ -99,6 +99,8 @@ function getAICallLabel(outcome: string | null): { text: string; color: string; 
       return { text: '❌ No interesado', color: 'text-gray-600', bg: 'bg-gray-100' };
     case 'callback':
       return { text: '📅 Llamar después', color: 'text-amber-700', bg: 'bg-amber-100' };
+    case 'no_answer':
+      return { text: '📵 No contestó', color: 'text-red-600', bg: 'bg-red-50' };
     default:
       return { text: '🤖 Llamada IA', color: 'text-purple-700', bg: 'bg-purple-100' };
   }

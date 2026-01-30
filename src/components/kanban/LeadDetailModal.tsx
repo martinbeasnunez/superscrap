@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { KanbanBusiness, KanbanColumnId, DecisionMaker } from '@/app/api/kanban/route';
 import { COLUMN_CONFIG } from './KanbanColumn';
 
@@ -248,6 +248,11 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
   const [aiCallStatus, setAiCallStatus] = useState<'idle' | 'calling' | 'success' | 'error'>('idle');
   const [aiCallResult, setAiCallResult] = useState<{summary?: string; outcome?: string} | null>(null);
 
+  // Audio player state
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     if (business) {
       fetchContactHistory();
@@ -401,6 +406,45 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
       setAiCallStatus('error');
       setTimeout(() => setAiCallStatus('idle'), 3000);
     }
+  };
+
+  // Reproducir audio de llamada IA
+  const handlePlayAudio = (conversationId: string) => {
+    // Si ya está reproduciéndose este audio, pausar
+    if (playingAudioId === conversationId && audioRef.current) {
+      audioRef.current.pause();
+      setPlayingAudioId(null);
+      return;
+    }
+
+    // Si hay otro audio reproduciéndose, detenerlo
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    setAudioLoading(conversationId);
+
+    // Crear nuevo elemento de audio
+    const audio = new Audio(`/api/ai-call/audio?conversationId=${conversationId}`);
+    audioRef.current = audio;
+
+    audio.oncanplaythrough = () => {
+      setAudioLoading(null);
+      audio.play();
+      setPlayingAudioId(conversationId);
+    };
+
+    audio.onended = () => {
+      setPlayingAudioId(null);
+    };
+
+    audio.onerror = () => {
+      setAudioLoading(null);
+      setPlayingAudioId(null);
+      alert('Error al cargar el audio de la llamada');
+    };
+
+    audio.load();
   };
 
   // Consultar resultado de la llamada periódicamente
@@ -840,6 +884,12 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {contactHistory.map((h, idx) => {
                     const isAICall = h.notes?.startsWith('🤖');
+                    // Extraer conversation_id de las notas para reproducir audio
+                    const convIdMatch = h.notes?.match(/conv_[a-z0-9]+/);
+                    const conversationId = convIdMatch ? convIdMatch[0] : null;
+                    const isPlaying = playingAudioId === conversationId;
+                    const isLoading = audioLoading === conversationId;
+
                     return (
                       <div key={h.id} className={`text-sm rounded-lg px-3 py-2 ${
                         isAICall ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'
@@ -851,6 +901,35 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                             {isAICall ? 'Llamada IA' : h.action_type}
                           </span>
                           <span className="text-gray-400 text-xs ml-auto">{formatTimeAgo(h.created_at)}</span>
+                          {/* Botón de play para llamadas IA */}
+                          {isAICall && conversationId && (
+                            <button
+                              onClick={() => handlePlayAudio(conversationId)}
+                              disabled={isLoading}
+                              className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                isPlaying
+                                  ? 'bg-red-500 text-white hover:bg-red-600'
+                                  : 'bg-purple-600 text-white hover:bg-purple-700'
+                              } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
+                              title={isPlaying ? 'Pausar' : 'Escuchar llamada'}
+                            >
+                              {isLoading ? (
+                                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                              ) : isPlaying ? (
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                  <rect x="6" y="4" width="4" height="16" />
+                                  <rect x="14" y="4" width="4" height="16" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              )}
+                            </button>
+                          )}
                         </div>
                         {h.notes && isAICall && (
                           <div className="mt-2 text-xs text-gray-600 whitespace-pre-line border-t border-purple-200 pt-2">

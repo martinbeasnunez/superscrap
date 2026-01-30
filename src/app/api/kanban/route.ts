@@ -31,6 +31,7 @@ export interface AICallResult {
   contactName: string | null;
   hasAICall: boolean;
   conversationId: string | null; // Para reproducir el audio de la llamada
+  callDate: string | null; // Fecha de la llamada
 }
 
 export interface KanbanBusiness {
@@ -134,7 +135,7 @@ export async function GET() {
     // por business_id con .in() porque Supabase tiene límites en queries IN con muchos valores
     const { data: contactHistory } = await supabase
       .from('contact_history')
-      .select('business_id, notes');
+      .select('business_id, notes, created_at');
 
     const contactCountMap: Record<string, number> = {};
     const aiCallMap: Record<string, AICallResult> = {};
@@ -174,6 +175,7 @@ export async function GET() {
           outcome,
           contactName,
           conversationId,
+          callDate: c.created_at || null,
         };
       }
     });

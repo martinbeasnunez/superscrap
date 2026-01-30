@@ -247,7 +247,12 @@ export default function KanbanBoard() {
     return allLeads
       .filter(l => l.aiCallResult?.hasAICall)
       .sort((a, b) => {
-        // Ordenar por outcome: interesados primero, luego otros, voicemail al final
+        // Primero ordenar por fecha (más recientes primero)
+        const dateA = a.aiCallResult?.callDate ? new Date(a.aiCallResult.callDate).getTime() : 0;
+        const dateB = b.aiCallResult?.callDate ? new Date(b.aiCallResult.callDate).getTime() : 0;
+        if (dateA !== dateB) return dateB - dateA;
+
+        // Si misma fecha, ordenar por outcome: interesados primero
         const priority: Record<string, number> = {
           'wants_quote': 1,
           'interested': 2,
@@ -317,6 +322,55 @@ export default function KanbanBoard() {
         return { label: '🤖 Completada', color: 'text-purple-700', bg: 'bg-purple-100' };
     }
   };
+
+  // Formatear fecha de llamada
+  const formatCallDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return `Hoy ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays === 1) {
+      return `Ayer ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays < 7) {
+      return `Hace ${diffDays} días`;
+    } else {
+      return date.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
+    }
+  };
+
+  // Calcular insights adicionales
+  const aiInsightsStats = useMemo(() => {
+    if (aiCallLeadsList.length === 0) return null;
+
+    // Tasa de conexión (llamadas que conectaron vs total)
+    const connected = aiCallLeadsList.filter(l =>
+      ['wants_quote', 'interested', 'not_interested', 'callback'].includes(l.aiCallResult?.outcome || '')
+    ).length;
+    const connectionRate = Math.round((connected / aiCallLeadsList.length) * 100);
+
+    // Tasa de interés (interesados vs conectados)
+    const interested = followUpMetrics.aiOutcomes.interested;
+    const interestRate = connected > 0 ? Math.round((interested / connected) * 100) : 0;
+
+    // Llamadas por día (aproximado)
+    const dates = aiCallLeadsList
+      .map(l => l.aiCallResult?.callDate)
+      .filter(Boolean)
+      .map(d => new Date(d!).toDateString());
+    const uniqueDays = new Set(dates).size;
+    const avgPerDay = uniqueDays > 0 ? Math.round(aiCallLeadsList.length / uniqueDays) : 0;
+
+    return {
+      connectionRate,
+      interestRate,
+      avgPerDay,
+      uniqueDays,
+      connected,
+    };
+  }, [aiCallLeadsList, followUpMetrics.aiOutcomes.interested]);
 
   if (loading) {
     return (
@@ -522,6 +576,24 @@ export default function KanbanBoard() {
                   </span>
                 )}
               </div>
+
+              {/* Insights adicionales */}
+              {aiInsightsStats && (
+                <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-purple-100">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-700">{aiInsightsStats.connectionRate}%</div>
+                    <div className="text-xs text-gray-500">Tasa de conexión</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{aiInsightsStats.interestRate}%</div>
+                    <div className="text-xs text-gray-500">Tasa de interés</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{aiInsightsStats.avgPerDay}</div>
+                    <div className="text-xs text-gray-500">Llamadas/día</div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Lista de llamadas */}
@@ -607,9 +679,14 @@ export default function KanbanBoard() {
 
                       {/* Botón para ver detalle */}
                       <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
-                        <span className="text-xs text-gray-400">
-                          {lead.phone}
-                        </span>
+                        <div className="flex items-center gap-3 text-xs text-gray-400">
+                          {lead.aiCallResult?.callDate && (
+                            <span className="flex items-center gap-1">
+                              📅 {formatCallDate(lead.aiCallResult.callDate)}
+                            </span>
+                          )}
+                          {lead.phone && <span>{lead.phone}</span>}
+                        </div>
                         <button
                           onClick={() => {
                             setShowAIInsights(false);
@@ -636,13 +713,17 @@ export default function KanbanBoard() {
 
             {/* Footer */}
             <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-              <span className="text-sm text-gray-500">
-                Tasa de éxito: <strong className="text-green-600">
-                  {aiCallLeadsList.length > 0
-                    ? Math.round((followUpMetrics.aiOutcomes.interested / aiCallLeadsList.length) * 100)
-                    : 0}%
-                </strong> interesados
-              </span>
+              <div className="flex items-center gap-4 text-sm text-gray-500">
+                <span>
+                  Conectaron: <strong className="text-blue-600">{aiInsightsStats?.connected || 0}</strong> de {aiCallLeadsList.length}
+                </span>
+                <span className="text-gray-300">|</span>
+                <span>
+                  Interesados: <strong className="text-green-600">
+                    {followUpMetrics.aiOutcomes.interested}
+                  </strong> ({aiInsightsStats?.interestRate || 0}% de conectados)
+                </span>
+              </div>
               <button
                 onClick={() => setShowAIInsights(false)}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"

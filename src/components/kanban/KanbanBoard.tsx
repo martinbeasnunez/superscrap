@@ -5,6 +5,7 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { KanbanBusiness, KanbanColumnId, KanbanResponse } from '@/app/api/kanban/route';
 import KanbanColumn from './KanbanColumn';
 import LeadDetailModal from './LeadDetailModal';
+import AICampaignModal from './AICampaignModal';
 import { COLUMN_CONFIG } from './KanbanColumn';
 
 const COLUMN_ORDER: KanbanColumnId[] = [
@@ -56,6 +57,7 @@ export default function KanbanBoard() {
   const [error, setError] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<KanbanBusiness | null>(null);
   const [showAIInsights, setShowAIInsights] = useState(false);
+  const [showAICampaign, setShowAICampaign] = useState(false);
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -452,6 +454,17 @@ export default function KanbanBoard() {
 
       {/* Stats rápidos con métricas de seguimiento */}
       <div className="flex flex-wrap items-center gap-4 mb-4 text-sm">
+        {/* Botón de Campaña IA destacado */}
+        <button
+          onClick={() => setShowAICampaign(true)}
+          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-2"
+        >
+          <span className="text-lg">🤖</span>
+          <span>Campaña IA</span>
+        </button>
+
+        <span className="border-l border-gray-300 h-6 mx-1"></span>
+
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> activos</span>
         <span className="text-green-600"><strong>{columns.cliente.length}</strong> clientes</span>
@@ -734,6 +747,19 @@ export default function KanbanBoard() {
           </div>
         </div>
       )}
+
+      {/* Modal de Campaña IA */}
+      <AICampaignModal
+        isOpen={showAICampaign}
+        onClose={() => setShowAICampaign(false)}
+        leads={{
+          nuevos: columns.nuevo,
+          seguimiento: [...columns.seguimiento_1, ...columns.seguimiento_2, ...columns.contactado],
+        }}
+        onCampaignComplete={() => {
+          setTimeout(() => fetchKanbanData(), 2000);
+        }}
+      />
     </div>
   );
 }

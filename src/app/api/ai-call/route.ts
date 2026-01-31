@@ -110,7 +110,8 @@ export async function POST(request: Request) {
             key_points: callContext.key_points,
             // Instrucciones especiales
             silence_instruction: 'Si el cliente guarda silencio por más de 30 segundos, despídete amablemente.',
-            voicemail_instruction: 'IMPORTANTE: Si detectas que es un buzón de voz, contestadora automática, o sistema de mensajes (escuchas "deje su mensaje", "después del tono", "no está disponible", "voicemail", etc.), cuelga INMEDIATAMENTE sin dejar mensaje. No pierdas tiempo con buzones de voz.',
+            voicemail_instruction: 'CRÍTICO - BUZÓN DE VOZ: Si detectas CUALQUIERA de estos indicadores, CUELGA INMEDIATAMENTE: 1) Escuchas "deje su mensaje", "después del tono", "no está disponible", "voicemail", "buzón de voz", "centro de atención", "presione 1", "marque el" 2) Escuchas solo tonos o música de espera por más de 10 segundos 3) Escuchas una voz grabada/automatizada 4) No hay respuesta humana real. NO dejes mensaje, NO intentes hablar con el sistema, simplemente CUELGA.',
+            language_instruction: 'IMPORTANTE: Toda la conversación y el análisis debe ser en ESPAÑOL. El summary y las conclusiones deben estar en español.',
           },
         },
       }),

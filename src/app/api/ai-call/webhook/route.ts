@@ -32,6 +32,9 @@ export async function POST(request: Request) {
       console.log('Voicemail detected for conversation:', conversation_id);
     }
 
+    // Determinar outcome final (voicemail tiene prioridad)
+    const finalOutcomeForDB = isVoicemailCall ? 'voicemail' : outcome;
+
     // Actualizar el registro de la llamada
     const { error: updateError } = await supabase
       .from('ai_calls')
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
         duration_seconds: call_duration_secs,
         transcript: transcript,
         summary: summary,
-        outcome: outcome,
+        outcome: finalOutcomeForDB,
         extracted_data: extractedData,
         updated_at: new Date().toISOString(),
       })
@@ -50,9 +53,12 @@ export async function POST(request: Request) {
       console.error('Error updating ai_call:', updateError);
     }
 
+    // Determinar el outcome final - forzar voicemail si fue detectado
+    const finalOutcome = isVoicemailCall ? 'voicemail' : outcome;
+
     // Si hay outcome positivo Y NO es voicemail, actualizar el lead
     // El voicemail NO cuenta como interesado - es pérdida de tiempo
-    if ((outcome === 'interested' || outcome === 'wants_quote') && !isVoicemailCall) {
+    if ((finalOutcome === 'interested' || finalOutcome === 'wants_quote') && !isVoicemailCall) {
       // Buscar el business_id de esta llamada
       const { data: callData } = await supabase
         .from('ai_calls')
@@ -83,9 +89,9 @@ export async function POST(request: Request) {
 function isVoicemail(transcript: string | null, summary: string | null): boolean {
   const textToCheck = ((transcript || '') + ' ' + (summary || '')).toLowerCase();
 
-  // Patrones comunes de buzón de voz
+  // Patrones comunes de buzón de voz en español e inglés
   const voicemailPatterns = [
-    'voicemail',
+    // Español
     'buzón de voz',
     'buzon de voz',
     'casilla de voz',
@@ -93,20 +99,46 @@ function isVoicemail(transcript: string | null, summary: string | null): boolean
     'deja tu mensaje',
     'después del tono',
     'despues del tono',
+    'mensaje de voz',
+    'correo de voz',
+    'grabar mensaje',
+    'mensaje después',
+    'mensaje despues',
+    'no está disponible',
+    'no esta disponible',
+    'centro de atención al cliente',
+    'centro de atencion al cliente',
+    'sistema de mensajes',
+    'sistema automatizado',
+    'marque el',
+    'presione el',
+    'oprima el',
+    'fuera de servicio',
+    'horario de atención',
+    'horario de atencion',
+    // Inglés (por si el summary viene en inglés)
+    'voicemail',
     'leave a message',
     'leave your message',
     'not available',
-    'no está disponible',
-    'no esta disponible',
-    'mensaje de voz',
-    'correo de voz',
-    'entelev',  // Sistema de mensajes automáticos
     'mailbox',
+    'automated voice',
+    'automated system',
+    'messaging system',
+    'voice prompts',
+    'press 1',
+    'press 2',
+    'dial',
+    'menu options',
+    'no initial response',
+    'receives no initial response',
+    'no response',
+    // Otros indicadores
+    'entelev',
     'beep',
-    'grabar mensaje',
     'tone',
-    'mensaje después',
-    'mensaje despues',
+    'ivr',
+    'pbx',
   ];
 
   return voicemailPatterns.some(pattern => textToCheck.includes(pattern));

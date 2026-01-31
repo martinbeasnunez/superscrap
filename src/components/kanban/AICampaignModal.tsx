@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { KanbanBusiness } from '@/app/api/kanban/route';
 
 interface AICampaignModalProps {
@@ -32,8 +32,8 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
   const [currentIndex, setCurrentIndex] = useState(0);
   const [delayBetweenCalls] = useState(5); // 5 segundos entre llamadas
 
-  // IDs de leads llamados en esta sesión (persiste mientras el modal está abierto)
-  const calledInSessionRef = useRef<Set<string>>(new Set());
+  // IDs de leads llamados en esta sesión (usa state para forzar re-render)
+  const [calledInSession, setCalledInSession] = useState<Set<string>>(new Set());
 
   // Leads disponibles según target
   const availableLeads = target === 'nuevos'
@@ -49,7 +49,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
     // Excluir si no tiene teléfono
     if (!l.phone) return false;
     // Excluir si fue llamado en esta sesión
-    if (calledInSessionRef.current.has(l.id)) return false;
+    if (calledInSession.has(l.id)) return false;
     // Excluir si fue llamado recientemente (últimas 24h) - verificar por contacted_at
     if (l.contacted_at) {
       const lastContact = new Date(l.contacted_at);
@@ -89,8 +89,8 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
 
   // Hacer una llamada individual
   const makeCall = useCallback(async (lead: KanbanBusiness, index: number) => {
-    // Marcar como llamado en esta sesión INMEDIATAMENTE
-    calledInSessionRef.current.add(lead.id);
+    // Marcar como llamado en esta sesión INMEDIATAMENTE (con setState para forzar re-render)
+    setCalledInSession(prev => new Set(prev).add(lead.id));
 
     // Actualizar estado a "llamando"
     setCallResults(prev => prev.map((r, i) =>
@@ -274,11 +274,11 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 <div className="space-y-2 max-h-32 overflow-y-auto">
                   {leadsToCall.slice(0, 5).map((lead, i) => (
                     <div key={lead.id} className="flex items-center gap-2 text-sm">
-                      <span className="w-5 h-5 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-bold">
+                      <span className="w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
                         {i + 1}
                       </span>
-                      <span className="truncate flex-1">{lead.name}</span>
-                      <span className="text-gray-400 text-xs">{lead.phone}</span>
+                      <span className="truncate flex-1 font-medium text-gray-900">{lead.name}</span>
+                      <span className="text-gray-600 text-xs font-medium">{lead.phone}</span>
                     </div>
                   ))}
                   {leadsToCall.length > 5 && (

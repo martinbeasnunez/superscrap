@@ -35,6 +35,9 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
   // IDs de leads llamados en esta sesión (usa state para forzar re-render)
   const [calledInSession, setCalledInSession] = useState<Set<string>>(new Set());
 
+  // IDs de leads excluidos manualmente por el usuario
+  const [excludedLeads, setExcludedLeads] = useState<Set<string>>(new Set());
+
   // Leads disponibles según target
   const availableLeads = target === 'nuevos'
     ? leads.nuevos
@@ -42,7 +45,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
       ? leads.seguimiento
       : [...leads.nuevos, ...leads.seguimiento];
 
-  // Leads sin llamada IA previa Y no llamados en esta sesión
+  // Leads sin llamada IA previa Y no llamados en esta sesión Y no excluidos
   const leadsWithoutAICall = availableLeads.filter(l => {
     // Excluir si ya tiene resultado de llamada IA
     if (l.aiCallResult?.hasAICall) return false;
@@ -50,6 +53,8 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
     if (!l.phone) return false;
     // Excluir si fue llamado en esta sesión
     if (calledInSession.has(l.id)) return false;
+    // Excluir si el usuario lo quitó manualmente
+    if (excludedLeads.has(l.id)) return false;
     // Excluir si fue llamado recientemente (últimas 24h) - verificar por contacted_at
     if (l.contacted_at) {
       const lastContact = new Date(l.contacted_at);
@@ -58,6 +63,16 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
     }
     return true;
   });
+
+  // Función para excluir un lead del preview
+  const excludeLead = (leadId: string) => {
+    setExcludedLeads(prev => new Set(prev).add(leadId));
+  };
+
+  // Función para restaurar todos los leads excluidos
+  const restoreExcludedLeads = () => {
+    setExcludedLeads(new Set());
+  };
 
   // Leads a llamar (limitados por quantity)
   const leadsToCall = leadsWithoutAICall.slice(0, quantity);
@@ -269,21 +284,40 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
               <div className="mb-6 p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-gray-700">Preview de llamadas</span>
-                  <span className="text-xs text-gray-500">{leadsToCall.length} leads</span>
+                  <div className="flex items-center gap-2">
+                    {excludedLeads.size > 0 && (
+                      <button
+                        onClick={restoreExcludedLeads}
+                        className="text-xs text-purple-600 hover:text-purple-800 hover:underline"
+                      >
+                        Restaurar {excludedLeads.size} quitados
+                      </button>
+                    )}
+                    <span className="text-xs text-gray-500">{leadsToCall.length} leads</span>
+                  </div>
                 </div>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {leadsToCall.slice(0, 5).map((lead, i) => (
-                    <div key={lead.id} className="flex items-center gap-2 text-sm">
-                      <span className="w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {leadsToCall.slice(0, 8).map((lead, i) => (
+                    <div key={lead.id} className="flex items-center gap-2 text-sm group">
+                      <span className="w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
                         {i + 1}
                       </span>
                       <span className="truncate flex-1 font-medium text-gray-900">{lead.name}</span>
-                      <span className="text-gray-600 text-xs font-medium">{lead.phone}</span>
+                      <span className="text-gray-600 text-xs font-medium flex-shrink-0">{lead.phone}</span>
+                      <button
+                        onClick={() => excludeLead(lead.id)}
+                        className="w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 transition-colors flex-shrink-0 opacity-50 group-hover:opacity-100"
+                        title={`Quitar ${lead.name} de la campaña`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   ))}
-                  {leadsToCall.length > 5 && (
+                  {leadsToCall.length > 8 && (
                     <p className="text-xs text-gray-400 text-center pt-1">
-                      y {leadsToCall.length - 5} más...
+                      y {leadsToCall.length - 8} más...
                     </p>
                   )}
                 </div>

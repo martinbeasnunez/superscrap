@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { KanbanBusiness } from '@/app/api/kanban/route';
 
 interface AICampaignModalProps {
@@ -32,6 +32,9 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
   const [currentIndex, setCurrentIndex] = useState(0);
   const [delayBetweenCalls] = useState(5); // 5 segundos entre llamadas
 
+  // IDs de leads llamados en esta sesión (persiste mientras el modal está abierto)
+  const calledInSessionRef = useRef<Set<string>>(new Set());
+
   // Leads disponibles según target
   const availableLeads = target === 'nuevos'
     ? leads.nuevos
@@ -39,8 +42,22 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
       ? leads.seguimiento
       : [...leads.nuevos, ...leads.seguimiento];
 
-  // Leads sin llamada IA previa (para no repetir)
-  const leadsWithoutAICall = availableLeads.filter(l => !l.aiCallResult?.hasAICall && l.phone);
+  // Leads sin llamada IA previa Y no llamados en esta sesión
+  const leadsWithoutAICall = availableLeads.filter(l => {
+    // Excluir si ya tiene resultado de llamada IA
+    if (l.aiCallResult?.hasAICall) return false;
+    // Excluir si no tiene teléfono
+    if (!l.phone) return false;
+    // Excluir si fue llamado en esta sesión
+    if (calledInSessionRef.current.has(l.id)) return false;
+    // Excluir si fue llamado recientemente (últimas 24h) - verificar por contacted_at
+    if (l.contacted_at) {
+      const lastContact = new Date(l.contacted_at);
+      const hoursAgo = (Date.now() - lastContact.getTime()) / (1000 * 60 * 60);
+      if (hoursAgo < 24) return false;
+    }
+    return true;
+  });
 
   // Leads a llamar (limitados por quantity)
   const leadsToCall = leadsWithoutAICall.slice(0, quantity);
@@ -72,6 +89,9 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
 
   // Hacer una llamada individual
   const makeCall = useCallback(async (lead: KanbanBusiness, index: number) => {
+    // Marcar como llamado en esta sesión INMEDIATAMENTE
+    calledInSessionRef.current.add(lead.id);
+
     // Actualizar estado a "llamando"
     setCallResults(prev => prev.map((r, i) =>
       i === index ? { ...r, status: 'calling' as const } : r

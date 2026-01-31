@@ -22,9 +22,13 @@ export async function POST(request: Request) {
     }
 
     // Extraer insights del análisis si existe
-    const summary = analysis?.summary || null;
-    const outcome = analysis?.outcome || determineOutcome(transcript, summary);
     const extractedData = analysis?.data_collection || {};
+
+    // Preferir los data points configurados en ElevenLabs
+    const summary = extractedData?.summary_es || analysis?.summary || null;
+    const outcomeFromEL = extractedData?.call_outcome || analysis?.outcome;
+    const outcome = outcomeFromEL || determineOutcome(transcript, summary);
+    const contactName = extractedData?.contact_name || null;
 
     // Si es buzón de voz, no hacer nada especial (no mover el lead)
     const isVoicemailCall = isVoicemail(transcript, summary);

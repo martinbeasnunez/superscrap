@@ -58,6 +58,7 @@ export default function KanbanBoard() {
   const [selectedBusiness, setSelectedBusiness] = useState<KanbanBusiness | null>(null);
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [showAICampaign, setShowAICampaign] = useState(false);
+  const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -219,8 +220,29 @@ export default function KanbanBoard() {
     const allLeads = COLUMN_ORDER.flatMap(col =>
       columns[col].map(lead => ({ ...lead, currentColumn: col }))
     );
+
+    // Filtrar por tiempo
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(startOfToday);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
     return allLeads
-      .filter(l => l.aiCallResult?.hasAICall)
+      .filter(l => {
+        if (!l.aiCallResult?.hasAICall) return false;
+        if (insightsTimeFilter === 'all') return true;
+
+        const callDate = l.aiCallResult?.callDate ? new Date(l.aiCallResult.callDate) : null;
+        if (!callDate) return false;
+
+        switch (insightsTimeFilter) {
+          case 'today': return callDate >= startOfToday;
+          case 'week': return callDate >= startOfWeek;
+          case 'month': return callDate >= startOfMonth;
+          default: return true;
+        }
+      })
       .sort((a, b) => {
         // Primero ordenar por fecha (más recientes primero)
         const dateA = a.aiCallResult?.callDate ? new Date(a.aiCallResult.callDate).getTime() : 0;
@@ -241,7 +263,7 @@ export default function KanbanBoard() {
         const bPriority = priority[b.aiCallResult?.outcome || 'completed'] || 5;
         return aPriority - bPriority;
       });
-  }, [columns]);
+  }, [columns, insightsTimeFilter]);
 
   // Reproducir audio de llamada IA
   const handlePlayAudio = (conversationId: string) => {
@@ -320,6 +342,15 @@ export default function KanbanBoard() {
   const aiInsightsStats = useMemo(() => {
     if (aiCallLeadsList.length === 0) return null;
 
+    // Calcular outcomes basados en la lista filtrada
+    const filteredOutcomes = {
+      interested: aiCallLeadsList.filter(l => l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote').length,
+      notInterested: aiCallLeadsList.filter(l => l.aiCallResult?.outcome === 'not_interested').length,
+      noAnswer: aiCallLeadsList.filter(l => l.aiCallResult?.outcome === 'no_answer').length,
+      voicemail: aiCallLeadsList.filter(l => l.aiCallResult?.outcome === 'voicemail').length,
+      other: aiCallLeadsList.filter(l => l.aiCallResult?.hasAICall && !['interested', 'wants_quote', 'not_interested', 'no_answer', 'voicemail'].includes(l.aiCallResult?.outcome || '')).length,
+    };
+
     // Tasa de conexión (llamadas que conectaron vs total)
     const connected = aiCallLeadsList.filter(l =>
       ['wants_quote', 'interested', 'not_interested', 'callback'].includes(l.aiCallResult?.outcome || '')
@@ -327,7 +358,7 @@ export default function KanbanBoard() {
     const connectionRate = Math.round((connected / aiCallLeadsList.length) * 100);
 
     // Tasa de interés (interesados vs conectados)
-    const interested = followUpMetrics.aiOutcomes.interested;
+    const interested = filteredOutcomes.interested;
     const interestRate = connected > 0 ? Math.round((interested / connected) * 100) : 0;
 
     // Llamadas por día (aproximado)
@@ -386,8 +417,9 @@ export default function KanbanBoard() {
       hourStats,
       estimatedCreditsUsed,
       costPerLead,
+      outcomes: filteredOutcomes,
     };
-  }, [aiCallLeadsList, followUpMetrics.aiOutcomes.interested]);
+  }, [aiCallLeadsList]);
 
   if (loading) {
     return (
@@ -560,18 +592,18 @@ export default function KanbanBoard() {
       {showAIInsights && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAIInsights(false)}>
           <div
-            className="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden shadow-xl"
+            className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     🤖 Insights de Llamadas IA
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {aiCallLeadsList.length} leads contactados por el agente IA
+                    {aiCallLeadsList.length} llamadas {insightsTimeFilter === 'today' ? 'hoy' : insightsTimeFilter === 'week' ? 'esta semana' : insightsTimeFilter === 'month' ? 'este mes' : 'en total'}
                   </p>
                 </div>
                 <button
@@ -584,26 +616,50 @@ export default function KanbanBoard() {
                 </button>
               </div>
 
-              {/* Resumen de resultados */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                  🎯 {followUpMetrics.aiOutcomes.interested} interesados
-                </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                  ❌ {followUpMetrics.aiOutcomes.notInterested} no interesados
-                </span>
-                <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm">
-                  📵 {followUpMetrics.aiOutcomes.noAnswer} no contestaron
-                </span>
-                <span className="px-3 py-1 bg-gray-50 text-gray-500 rounded-full text-sm">
-                  📭 {followUpMetrics.aiOutcomes.voicemail} buzón de voz
-                </span>
-                {followUpMetrics.aiOutcomes.other > 0 && (
-                  <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">
-                    📞 {followUpMetrics.aiOutcomes.other} otros
-                  </span>
-                )}
+              {/* Filtro de tiempo */}
+              <div className="flex gap-2 mt-3">
+                {[
+                  { value: 'today', label: 'Hoy' },
+                  { value: 'week', label: 'Esta semana' },
+                  { value: 'month', label: 'Este mes' },
+                  { value: 'all', label: 'Todo' },
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setInsightsTimeFilter(value as typeof insightsTimeFilter)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      insightsTimeFilter === value
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
+
+              {/* Resumen de resultados */}
+              {aiInsightsStats && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                    🎯 {aiInsightsStats.outcomes.interested} interesados
+                  </span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
+                    ❌ {aiInsightsStats.outcomes.notInterested} no interesados
+                  </span>
+                  <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm">
+                    📵 {aiInsightsStats.outcomes.noAnswer} no contestaron
+                  </span>
+                  <span className="px-3 py-1 bg-gray-50 text-gray-500 rounded-full text-sm">
+                    📭 {aiInsightsStats.outcomes.voicemail} buzón de voz
+                  </span>
+                  {aiInsightsStats.outcomes.other > 0 && (
+                    <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">
+                      📞 {aiInsightsStats.outcomes.other} otros
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Insights adicionales */}
               {aiInsightsStats && (
@@ -624,6 +680,8 @@ export default function KanbanBoard() {
               )}
             </div>
 
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
             {/* ALERTA DE ACCIÓN - Leads pendientes de cotización */}
             {aiInsightsStats?.pendingQuotes && aiInsightsStats.pendingQuotes.length > 0 && (
               <div className="mx-6 mt-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl">
@@ -687,7 +745,7 @@ export default function KanbanBoard() {
                   {/* Interesados */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-green-500 text-white rounded-lg py-3 px-2" style={{ width: `${Math.max(50, aiInsightsStats.interestRate)}%`, margin: '0 auto' }}>
-                      <div className="text-xl font-bold">{followUpMetrics.aiOutcomes.interested}</div>
+                      <div className="text-xl font-bold">{aiInsightsStats.outcomes.interested}</div>
                       <div className="text-xs opacity-90">Interesados</div>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.interestRate}%</div>
@@ -850,9 +908,10 @@ export default function KanbanBoard() {
                 </div>
               )}
             </div>
+            </div>{/* End scrollable content */}
 
-            {/* Footer */}
-            <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            {/* Footer - Fixed */}
+            <div className="flex-shrink-0 px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <span>
                   Conectaron: <strong className="text-blue-600">{aiInsightsStats?.connected || 0}</strong> de {aiCallLeadsList.length}
@@ -860,7 +919,7 @@ export default function KanbanBoard() {
                 <span className="text-gray-300">|</span>
                 <span>
                   Interesados: <strong className="text-green-600">
-                    {followUpMetrics.aiOutcomes.interested}
+                    {aiInsightsStats?.outcomes.interested || 0}
                   </strong> ({aiInsightsStats?.interestRate || 0}% de conectados)
                 </span>
               </div>

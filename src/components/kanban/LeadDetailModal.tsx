@@ -235,7 +235,19 @@ function getActionIcon(action: string): string {
     case 'email': return '📧';
     case 'call': return '📞';
     case 'ai_call': return '🤖';
+    case 'stage_change': return '📋';
     default: return '📝';
+  }
+}
+
+function getActionLabel(action: string): string {
+  switch (action) {
+    case 'whatsapp': return 'WhatsApp';
+    case 'email': return 'Email';
+    case 'call': return 'Llamada';
+    case 'ai_call': return 'Llamada IA';
+    case 'stage_change': return 'Cambio de etapa';
+    default: return action;
   }
 }
 
@@ -884,6 +896,7 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {contactHistory.map((h, idx) => {
                     const isAICall = h.notes?.startsWith('🤖');
+                    const isStageChange = h.action_type === 'stage_change';
                     // Extraer conversation_id de las notas para reproducir audio
                     const convIdMatch = h.notes?.match(/conv_[a-z0-9]+/);
                     const conversationId = convIdMatch ? convIdMatch[0] : null;
@@ -892,13 +905,17 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
 
                     return (
                       <div key={h.id} className={`text-sm rounded-lg px-3 py-2 ${
-                        isAICall ? 'bg-purple-50 border border-purple-200' : 'bg-gray-50'
+                        isAICall
+                          ? 'bg-purple-50 border border-purple-200'
+                          : isStageChange
+                            ? 'bg-blue-50 border border-blue-200'
+                            : 'bg-gray-50'
                       }`}>
                         <div className="flex items-center gap-2">
                           <span className="text-gray-400 text-xs font-medium">#{contactHistory.length - idx}</span>
                           <span>{isAICall ? '🤖' : getActionIcon(h.action_type)}</span>
-                          <span className="text-gray-700 capitalize">
-                            {isAICall ? 'Llamada IA' : h.action_type}
+                          <span className="text-gray-700">
+                            {isAICall ? 'Llamada IA' : getActionLabel(h.action_type)}
                           </span>
                           <span className="text-gray-400 text-xs ml-auto">{formatTimeAgo(h.created_at)}</span>
                           {/* Botón de play para llamadas IA */}
@@ -934,6 +951,11 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                         {h.notes && isAICall && (
                           <div className="mt-2 text-xs text-gray-600 whitespace-pre-line border-t border-purple-200 pt-2">
                             {h.notes.split('\n').slice(2).join('\n')}
+                          </div>
+                        )}
+                        {h.notes && h.action_type === 'stage_change' && (
+                          <div className="mt-1 text-xs text-blue-600">
+                            {h.notes.replace('📋 ', '')}
                           </div>
                         )}
                       </div>

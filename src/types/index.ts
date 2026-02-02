@@ -35,11 +35,13 @@ export type LeadStatus = 'no_contact' | 'prospect' | 'discarded';
 // Etapa de venta (pipeline comercial)
 // - nuevo = sin contactar
 // - contactado = esperando respuesta
+// - seguimiento_1 = 3-5 días sin respuesta
+// - seguimiento_2 = 6+ días sin respuesta
 // - interesado = respondió con interés
 // - cotizado = tiene cotización
 // - cliente = cerró la venta
 // - perdido = no le interesa o no califica
-export type SalesStage = 'nuevo' | 'contactado' | 'interesado' | 'cotizado' | 'cliente' | 'perdido';
+export type SalesStage = 'nuevo' | 'contactado' | 'seguimiento_1' | 'seguimiento_2' | 'interesado' | 'cotizado' | 'cliente' | 'perdido';
 
 export interface Business {
   id: string;

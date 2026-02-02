@@ -126,17 +126,15 @@ export default function KanbanBoard() {
     };
   }, [columns]);
 
-  const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId) => {
-    // No guardar columnas virtuales de seguimiento en DB
-    if (newStage === 'seguimiento_1' || newStage === 'seguimiento_2') {
-      return;
-    }
-
+  const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
       const response = await fetch(`/api/businesses/${businessId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sales_stage: newStage }),
+        body: JSON.stringify({
+          sales_stage: newStage,
+          previous_stage: oldStage // Para registrar el historial
+        }),
       });
       if (!response.ok) {
         throw new Error('Error al actualizar etapa');
@@ -164,39 +162,21 @@ export default function KanbanBoard() {
     const business = columns[sourceColumn].find((b) => b.id === draggableId);
     if (!business) return;
 
-    // Las columnas de seguimiento son virtuales (basadas en tiempo), no se guardan en DB
-    const isVirtualColumn = (col: KanbanColumnId) =>
-      col === 'seguimiento_1' || col === 'seguimiento_2';
-
-    // Determinar el sales_stage real para la DB
-    // Si destino es seguimiento, mantener el stage anterior o 'contactado'
-    const getActualSalesStage = (dest: KanbanColumnId, currentStage: typeof business.sales_stage) => {
-      if (isVirtualColumn(dest)) {
-        // Mantener el stage actual o usar 'contactado'
-        return currentStage && !isVirtualColumn(currentStage as KanbanColumnId)
-          ? currentStage
-          : 'contactado';
-      }
-      return dest as typeof business.sales_stage;
-    };
-
-    const actualSalesStage = getActualSalesStage(destColumn, business.sales_stage);
-
     setColumns((prev) => {
       const newColumns = { ...prev };
       newColumns[sourceColumn] = prev[sourceColumn].filter((b) => b.id !== draggableId);
       const destItems = [...prev[destColumn].filter((b) => b.id !== draggableId)];
       destItems.splice(destination.index, 0, {
         ...business,
-        sales_stage: actualSalesStage,
+        sales_stage: destColumn as typeof business.sales_stage,
       });
       newColumns[destColumn] = destItems;
       return newColumns;
     });
 
-    // Solo actualizar en DB si el destino no es una columna virtual
-    if (sourceColumn !== destColumn && !isVirtualColumn(destColumn)) {
-      updateBusinessStage(draggableId, destColumn);
+    // Actualizar en DB con el stage anterior
+    if (sourceColumn !== destColumn) {
+      updateBusinessStage(draggableId, destColumn, sourceColumn);
     }
   };
 
@@ -219,22 +199,15 @@ export default function KanbanBoard() {
 
     if (!business || !sourceColumn || sourceColumn === newStage) return;
 
-    // Determinar el sales_stage real (no columnas virtuales)
-    const isVirtualColumn = (col: KanbanColumnId) =>
-      col === 'seguimiento_1' || col === 'seguimiento_2';
-    const actualSalesStage = isVirtualColumn(newStage)
-      ? business!.sales_stage
-      : (newStage as typeof business.sales_stage);
-
     setColumns((prev) => {
       const newColumns = { ...prev };
       newColumns[sourceColumn!] = prev[sourceColumn!].filter((b) => b.id !== businessId);
-      newColumns[newStage] = [{ ...business!, sales_stage: actualSalesStage }, ...prev[newStage]];
+      newColumns[newStage] = [{ ...business!, sales_stage: newStage as typeof business.sales_stage }, ...prev[newStage]];
       return newColumns;
     });
 
-    setSelectedBusiness((prev) => prev ? { ...prev, sales_stage: actualSalesStage } : null);
-    updateBusinessStage(businessId, newStage);
+    setSelectedBusiness((prev) => prev ? { ...prev, sales_stage: newStage as typeof prev.sales_stage } : null);
+    updateBusinessStage(businessId, newStage, sourceColumn);
   };
 
   const handleActionRegistered = () => {

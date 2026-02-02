@@ -84,10 +84,15 @@ function classifyBusiness(business: KanbanBusiness): KanbanColumnId {
     return 'interesado';
   }
 
+  // Seguimiento - respetar el stage guardado (no recalcular por días)
+  if (salesStage === 'seguimiento_2') return 'seguimiento_2';
+  if (salesStage === 'seguimiento_1') return 'seguimiento_1';
+  if (salesStage === 'contactado') return 'contactado';
+
   // Sin contactar = nuevo
   if (!hasContacts) return 'nuevo';
 
-  // Tiene contactos - clasificar por tiempo sin contacto
+  // Tiene contactos pero sin sales_stage definido - clasificar por tiempo sin contacto
   if (daysSince !== null) {
     if (daysSince >= 6) return 'seguimiento_2';
     if (daysSince >= 3) return 'seguimiento_1';

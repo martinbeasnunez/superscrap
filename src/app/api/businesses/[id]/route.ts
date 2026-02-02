@@ -4,7 +4,7 @@ import { ContactAction, LeadStatus, SalesStage } from '@/types';
 
 const validContactActions: ContactAction[] = ['whatsapp', 'email', 'call'];
 const validLeadStatuses: LeadStatus[] = ['no_contact', 'prospect', 'discarded'];
-const validSalesStages: SalesStage[] = ['nuevo', 'contactado', 'interesado', 'cotizado', 'cliente', 'perdido'];
+const validSalesStages: SalesStage[] = ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'interesado', 'cotizado', 'cliente', 'perdido'];
 
 export async function PATCH(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { contact_actions, lead_status, sales_stage, user_id } = body;
+    const { contact_actions, lead_status, sales_stage, user_id, previous_stage } = body;
 
     // Validar contact_actions (array de acciones)
     if (contact_actions !== undefined) {
@@ -85,6 +85,27 @@ export async function PATCH(
         { error: 'Error al actualizar negocio' },
         { status: 500 }
       );
+    }
+
+    // Registrar cambio de stage en contact_history si hay previous_stage
+    if (sales_stage && previous_stage && sales_stage !== previous_stage) {
+      const stageNames: Record<string, string> = {
+        'nuevo': 'Nuevos',
+        'contactado': 'Contactado',
+        'seguimiento_1': 'Seguimiento 1',
+        'seguimiento_2': 'Seguimiento 2',
+        'interesado': 'Interesado',
+        'cotizado': 'Cotizado',
+        'cliente': 'Cliente',
+        'perdido': 'Perdido'
+      };
+
+      await supabase.from('contact_history').insert({
+        business_id: id,
+        action_type: 'stage_change',
+        notes: `📋 Cambio de etapa: ${stageNames[previous_stage] || previous_stage} → ${stageNames[sales_stage] || sales_stage}`,
+        created_at: new Date().toISOString(),
+      });
     }
 
     return NextResponse.json({ business: data });

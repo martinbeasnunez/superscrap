@@ -88,6 +88,8 @@ export async function PATCH(
     }
 
     // Registrar cambio de stage en contact_history si hay previous_stage
+    console.log('Stage change check:', { sales_stage, previous_stage, shouldRecord: sales_stage && previous_stage && sales_stage !== previous_stage });
+
     if (sales_stage && previous_stage && sales_stage !== previous_stage) {
       const stageNames: Record<string, string> = {
         'nuevo': 'Nuevos',
@@ -100,12 +102,22 @@ export async function PATCH(
         'perdido': 'Perdido'
       };
 
-      await supabase.from('contact_history').insert({
+      const historyEntry = {
         business_id: id,
         action_type: 'stage_change',
         notes: `📋 Cambio de etapa: ${stageNames[previous_stage] || previous_stage} → ${stageNames[sales_stage] || sales_stage}`,
         created_at: new Date().toISOString(),
-      });
+      };
+
+      console.log('Inserting stage change history:', historyEntry);
+
+      const { error: historyError } = await supabase.from('contact_history').insert(historyEntry);
+
+      if (historyError) {
+        console.error('Error inserting stage history:', historyError);
+      } else {
+        console.log('Stage history inserted successfully');
+      }
     }
 
     return NextResponse.json({ business: data });

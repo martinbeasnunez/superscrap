@@ -338,12 +338,54 @@ export default function KanbanBoard() {
     const uniqueDays = new Set(dates).size;
     const avgPerDay = uniqueDays > 0 ? Math.round(aiCallLeadsList.length / uniqueDays) : 0;
 
+    // NUEVO: Leads que pidieron cotización pero no están en "cotizado" o "cliente"
+    const pendingQuotes = aiCallLeadsList.filter(l =>
+      (l.aiCallResult?.outcome === 'wants_quote' || l.aiCallResult?.outcome === 'interested') &&
+      !['cotizado', 'cliente'].includes(l.currentColumn)
+    );
+
+    // NUEVO: Mejores horarios (análisis de cuándo contestan)
+    const hourStats: Record<number, { total: number; connected: number }> = {};
+    aiCallLeadsList.forEach(l => {
+      if (l.aiCallResult?.callDate) {
+        const hour = new Date(l.aiCallResult.callDate).getHours();
+        if (!hourStats[hour]) hourStats[hour] = { total: 0, connected: 0 };
+        hourStats[hour].total++;
+        if (['wants_quote', 'interested', 'not_interested', 'callback'].includes(l.aiCallResult?.outcome || '')) {
+          hourStats[hour].connected++;
+        }
+      }
+    });
+
+    // Encontrar mejor horario
+    let bestHour = null;
+    let bestRate = 0;
+    Object.entries(hourStats).forEach(([hour, stats]) => {
+      if (stats.total >= 3) { // Solo considerar si hay al menos 3 llamadas
+        const rate = stats.connected / stats.total;
+        if (rate > bestRate) {
+          bestRate = rate;
+          bestHour = parseInt(hour);
+        }
+      }
+    });
+
+    // NUEVO: Costo estimado (aprox 1000 créditos por llamada de 1 min)
+    const estimatedCreditsUsed = aiCallLeadsList.length * 1500; // promedio estimado
+    const costPerLead = interested > 0 ? Math.round(estimatedCreditsUsed / interested) : 0;
+
     return {
       connectionRate,
       interestRate,
       avgPerDay,
       uniqueDays,
       connected,
+      pendingQuotes,
+      bestHour,
+      bestHourRate: Math.round(bestRate * 100),
+      hourStats,
+      estimatedCreditsUsed,
+      costPerLead,
     };
   }, [aiCallLeadsList, followUpMetrics.aiOutcomes.interested]);
 
@@ -581,6 +623,118 @@ export default function KanbanBoard() {
                 </div>
               )}
             </div>
+
+            {/* ALERTA DE ACCIÓN - Leads pendientes de cotización */}
+            {aiInsightsStats?.pendingQuotes && aiInsightsStats.pendingQuotes.length > 0 && (
+              <div className="mx-6 mt-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🔥</span>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-amber-800">
+                      ¡{aiInsightsStats.pendingQuotes.length} leads esperan cotización!
+                    </h4>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Estos leads mostraron interés pero aún no les has enviado cotización:
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {aiInsightsStats.pendingQuotes.slice(0, 5).map(lead => (
+                        <button
+                          key={lead.id}
+                          onClick={() => {
+                            setShowAIInsights(false);
+                            setSelectedBusiness(lead);
+                          }}
+                          className="px-3 py-1 bg-white border border-amber-300 rounded-full text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+                        >
+                          {lead.name.split(' ').slice(0, 2).join(' ')}
+                        </button>
+                      ))}
+                      {aiInsightsStats.pendingQuotes.length > 5 && (
+                        <span className="px-3 py-1 text-sm text-amber-600">
+                          +{aiInsightsStats.pendingQuotes.length - 5} más
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FUNNEL VISUAL */}
+            {aiInsightsStats && (
+              <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  📊 Funnel de Conversión
+                </h4>
+                <div className="flex items-center justify-between gap-2">
+                  {/* Llamadas */}
+                  <div className="flex-1 text-center">
+                    <div className="w-full bg-blue-500 text-white rounded-lg py-3 px-2">
+                      <div className="text-xl font-bold">{aiCallLeadsList.length}</div>
+                      <div className="text-xs opacity-90">Llamadas</div>
+                    </div>
+                  </div>
+                  <span className="text-gray-400">→</span>
+                  {/* Conectaron */}
+                  <div className="flex-1 text-center">
+                    <div className="w-full bg-purple-500 text-white rounded-lg py-3 px-2" style={{ width: `${Math.max(60, aiInsightsStats.connectionRate)}%`, margin: '0 auto' }}>
+                      <div className="text-xl font-bold">{aiInsightsStats.connected}</div>
+                      <div className="text-xs opacity-90">Conectaron</div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.connectionRate}%</div>
+                  </div>
+                  <span className="text-gray-400">→</span>
+                  {/* Interesados */}
+                  <div className="flex-1 text-center">
+                    <div className="w-full bg-green-500 text-white rounded-lg py-3 px-2" style={{ width: `${Math.max(50, aiInsightsStats.interestRate)}%`, margin: '0 auto' }}>
+                      <div className="text-xl font-bold">{followUpMetrics.aiOutcomes.interested}</div>
+                      <div className="text-xs opacity-90">Interesados</div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.interestRate}%</div>
+                  </div>
+                  <span className="text-gray-400">→</span>
+                  {/* Cotizados */}
+                  <div className="flex-1 text-center">
+                    <div className="w-full bg-amber-500 text-white rounded-lg py-3 px-2">
+                      <div className="text-xl font-bold">{columns.cotizado.length}</div>
+                      <div className="text-xs opacity-90">Cotizados</div>
+                    </div>
+                  </div>
+                  <span className="text-gray-400">→</span>
+                  {/* Clientes */}
+                  <div className="flex-1 text-center">
+                    <div className="w-full bg-emerald-600 text-white rounded-lg py-3 px-2">
+                      <div className="text-xl font-bold">{columns.cliente.length}</div>
+                      <div className="text-xs opacity-90">Clientes</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MEJOR HORARIO */}
+            {aiInsightsStats && aiInsightsStats.bestHour !== null && (
+              <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">⏰</span>
+                    <div>
+                      <h4 className="font-semibold text-gray-800">Mejor horario para llamar</h4>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-bold text-green-700">
+                          {aiInsightsStats.bestHour}:00 - {aiInsightsStats.bestHour + 1}:00
+                        </span>
+                        {' '}tiene {aiInsightsStats.bestHourRate}% de conexión
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500">Tip: programa tus campañas</div>
+                    <div className="text-xs text-gray-500">en este horario</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Lista de llamadas */}
             <div className="px-6 py-4 overflow-y-auto max-h-[calc(85vh-180px)]">

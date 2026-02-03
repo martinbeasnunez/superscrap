@@ -412,16 +412,15 @@ export default function KanbanBoard() {
     const aiCotizados = aiCallLeadsList.filter(l => l.currentColumn === 'cotizado').length;
     const aiClientes = aiCallLeadsList.filter(l => l.currentColumn === 'cliente').length;
 
-    // NUEVO: Cambios de etapa por resultado de IA
-    // La IA mueve a "interesado" cuando el outcome es interested/wants_quote
-    // La IA mueve a "perdido" cuando el outcome es not_interested
+    // Cambios de etapa por resultado de IA
+    // Cuenta basándose en el OUTCOME de la llamada, no en la columna actual
+    // Si la IA clasificó como interested/wants_quote = la IA lo movió a "Interesado"
+    // Si la IA clasificó como not_interested = la IA lo movió a "Perdido"
     const movedToInteresado = aiCallLeadsList.filter(l =>
-      l.currentColumn === 'interesado' &&
-      (l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote')
+      l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote'
     ).length;
 
     const movedToPerdido = aiCallLeadsList.filter(l =>
-      l.currentColumn === 'perdido' &&
       l.aiCallResult?.outcome === 'not_interested'
     ).length;
 

@@ -63,44 +63,22 @@ export interface KanbanResponse {
   counts: Record<KanbanColumnId, number>;
 }
 
-// Clasificar negocio en columna basado en sales_stage Y días sin contacto
+// Clasificar negocio en columna basado SOLO en sales_stage guardado
+// NO hay reclasificación automática - solo la IA o drag & drop mueve cards
 function classifyBusiness(business: KanbanBusiness): KanbanColumnId {
-  const hasContacts = business.contact_actions && business.contact_actions.length > 0;
-  const leadStatus = business.lead_status;
   const salesStage = business.sales_stage;
-  const daysSince = business.daysSinceContact;
 
-  // Estados finales - siempre respetarlos
-  if (salesStage === 'cliente' || leadStatus === 'cliente') return 'cliente';
-  if (salesStage === 'perdido' || leadStatus === 'discarded') return 'perdido';
-
-  // Cotizado - respetarlo
-  if (salesStage === 'cotizado') return 'cotizado';
-
-  // Interesado/Prospect - pero verificar si necesita seguimiento
-  if (salesStage === 'interesado' || leadStatus === 'prospect') {
-    // Si es interesado pero hace mucho que no lo contactamos, moverlo a seguimiento
-    if (daysSince !== null && daysSince >= 6) return 'seguimiento_2';
-    if (daysSince !== null && daysSince >= 3) return 'seguimiento_1';
-    return 'interesado';
+  // Si tiene sales_stage guardado, usarlo directamente
+  if (salesStage) {
+    // Validar que sea un stage válido
+    const validStages: KanbanColumnId[] = ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'interesado', 'cotizado', 'cliente', 'perdido'];
+    if (validStages.includes(salesStage as KanbanColumnId)) {
+      return salesStage as KanbanColumnId;
+    }
   }
 
-  // Seguimiento - respetar el stage guardado (no recalcular por días)
-  if (salesStage === 'seguimiento_2') return 'seguimiento_2';
-  if (salesStage === 'seguimiento_1') return 'seguimiento_1';
-  if (salesStage === 'contactado') return 'contactado';
-
-  // Sin contactar = nuevo
-  if (!hasContacts) return 'nuevo';
-
-  // Tiene contactos pero sin sales_stage definido - clasificar por tiempo sin contacto
-  if (daysSince !== null) {
-    if (daysSince >= 6) return 'seguimiento_2';
-    if (daysSince >= 3) return 'seguimiento_1';
-  }
-
-  // Contactado recientemente (0-2 días)
-  return 'contactado';
+  // Sin sales_stage = nuevo (nunca reclasificar automáticamente)
+  return 'nuevo';
 }
 
 export async function GET() {

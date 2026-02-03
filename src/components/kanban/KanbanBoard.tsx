@@ -56,6 +56,7 @@ export default function KanbanBoard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedBusiness, setSelectedBusiness] = useState<KanbanBusiness | null>(null);
+  const [selectedBusinessColumn, setSelectedBusinessColumn] = useState<KanbanColumnId>('nuevo');
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [showAICampaign, setShowAICampaign] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
@@ -181,8 +182,9 @@ export default function KanbanBoard() {
     }
   };
 
-  const handleCardClick = (business: KanbanBusiness) => {
+  const handleCardClick = (business: KanbanBusiness, column: KanbanColumnId) => {
     setSelectedBusiness(business);
+    setSelectedBusinessColumn(column);
   };
 
   const handleStageChange = (businessId: string, newStage: KanbanColumnId) => {
@@ -208,6 +210,7 @@ export default function KanbanBoard() {
     });
 
     setSelectedBusiness((prev) => prev ? { ...prev, sales_stage: newStage as typeof prev.sales_stage } : null);
+    setSelectedBusinessColumn(newStage); // Actualizar la columna del modal
     updateBusinessStage(businessId, newStage, sourceColumn);
   };
 
@@ -608,6 +611,7 @@ export default function KanbanBoard() {
       {selectedBusiness && (
         <LeadDetailModal
           business={selectedBusiness}
+          currentColumn={selectedBusinessColumn}
           onClose={() => setSelectedBusiness(null)}
           onStageChange={handleStageChange}
           onActionRegistered={handleActionRegistered}

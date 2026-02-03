@@ -95,7 +95,7 @@ export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = {
 interface KanbanColumnProps {
   columnId: KanbanColumnId;
   businesses: KanbanBusiness[];
-  onCardClick: (business: KanbanBusiness) => void;
+  onCardClick: (business: KanbanBusiness, column: KanbanColumnId) => void;
 }
 
 export default function KanbanColumn({ columnId, businesses, onCardClick }: KanbanColumnProps) {
@@ -146,7 +146,7 @@ export default function KanbanColumn({ columnId, businesses, onCardClick }: Kanb
                   key={business.id}
                   business={business}
                   index={index}
-                  onClick={() => onCardClick(business)}
+                  onClick={() => onCardClick(business, columnId)}
                 />
               ))
             )}

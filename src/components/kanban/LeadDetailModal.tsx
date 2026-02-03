@@ -6,6 +6,7 @@ import { COLUMN_CONFIG } from './KanbanColumn';
 
 interface LeadDetailModalProps {
   business: KanbanBusiness | null;
+  currentColumn: KanbanColumnId; // La columna actual donde está la card
   onClose: () => void;
   onStageChange: (businessId: string, newStage: KanbanColumnId) => void;
   onActionRegistered: () => void;
@@ -296,7 +297,7 @@ function getActionLabel(action: string): string {
   }
 }
 
-export default function LeadDetailModal({ business, onClose, onStageChange, onActionRegistered }: LeadDetailModalProps) {
+export default function LeadDetailModal({ business, currentColumn, onClose, onStageChange, onActionRegistered }: LeadDetailModalProps) {
   const [contactHistory, setContactHistory] = useState<ContactHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -309,6 +310,10 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [audioLoading, setAudioLoading] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // USAR currentColumn (la columna donde está la card) como fuente de verdad
+  // Esto garantiza que el pitch siempre refleje la posición visual de la card
+  const currentStage = currentColumn;
 
   useEffect(() => {
     if (business) {
@@ -389,7 +394,13 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
 
   const handleWhatsAppClick = () => {
     if (!business?.phone) return;
-    const pitch = getWhatsAppPitch(business.name, business.business_type, business.sales_stage);
+    // Usar currentStage que ya está calculado (incluye el fallback a 'nuevo')
+    const pitch = getWhatsAppPitch(business.name, business.business_type, currentStage);
+    console.log('[WhatsApp] business.sales_stage:', business.sales_stage, '| currentStage:', currentStage, '| pitch type:',
+      currentStage === 'seguimiento_1' || currentStage === 'seguimiento_2' || currentStage === 'contactado' ? 'FOLLOW-UP' :
+      currentStage === 'interesado' ? 'PUSH-QUOTE' :
+      currentStage === 'cotizado' ? 'PUSH-CLOSE' : 'FIRST-CONTACT'
+    );
     const url = `https://wa.me/${getWhatsAppNumber(business.phone)}?text=${encodeURIComponent(pitch)}`;
     window.open(url, '_blank');
     registerAction('whatsapp');
@@ -571,7 +582,6 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
   if (!business) return null;
 
   const showWhatsApp = isPeruvianMobile(business.phone);
-  const currentStage = (business.sales_stage || 'nuevo') as KanbanColumnId;
   const currentConfig = COLUMN_CONFIG[currentStage];
 
   return (
@@ -753,7 +763,7 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                         )}
                         {dm.phone && isMobile && (
                           <a
-                            href={`https://wa.me/${getWhatsAppNumber(dm.phone)}?text=${encodeURIComponent(getWhatsAppPitch(business.name, business.business_type, business.sales_stage))}`}
+                            href={`https://wa.me/${getWhatsAppNumber(dm.phone)}?text=${encodeURIComponent(getWhatsAppPitch(business.name, business.business_type, currentStage))}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 text-green-600 hover:bg-green-50 rounded"

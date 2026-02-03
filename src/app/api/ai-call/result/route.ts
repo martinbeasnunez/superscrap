@@ -352,16 +352,36 @@ export async function POST(request: Request) {
         console.error('Error inserting contact_history:', insertError);
       }
 
+      // Obtener el stage actual del lead para decidir a dónde moverlo
+      const { data: currentBusiness } = await supabase
+        .from('businesses')
+        .select('sales_stage')
+        .eq('id', businessId)
+        .single();
+
+      const currentStage = currentBusiness?.sales_stage || 'nuevo';
+
       // Actualizar sales_stage del lead según outcome
       const updateData: Record<string, unknown> = {
         contacted_at: new Date().toISOString(),
       };
 
-      // Mover a "interesado" si hay interés
+      // Lógica de movimiento:
+      // - interested / wants_quote → interesado (siempre)
+      // - not_interested → perdido (siempre)
+      // - callback / no_answer / voicemail / completed → seguimiento_1
+      //   (solo si está en nuevo, contactado. Si ya está en seguimiento_2, dejarlo ahí)
       if (outcome === 'interested' || outcome === 'wants_quote') {
         updateData.sales_stage = 'interesado';
       } else if (outcome === 'not_interested') {
         updateData.sales_stage = 'perdido';
+      } else if (['callback', 'no_answer', 'voicemail', 'completed'].includes(outcome)) {
+        // Solo mover a seguimiento_1 si está en una etapa anterior
+        const earlyStages = ['nuevo', 'contactado'];
+        if (earlyStages.includes(currentStage)) {
+          updateData.sales_stage = 'seguimiento_1';
+        }
+        // Si ya está en seguimiento_1 o seguimiento_2, no mover
       }
 
       const { error } = await supabase
@@ -380,7 +400,7 @@ export async function POST(request: Request) {
       summary,
       status,
       duration,
-      salesStageUpdated: outcome === 'interested' || outcome === 'wants_quote' || outcome === 'not_interested',
+      salesStageUpdated: true, // Siempre actualizamos el stage según el outcome
     });
   } catch (error) {
     console.error('AI Call result POST error:', error);

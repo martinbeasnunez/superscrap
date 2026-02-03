@@ -41,10 +41,55 @@ function getWhatsAppNumber(phone: string): string {
   return `51${cleaned}`;
 }
 
-// Pitch de WhatsApp según industria
-function getWhatsAppPitch(businessName: string, businessType: string | null): string {
+// Pitch de WhatsApp según industria Y ETAPA DEL PIPELINE
+function getWhatsAppPitch(businessName: string, businessType: string | null, salesStage?: string): string {
   const typeLower = (businessType || '').toLowerCase();
+  const stage = salesStage || 'nuevo';
 
+  // SEGUIMIENTO - Pitches para leads ya contactados
+  if (stage === 'seguimiento_1' || stage === 'seguimiento_2' || stage === 'contactado') {
+    // Pitch de follow-up corto y directo
+    if (stage === 'seguimiento_2') {
+      // Más urgente para seguimiento_2
+      return `Hola! Soy de GetLavado, les habiamos escrito hace unos dias sobre lavanderia industrial para *${businessName}*
+
+Solo queria saber si tuvieron chance de revisar la propuesta?
+
+Si ya tienen proveedor o no les interesa, me avisan y no los molesto mas 👍`;
+    }
+
+    return `Hola! Les escribo de nuevo de GetLavado para *${businessName}*
+
+Queria hacer seguimiento a mi mensaje anterior sobre lavanderia industrial.
+
+Tienen 5 min esta semana para una llamada rapida? Les explico como podemos ayudarles a reducir costos.`;
+  }
+
+  // INTERESADO - Ya mostraron interes, push hacia cotizacion
+  if (stage === 'interesado') {
+    return `Hola! Soy de GetLavado para *${businessName}*
+
+Me comentaron que les interesa el servicio. Para enviarles una cotizacion necesito saber:
+
+1. Que tipo de textiles manejan? (toallas, sabanas, uniformes, manteles)
+2. Volumen aproximado semanal?
+3. Frecuencia de recojo que necesitan?
+
+Con esos datos les tengo la cotizacion en 24h! 📋`;
+  }
+
+  // COTIZADO - Ya tienen cotizacion, push hacia cierre
+  if (stage === 'cotizado') {
+    return `Hola! Soy de GetLavado para *${businessName}*
+
+Queria hacer seguimiento a la cotizacion que les enviamos.
+
+Tienen alguna duda? Hay algo que podamos ajustar para que les funcione mejor?
+
+Estamos a la orden para resolver cualquier pregunta 👍`;
+  }
+
+  // NUEVO - Primer contacto (pitch completo según industria)
   if (typeLower.includes('hotel') || typeLower.includes('hostal')) {
     return `Hola! Les escribo de GetLavado a *${businessName}*
 
@@ -110,7 +155,7 @@ Lo que hacemos:
 Cuantos manteles/uniformes manejan? Les paso numeros`;
   }
 
-  // Default pitch
+  // Default pitch para NUEVO
   return `Hola! Les escribo de GetLavado a *${businessName}*
 
 Somos lavanderia industrial con +800 clientes y 8 anos en el mercado:
@@ -310,20 +355,16 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
         }),
       });
 
-      // Actualizar contact_actions y sales_stage si es primer contacto
+      // Actualizar contact_actions (NO mover de columna - solo la IA mueve cards)
       const currentActions = business.contact_actions || [];
-      const isFirstContact = currentActions.length === 0;
       const newActions = currentActions.includes(action) ? currentActions : [...currentActions, action];
 
-      // Si es primer contacto y está en "nuevo", mover a "contactado"
+      // Solo actualizar las acciones de contacto, NO cambiar sales_stage
+      // El movimiento de columnas es responsabilidad EXCLUSIVA de la IA
       const updateData: Record<string, unknown> = {
         contact_actions: newActions,
         user_id: userId,
       };
-
-      if (isFirstContact && (!business.sales_stage || business.sales_stage === 'nuevo')) {
-        updateData.sales_stage = 'contactado';
-      }
 
       await fetch(`/api/businesses/${business.id}`, {
         method: 'PATCH',
@@ -343,7 +384,7 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
 
   const handleWhatsAppClick = () => {
     if (!business?.phone) return;
-    const pitch = getWhatsAppPitch(business.name, business.business_type);
+    const pitch = getWhatsAppPitch(business.name, business.business_type, business.sales_stage);
     const url = `https://wa.me/${getWhatsAppNumber(business.phone)}?text=${encodeURIComponent(pitch)}`;
     window.open(url, '_blank');
     registerAction('whatsapp');
@@ -707,7 +748,7 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
                         )}
                         {dm.phone && isMobile && (
                           <a
-                            href={`https://wa.me/${getWhatsAppNumber(dm.phone)}?text=${encodeURIComponent(getWhatsAppPitch(business.name, business.business_type))}`}
+                            href={`https://wa.me/${getWhatsAppNumber(dm.phone)}?text=${encodeURIComponent(getWhatsAppPitch(business.name, business.business_type, business.sales_stage))}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 text-green-600 hover:bg-green-50 rounded"

@@ -176,59 +176,30 @@ export async function GET() {
         const convIdMatch = c.notes.match(/conv_[a-z0-9]+/);
         const conversationId = convIdMatch ? convIdMatch[0] : null;
 
-        // Extraer resumen corto de la llamada
+        // Extraer resumen corto (máx 2-3 palabras)
         let shortSummary: string | null = null;
-
-        // Primero intentar extraer del resumen de ElevenLabs (después de 📋)
         const summaryMatch = c.notes.match(/📋\s+([^\n]+)/);
         const elevenlabsSummary = summaryMatch ? summaryMatch[1].toLowerCase() : '';
 
-        // Detectar situación específica del resumen
-        if (c.notes.includes('📋 Ya tiene proveedor') || elevenlabsSummary.includes('proveedor') || elevenlabsSummary.includes('provider')) {
-          shortSummary = 'Tiene proveedor';
-        }
-        else if (elevenlabsSummary.includes('interno') || elevenlabsSummary.includes('internal')) {
-          shortSummary = 'Lavandería interna';
-        }
-        else if (c.notes.includes('🔥 OPORTUNIDAD') || elevenlabsSummary.includes('unsatisfied') || elevenlabsSummary.includes('unhappy')) {
-          shortSummary = 'Insatisfecho';
-        }
-        else if (notesLower.includes('ocupado') || notesLower.includes('busy') || elevenlabsSummary.includes('busy')) {
-          shortSummary = 'Ocupado';
-        }
-        else if (notesLower.includes('no tiene tiempo') || elevenlabsSummary.includes('no time')) {
-          shortSummary = 'Sin tiempo';
-        }
-        else if (notesLower.includes('reunión') || elevenlabsSummary.includes('meeting')) {
-          shortSummary = 'En reunión';
-        }
-        else if (elevenlabsSummary.includes('quote') || elevenlabsSummary.includes('cotización') || elevenlabsSummary.includes('whatsapp')) {
-          shortSummary = 'Pidió cotización';
-        }
-        else if (elevenlabsSummary.includes('not interested') || elevenlabsSummary.includes('no interest')) {
-          shortSummary = 'No interesado';
-        }
-        else if (elevenlabsSummary.includes('interested') || elevenlabsSummary.includes('curious')) {
-          shortSummary = 'Interesado';
-        }
-        else if (elevenlabsSummary.includes('callback') || elevenlabsSummary.includes('call back') || elevenlabsSummary.includes('later')) {
-          shortSummary = 'Llamar después';
-        }
+        // Detectar situación (2-3 palabras)
+        if (elevenlabsSummary.includes('proveedor') || elevenlabsSummary.includes('provider')) shortSummary = 'Tiene proveedor';
+        else if (elevenlabsSummary.includes('interno') || elevenlabsSummary.includes('internal') || elevenlabsSummary.includes('in-house')) shortSummary = 'Lavado interno';
+        else if (elevenlabsSummary.includes('unsatisfied') || elevenlabsSummary.includes('unhappy') || c.notes.includes('🔥 OPORTUNIDAD')) shortSummary = 'Insatisfecho';
+        else if (elevenlabsSummary.includes('busy') || notesLower.includes('ocupado')) shortSummary = 'Ocupado';
+        else if (elevenlabsSummary.includes('no time') || notesLower.includes('no tiene tiempo')) shortSummary = 'Sin tiempo';
+        else if (elevenlabsSummary.includes('meeting') || notesLower.includes('reunión')) shortSummary = 'En reunión';
+        else if (elevenlabsSummary.includes('quote') || elevenlabsSummary.includes('cotización') || elevenlabsSummary.includes('whatsapp')) shortSummary = 'Pidió cotización';
+        else if (elevenlabsSummary.includes('not interested') || elevenlabsSummary.includes('no interest')) shortSummary = 'No interesa';
+        else if (elevenlabsSummary.includes('interested') || elevenlabsSummary.includes('curious')) shortSummary = 'Interesado';
+        else if (elevenlabsSummary.includes('call back') || elevenlabsSummary.includes('later') || elevenlabsSummary.includes('después')) shortSummary = 'Llamar después';
+        else if (elevenlabsSummary.includes('hung up') || elevenlabsSummary.includes('colgó')) shortSummary = 'Colgó';
         else if (outcome === 'voicemail') shortSummary = 'Buzón de voz';
         else if (outcome === 'no_answer') shortSummary = 'No contestó';
-        else if (outcome === 'wants_quote') shortSummary = 'Quiere cotización';
+        else if (outcome === 'wants_quote') shortSummary = 'Pidió cotización';
         else if (outcome === 'interested') shortSummary = 'Interesado';
-        else if (outcome === 'not_interested') shortSummary = 'No interesado';
+        else if (outcome === 'not_interested') shortSummary = 'No interesa';
         else if (outcome === 'callback') shortSummary = 'Llamar después';
-        // Para 'completed', extraer algo útil del resumen de ElevenLabs
-        else if (summaryMatch && summaryMatch[1].length > 10) {
-          // Tomar las primeras palabras del resumen (máx 30 chars)
-          const truncated = summaryMatch[1].slice(0, 30).trim();
-          shortSummary = truncated.length < summaryMatch[1].length ? truncated + '...' : truncated;
-        }
-        else {
-          shortSummary = 'Conversación';
-        }
+        else shortSummary = 'Conectó';
 
         aiCallMap[c.business_id] = {
           hasAICall: true,

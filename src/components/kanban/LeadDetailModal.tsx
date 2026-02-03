@@ -355,16 +355,21 @@ export default function LeadDetailModal({ business, onClose, onStageChange, onAc
         }),
       });
 
-      // Actualizar contact_actions (NO mover de columna - solo la IA mueve cards)
+      // Actualizar contact_actions
       const currentActions = business.contact_actions || [];
+      const isFirstContact = currentActions.length === 0;
       const newActions = currentActions.includes(action) ? currentActions : [...currentActions, action];
 
-      // Solo actualizar las acciones de contacto, NO cambiar sales_stage
-      // El movimiento de columnas es responsabilidad EXCLUSIVA de la IA
+      // Regla simple: Si está en "nuevo" y es primer contacto → mover a "contactado"
+      // El resto de movimientos (interesado, perdido, etc.) solo los hace la IA
       const updateData: Record<string, unknown> = {
         contact_actions: newActions,
         user_id: userId,
       };
+
+      if (isFirstContact && (!business.sales_stage || business.sales_stage === 'nuevo')) {
+        updateData.sales_stage = 'contactado';
+      }
 
       await fetch(`/api/businesses/${business.id}`, {
         method: 'PATCH',

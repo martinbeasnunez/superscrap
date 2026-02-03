@@ -412,6 +412,21 @@ export default function KanbanBoard() {
     const aiCotizados = aiCallLeadsList.filter(l => l.currentColumn === 'cotizado').length;
     const aiClientes = aiCallLeadsList.filter(l => l.currentColumn === 'cliente').length;
 
+    // NUEVO: Cambios de etapa por resultado de IA
+    // La IA mueve a "interesado" cuando el outcome es interested/wants_quote
+    // La IA mueve a "perdido" cuando el outcome es not_interested
+    const movedToInteresado = aiCallLeadsList.filter(l =>
+      l.currentColumn === 'interesado' &&
+      (l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote')
+    ).length;
+
+    const movedToPerdido = aiCallLeadsList.filter(l =>
+      l.currentColumn === 'perdido' &&
+      l.aiCallResult?.outcome === 'not_interested'
+    ).length;
+
+    const totalAIMoves = movedToInteresado + movedToPerdido;
+
     return {
       connectionRate,
       interestRate,
@@ -427,6 +442,9 @@ export default function KanbanBoard() {
       outcomes: filteredOutcomes,
       aiCotizados,
       aiClientes,
+      movedToInteresado,
+      movedToPerdido,
+      totalAIMoves,
     };
   }, [aiCallLeadsList]);
 
@@ -672,7 +690,7 @@ export default function KanbanBoard() {
 
               {/* Insights adicionales */}
               {aiInsightsStats && (
-                <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-purple-100">
+                <div className="grid grid-cols-4 gap-3 mt-4 pt-3 border-t border-purple-100">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-700">{aiInsightsStats.connectionRate}%</div>
                     <div className="text-xs text-gray-500">Tasa de conexión</div>
@@ -684,6 +702,18 @@ export default function KanbanBoard() {
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">{aiInsightsStats.avgPerDay}</div>
                     <div className="text-xs text-gray-500">Llamadas/día</div>
+                  </div>
+                  {/* Cambios de etapa por IA - inline */}
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-indigo-600">
+                      {aiInsightsStats.totalAIMoves}
+                      {aiInsightsStats.totalAIMoves > 0 && (
+                        <span className="text-sm ml-1">
+                          ({aiInsightsStats.movedToInteresado}🎯 {aiInsightsStats.movedToPerdido}❌)
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500">Movidos por IA</div>
                   </div>
                 </div>
               )}
@@ -775,6 +805,41 @@ export default function KanbanBoard() {
                       <div className="text-xs opacity-90">Clientes</div>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* MOVIMIENTOS DE ETAPA POR IA */}
+            {aiInsightsStats && aiInsightsStats.totalAIMoves > 0 && (
+              <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl">🔄</span>
+                  <div>
+                    <h4 className="font-semibold text-gray-800">Cambios de etapa por IA</h4>
+                    <p className="text-sm text-gray-600">
+                      La IA movió <strong className="text-indigo-700">{aiInsightsStats.totalAIMoves}</strong> leads automáticamente
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  {aiInsightsStats.movedToInteresado > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-green-200">
+                      <span className="text-lg">🎯</span>
+                      <div>
+                        <div className="text-lg font-bold text-green-700">{aiInsightsStats.movedToInteresado}</div>
+                        <div className="text-xs text-gray-500">→ Interesados</div>
+                      </div>
+                    </div>
+                  )}
+                  {aiInsightsStats.movedToPerdido > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-200">
+                      <span className="text-lg">❌</span>
+                      <div>
+                        <div className="text-lg font-bold text-gray-600">{aiInsightsStats.movedToPerdido}</div>
+                        <div className="text-xs text-gray-500">→ Perdidos</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

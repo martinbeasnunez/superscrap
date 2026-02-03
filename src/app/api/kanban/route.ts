@@ -32,6 +32,7 @@ export interface AICallResult {
   hasAICall: boolean;
   conversationId: string | null; // Para reproducir el audio de la llamada
   callDate: string | null; // Fecha de la llamada
+  shortSummary: string | null; // Resumen corto de la llamada (ej: "Tiene proveedor", "Ocupado")
 }
 
 export interface KanbanBusiness {
@@ -175,12 +176,29 @@ export async function GET() {
         const convIdMatch = c.notes.match(/conv_[a-z0-9]+/);
         const conversationId = convIdMatch ? convIdMatch[0] : null;
 
+        // Extraer resumen corto de la llamada
+        let shortSummary: string | null = null;
+        if (c.notes.includes('📋 Ya tiene proveedor')) shortSummary = 'Tiene proveedor';
+        else if (c.notes.includes('📋 No tiene proveedor')) shortSummary = 'Sin proveedor';
+        else if (c.notes.includes('🔥 OPORTUNIDAD')) shortSummary = 'Insatisfecho';
+        else if (notesLower.includes('ocupado') || notesLower.includes('busy')) shortSummary = 'Ocupado';
+        else if (notesLower.includes('no tiene tiempo')) shortSummary = 'Sin tiempo';
+        else if (notesLower.includes('reunión')) shortSummary = 'En reunión';
+        else if (outcome === 'voicemail') shortSummary = 'Buzón de voz';
+        else if (outcome === 'no_answer') shortSummary = 'No contestó';
+        else if (outcome === 'wants_quote') shortSummary = 'Quiere cotización';
+        else if (outcome === 'interested') shortSummary = 'Interesado';
+        else if (outcome === 'not_interested') shortSummary = 'No interesado';
+        else if (outcome === 'callback') shortSummary = 'Llamar después';
+        else shortSummary = 'Llamada completada';
+
         aiCallMap[c.business_id] = {
           hasAICall: true,
           outcome,
           contactName,
           conversationId,
           callDate: c.created_at || null,
+          shortSummary,
         };
       }
     });

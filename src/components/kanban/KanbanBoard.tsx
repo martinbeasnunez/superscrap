@@ -301,22 +301,25 @@ export default function KanbanBoard() {
   };
 
   // Obtener label y color del outcome
-  const getOutcomeInfo = (outcome: string | null) => {
+  const getOutcomeInfo = (outcome: string | null, shortSummary?: string | null) => {
+    const summary = shortSummary || '';
+
     switch (outcome) {
       case 'wants_quote':
-        return { label: '💰 Quiere cotización', color: 'text-green-700', bg: 'bg-green-100' };
+        return { label: `💰 ${summary || 'Quiere cotización'}`, color: 'text-green-700', bg: 'bg-green-100' };
       case 'interested':
-        return { label: '🎯 Interesado', color: 'text-blue-700', bg: 'bg-blue-100' };
+        return { label: `🎯 ${summary || 'Interesado'}`, color: 'text-blue-700', bg: 'bg-blue-100' };
       case 'not_interested':
-        return { label: '❌ No interesado', color: 'text-gray-600', bg: 'bg-gray-100' };
+        return { label: `❌ ${summary || 'No interesado'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
       case 'callback':
-        return { label: '📅 Llamar después', color: 'text-amber-700', bg: 'bg-amber-100' };
+        return { label: `📅 ${summary || 'Llamar después'}`, color: 'text-amber-700', bg: 'bg-amber-100' };
       case 'no_answer':
-        return { label: '📵 No contestó', color: 'text-red-600', bg: 'bg-red-50' };
+        return { label: `📵 ${summary || 'No contestó'}`, color: 'text-red-600', bg: 'bg-red-50' };
       case 'voicemail':
-        return { label: '📭 Buzón de voz', color: 'text-gray-500', bg: 'bg-gray-50' };
+        return { label: `📭 ${summary || 'Buzón de voz'}`, color: 'text-gray-500', bg: 'bg-gray-50' };
       default:
-        return { label: '🤖 Completada', color: 'text-purple-700', bg: 'bg-purple-100' };
+        // Para 'completed', usar el resumen corto que es más descriptivo
+        return { label: `📞 ${summary || 'Llamada completada'}`, color: 'text-purple-700', bg: 'bg-purple-100' };
     }
   };
 
@@ -405,6 +408,10 @@ export default function KanbanBoard() {
     const estimatedCreditsUsed = aiCallLeadsList.length * 1500; // promedio estimado
     const costPerLead = interested > 0 ? Math.round(estimatedCreditsUsed / interested) : 0;
 
+    // Contar cotizados y clientes que fueron contactados por IA
+    const aiCotizados = aiCallLeadsList.filter(l => l.currentColumn === 'cotizado').length;
+    const aiClientes = aiCallLeadsList.filter(l => l.currentColumn === 'cliente').length;
+
     return {
       connectionRate,
       interestRate,
@@ -418,6 +425,8 @@ export default function KanbanBoard() {
       estimatedCreditsUsed,
       costPerLead,
       outcomes: filteredOutcomes,
+      aiCotizados,
+      aiClientes,
     };
   }, [aiCallLeadsList]);
 
@@ -751,18 +760,18 @@ export default function KanbanBoard() {
                     <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.interestRate}%</div>
                   </div>
                   <span className="text-gray-400">→</span>
-                  {/* Cotizados */}
+                  {/* Cotizados (por IA) */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-amber-500 text-white rounded-lg py-3 px-2">
-                      <div className="text-xl font-bold">{columns.cotizado.length}</div>
+                      <div className="text-xl font-bold">{aiInsightsStats.aiCotizados}</div>
                       <div className="text-xs opacity-90">Cotizados</div>
                     </div>
                   </div>
                   <span className="text-gray-400">→</span>
-                  {/* Clientes */}
+                  {/* Clientes (por IA) */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-emerald-600 text-white rounded-lg py-3 px-2">
-                      <div className="text-xl font-bold">{columns.cliente.length}</div>
+                      <div className="text-xl font-bold">{aiInsightsStats.aiClientes}</div>
                       <div className="text-xs opacity-90">Clientes</div>
                     </div>
                   </div>
@@ -798,7 +807,7 @@ export default function KanbanBoard() {
             <div className="px-6 py-4 overflow-y-auto max-h-[calc(85vh-180px)]">
               <div className="space-y-3">
                 {aiCallLeadsList.map((lead) => {
-                  const outcomeInfo = getOutcomeInfo(lead.aiCallResult?.outcome || null);
+                  const outcomeInfo = getOutcomeInfo(lead.aiCallResult?.outcome || null, lead.aiCallResult?.shortSummary);
                   const columnConfig = COLUMN_CONFIG[lead.currentColumn as KanbanColumnId];
                   const conversationId = lead.aiCallResult?.conversationId;
                   const isPlaying = playingAudioId === conversationId;

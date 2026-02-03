@@ -63,22 +63,33 @@ export interface KanbanResponse {
   counts: Record<KanbanColumnId, number>;
 }
 
-// Clasificar negocio en columna basado SOLO en sales_stage guardado
-// NO hay reclasificación automática - solo la IA o drag & drop mueve cards
+// Clasificar negocio en columna
+// - Stages "finales" (interesado, cotizado, cliente, perdido) se respetan siempre
+// - Stages de seguimiento se reclasifican por días para mostrar urgencia visual
 function classifyBusiness(business: KanbanBusiness): KanbanColumnId {
   const salesStage = business.sales_stage;
+  const daysSinceContact = business.daysSinceContact;
+  const hasContact = business.contact_actions && business.contact_actions.length > 0;
 
-  // Si tiene sales_stage guardado, usarlo directamente
-  if (salesStage) {
-    // Validar que sea un stage válido
-    const validStages: KanbanColumnId[] = ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'interesado', 'cotizado', 'cliente', 'perdido'];
-    if (validStages.includes(salesStage as KanbanColumnId)) {
-      return salesStage as KanbanColumnId;
-    }
+  // Stages "finales" - NUNCA reclasificar automáticamente
+  const finalStages: KanbanColumnId[] = ['interesado', 'cotizado', 'cliente', 'perdido'];
+  if (salesStage && finalStages.includes(salesStage as KanbanColumnId)) {
+    return salesStage as KanbanColumnId;
   }
 
-  // Sin sales_stage = nuevo (nunca reclasificar automáticamente)
-  return 'nuevo';
+  // Sin contacto = nuevo
+  if (!hasContact || daysSinceContact === null) {
+    return 'nuevo';
+  }
+
+  // Con contacto - clasificar por días para mostrar urgencia
+  if (daysSinceContact >= 6) {
+    return 'seguimiento_2'; // 6+ días = urgente
+  } else if (daysSinceContact >= 3) {
+    return 'seguimiento_1'; // 3-5 días = necesita follow-up
+  } else {
+    return 'contactado'; // 0-2 días = reciente
+  }
 }
 
 export async function GET() {

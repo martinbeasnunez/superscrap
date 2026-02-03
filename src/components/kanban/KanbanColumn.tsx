@@ -32,7 +32,7 @@ export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = {
     color: 'text-blue-700',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
-    description: 'Primer contacto realizado',
+    description: 'Contactados hace 0-2 días',
   },
   seguimiento_1: {
     id: 'seguimiento_1',
@@ -41,7 +41,7 @@ export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = {
     color: 'text-orange-700',
     bgColor: 'bg-orange-50',
     borderColor: 'border-orange-300',
-    description: 'Necesita follow-up',
+    description: '3-5 días sin respuesta',
     isFollowUp: true,
   },
   seguimiento_2: {
@@ -51,7 +51,7 @@ export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = {
     color: 'text-red-700',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-300',
-    description: 'Segundo follow-up',
+    description: '6+ días - ¡URGENTE!',
     isFollowUp: true,
   },
   interesado: {

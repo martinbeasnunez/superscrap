@@ -110,7 +110,7 @@ Me comentaron que les interesa el servicio. Para enviarles una cotizacion necesi
 2. Volumen aproximado semanal?
 3. Frecuencia de recojo que necesitan?
 
-Con esos datos les tengo la cotizacion en 24h! 📋`;
+Con esos datos les preparo la cotizacion! 📋`;
   }
 
   // COTIZADO - Ya tienen cotizacion, push hacia cierre
@@ -148,7 +148,7 @@ Lo que hacemos diferente:
 - Recojo y entrega en tu local
 - *40% menos* que hacerlo internamente
 
-Cuantas toallas manejan aprox? Les paso cotizacion en 24h`;
+Cuantas toallas manejan aprox? Les paso cotizacion`;
   }
 
   if (typeLower.includes('spa') || typeLower.includes('masaje') || typeLower.includes('wellness')) {
@@ -196,7 +196,7 @@ Cuantos manteles/uniformes manejan? Les paso numeros`;
 Somos lavanderia industrial con +800 clientes y 8 anos en el mercado:
 - Recojo y entrega en tu local
 - Tu solo apilas, nosotros hacemos el resto
-- Cotizacion en 24 horas
+- Cotizacion sin compromiso
 
 Manejan toallas, uniformes, sabanas o manteles? Cuentenme y les paso numeros`;
 }
@@ -240,7 +240,7 @@ Solo quería preguntarles directamente:
 
 *¿Les interesa recibir una cotización?*
 
-• Si *sí* → Con gusto se las preparo en 24 horas
+• Si *sí* → Con gusto se las preparo
 • Si *no* → No hay problema, los dejo tranquilos
 
 Cualquier respuesta me ayuda. ¡Gracias por su tiempo! 🙏
@@ -360,7 +360,7 @@ Si prefieren, pueden responder este correo con:
 1. Volumen aproximado de ${textiles} que manejan
 2. Frecuencia que necesitan (diaria, 2x semana, semanal)
 
-¡Y les preparo los números en 24 horas!
+¡Y les preparo los números!
 
 ---
 
@@ -398,7 +398,7 @@ Para prepararles una cotización personalizada, necesito algunos datos:
    □ 2-3 veces por semana
    □ Semanal
 
-Con esa info les tengo cotización en menos de 24 horas. 📋
+Con esa info les preparo la cotización. 📋
 
 También podemos coordinar una visita a nuestra planta para que vean cómo trabajamos. ¡+800 empresas ya confían en nosotros!
 

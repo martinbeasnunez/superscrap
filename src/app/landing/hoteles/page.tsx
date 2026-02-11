@@ -63,7 +63,7 @@ export default function HotelesLanding() {
           <div className="text-6xl mb-4">✅</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Solicitud Recibida!</h2>
           <p className="text-gray-600 mb-6">
-            Nuestro equipo te contactará en las próximas 24 horas con una cotización personalizada.
+            Nuestro equipo te contactará pronto con una cotización personalizada.
           </p>
           <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-800">
             <p className="font-medium">¿Necesitas atención inmediata?</p>
@@ -172,7 +172,7 @@ export default function HotelesLanding() {
           <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Solicita tu Cotización</h2>
-              <p className="text-gray-600">Respuesta en menos de 24 horas</p>
+              <p className="text-gray-600">Sin compromiso</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -335,7 +335,7 @@ export default function HotelesLanding() {
               </button>
 
               <p className="text-xs text-gray-500 text-center">
-                Sin compromiso. Respuesta garantizada en 24 horas.
+                Sin compromiso. Te contactamos pronto.
               </p>
             </form>
           </div>

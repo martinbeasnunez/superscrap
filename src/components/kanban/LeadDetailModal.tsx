@@ -47,6 +47,18 @@ function getWhatsAppPitch(businessName: string, businessType: string | null, sal
   const typeLower = (businessType || '').toLowerCase();
   const stage = salesStage || 'nuevo';
 
+  // SEGUIMIENTO 3 - Último intento (9+ días) - Pitch KILLER: directo, sí o no
+  if (stage === 'seguimiento_3') {
+    return `Hola! Ultimo mensaje de GetLavado para *${businessName}* 👋
+
+Pregunta directa: ¿Les interesa cotizar lavanderia industrial?
+
+✅ Si → Les envio info
+❌ No → Los dejo tranquilos
+
+Respuesta breve es suficiente 👍`;
+  }
+
   // SEGUIMIENTO - Pitches para leads ya contactados
   if (stage === 'seguimiento_1' || stage === 'seguimiento_2' || stage === 'contactado') {
     // Pitch de follow-up corto y directo
@@ -839,7 +851,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             {/* Botón de Llamada con IA - Solo para columnas de prospección */}
             {/* El agente IA solo llama en: nuevo, contactado, seguimiento_1, seguimiento_2 */}
             {/* En interesados, cotizados, clientes, perdidos es trabajo humano */}
-            {business.phone && ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2'].includes(currentStage) && (
+            {business.phone && ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3'].includes(currentStage) && (
               <div className="mt-3">
                 <button
                   onClick={handleAICall}

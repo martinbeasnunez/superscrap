@@ -51,7 +51,17 @@ export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = {
     color: 'text-red-700',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-300',
-    description: '6+ días - ¡URGENTE!',
+    description: '6-8 días - ¡URGENTE!',
+    isFollowUp: true,
+  },
+  seguimiento_3: {
+    id: 'seguimiento_3',
+    title: 'Último Intento',
+    icon: '💀',
+    color: 'text-gray-900',
+    bgColor: 'bg-gray-100',
+    borderColor: 'border-gray-400',
+    description: '9+ días - Sí o No',
     isFollowUp: true,
   },
   interesado: {

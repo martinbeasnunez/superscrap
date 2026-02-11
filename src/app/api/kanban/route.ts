@@ -7,7 +7,8 @@ export type KanbanColumnId =
   | 'nuevo'
   | 'contactado'
   | 'seguimiento_1'  // 3-5 días sin respuesta
-  | 'seguimiento_2'  // 6+ días sin respuesta
+  | 'seguimiento_2'  // 6-8 días sin respuesta
+  | 'seguimiento_3'  // 9+ días - último intento
   | 'interesado'
   | 'cotizado'
   | 'cliente'
@@ -83,8 +84,10 @@ function classifyBusiness(business: KanbanBusiness): KanbanColumnId {
   }
 
   // Con contacto - clasificar por días para mostrar urgencia
-  if (daysSinceContact >= 6) {
-    return 'seguimiento_2'; // 6+ días = urgente
+  if (daysSinceContact >= 9) {
+    return 'seguimiento_3'; // 9+ días = último intento
+  } else if (daysSinceContact >= 6) {
+    return 'seguimiento_2'; // 6-8 días = urgente
   } else if (daysSinceContact >= 3) {
     return 'seguimiento_1'; // 3-5 días = necesita follow-up
   } else {
@@ -208,6 +211,7 @@ export async function GET() {
       contactado: [],
       seguimiento_1: [],
       seguimiento_2: [],
+      seguimiento_3: [],
       interesado: [],
       cotizado: [],
       cliente: [],
@@ -257,6 +261,8 @@ export async function GET() {
     columns.seguimiento_1.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
     // Seguimiento 2: más antiguos primero (crítico)
     columns.seguimiento_2.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
+    // Seguimiento 3: más antiguos primero (último intento)
+    columns.seguimiento_3.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
     // Interesados: más recientes primero
     columns.interesado.sort((a, b) => (a.daysSinceContact || 0) - (b.daysSinceContact || 0));
     // Cotizados: más recientes primero
@@ -271,6 +277,7 @@ export async function GET() {
       contactado: columns.contactado.length,
       seguimiento_1: columns.seguimiento_1.length,
       seguimiento_2: columns.seguimiento_2.length,
+      seguimiento_3: columns.seguimiento_3.length,
       interesado: columns.interesado.length,
       cotizado: columns.cotizado.length,
       cliente: columns.cliente.length,

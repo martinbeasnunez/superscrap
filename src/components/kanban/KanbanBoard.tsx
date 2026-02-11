@@ -13,6 +13,7 @@ const COLUMN_ORDER: KanbanColumnId[] = [
   'contactado',
   'seguimiento_1',
   'seguimiento_2',
+  'seguimiento_3',
   'interesado',
   'cotizado',
   'cliente',
@@ -29,12 +30,15 @@ const FOLLOW_UP_QUOTES = [
 ];
 
 // Tips de seguimiento según situación
-function getFollowUpTip(urgentCount: number, criticalCount: number, contactedWithoutFollowUp: number): string {
+function getFollowUpTip(urgentCount: number, criticalCount: number, contactedWithoutFollowUp: number, finalCount?: number): string {
+  if (finalCount && finalCount > 0) {
+    return `💀 ¡${finalCount} leads llevan +9 días! Es ahora o nunca. Mensaje killer: "¿Sí o no?"`;
+  }
   if (criticalCount > 0) {
-    return `🔥 ¡${criticalCount} leads llevan +5 días sin contacto! El interés se enfría rápido. Actúa HOY.`;
+    return `🔥 ¡${criticalCount} leads llevan 6-8 días sin contacto! El interés se enfría rápido. Actúa HOY.`;
   }
   if (urgentCount > 0) {
-    return `⏰ ${urgentCount} leads necesitan seguimiento (3-4 días). Un mensaje ahora puede cerrar la venta.`;
+    return `⏰ ${urgentCount} leads necesitan seguimiento (3-5 días). Un mensaje ahora puede cerrar la venta.`;
   }
   if (contactedWithoutFollowUp > 5) {
     return `💡 Tip: Los mejores vendedores hacen 3-5 contactos por lead. ¿Ya hiciste seguimiento?`;
@@ -48,6 +52,7 @@ export default function KanbanBoard() {
     contactado: [],
     seguimiento_1: [],
     seguimiento_2: [],
+    seguimiento_3: [],
     interesado: [],
     cotizado: [],
     cliente: [],
@@ -91,6 +96,7 @@ export default function KanbanBoard() {
   const followUpMetrics = useMemo(() => {
     const seguimiento1Count = columns.seguimiento_1.length;
     const seguimiento2Count = columns.seguimiento_2.length;
+    const seguimiento3Count = columns.seguimiento_3.length;
     const recentCount = columns.contactado.length;
 
     // Leads contactados solo 1 vez en todo el pipeline activo
@@ -98,6 +104,7 @@ export default function KanbanBoard() {
       ...columns.contactado,
       ...columns.seguimiento_1,
       ...columns.seguimiento_2,
+      ...columns.seguimiento_3,
       ...columns.interesado,
       ...columns.cotizado,
     ];
@@ -119,10 +126,11 @@ export default function KanbanBoard() {
     return {
       urgentCount: seguimiento1Count,
       criticalCount: seguimiento2Count,
+      finalCount: seguimiento3Count,
       recentCount,
       totalContactedLeads: allActiveLeads.length,
       singleContactLeads,
-      needsAttention: seguimiento1Count + seguimiento2Count,
+      needsAttention: seguimiento1Count + seguimiento2Count + seguimiento3Count,
       aiCallLeads,
       aiOutcomes,
     };
@@ -481,40 +489,47 @@ export default function KanbanBoard() {
   }
 
   const totalLeads = COLUMN_ORDER.reduce((sum, col) => sum + columns[col].length, 0);
-  const activeLeads = columns.nuevo.length + columns.contactado.length + columns.seguimiento_1.length + columns.seguimiento_2.length + columns.interesado.length + columns.cotizado.length;
+  const activeLeads = columns.nuevo.length + columns.contactado.length + columns.seguimiento_1.length + columns.seguimiento_2.length + columns.seguimiento_3.length + columns.interesado.length + columns.cotizado.length;
 
   return (
     <div className="h-full">
       {/* Banner de seguimiento - Solo si hay leads que necesitan atención */}
       {followUpMetrics.needsAttention > 0 && (
         <div className={`mb-4 p-4 rounded-xl border-2 ${
-          followUpMetrics.criticalCount > 0
-            ? 'bg-red-50 border-red-200'
-            : 'bg-orange-50 border-orange-200'
+          followUpMetrics.finalCount > 0
+            ? 'bg-gray-900 border-gray-700'
+            : followUpMetrics.criticalCount > 0
+              ? 'bg-red-50 border-red-200'
+              : 'bg-orange-50 border-orange-200'
         }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`text-3xl ${followUpMetrics.criticalCount > 0 ? 'animate-bounce' : 'animate-pulse'}`}>
-                {followUpMetrics.criticalCount > 0 ? '🔥' : '⏰'}
+              <div className={`text-3xl ${followUpMetrics.finalCount > 0 ? '' : followUpMetrics.criticalCount > 0 ? 'animate-bounce' : 'animate-pulse'}`}>
+                {followUpMetrics.finalCount > 0 ? '💀' : followUpMetrics.criticalCount > 0 ? '🔥' : '⏰'}
               </div>
               <div>
-                <h3 className={`font-bold ${followUpMetrics.criticalCount > 0 ? 'text-red-800' : 'text-orange-800'}`}>
+                <h3 className={`font-bold ${followUpMetrics.finalCount > 0 ? 'text-white' : followUpMetrics.criticalCount > 0 ? 'text-red-800' : 'text-orange-800'}`}>
                   ¡{followUpMetrics.needsAttention} leads necesitan seguimiento!
                 </h3>
-                <p className={`text-sm ${followUpMetrics.criticalCount > 0 ? 'text-red-600' : 'text-orange-600'}`}>
-                  {getFollowUpTip(followUpMetrics.urgentCount, followUpMetrics.criticalCount, followUpMetrics.singleContactLeads)}
+                <p className={`text-sm ${followUpMetrics.finalCount > 0 ? 'text-gray-300' : followUpMetrics.criticalCount > 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                  {getFollowUpTip(followUpMetrics.urgentCount, followUpMetrics.criticalCount, followUpMetrics.singleContactLeads, followUpMetrics.finalCount)}
                 </p>
               </div>
             </div>
             <div className="flex gap-2 text-sm">
+              {followUpMetrics.finalCount > 0 && (
+                <span className="px-3 py-1 bg-gray-800 text-white rounded-full font-bold">
+                  💀 {followUpMetrics.finalCount} último intento (+9d)
+                </span>
+              )}
               {followUpMetrics.criticalCount > 0 && (
                 <span className="px-3 py-1 bg-red-200 text-red-800 rounded-full font-bold animate-pulse">
-                  🔥 {followUpMetrics.criticalCount} críticos (+5d)
+                  🔥 {followUpMetrics.criticalCount} críticos (6-8d)
                 </span>
               )}
               {followUpMetrics.urgentCount > 0 && (
                 <span className="px-3 py-1 bg-orange-200 text-orange-800 rounded-full font-medium">
-                  ⏰ {followUpMetrics.urgentCount} urgentes (3-4d)
+                  ⏰ {followUpMetrics.urgentCount} urgentes (3-5d)
                 </span>
               )}
             </div>
@@ -1017,7 +1032,7 @@ export default function KanbanBoard() {
         onClose={() => setShowAICampaign(false)}
         leads={{
           nuevos: columns.nuevo,
-          seguimiento: [...columns.seguimiento_1, ...columns.seguimiento_2, ...columns.contactado],
+          seguimiento: [...columns.seguimiento_1, ...columns.seguimiento_2, ...columns.seguimiento_3, ...columns.contactado],
         }}
         onCampaignComplete={() => {
           setTimeout(() => fetchKanbanData(), 2000);

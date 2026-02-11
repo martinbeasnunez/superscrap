@@ -1,16 +1,26 @@
 // Configuración de landings por industria
-// Cada industria tiene su propia landing optimizada para SEO
+// Cada industria tiene su propia landing optimizada para SEO y conversión
+
+export interface Testimonial {
+  name: string;
+  role: string;
+  company: string;
+  quote: string;
+  image: string;
+}
 
 export interface IndustryConfig {
   slug: string;
   name: string;
   namePlural: string;
   heroImage: string;
-  primaryColor: string;
-  secondaryColor: string;
+  galleryImages: string[];
+  processImage: string;
   textiles: string[];
   benefits: string[];
   painPoints: string[];
+  stats: { value: string; label: string }[];
+  testimonial: Testimonial;
   caseStudy: {
     before: string;
     after: string;
@@ -29,27 +39,52 @@ export interface IndustryConfig {
   };
 }
 
+// Logos de clientes (usamos logos genéricos por industria)
+export const CLIENT_LOGOS = [
+  'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=200&h=80&fit=crop&auto=format',
+  'https://images.unsplash.com/photo-1599305446868-59e861c19d3c?w=200&h=80&fit=crop&auto=format',
+  'https://images.unsplash.com/photo-1599305446956-079a7e4cfa6a?w=200&h=80&fit=crop&auto=format',
+  'https://images.unsplash.com/photo-1599305447147-71b1f08e9caa?w=200&h=80&fit=crop&auto=format',
+];
+
 export const INDUSTRIES: Record<string, IndustryConfig> = {
   hoteles: {
     slug: 'hoteles',
     name: 'Hotel',
     namePlural: 'Hoteles',
     heroImage: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2070&q=80',
-    primaryColor: 'blue',
-    secondaryColor: 'yellow',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80',
+    ],
+    processImage: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Sábanas', 'Toallas', 'Batas', 'Uniformes'],
     benefits: [
-      'Recojo y entrega en tu hotel',
-      'Capacidad para alto volumen diario',
-      '8 años de experiencia con hoteles',
+      'Recojo y entrega diaria en tu hotel',
+      'Capacidad para 5+ toneladas diarias',
+      '8 años de experiencia hotelera',
       'Prueba 1 semana sin compromiso',
     ],
     painPoints: [
       'Sábanas manchadas que no salen',
       'Toallas que pierden suavidad',
-      'Entregas impuntuales',
+      'Entregas impuntuales que afectan operación',
       'Costos internos muy altos',
     ],
+    stats: [
+      { value: '150+', label: 'Hoteles atendidos' },
+      { value: '5 Ton', label: 'Capacidad diaria' },
+      { value: '99.2%', label: 'Entregas a tiempo' },
+      { value: '8 años', label: 'Experiencia' },
+    ],
+    testimonial: {
+      name: 'Carlos Mendoza',
+      role: 'Gerente de Operaciones',
+      company: 'Hotel Boutique Miraflores',
+      quote: 'Desde que trabajamos con GetLavado, nuestros huéspedes notan la diferencia. Las sábanas están impecables y siempre llegan a tiempo.',
+      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
+    },
     caseStudy: {
       before: 'S/8,500/mes en lavandería interna',
       after: 'S/5,200/mes con GetLavado',
@@ -95,8 +130,12 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     name: 'Restaurante',
     namePlural: 'Restaurantes',
     heroImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=2070&q=80',
-    primaryColor: 'orange',
-    secondaryColor: 'red',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?auto=format&fit=crop&w=800&q=80',
+    ],
+    processImage: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Manteles', 'Servilletas', 'Uniformes de cocina', 'Delantales'],
     benefits: [
       'Manteles siempre blancos y planchados',
@@ -105,11 +144,24 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       'Tratamiento especial para manchas de grasa',
     ],
     painPoints: [
-      'Manchas de grasa difíciles',
+      'Manchas de grasa que no salen',
       'Manteles amarillentos',
       'Uniformes con olor a cocina',
       'Entregas impuntuales',
     ],
+    stats: [
+      { value: '200+', label: 'Restaurantes' },
+      { value: '95%', label: 'Manchas removidas' },
+      { value: '24h', label: 'Servicio express' },
+      { value: '0', label: 'Olor residual' },
+    ],
+    testimonial: {
+      name: 'Patricia Vega',
+      role: 'Dueña',
+      company: 'Cevichería La Mar Brava',
+      quote: 'Los manteles quedan perfectos, sin manchas de ají ni pescado. Mis clientes siempre comentan lo impecable de la mesa.',
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80',
+    },
     caseStudy: {
       before: 'S/2,800/mes en lavandería local',
       after: 'S/1,900/mes con GetLavado',
@@ -155,13 +207,17 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     name: 'Clínica',
     namePlural: 'Clínicas y Centros Médicos',
     heroImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=2070&q=80',
-    primaryColor: 'teal',
-    secondaryColor: 'green',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
+    ],
+    processImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Sábanas médicas', 'Batas', 'Uniformes', 'Campos quirúrgicos'],
     benefits: [
-      'Proceso de desinfección certificado',
-      'Cumplimos normas sanitarias MINSA',
-      'Recojo y entrega hermético',
+      'Desinfección certificada MINSA',
+      'Protocolo para textiles contaminados',
+      'Recojo hermético especializado',
       'Trazabilidad de cada pieza',
     ],
     painPoints: [
@@ -170,6 +226,19 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       'Costos de esterilización altos',
       'Proveedores no certificados',
     ],
+    stats: [
+      { value: '50+', label: 'Clínicas' },
+      { value: '100%', label: 'Desinfección' },
+      { value: 'MINSA', label: 'Certificación' },
+      { value: 'ISO', label: 'Calidad' },
+    ],
+    testimonial: {
+      name: 'Dr. Roberto Sánchez',
+      role: 'Director Médico',
+      company: 'Clínica Estética Premium',
+      quote: 'La certificación y trazabilidad que ofrecen nos da tranquilidad. Cumplimos todas las normas sin preocuparnos.',
+      image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=150&q=80',
+    },
     caseStudy: {
       before: 'S/4,500/mes con proveedor anterior',
       after: 'S/3,100/mes con GetLavado',
@@ -215,14 +284,18 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     name: 'Gimnasio',
     namePlural: 'Gimnasios y Centros Fitness',
     heroImage: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2070&q=80',
-    primaryColor: 'purple',
-    secondaryColor: 'pink',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1576678927484-cc907957088c?auto=format&fit=crop&w=800&q=80',
+    ],
+    processImage: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Toallas', 'Batas', 'Uniformes staff', 'Alfombras'],
     benefits: [
-      'Toallas siempre suaves y blancas',
       'Eliminamos olor a sudor 100%',
+      'Toallas siempre suaves y blancas',
       'Recojo diario disponible',
-      'Precios por volumen',
+      'Precios especiales por volumen',
     ],
     painPoints: [
       'Toallas con olor persistente',
@@ -230,6 +303,19 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       'Alto volumen diario',
       'Clientes exigentes',
     ],
+    stats: [
+      { value: '80+', label: 'Gimnasios' },
+      { value: '1000+', label: 'Toallas/día' },
+      { value: '0%', label: 'Olor residual' },
+      { value: '40%', label: 'Ahorro promedio' },
+    ],
+    testimonial: {
+      name: 'Andrea Torres',
+      role: 'Gerente General',
+      company: 'FitLife Gym',
+      quote: 'Nuestros socios notaron el cambio inmediatamente. Las toallas huelen increíble y están súper suaves.',
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+    },
     caseStudy: {
       before: 'S/4,200/mes en lavandería local',
       after: 'S/2,500/mes con GetLavado',
@@ -275,21 +361,38 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     name: 'Spa',
     namePlural: 'Spas y Centros de Bienestar',
     heroImage: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=2070&q=80',
-    primaryColor: 'emerald',
-    secondaryColor: 'teal',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?auto=format&fit=crop&w=800&q=80',
+    ],
+    processImage: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Toallas premium', 'Batas', 'Sábanas de camilla', 'Fundas'],
     benefits: [
       'Toallas extra suaves para spa',
       'Aroma neutro profesional',
       'Doblado especial presentación',
-      'Textiles como nuevos siempre',
+      'Tratamiento de aceites incluido',
     ],
     painPoints: [
       'Clientes muy exigentes',
       'Necesidad de suavidad extrema',
-      'Manchas de aceites',
-      'Presentación impecable',
+      'Manchas de aceites difíciles',
+      'Presentación impecable requerida',
     ],
+    stats: [
+      { value: '40+', label: 'Spas premium' },
+      { value: '5★', label: 'Calidad' },
+      { value: '100%', label: 'Aceites removidos' },
+      { value: 'Premium', label: 'Presentación' },
+    ],
+    testimonial: {
+      name: 'Mónica Delgado',
+      role: 'Directora',
+      company: 'Zen Spa & Wellness',
+      quote: 'La suavidad de las toallas es increíble. Nuestros clientes siempre comentan lo premium que se siente todo.',
+      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80',
+    },
     caseStudy: {
       before: 'S/3,200/mes lavando internamente',
       after: 'S/2,100/mes con GetLavado',
@@ -335,14 +438,18 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     name: 'Empresa de Seguridad',
     namePlural: 'Empresas de Seguridad y Vigilancia',
     heroImage: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=2070&q=80',
-    primaryColor: 'slate',
-    secondaryColor: 'blue',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1606761568499-6d2451b23c66?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+    ],
+    processImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Uniformes', 'Camisas', 'Pantalones', 'Chalecos'],
     benefits: [
       'Uniformes siempre presentables',
       'Planchado impecable incluido',
-      'Manejo de grandes volúmenes',
-      'Entrega por sedes',
+      'Entrega en múltiples sedes',
+      'Reparaciones menores incluidas',
     ],
     painPoints: [
       'Personal en múltiples ubicaciones',
@@ -350,6 +457,19 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       'Alto costo de reposición',
       'Manchas de trabajo difíciles',
     ],
+    stats: [
+      { value: '30+', label: 'Empresas' },
+      { value: '5000+', label: 'Uniformes/mes' },
+      { value: 'Multi', label: 'Sedes' },
+      { value: '100%', label: 'Planchado' },
+    ],
+    testimonial: {
+      name: 'Jorge Ramírez',
+      role: 'Gerente de Operaciones',
+      company: 'Seguridad Total S.A.',
+      quote: 'Manejan 200+ uniformes semanales en 5 sedes diferentes. Siempre puntuales y con calidad impecable.',
+      image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80',
+    },
     caseStudy: {
       before: 'S/6,800/mes con lavandería fragmentada',
       after: 'S/4,200/mes centralizado con GetLavado',
@@ -395,21 +515,38 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     name: 'Edificio',
     namePlural: 'Edificios y Condominios',
     heroImage: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2070&q=80',
-    primaryColor: 'zinc',
-    secondaryColor: 'amber',
+    galleryImages: [
+      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+    ],
+    processImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Uniformes de personal', 'Cortinas áreas comunes', 'Alfombras', 'Manteles eventos'],
     benefits: [
-      'Servicio para áreas comunes',
-      'Uniformes de conserjes y staff',
-      'Cortinas y alfombras incluidas',
+      'Servicio integral áreas comunes',
+      'Uniformes de todo el staff',
+      'Retiro e instalación de cortinas',
       'Facturación a administración',
     ],
     painPoints: [
       'Personal con uniformes gastados',
       'Cortinas de lobby sucias',
       'Alfombras con manchas',
-      'Eventos sin textiles limpios',
+      'Múltiples proveedores',
     ],
+    stats: [
+      { value: '60+', label: 'Edificios' },
+      { value: 'Todo', label: 'Incluido' },
+      { value: 'RUC', label: 'Facturación' },
+      { value: '33%', label: 'Ahorro' },
+    ],
+    testimonial: {
+      name: 'Luis García',
+      role: 'Administrador',
+      company: 'Edificio Parque Central',
+      quote: 'Un solo proveedor para todo: uniformes, cortinas, alfombras. Simplificó nuestra operación y ahorramos dinero.',
+      image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=150&q=80',
+    },
     caseStudy: {
       before: 'S/1,800/mes con múltiples proveedores',
       after: 'S/1,200/mes todo centralizado',

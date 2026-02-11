@@ -15,8 +15,13 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-// Rutas públicas que no requieren autenticación
-const publicRoutes = ['/landing', '/login'];
+// Rutas públicas que no requieren autenticación (landing pages para SEO)
+// /landing/[industria] es público, pero /landings (gestión) requiere auth
+const isPublicLandingPage = (path: string) => {
+  // Solo las landing pages públicas: /landing, /landing/hoteles, etc.
+  // NO incluye /landings (con s) que es la página de gestión
+  return path === '/landing' || (path.startsWith('/landing/') && !path.startsWith('/landings'));
+};
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -25,7 +30,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter();
 
   // Verificar si es una ruta pública
-  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+  const isPublicRoute = pathname === '/login' || isPublicLandingPage(pathname);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('superscrap_user');

@@ -3,29 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-interface ContactStats {
-  whatsapp: number;
-  email: number;
-  call: number;
-  contacted: number;
-  prospects: number;
-  discarded: number;
-}
-
-interface SearchWithUser {
-  id: string;
-  business_type: string;
-  city: string;
-  required_services: string[];
-  status: string;
-  total_results: number | null;
-  matching_results: number | null;
-  created_at: string;
-  created_by: string;
-  created_by_email: string | null;
-  contact_stats: ContactStats;
-}
-
 interface UserStats {
   name: string;
   whatsapp: number;
@@ -122,24 +99,15 @@ function CircularProgress({ value, max, color, size = 120 }: { value: number; ma
 }
 
 export default function EstadisticasPage() {
-  const [searches, setSearches] = useState<SearchWithUser[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'searches'>('overview');
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [searchesRes, statsRes] = await Promise.all([
-          fetch('/api/searches'),
-          fetch('/api/stats'),
-        ]);
-
-        const searchesData = await searchesRes.json();
-        const statsData = await statsRes.json();
-
-        setSearches(searchesData.searches || []);
-        setStats(statsData);
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        setStats(data);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -202,32 +170,18 @@ export default function EstadisticasPage() {
           <p className="text-gray-500 mt-1">Métricas de rendimiento y análisis de conversión</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex bg-gray-100 rounded-xl p-1">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'overview'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Resumen
-          </button>
-          <button
-            onClick={() => setActiveTab('searches')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'searches'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Búsquedas
-          </button>
-        </div>
+        <Link
+          href="/historial"
+          className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors font-medium"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Ver historial
+        </Link>
       </div>
 
-      {activeTab === 'overview' && stats && (
+      {stats && (
         <>
           {/* KPI Cards Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -583,87 +537,6 @@ export default function EstadisticasPage() {
             </div>
           </div>
         </>
-      )}
-
-      {activeTab === 'searches' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Historial de búsquedas</h3>
-              <span className="text-sm text-gray-500">{searches.length} búsquedas</span>
-            </div>
-          </div>
-
-          {searches.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <p className="text-gray-500">No hay búsquedas aún</p>
-              <Link href="/" className="inline-flex items-center gap-2 mt-4 text-[#F6653C] hover:underline font-medium">
-                Crear primera búsqueda
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {searches.map((search) => (
-                <Link
-                  key={search.id}
-                  href={`/busquedas/${search.id}`}
-                  className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-medium text-gray-900">
-                        {search.business_type} en {search.city}
-                      </h4>
-                      {getStatusBadge(search.status)}
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        {search.created_by}
-                      </span>
-                      <span>•</span>
-                      <span>{formatDate(search.created_at)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-6">
-                    {search.contact_stats.whatsapp > 0 && (
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-emerald-600">{search.contact_stats.whatsapp}</p>
-                        <p className="text-xs text-gray-500">WhatsApp</p>
-                      </div>
-                    )}
-                    {search.contact_stats.prospects > 0 && (
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-purple-600">{search.contact_stats.prospects}</p>
-                        <p className="text-xs text-gray-500">Prospectos</p>
-                      </div>
-                    )}
-                    {search.matching_results !== null && (
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-gray-700">{search.matching_results}</p>
-                        <p className="text-xs text-gray-500">Leads</p>
-                      </div>
-                    )}
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
       )}
     </div>
   );

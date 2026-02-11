@@ -2,160 +2,186 @@
 
 import { useState, useEffect } from 'react';
 import SearchForm from '@/components/SearchForm';
-import LoginForm from '@/components/LoginForm';
 import Link from 'next/link';
 
-interface User {
+interface RecentSearch {
   id: string;
-  name: string;
-  email: string;
+  business_type: string;
+  city: string;
+  created_at: string;
+  total_results: number | null;
+  matching_results: number | null;
 }
 
-export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
+export default function BusquedasPage() {
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verificar si hay usuario en localStorage
     const savedUser = localStorage.getItem('superscrap_user');
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const user = JSON.parse(savedUser);
+        setUserId(user.id);
       } catch {
-        localStorage.removeItem('superscrap_user');
+        // ignore
       }
     }
-    setLoading(false);
+
+    // Fetch recent searches
+    async function fetchRecentSearches() {
+      try {
+        const res = await fetch('/api/searches?limit=5');
+        const data = await res.json();
+        setRecentSearches(data.searches || []);
+      } catch (error) {
+        console.error('Error fetching searches:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRecentSearches();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('superscrap_user');
-    setUser(null);
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `hace ${diffMins}m`;
+    if (diffHours < 24) return `hace ${diffHours}h`;
+    return `hace ${diffDays}d`;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  const industryIcons: Record<string, string> = {
+    hotel: '🏨',
+    hostal: '🛏️',
+    restaurante: '🍽️',
+    cevicheria: '🐟',
+    clinica: '🏥',
+    gimnasio: '💪',
+    spa: '💆',
+    seguridad: '🛡️',
+    limpieza: '🧹',
+    edificio: '🏢',
+  };
 
-  if (!user) {
-    return <LoginForm onLogin={setUser} />;
-  }
+  const getIcon = (type: string) => {
+    const lowerType = type.toLowerCase();
+    for (const [key, icon] of Object.entries(industryIcons)) {
+      if (lowerType.includes(key)) return icon;
+    }
+    return '🔍';
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header con usuario */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-          <span className="text-sm text-gray-600">
-            Hola, <span className="font-medium text-gray-900">{user.name}</span>
-          </span>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            Cerrar sesión
-          </button>
-        </div>
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Nueva Búsqueda</h1>
+        <p className="text-gray-500 mt-1">Encuentra negocios con necesidades de lavandería industrial</p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">SuperScrap</h1>
-          <p className="text-lg text-gray-600">
-            Encuentra negocios con necesidades de lavandería industrial
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Formulario */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <SearchForm userId={user.id} />
-          </div>
-
-          {/* Guía de uso */}
-          <div className="space-y-6">
-            {/* Qué textiles necesita cada industria */}
-            <div className="bg-blue-50 rounded-xl p-6">
-              <h3 className="font-semibold text-blue-900 mb-3">Que necesita cada industria</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  <span className="text-blue-800"><strong>Hoteles/Hostales:</strong> sabanas, toallas, batas</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  <span className="text-blue-800"><strong>Spas/Gimnasios:</strong> toallas, batas</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  <span className="text-blue-800"><strong>Restaurantes:</strong> manteles, servilletas, uniformes</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  <span className="text-blue-800"><strong>Clinicas:</strong> sabanas, batas medicas, uniformes</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  <span className="text-blue-800"><strong>Seguridad/Limpieza:</strong> uniformes en volumen</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  <span className="text-blue-800"><strong>Fabricas/Mineras:</strong> overoles, uniformes</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Google Maps vs Directorio */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Cuando usar cada fuente</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <p className="font-medium text-gray-800 mb-1">Google Maps</p>
-                  <p className="text-gray-600">Hoteles, spas, restaurantes, clinicas, gimnasios - negocios con local fisico que atienden clientes.</p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800 mb-1">Directorio Industrial</p>
-                  <p className="text-gray-600">Empresas de seguridad, limpieza, transporte, fabricas - empresas B2B con empleados uniformados.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Tips rapidos */}
-            <div className="bg-green-50 rounded-xl p-6">
-              <h3 className="font-semibold text-green-900 mb-3">Tips</h3>
-              <ul className="text-sm text-green-800 space-y-2">
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Usa las sugerencias de abajo del buscador</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Agrega nivel: &quot;hotel 5 estrellas&quot; vs &quot;hotel 3 estrellas&quot;</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Prioriza negocios con % alto de match</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Usa el boton de WhatsApp - ya tiene mensaje listo</span>
-                </li>
-              </ul>
-            </div>
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Search Form */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <SearchForm userId={userId || ''} />
           </div>
         </div>
 
-        <div className="text-center mt-8">
-          <Link
-            href="/busquedas"
-            className="text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Ver búsquedas anteriores →
-          </Link>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Quick tips */}
+          <div className="bg-gradient-to-br from-[#F6653C]/10 to-orange-50 rounded-2xl p-6 border border-[#F6653C]/20">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-[#F6653C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Tips de búsqueda
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
+                <span className="text-lg">🏨</span>
+                <div>
+                  <p className="font-medium text-gray-800">Hoteles</p>
+                  <p className="text-gray-600 text-xs">Sábanas, toallas, batas</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
+                <span className="text-lg">🍽️</span>
+                <div>
+                  <p className="font-medium text-gray-800">Restaurantes</p>
+                  <p className="text-gray-600 text-xs">Manteles, servilletas, uniformes</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
+                <span className="text-lg">🏥</span>
+                <div>
+                  <p className="font-medium text-gray-800">Clínicas</p>
+                  <p className="text-gray-600 text-xs">Sábanas médicas, batas, uniformes</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
+                <span className="text-lg">🛡️</span>
+                <div>
+                  <p className="font-medium text-gray-800">Seguridad</p>
+                  <p className="text-gray-600 text-xs">Uniformes en volumen</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent searches */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Búsquedas recientes</h3>
+              <Link href="/estadisticas" className="text-sm text-[#F6653C] hover:underline">
+                Ver todas
+              </Link>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin h-6 w-6 border-2 border-[#F6653C] border-t-transparent rounded-full"></div>
+              </div>
+            ) : recentSearches.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No hay búsquedas aún
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {recentSearches.map((search) => (
+                  <Link
+                    key={search.id}
+                    href={`/busquedas/${search.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                  >
+                    <span className="text-xl">{getIcon(search.business_type)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate group-hover:text-[#F6653C]">
+                        {search.business_type}
+                      </p>
+                      <p className="text-xs text-gray-500">{search.city}</p>
+                    </div>
+                    <div className="text-right">
+                      {search.matching_results !== null && (
+                        <p className="text-xs font-medium text-emerald-600">
+                          {search.matching_results} leads
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400">{formatTimeAgo(search.created_at)}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

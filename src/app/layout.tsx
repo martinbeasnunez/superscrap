@@ -1,20 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import AppLayout from "@/components/layout/AppLayout";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "SuperScrap - Encuentra negocios locales",
-  description: "Busca negocios locales con servicios específicos",
+  title: "SuperScrap CRM - Pipeline de Ventas",
+  description: "CRM para gestión de leads y pipeline de ventas B2B",
 };
 
 export default function RootLayout({
@@ -23,11 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="es">
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <AppLayout>{children}</AppLayout>
       </body>
     </html>
   );

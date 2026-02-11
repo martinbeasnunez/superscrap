@@ -370,6 +370,8 @@ export default function BusinessCard({
   );
   const [updating, setUpdating] = useState(false);
   const [emailModal, setEmailModal] = useState<{ to: string; subject: string; body: string } | null>(null);
+  const [aiCallStatus, setAiCallStatus] = useState<'idle' | 'calling' | 'success' | 'error'>('idle');
+  const [aiCallResult, setAiCallResult] = useState<{summary?: string; outcome?: string} | null>(null);
 
   const analysis = business.analysis;
   const matchPercentage = analysis?.match_percentage || 0;
@@ -454,6 +456,94 @@ export default function BusinessCard({
     // Si ya tiene ese estado, quitarlo (volver a no_contact)
     const newStatus = leadStatus === status ? 'no_contact' : status;
     updateBusiness(contactActions, newStatus);
+  };
+
+  // Llamada con Agente IA
+  const handleAICall = async () => {
+    if (!business.phone) return;
+    setAiCallStatus('calling');
+    setAiCallResult(null);
+
+    try {
+      const res = await fetch('/api/ai-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          phoneNumber: business.phone,
+          businessName: business.name,
+          businessType: businessType,
+          salesStage: 'nuevo', // Desde búsqueda siempre es nuevo
+          contactCount: 0,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setAiCallStatus('success');
+
+        // Marcar como contactado
+        const newActions = contactActions.includes('call') ? contactActions : [...contactActions, 'call'];
+        updateBusiness(newActions, leadStatus);
+
+        // Polling para obtener resultado
+        const conversationId = data.conversation_id;
+        if (conversationId) {
+          pollForAICallResult(conversationId);
+        }
+      } else {
+        console.error('AI Call error:', data);
+        setAiCallStatus('error');
+        setTimeout(() => setAiCallStatus('idle'), 3000);
+      }
+    } catch (err) {
+      console.error('AI Call error:', err);
+      setAiCallStatus('error');
+      setTimeout(() => setAiCallStatus('idle'), 3000);
+    }
+  };
+
+  // Polling para resultado de llamada IA
+  const pollForAICallResult = async (conversationId: string) => {
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const checkResult = async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/ai-call/result`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId,
+            businessId: business.id,
+          }),
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+          setAiCallResult({
+            summary: result.summary,
+            outcome: result.outcome,
+          });
+          return;
+        }
+
+        if (attempts < maxAttempts) {
+          const delay = attempts < 4 ? 15000 : 30000;
+          setTimeout(checkResult, delay);
+        }
+      } catch (err) {
+        console.error('Error polling AI call result:', err);
+        if (attempts < maxAttempts) {
+          setTimeout(checkResult, 30000);
+        }
+      }
+    };
+
+    setTimeout(checkResult, 15000);
   };
 
   const getMatchColor = (percent: number) => {
@@ -767,7 +857,78 @@ export default function BusinessCard({
             WhatsApp
           </a>
         )}
+        {/* Botón de Llamada con IA */}
+        {business.phone && (
+          <button
+            onClick={handleAICall}
+            disabled={aiCallStatus === 'calling'}
+            className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 font-medium ${
+              aiCallStatus === 'success'
+                ? 'bg-green-100 text-green-700 border border-green-300'
+                : aiCallStatus === 'error'
+                  ? 'bg-red-100 text-red-700 border border-red-300'
+                  : aiCallStatus === 'calling'
+                    ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
+                    : 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700'
+            }`}
+          >
+            {aiCallStatus === 'calling' ? (
+              <>
+                <span className="animate-spin">🤖</span>
+                <span>Llamando...</span>
+              </>
+            ) : aiCallStatus === 'success' ? (
+              <>
+                <span>✅</span>
+                <span>¡Iniciada!</span>
+              </>
+            ) : aiCallStatus === 'error' ? (
+              <>
+                <span>❌</span>
+                <span>Error</span>
+              </>
+            ) : (
+              <>
+                <span>🤖</span>
+                <span>Llamada IA</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
+
+      {/* Resultado de llamada IA */}
+      {aiCallResult && (
+        <div className={`mt-3 p-3 rounded-lg border-2 ${
+          aiCallResult.outcome === 'interested' || aiCallResult.outcome === 'wants_quote'
+            ? 'bg-green-50 border-green-300'
+            : aiCallResult.outcome === 'not_interested'
+              ? 'bg-red-50 border-red-300'
+              : 'bg-gray-50 border-gray-300'
+        }`}>
+          <div className="flex items-center gap-2 mb-1">
+            <span>
+              {aiCallResult.outcome === 'interested' && '🎯'}
+              {aiCallResult.outcome === 'wants_quote' && '💰'}
+              {aiCallResult.outcome === 'not_interested' && '❌'}
+              {aiCallResult.outcome === 'callback' && '📅'}
+              {aiCallResult.outcome === 'no_answer' && '📵'}
+              {!['interested', 'wants_quote', 'not_interested', 'callback', 'no_answer'].includes(aiCallResult.outcome || '') && '📞'}
+            </span>
+            <span className="font-medium text-sm">
+              {aiCallResult.outcome === 'interested' && '¡Interesado!'}
+              {aiCallResult.outcome === 'wants_quote' && '¡Quiere cotización!'}
+              {aiCallResult.outcome === 'not_interested' && 'No interesado'}
+              {aiCallResult.outcome === 'callback' && 'Llamar después'}
+              {aiCallResult.outcome === 'no_answer' && 'No contestó'}
+              {aiCallResult.outcome === 'completed' && 'Llamada completada'}
+            </span>
+          </div>
+          {aiCallResult.summary && (
+            <p className="text-xs text-gray-600">{aiCallResult.summary}</p>
+          )}
+        </div>
+      )}
 
       {/* Contact actions (múltiples) */}
       <div className="mt-3 pt-3 border-t border-gray-200">

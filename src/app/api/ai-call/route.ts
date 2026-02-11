@@ -16,9 +16,35 @@ function getCallContext(salesStage: string | null, contactCount: number, lastCon
   const stage = salesStage || 'nuevo';
 
   switch (stage) {
+    case 'seguimiento_3':
+      // Último intento - directo pero amigable
+      return {
+        call_type: 'ÚLTIMO CONTACTO',
+        call_objective: 'Obtener una respuesta definitiva: sí les interesa o no. Cerrar el tema amigablemente.',
+        opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te he llamado un par de veces sobre lavandería industrial. Sé que estás ocupado, así que seré breve: ¿les interesa recibir una cotización o prefieren que no los moleste más?`,
+        key_points: `- Ser breve y directo, no insistir demasiado
+- Aceptar cualquier respuesta con amabilidad
+- Si dicen "no": agradecer y despedirse cordialmente
+- Si dicen "quizás después": preguntar cuándo sería mejor momento
+- Si dicen "sí": pasar a enviar cotización por WhatsApp
+- NO presionar, este es el último intento`,
+      };
+
+    case 'seguimiento_2':
+      // Urgente pero no desesperado
+      return {
+        call_type: 'SEGUIMIENTO URGENTE',
+        call_objective: 'Conseguir respuesta antes de que el lead se enfríe completamente',
+        opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te había escrito hace unos días sobre lavandería industrial. Solo quería saber si tuvieron chance de revisar la propuesta.`,
+        key_points: `- Preguntar directamente si les interesa o no
+- Si ya tienen proveedor: preguntar si están satisfechos
+- Ofrecer cotización comparativa sin compromiso
+- No ser insistente, pero sí claro
+- Si no hay interés, agradecer y cerrar amablemente`,
+      };
+
     case 'contactado':
     case 'seguimiento_1':
-    case 'seguimiento_2':
       return {
         call_type: 'SEGUIMIENTO',
         call_objective: 'Retomar conversación anterior y conseguir que acepten recibir cotización',

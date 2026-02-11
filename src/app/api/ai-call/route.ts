@@ -16,12 +16,33 @@ function getCallContext(salesStage: string | null, contactCount: number, lastCon
   const stage = salesStage || 'nuevo';
   const contacts = contactCount || 0;
 
+  console.log('[getCallContext] Input - salesStage:', salesStage, '| contactCount:', contacts, '| resolved stage:', stage);
+
+  // SEGUIMIENTO 3 / ÚLTIMO INTENTO - Tiene prioridad sobre el conteo de contactos
+  // Este es el pitch más importante - debe ser directo pero amigable
+  if (stage === 'seguimiento_3') {
+    console.log('[getCallContext] Using ÚLTIMO INTENTO pitch for seguimiento_3');
+    return {
+      call_type: 'ÚLTIMO INTENTO',
+      call_objective: 'Cerrar el tema: obtener un sí o no definitivo. No presionar, ser amigable.',
+      opening_script: `Hola! Soy Alejandro de GetLavado. Te he escrito varias veces sobre lavandería industrial. Sé que están super ocupados, así que seré muy breve: ¿les interesa que les envíe una cotización? O prefieren que los contacte en otro momento? Un sí o un no me ayuda mucho.`,
+      key_points: `- CRÍTICO: Este es el ÚLTIMO INTENTO, ser muy breve
+- Aceptar CUALQUIER respuesta inmediatamente sin insistir
+- Si dicen "no" o "no me interesa": agradecer y despedirse cordialmente, NO insistir
+- Si dicen "quizás" o "después": preguntar cuándo sería mejor momento y despedirse
+- Si dicen "sí": preguntar qué tipo de textiles manejan y ofrecer enviar cotización por WhatsApp
+- Tono amable y ligero, NUNCA frustrado o insistente
+- NO hacer pitch largo, ir directo al grano`,
+    };
+  }
+
   // Si tiene 5+ contactos, usar pitch de último intento sin importar el stage
   if (contacts >= 5 && !['interesado', 'cotizado', 'cliente'].includes(stage)) {
+    console.log('[getCallContext] Using ÚLTIMO CONTACTO pitch (5+ contacts)');
     return {
       call_type: 'ÚLTIMO CONTACTO (MÚLTIPLES INTENTOS)',
       call_objective: 'Obtener respuesta definitiva después de varios intentos. No presionar.',
-      opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te he contactado varias veces sobre lavandería industrial. Sé que estás muy ocupado, así que seré muy breve: ¿les interesa o prefieren que no los contacte más?`,
+      opening_script: `Hola! Soy Alejandro de GetLavado. Te he contactado varias veces sobre lavandería industrial. Sé que estás muy ocupado, así que seré muy breve: ¿les interesa o prefieren que no los contacte más?`,
       key_points: `- Ser MUY breve, ya lo han contactado muchas veces
 - Aceptar cualquier respuesta inmediatamente
 - Si dicen "no": agradecer y despedirse sin insistir
@@ -32,11 +53,12 @@ function getCallContext(salesStage: string | null, contactCount: number, lastCon
   }
 
   // Si tiene 3-4 contactos, ser más directo
-  if (contacts >= 3 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
+  if (contacts >= 3 && !['interesado', 'cotizado', 'cliente'].includes(stage)) {
+    console.log('[getCallContext] Using SEGUIMIENTO DIRECTO pitch (3-4 contacts)');
     return {
       call_type: 'SEGUIMIENTO DIRECTO',
       call_objective: 'Conseguir respuesta clara después de varios contactos.',
-      opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te he escrito un par de veces sobre lavandería industrial. Solo quería confirmar: ¿les interesa recibir una cotización o ya tienen proveedor?`,
+      opening_script: `Hola! Soy Alejandro de GetLavado. Te he escrito un par de veces sobre lavandería industrial. Solo quería confirmar: ¿les interesa recibir una cotización o ya tienen proveedor?`,
       key_points: `- Ir directo al punto, ya hubo contactos previos
 - Preguntar si tienen proveedor actual
 - Si dicen que sí tienen: preguntar si están satisfechos
@@ -45,20 +67,9 @@ function getCallContext(salesStage: string | null, contactCount: number, lastCon
     };
   }
 
+  console.log('[getCallContext] Using switch case for stage:', stage);
+
   switch (stage) {
-    case 'seguimiento_3':
-      // Último intento - directo pero amigable
-      return {
-        call_type: 'ÚLTIMO CONTACTO',
-        call_objective: 'Obtener una respuesta definitiva: sí les interesa o no. Cerrar el tema amigablemente.',
-        opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te he llamado un par de veces sobre lavandería industrial. Sé que estás ocupado, así que seré breve: ¿les interesa recibir una cotización o prefieren que no los moleste más?`,
-        key_points: `- Ser breve y directo, no insistir demasiado
-- Aceptar cualquier respuesta con amabilidad
-- Si dicen "no": agradecer y despedirse cordialmente
-- Si dicen "quizás después": preguntar cuándo sería mejor momento
-- Si dicen "sí": pasar a enviar cotización por WhatsApp
-- NO presionar, este es el último intento`,
-      };
 
     case 'seguimiento_2':
       // Urgente pero no desesperado
@@ -128,6 +139,13 @@ export async function POST(request: Request) {
   try {
     const { businessId, phoneNumber, businessName, businessType, salesStage, contactCount, lastAICallSummary } = await request.json();
 
+    console.log('=== AI CALL REQUEST ===');
+    console.log('businessId:', businessId);
+    console.log('businessName:', businessName);
+    console.log('salesStage:', salesStage);
+    console.log('contactCount:', contactCount);
+    console.log('========================');
+
     if (!phoneNumber) {
       return NextResponse.json({ error: 'Número de teléfono requerido' }, { status: 400 });
     }
@@ -143,6 +161,11 @@ export async function POST(request: Request) {
 
     // Obtener contexto de llamada según el stage
     const callContext = getCallContext(salesStage, contactCount || 0, lastAICallSummary);
+
+    console.log('=== CALL CONTEXT SELECTED ===');
+    console.log('call_type:', callContext.call_type);
+    console.log('opening_script:', callContext.opening_script.substring(0, 100) + '...');
+    console.log('=============================');
 
     // Hacer llamada via ElevenLabs
     const response = await fetch('https://api.elevenlabs.io/v1/convai/twilio/outbound-call', {

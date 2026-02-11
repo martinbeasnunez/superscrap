@@ -484,7 +484,7 @@ export default function BusinessCard({
         setAiCallStatus('success');
 
         // Marcar como contactado
-        const newActions = contactActions.includes('call') ? contactActions : [...contactActions, 'call'];
+        const newActions: ContactAction[] = contactActions.includes('call') ? contactActions : [...contactActions, 'call' as ContactAction];
         updateBusiness(newActions, leadStatus);
 
         // Polling para obtener resultado

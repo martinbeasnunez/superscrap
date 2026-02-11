@@ -85,19 +85,32 @@ export default function HotelesLanding() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900">
-      {/* Hero Section */}
-      <div className="max-w-6xl mx-auto px-4 py-12 md:py-20">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Left - Content */}
-          <div className="text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 text-sm mb-6">
-              <span className="text-yellow-400">⭐</span>
-              <span>+800 empresas confían en nosotros</span>
-            </div>
+    <div className="min-h-screen">
+      {/* Hero Section con imagen de fondo */}
+      <div className="relative min-h-screen">
+        {/* Imagen de fondo */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`,
+          }}
+        >
+          {/* Overlay oscuro */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/95 via-blue-900/85 to-blue-900/70"></div>
+        </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-              Lavandería Industrial para{' '}
+        {/* Contenido */}
+        <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left - Content */}
+            <div className="text-white">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm mb-6">
+                <span className="text-yellow-400">⭐</span>
+                <span>+800 empresas confían en nosotros</span>
+              </div>
+
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                Lavandería Industrial para{' '}
               <span className="text-yellow-400">Hoteles</span>
             </h1>
 
@@ -327,6 +340,7 @@ export default function HotelesLanding() {
             </form>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Footer */}

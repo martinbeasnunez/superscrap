@@ -130,7 +130,7 @@ export default function HistorialPage() {
           <p className="text-gray-500 mt-1">Todas las búsquedas realizadas por el equipo</p>
         </div>
         <Link
-          href="/"
+          href="/buscar"
           className="flex items-center gap-2 px-4 py-2.5 bg-[#F6653C] text-white rounded-xl hover:bg-[#e55a35] transition-colors font-medium"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,7 +230,7 @@ export default function HistorialPage() {
               </svg>
             </div>
             <p className="text-gray-500 mb-2">No hay búsquedas que coincidan</p>
-            <Link href="/" className="inline-flex items-center gap-2 text-[#F6653C] hover:underline font-medium">
+            <Link href="/buscar" className="inline-flex items-center gap-2 text-[#F6653C] hover:underline font-medium">
               Crear nueva búsqueda
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

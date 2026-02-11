@@ -25,6 +25,29 @@ export async function GET() {
     const todayUTC = new Date(todayPeru.getTime() - peruOffset * 60000);
     const todayISO = todayUTC.toISOString();
 
+    // Calcular fechas para semana actual y semana pasada
+    const dayOfWeek = peruTime.getDay(); // 0 = domingo
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+    // Inicio de semana actual (lunes)
+    const thisWeekStart = new Date(todayPeru);
+    thisWeekStart.setDate(thisWeekStart.getDate() - mondayOffset);
+    thisWeekStart.setHours(0, 0, 0, 0);
+    const thisWeekStartUTC = new Date(thisWeekStart.getTime() - peruOffset * 60000);
+    const thisWeekStartISO = thisWeekStartUTC.toISOString();
+
+    // Inicio de semana pasada
+    const lastWeekStart = new Date(thisWeekStart);
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+    const lastWeekStartUTC = new Date(lastWeekStart.getTime() - peruOffset * 60000);
+    const lastWeekStartISO = lastWeekStartUTC.toISOString();
+
+    // Fin de semana pasada (domingo 23:59:59)
+    const lastWeekEnd = new Date(thisWeekStart);
+    lastWeekEnd.setMilliseconds(-1);
+    const lastWeekEndUTC = new Date(lastWeekEnd.getTime() - peruOffset * 60000);
+    const lastWeekEndISO = lastWeekEndUTC.toISOString();
+
     // Total búsquedas
     const { count: totalSearches } = await supabase
       .from('searches')
@@ -56,11 +79,22 @@ export async function GET() {
     let whatsappToday = 0, emailToday = 0, callToday = 0;
     let prospectsToday = 0, discardedToday = 0;
 
+    // Contadores de semana actual
+    let whatsappThisWeek = 0, emailThisWeek = 0, callThisWeek = 0;
+    let prospectsThisWeek = 0;
+
+    // Contadores de semana pasada
+    let whatsappLastWeek = 0, emailLastWeek = 0, callLastWeek = 0;
+    let prospectsLastWeek = 0;
+
     // Stats por usuario (solo hoy)
     const userStatsToday = new Map<string, UserStats>();
 
     contactStats?.forEach((b) => {
-      const isToday = b.contacted_at && b.contacted_at >= todayISO;
+      const contactedAt = b.contacted_at;
+      const isToday = contactedAt && contactedAt >= todayISO;
+      const isThisWeek = contactedAt && contactedAt >= thisWeekStartISO;
+      const isLastWeek = contactedAt && contactedAt >= lastWeekStartISO && contactedAt <= lastWeekEndISO;
       const userId = b.contacted_by;
       const userName = userId ? userMap.get(userId) || 'Desconocido' : null;
 
@@ -88,20 +122,28 @@ export async function GET() {
       if (actions.includes('whatsapp')) {
         whatsappTotal++;
         if (isToday) whatsappToday++;
+        if (isThisWeek) whatsappThisWeek++;
+        if (isLastWeek) whatsappLastWeek++;
       }
       if (actions.includes('email')) {
         emailTotal++;
         if (isToday) emailToday++;
+        if (isThisWeek) emailThisWeek++;
+        if (isLastWeek) emailLastWeek++;
       }
       if (actions.includes('call')) {
         callTotal++;
         if (isToday) callToday++;
+        if (isThisWeek) callThisWeek++;
+        if (isLastWeek) callLastWeek++;
       }
 
       // Contar estados usando sales_stage
       if (isProspect) {
         prospectsTotal++;
         if (isToday) prospectsToday++;
+        if (isThisWeek) prospectsThisWeek++;
+        if (isLastWeek) prospectsLastWeek++;
       } else if (isDiscarded) {
         discardedTotal++;
         if (isToday) discardedToday++;
@@ -292,6 +334,20 @@ export async function GET() {
         prospects: prospectsToday,
         discarded: discardedToday,
         byUser: Array.from(userStatsToday.values()),
+      },
+      thisWeek: {
+        contacts: whatsappThisWeek + emailThisWeek + callThisWeek,
+        whatsapp: whatsappThisWeek,
+        email: emailThisWeek,
+        call: callThisWeek,
+        prospects: prospectsThisWeek,
+      },
+      lastWeek: {
+        contacts: whatsappLastWeek + emailLastWeek + callLastWeek,
+        whatsapp: whatsappLastWeek,
+        email: emailLastWeek,
+        call: callLastWeek,
+        prospects: prospectsLastWeek,
       },
       insights: {
         bestType,

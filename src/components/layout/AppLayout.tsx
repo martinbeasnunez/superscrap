@@ -62,7 +62,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   if (!user) {
     return <LoginForm onLogin={(u) => {
       setUser(u);
-      router.push('/seguimiento');
+      router.push('/estadisticas');
     }} />;
   }
 

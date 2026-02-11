@@ -39,6 +39,17 @@ export default function LandingsPage() {
           <span className="text-sm text-gray-500">
             {industries.length} landings activas
           </span>
+          <button
+            disabled
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed font-medium"
+            title="Próximamente"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Crear landing
+            <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded ml-1">Pronto</span>
+          </button>
         </div>
       </div>
 

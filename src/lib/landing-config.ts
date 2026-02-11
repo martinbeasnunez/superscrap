@@ -52,11 +52,15 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     slug: 'hoteles',
     name: 'Hotel',
     namePlural: 'Hoteles',
-    heroImage: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2070&q=80',
+    // Hotel boutique estilo Miraflores/San Isidro
+    heroImage: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=2070&q=80',
     galleryImages: [
+      // Habitación elegante con sábanas blancas
+      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80',
+      // Toallas dobladas en baño de hotel
+      'https://images.unsplash.com/photo-1584132915807-fd1f5fbc078f?auto=format&fit=crop&w=800&q=80',
+      // Lobby moderno de hotel
       'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80',
     ],
     processImage: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Sábanas', 'Toallas', 'Batas', 'Uniformes'],
@@ -83,7 +87,7 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       role: 'Gerente de Operaciones',
       company: 'Hotel Boutique Miraflores',
       quote: 'Desde que trabajamos con GetLavado, nuestros huéspedes notan la diferencia. Las sábanas están impecables y siempre llegan a tiempo.',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
+      image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80',
     },
     caseStudy: {
       before: 'S/8,500/mes en lavandería interna',
@@ -129,11 +133,15 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     slug: 'restaurantes',
     name: 'Restaurante',
     namePlural: 'Restaurantes',
-    heroImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=2070&q=80',
+    // Restaurante peruano elegante - estilo Miraflores gastronómico
+    heroImage: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=2070&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?auto=format&fit=crop&w=800&q=80',
+      // Mesa elegante con manteles blancos
+      'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=800&q=80',
+      // Chef/cocina profesional
+      'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=800&q=80',
+      // Servilletas y cubiertos elegantes
+      'https://images.unsplash.com/photo-1559329007-40df8a9345d8?auto=format&fit=crop&w=800&q=80',
     ],
     processImage: 'https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Manteles', 'Servilletas', 'Uniformes de cocina', 'Delantales'],
@@ -160,7 +168,7 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       role: 'Dueña',
       company: 'Cevichería La Mar Brava',
       quote: 'Los manteles quedan perfectos, sin manchas de ají ni pescado. Mis clientes siempre comentan lo impecable de la mesa.',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80',
+      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
     },
     caseStudy: {
       before: 'S/2,800/mes en lavandería local',
@@ -206,11 +214,15 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     slug: 'clinicas',
     name: 'Clínica',
     namePlural: 'Clínicas y Centros Médicos',
-    heroImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=2070&q=80',
+    // Clínica moderna estilo San Borja/San Isidro
+    heroImage: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=2070&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=800&q=80',
+      // Consultorio médico limpio y moderno
+      'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=800&q=80',
+      // Doctor/médico profesional latinoamericano
+      'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80',
+      // Sala de espera moderna
+      'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80',
     ],
     processImage: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Sábanas médicas', 'Batas', 'Uniformes', 'Campos quirúrgicos'],
@@ -237,7 +249,7 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       role: 'Director Médico',
       company: 'Clínica Estética Premium',
       quote: 'La certificación y trazabilidad que ofrecen nos da tranquilidad. Cumplimos todas las normas sin preocuparnos.',
-      image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=150&q=80',
+      image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=150&q=80',
     },
     caseStudy: {
       before: 'S/4,500/mes con proveedor anterior',
@@ -283,11 +295,15 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     slug: 'gimnasios',
     name: 'Gimnasio',
     namePlural: 'Gimnasios y Centros Fitness',
+    // Gimnasio moderno tipo boutique Miraflores
     heroImage: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2070&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=800&q=80',
+      // Gente haciendo ejercicio - fitness latinoamericano
+      'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=800&q=80',
+      // Toallas en gimnasio
       'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1576678927484-cc907957088c?auto=format&fit=crop&w=800&q=80',
+      // Mujer fitness latinoamericana
+      'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80',
     ],
     processImage: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Toallas', 'Batas', 'Uniformes staff', 'Alfombras'],
@@ -314,7 +330,7 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       role: 'Gerente General',
       company: 'FitLife Gym',
       quote: 'Nuestros socios notaron el cambio inmediatamente. Las toallas huelen increíble y están súper suaves.',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+      image: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=150&q=80',
     },
     caseStudy: {
       before: 'S/4,200/mes en lavandería local',
@@ -360,11 +376,15 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     slug: 'spas',
     name: 'Spa',
     namePlural: 'Spas y Centros de Bienestar',
-    heroImage: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=2070&q=80',
+    // Spa premium estilo San Isidro
+    heroImage: 'https://images.unsplash.com/photo-1600334129128-685c5582fd35?auto=format&fit=crop&w=2070&q=80',
     galleryImages: [
+      // Masaje/tratamiento con toallas
+      'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=800&q=80',
+      // Toallas dobladas estilo spa
       'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?auto=format&fit=crop&w=800&q=80',
+      // Mujer latina recibiendo tratamiento
+      'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
     ],
     processImage: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Toallas premium', 'Batas', 'Sábanas de camilla', 'Fundas'],
@@ -391,7 +411,7 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       role: 'Directora',
       company: 'Zen Spa & Wellness',
       quote: 'La suavidad de las toallas es increíble. Nuestros clientes siempre comentan lo premium que se siente todo.',
-      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80',
+      image: 'https://images.unsplash.com/photo-1598550874175-4d0ef436c909?auto=format&fit=crop&w=150&q=80',
     },
     caseStudy: {
       before: 'S/3,200/mes lavando internamente',
@@ -437,11 +457,15 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     slug: 'empresas-seguridad',
     name: 'Empresa de Seguridad',
     namePlural: 'Empresas de Seguridad y Vigilancia',
-    heroImage: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=2070&q=80',
+    // Seguridad corporativa Lima
+    heroImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=2070&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1606761568499-6d2451b23c66?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+      // Profesional de seguridad latinoamericano
+      'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80',
+      // Equipo corporativo diverso
+      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
+      // Uniforme profesional
+      'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80',
     ],
     processImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Uniformes', 'Camisas', 'Pantalones', 'Chalecos'],
@@ -468,7 +492,7 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       role: 'Gerente de Operaciones',
       company: 'Seguridad Total S.A.',
       quote: 'Manejan 200+ uniformes semanales en 5 sedes diferentes. Siempre puntuales y con calidad impecable.',
-      image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80',
+      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
     },
     caseStudy: {
       before: 'S/6,800/mes con lavandería fragmentada',
@@ -514,11 +538,15 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
     slug: 'edificios',
     name: 'Edificio',
     namePlural: 'Edificios y Condominios',
-    heroImage: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2070&q=80',
+    // Edificio moderno tipo San Isidro/Miraflores
+    heroImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=2070&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80',
+      // Lobby de edificio moderno
       'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+      // Edificio residencial moderno
+      'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=800&q=80',
+      // Recepción corporativa
+      'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=800&q=80',
     ],
     processImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
     textiles: ['Uniformes de personal', 'Cortinas áreas comunes', 'Alfombras', 'Manteles eventos'],
@@ -545,7 +573,7 @@ export const INDUSTRIES: Record<string, IndustryConfig> = {
       role: 'Administrador',
       company: 'Edificio Parque Central',
       quote: 'Un solo proveedor para todo: uniformes, cortinas, alfombras. Simplificó nuestra operación y ahorramos dinero.',
-      image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=150&q=80',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
     },
     caseStudy: {
       before: 'S/1,800/mes con múltiples proveedores',

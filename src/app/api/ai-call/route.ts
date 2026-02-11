@@ -6,7 +6,7 @@ const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const ELEVENLABS_AGENT_ID = process.env.ELEVENLABS_AGENT_ID || '955wp4k1';
 const ELEVENLABS_PHONE_NUMBER_ID = process.env.ELEVENLABS_PHONE_NUMBER_ID || 'phnum_6101kg6k9e1kewdv2vf5rqpv99h6';
 
-// Generar contexto de llamada según el stage del lead
+// Generar contexto de llamada según el stage del lead y número de contactos
 function getCallContext(salesStage: string | null, contactCount: number, lastContactInfo?: string): {
   call_type: string;
   call_objective: string;
@@ -14,6 +14,36 @@ function getCallContext(salesStage: string | null, contactCount: number, lastCon
   key_points: string;
 } {
   const stage = salesStage || 'nuevo';
+  const contacts = contactCount || 0;
+
+  // Si tiene 5+ contactos, usar pitch de último intento sin importar el stage
+  if (contacts >= 5 && !['interesado', 'cotizado', 'cliente'].includes(stage)) {
+    return {
+      call_type: 'ÚLTIMO CONTACTO (MÚLTIPLES INTENTOS)',
+      call_objective: 'Obtener respuesta definitiva después de varios intentos. No presionar.',
+      opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te he contactado varias veces sobre lavandería industrial. Sé que estás muy ocupado, así que seré muy breve: ¿les interesa o prefieren que no los contacte más?`,
+      key_points: `- Ser MUY breve, ya lo han contactado muchas veces
+- Aceptar cualquier respuesta inmediatamente
+- Si dicen "no": agradecer y despedirse sin insistir
+- Si dicen "quizás": preguntar cuándo llamar, no insistir ahora
+- Este es definitivamente el último intento
+- Mantener tono amable, no frustrado`,
+    };
+  }
+
+  // Si tiene 3-4 contactos, ser más directo
+  if (contacts >= 3 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
+    return {
+      call_type: 'SEGUIMIENTO DIRECTO',
+      call_objective: 'Conseguir respuesta clara después de varios contactos.',
+      opening_script: `Hola, buenos días. Soy Alejandro de GetLavado. Te he escrito un par de veces sobre lavandería industrial. Solo quería confirmar: ¿les interesa recibir una cotización o ya tienen proveedor?`,
+      key_points: `- Ir directo al punto, ya hubo contactos previos
+- Preguntar si tienen proveedor actual
+- Si dicen que sí tienen: preguntar si están satisfechos
+- Ofrecer cotización comparativa
+- No extender mucho la llamada`,
+    };
+  }
 
   switch (stage) {
     case 'seguimiento_3':

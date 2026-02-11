@@ -42,10 +42,33 @@ function getWhatsAppNumber(phone: string): string {
   return `51${cleaned}`;
 }
 
-// Pitch de WhatsApp según industria Y ETAPA DEL PIPELINE
-function getWhatsAppPitch(businessName: string, businessType: string | null, salesStage?: string): string {
+// Pitch de WhatsApp según industria, ETAPA DEL PIPELINE y NÚMERO DE CONTACTOS
+function getWhatsAppPitch(businessName: string, businessType: string | null, salesStage?: string, contactCount?: number): string {
   const typeLower = (businessType || '').toLowerCase();
   const stage = salesStage || 'nuevo';
+  const contacts = contactCount || 0;
+
+  // Si ya tiene 5+ contactos, usar pitch de último intento sin importar el stage
+  if (contacts >= 5 && !['interesado', 'cotizado', 'cliente'].includes(stage)) {
+    return `Hola! Soy de GetLavado, les he escrito varias veces sobre lavanderia industrial para *${businessName}* 🧺
+
+Entiendo que estan super ocupados! Solo queria saber:
+
+¿Les interesa que les envie una cotizacion? O mejor los contacto en otro momento?
+
+Un "si" o "no" me ayuda mucho, gracias! 🙌`;
+  }
+
+  // Si tiene 3-4 contactos, pitch más directo
+  if (contacts >= 3 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
+    return `Hola! Soy de GetLavado para *${businessName}*
+
+Les he escrito un par de veces sobre lavanderia industrial. Solo queria confirmar:
+
+¿Les interesa recibir una cotizacion sin compromiso? O prefieren que no los moleste mas?
+
+Cualquier respuesta me sirve 👍`;
+  }
 
   // SEGUIMIENTO 3 - Último intento (9+ días) - Pitch directo pero amigable
   if (stage === 'seguimiento_3') {
@@ -178,10 +201,11 @@ Somos lavanderia industrial con +800 clientes y 8 anos en el mercado:
 Manejan toallas, uniformes, sabanas o manteles? Cuentenme y les paso numeros`;
 }
 
-// Genera email pitch según etapa del pipeline
-function getEmailPitch(businessName: string, businessType: string | null, salesStage?: string): { subject: string; body: string } {
+// Genera email pitch según etapa del pipeline y número de contactos
+function getEmailPitch(businessName: string, businessType: string | null, salesStage?: string, contactCount?: number): { subject: string; body: string } {
   const typeLower = (businessType || '').toLowerCase();
   const stage = salesStage || 'nuevo';
+  const contacts = contactCount || 0;
 
   // Detectar industria
   let industria = 'empresa';
@@ -202,6 +226,59 @@ function getEmailPitch(businessName: string, businessType: string | null, salesS
   } else if (typeLower.includes('seguridad') || typeLower.includes('vigilancia')) {
     industria = 'empresa de seguridad';
     textiles = 'uniformes de su personal';
+  }
+
+  // Si tiene 5+ contactos, usar email de cierre sin importar el stage
+  if (contacts >= 5 && !['interesado', 'cotizado', 'cliente'].includes(stage)) {
+    return {
+      subject: `Último mensaje - Lavandería para ${businessName}`,
+      body: `Hola equipo de *${businessName}* 👋
+
+Les he escrito varias veces sobre nuestro servicio de lavandería industrial. Entiendo que están muy ocupados.
+
+Solo quería preguntarles directamente:
+
+*¿Les interesa recibir una cotización?*
+
+• Si *sí* → Con gusto se las preparo en 24 horas
+• Si *no* → No hay problema, los dejo tranquilos
+
+Cualquier respuesta me ayuda. ¡Gracias por su tiempo! 🙏
+
+---
+
+Saludos,
+
+*Alejandro Ramos*
+Business Development Executive (B2B)
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653`
+    };
+  }
+
+  // Si tiene 3-4 contactos, email más directo
+  if (contacts >= 3 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
+    return {
+      subject: `Re: Lavandería industrial - ${businessName}`,
+      body: `Hola equipo de *${businessName}* 👋
+
+Les he escrito un par de veces sobre lavandería industrial para ${textiles}. Quería hacer un último seguimiento.
+
+*¿Les gustaría que les prepare una cotización sin compromiso?*
+
+Si ya tienen proveedor y están contentos, me encantaría saberlo. Muchas ${industria}s nos eligen porque su proveedor anterior fallaba en algo.
+
+¿Qué les parece?
+
+---
+
+Saludos,
+
+*Alejandro Ramos*
+Business Development Executive (B2B)
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653`
+    };
   }
 
   // SEGUIMIENTO 3 - Email final, amigable pero cerrando el tema
@@ -563,7 +640,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const handleWhatsAppClick = () => {
     if (!business?.phone) return;
     // Usar currentStage que ya está calculado (incluye el fallback a 'nuevo')
-    const pitch = getWhatsAppPitch(business.name, business.business_type, currentStage);
+    const pitch = getWhatsAppPitch(business.name, business.business_type, currentStage, business.contactCount);
     console.log('[WhatsApp] business.sales_stage:', business.sales_stage, '| currentStage:', currentStage, '| pitch type:',
       currentStage === 'seguimiento_1' || currentStage === 'seguimiento_2' || currentStage === 'contactado' ? 'FOLLOW-UP' :
       currentStage === 'interesado' ? 'PUSH-QUOTE' :
@@ -582,7 +659,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
   const handleEmailClick = (email?: string) => {
     if (!business) return;
-    const pitch = getEmailPitch(business.name, business.business_type, currentStage);
+    const pitch = getEmailPitch(business.name, business.business_type, currentStage, business.contactCount);
     const targetEmail = email || (business.decision_makers?.find(dm => dm.email)?.email) || '';
     setEmailModal({ to: targetEmail, subject: pitch.subject, body: pitch.body });
     registerAction('email');
@@ -931,7 +1008,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         )}
                         {dm.phone && isMobile && (
                           <a
-                            href={`https://wa.me/${getWhatsAppNumber(dm.phone)}?text=${encodeURIComponent(getWhatsAppPitch(business.name, business.business_type, currentStage))}`}
+                            href={`https://wa.me/${getWhatsAppNumber(dm.phone)}?text=${encodeURIComponent(getWhatsAppPitch(business.name, business.business_type, currentStage, business.contactCount))}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 text-green-600 hover:bg-green-50 rounded"

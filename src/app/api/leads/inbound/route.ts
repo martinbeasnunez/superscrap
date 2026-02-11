@@ -55,13 +55,14 @@ export async function POST(request: Request) {
     if (existingSearch && existingSearch.length > 0) {
       searchId = existingSearch[0].id;
     } else {
-      // Crear search - campos mínimos
+      // Crear search - incluyendo required_services que es NOT NULL
       const { data: newSearch, error: searchError } = await supabase
         .from('searches')
         .insert({
           business_type: 'inbound_lead',
           city: 'Lima',
           status: 'completed',
+          required_services: [],
         })
         .select('id')
         .single();

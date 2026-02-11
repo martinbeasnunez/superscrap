@@ -47,16 +47,15 @@ function getWhatsAppPitch(businessName: string, businessType: string | null, sal
   const typeLower = (businessType || '').toLowerCase();
   const stage = salesStage || 'nuevo';
 
-  // SEGUIMIENTO 3 - Último intento (9+ días) - Pitch KILLER: directo, sí o no
+  // SEGUIMIENTO 3 - Último intento (9+ días) - Pitch directo pero amigable
   if (stage === 'seguimiento_3') {
-    return `Hola! Ultimo mensaje de GetLavado para *${businessName}* 👋
+    return `Hola! Soy de GetLavado, les habia escrito sobre lavanderia industrial para *${businessName}* 🧺
 
-Pregunta directa: ¿Les interesa cotizar lavanderia industrial?
+Se que estan ocupados! Solo queria cerrar el tema de mi lado:
 
-✅ Si → Les envio info
-❌ No → Los dejo tranquilos
+¿Les gustaria que les prepare una cotizacion? O prefieren que los contacte en otro momento?
 
-Respuesta breve es suficiente 👍`;
+Cualquier respuesta me sirve, gracias! 🙌`;
   }
 
   // SEGUIMIENTO - Pitches para leads ya contactados
@@ -179,42 +178,199 @@ Somos lavanderia industrial con +800 clientes y 8 anos en el mercado:
 Manejan toallas, uniformes, sabanas o manteles? Cuentenme y les paso numeros`;
 }
 
-// Genera email pitch killer con FOMO y CTA
-function getEmailPitch(businessName: string, businessType: string | null): { subject: string; body: string } {
+// Genera email pitch según etapa del pipeline
+function getEmailPitch(businessName: string, businessType: string | null, salesStage?: string): { subject: string; body: string } {
   const typeLower = (businessType || '').toLowerCase();
+  const stage = salesStage || 'nuevo';
 
   // Detectar industria
   let industria = 'empresa';
   let textiles = 'textiles';
-  let beneficio = 'optimizar sus costos de lavandería';
 
   if (typeLower.includes('hotel') || typeLower.includes('hostal')) {
     industria = 'hotel';
     textiles = 'sábanas, toallas y uniformes';
-    beneficio = 'mantener la experiencia 5 estrellas que sus huéspedes merecen';
   } else if (typeLower.includes('clinic') || typeLower.includes('hospital') || typeLower.includes('médic') || typeLower.includes('salud') || typeLower.includes('estetica')) {
     industria = 'centro de salud';
     textiles = 'uniformes médicos, sábanas y batas';
-    beneficio = 'cumplir con los más altos estándares de higiene';
   } else if (typeLower.includes('spa') || typeLower.includes('gym') || typeLower.includes('fitness') || typeLower.includes('gimnasio')) {
     industria = 'centro de bienestar';
     textiles = 'toallas y batas';
-    beneficio = 'ofrecer la experiencia premium que sus clientes esperan';
   } else if (typeLower.includes('restaurante') || typeLower.includes('comida') || typeLower.includes('cevich')) {
     industria = 'restaurante';
     textiles = 'manteles, servilletas y uniformes';
-    beneficio = 'proyectar la imagen de calidad que su establecimiento merece';
   } else if (typeLower.includes('seguridad') || typeLower.includes('vigilancia')) {
     industria = 'empresa de seguridad';
     textiles = 'uniformes de su personal';
-    beneficio = 'mantener la imagen profesional de sus guardias';
   }
 
-  // Asuntos killer - generan curiosidad
+  // SEGUIMIENTO 3 - Email final, amigable pero cerrando el tema
+  if (stage === 'seguimiento_3') {
+    return {
+      subject: `Cerrando el tema - Lavandería para ${businessName}`,
+      body: `Hola equipo de *${businessName}* 👋
+
+Les había escrito hace unas semanas sobre nuestro servicio de lavandería industrial para ${textiles}.
+
+Entiendo que están ocupados, así que quería cerrar el tema de mi lado:
+
+*¿Les gustaría que les prepare una cotización sin compromiso?*
+
+Si no es el momento, no hay problema. Solo respóndanme con un "no por ahora" y los dejo tranquilos.
+
+Pero si tienen aunque sea un poco de curiosidad, con gusto les envío números. Muchas ${industria}s como ustedes han reducido costos hasta 40%.
+
+Quedo atento a su respuesta 🙌
+
+---
+
+Saludos,
+
+*Alejandro Ramos*
+Business Development Executive (B2B)
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653`
+    };
+  }
+
+  // SEGUIMIENTO 2 - Email de seguimiento urgente
+  if (stage === 'seguimiento_2') {
+    return {
+      subject: `Re: Lavandería industrial para ${businessName}`,
+      body: `Hola equipo de *${businessName}* 👋
+
+Les escribí hace unos días sobre lavandería industrial. ¿Tuvieron chance de revisar la propuesta?
+
+Solo quería saber si:
+• ¿Ya tienen proveedor y están contentos?
+• ¿Les interesa cotizar pero no es el momento?
+• ¿Prefieren que los llame para explicarles mejor?
+
+Cualquier respuesta me ayuda a saber cómo proceder.
+
+Si ya tienen proveedor, me encantaría saber si están satisfechos o si hay algo que podríamos mejorar. Muchos clientes nos eligen porque su proveedor anterior fallaba en entregas o calidad.
+
+¡Gracias por su tiempo! 🙏
+
+---
+
+Saludos,
+
+*Alejandro Ramos*
+Business Development Executive (B2B)
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653`
+    };
+  }
+
+  // SEGUIMIENTO 1 / CONTACTADO - Email de seguimiento suave
+  if (stage === 'seguimiento_1' || stage === 'contactado') {
+    return {
+      subject: `Seguimiento: Lavandería para ${businessName}`,
+      body: `Hola equipo de *${businessName}* 👋
+
+Les escribo para hacer seguimiento a mi mensaje anterior sobre lavandería industrial.
+
+Sé que están ocupados, pero quería recordarles que ofrecemos:
+
+• *Recojo y entrega* en su local (ustedes no mueven un dedo)
+• *Capacidad industrial* para alto volumen de ${textiles}
+• *Precios competitivos* - hasta 40% menos que hacerlo internamente
+
+¿Tienen 5 minutos esta semana para una llamada rápida? Les explico cómo funciona y les paso cotización sin compromiso.
+
+Si prefieren, pueden responder este correo con:
+1. Volumen aproximado de ${textiles} que manejan
+2. Frecuencia que necesitan (diaria, 2x semana, semanal)
+
+¡Y les preparo los números en 24 horas!
+
+---
+
+Saludos,
+
+*Alejandro Ramos*
+Business Development Executive (B2B)
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653`
+    };
+  }
+
+  // INTERESADO - Email de push hacia cotización
+  if (stage === 'interesado') {
+    return {
+      subject: `Tu cotización de lavandería - ${businessName}`,
+      body: `Hola equipo de *${businessName}* 👋
+
+¡Qué gusto que les interese nuestro servicio!
+
+Para prepararles una cotización personalizada, necesito algunos datos:
+
+*1. ¿Qué tipo de textiles manejan?*
+   □ Toallas
+   □ Sábanas
+   □ Uniformes
+   □ Manteles
+   □ Otros: ________
+
+*2. ¿Volumen aproximado semanal?*
+   (Ej: 50 toallas, 20 juegos de sábanas, etc.)
+
+*3. ¿Frecuencia de recojo que necesitan?*
+   □ Diaria
+   □ 2-3 veces por semana
+   □ Semanal
+
+Con esa info les tengo cotización en menos de 24 horas. 📋
+
+También podemos coordinar una visita a nuestra planta para que vean cómo trabajamos. ¡+800 empresas ya confían en nosotros!
+
+---
+
+Saludos,
+
+*Alejandro Ramos*
+Business Development Executive (B2B)
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653`
+    };
+  }
+
+  // COTIZADO - Email de push hacia cierre
+  if (stage === 'cotizado') {
+    return {
+      subject: `Re: Cotización lavandería - ${businessName}`,
+      body: `Hola equipo de *${businessName}* 👋
+
+Quería hacer seguimiento a la cotización que les enviamos.
+
+*¿Tienen alguna duda o hay algo que podamos ajustar?*
+
+Entiendo que tomar una decisión así lleva tiempo. Para que les sea más fácil, les recuerdo que ofrecemos:
+
+• *Prueba sin compromiso* - Pueden probar 1 semana y si no les convence, no hay costo
+• *Sin contratos largos* - Trabajamos mes a mes
+• *Garantía de calidad* - Si algo no está perfecto, lo repetimos sin costo
+
+¿Qué les parece si coordinamos una fecha para hacer la primera prueba?
+
+Pueden elegir un día de bajo volumen para empezar tranquilos. 📅
+
+---
+
+Saludos,
+
+*Alejandro Ramos*
+Business Development Executive (B2B)
+GetLavado - Lavandería Industrial 🧺
+📞 +51 928 113 653`
+    };
+  }
+
+  // NUEVO - Email de primer contacto (el original)
   const subjects = [
     `¿Están pagando de más por lavandería? (pregunta seria)`,
     `Propuesta para reducir 40% en costos de ${textiles}`,
-    `Re: Cotización lavandería industrial - propuesta especial`,
     `Pregunta rápida sobre sus ${textiles}`,
     `¿10 min esta semana? Tengo algo que mostrarles`,
   ];
@@ -224,7 +380,7 @@ function getEmailPitch(businessName: string, businessType: string | null): { sub
 
 Les escribo porque aparecieron en nuestra lista de empresas que podrían estar *pagando de más* por su lavandería.
 
-Como ${industria}, sabemos que ${textiles} son críticos para ${beneficio}. Pero... ¿cuánto les está costando mantenerlos impecables? 🤔
+Como ${industria}, sabemos que ${textiles} son críticos. Pero... ¿cuánto les está costando mantenerlos impecables? 🤔
 
 ---
 *⚠️ LA REALIDAD QUE NADIE CUENTA*
@@ -426,7 +582,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
   const handleEmailClick = (email?: string) => {
     if (!business) return;
-    const pitch = getEmailPitch(business.name, business.business_type);
+    const pitch = getEmailPitch(business.name, business.business_type, currentStage);
     const targetEmail = email || (business.decision_makers?.find(dm => dm.email)?.email) || '';
     setEmailModal({ to: targetEmail, subject: pitch.subject, body: pitch.body });
     registerAction('email');

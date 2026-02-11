@@ -680,6 +680,10 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     const lastAICall = contactHistory.find(h => h.notes?.startsWith('🤖'));
     const lastAICallSummary = lastAICall?.notes || null;
 
+    // IMPORTANTE: Usar currentStage (posición visual de la card) como fuente de verdad
+    // Esto garantiza que el pitch refleje la columna donde está la card, no el valor en DB
+    console.log('[AI Call] Using currentStage for pitch:', currentStage, '| (DB sales_stage:', business.sales_stage, ')');
+
     try {
       const res = await fetch('/api/ai-call', {
         method: 'POST',
@@ -689,8 +693,8 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
           phoneNumber: business.phone,
           businessName: business.name,
           businessType: business.business_type,
-          // Pasar contexto para adaptar el pitch
-          salesStage: business.sales_stage,
+          // CORREGIDO: Usar currentStage (columna visual) en vez de business.sales_stage (DB)
+          salesStage: currentStage,
           contactCount: business.contactCount,
           lastAICallSummary,
         }),

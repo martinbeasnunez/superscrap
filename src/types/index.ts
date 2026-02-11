@@ -36,12 +36,13 @@ export type LeadStatus = 'no_contact' | 'prospect' | 'discarded';
 // - nuevo = sin contactar
 // - contactado = esperando respuesta
 // - seguimiento_1 = 3-5 días sin respuesta
-// - seguimiento_2 = 6+ días sin respuesta
+// - seguimiento_2 = 6-8 días sin respuesta
+// - seguimiento_3 = 9+ días sin respuesta (último intento)
 // - interesado = respondió con interés
 // - cotizado = tiene cotización
 // - cliente = cerró la venta
 // - perdido = no le interesa o no califica
-export type SalesStage = 'nuevo' | 'contactado' | 'seguimiento_1' | 'seguimiento_2' | 'interesado' | 'cotizado' | 'cliente' | 'perdido';
+export type SalesStage = 'nuevo' | 'contactado' | 'seguimiento_1' | 'seguimiento_2' | 'seguimiento_3' | 'interesado' | 'cotizado' | 'cliente' | 'perdido';
 
 export interface Business {
   id: string;

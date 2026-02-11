@@ -369,19 +369,31 @@ export async function POST(request: Request) {
       // Lógica de movimiento:
       // - interested / wants_quote → interesado (siempre)
       // - not_interested → perdido (siempre)
-      // - callback / no_answer / voicemail / completed → seguimiento_1
-      //   (solo si está en nuevo, contactado. Si ya está en seguimiento_2, dejarlo ahí)
+      // - callback / no_answer / voicemail / completed → NO MOVER si ya está en seguimiento
+      //   Solo mover a seguimiento_1 si está en nuevo o contactado
+      //   NUNCA mover hacia atrás (ej: de seguimiento_3 a seguimiento_1)
+      console.log('[AI Call Result] Current stage:', currentStage, '| Outcome:', outcome);
+
       if (outcome === 'interested' || outcome === 'wants_quote') {
         updateData.sales_stage = 'interesado';
+        console.log('[AI Call Result] Moving to interesado');
       } else if (outcome === 'not_interested') {
         updateData.sales_stage = 'perdido';
+        console.log('[AI Call Result] Moving to perdido');
       } else if (['callback', 'no_answer', 'voicemail', 'completed'].includes(outcome)) {
-        // Solo mover a seguimiento_1 si está en una etapa anterior
+        // IMPORTANTE: Solo mover si está en etapas muy tempranas
+        // Si ya está en seguimiento_1, seguimiento_2, seguimiento_3, interesado, cotizado - NO TOCAR
         const earlyStages = ['nuevo', 'contactado'];
         if (earlyStages.includes(currentStage)) {
           updateData.sales_stage = 'seguimiento_1';
+          console.log('[AI Call Result] Moving from', currentStage, 'to seguimiento_1');
+        } else {
+          // Ya está en una etapa de seguimiento - NO MOVER
+          console.log('[AI Call Result] Keeping in current stage:', currentStage, '(not moving)');
         }
-        // Si ya está en seguimiento_1 o seguimiento_2, no mover
+      } else {
+        // Outcome desconocido - NO MOVER
+        console.log('[AI Call Result] Unknown outcome, keeping in current stage:', currentStage);
       }
 
       const { error } = await supabase

@@ -4,7 +4,7 @@ import { ContactAction, LeadStatus, SalesStage } from '@/types';
 
 const validContactActions: ContactAction[] = ['whatsapp', 'email', 'call'];
 const validLeadStatuses: LeadStatus[] = ['no_contact', 'prospect', 'discarded'];
-const validSalesStages: SalesStage[] = ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'interesado', 'cotizado', 'cliente', 'perdido'];
+const validSalesStages: SalesStage[] = ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado', 'cliente', 'perdido'];
 
 export async function PATCH(
   request: NextRequest,
@@ -96,6 +96,7 @@ export async function PATCH(
         'contactado': 'Contactado',
         'seguimiento_1': 'Seguimiento 1',
         'seguimiento_2': 'Seguimiento 2',
+        'seguimiento_3': 'Último Intento',
         'interesado': 'Interesado',
         'cotizado': 'Cotizado',
         'cliente': 'Cliente',

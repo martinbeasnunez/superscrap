@@ -115,6 +115,7 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
   const hasCall = business.contact_actions?.includes('call');
   const hasAnyContact = business.contact_actions && business.contact_actions.length > 0;
   const hasAICall = business.aiCallResult?.hasAICall;
+  const isInbound = business.lead_status === 'inbound';
 
   const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount);
   const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null) : null;
@@ -143,8 +144,16 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
             ${urgency.level === 'critical' ? 'ring-1 ring-red-200' : ''}
           `}
         >
+          {/* Badge INBOUND - lead caliente que nos buscó */}
+          {isInbound && (
+            <div className="mb-2 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-300 animate-pulse">
+              <span>🔥</span>
+              LEAD INBOUND - ¡Llamar YA!
+            </div>
+          )}
+
           {/* Badge de urgencia - prominente arriba */}
-          {urgency.level !== 'none' && urgency.level !== 'ok' && (
+          {!isInbound && urgency.level !== 'none' && urgency.level !== 'ok' && (
             <div className={`mb-2 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 ${urgency.bgColor} ${urgency.color} ${urgency.pulseColor}`}>
               {urgency.level === 'critical' && <span>🔥</span>}
               {urgency.level === 'urgent' && <span>⏰</span>}

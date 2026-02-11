@@ -263,8 +263,15 @@ export async function GET() {
     columns.seguimiento_2.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
     // Seguimiento 3: más antiguos primero (último intento)
     columns.seguimiento_3.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
-    // Interesados: más recientes primero
-    columns.interesado.sort((a, b) => (a.daysSinceContact || 0) - (b.daysSinceContact || 0));
+    // Interesados: inbound primero, luego más recientes primero
+    columns.interesado.sort((a, b) => {
+      // Leads inbound siempre van primero
+      const aInbound = a.lead_status === 'inbound' ? 1 : 0;
+      const bInbound = b.lead_status === 'inbound' ? 1 : 0;
+      if (aInbound !== bInbound) return bInbound - aInbound;
+      // Luego por fecha de contacto (más recientes primero)
+      return (a.daysSinceContact || 0) - (b.daysSinceContact || 0);
+    });
     // Cotizados: más recientes primero
     columns.cotizado.sort((a, b) => (a.daysSinceContact || 0) - (b.daysSinceContact || 0));
     // Clientes: por nombre

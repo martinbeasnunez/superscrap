@@ -1,15 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-// UUID generator compatible con Edge runtime
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
 interface InboundLeadRequest {
   businessName: string;
   contactName: string;
@@ -56,76 +47,77 @@ export async function POST(request: Request) {
     let searchId: string;
 
     // Buscar si ya existe un search para inbound leads
-    const { data: existingSearch } = await supabase
+    const { data: existingSearch, error: findError } = await supabase
       .from('searches')
       .select('id')
       .eq('business_type', 'inbound_lead')
-      .single();
+      .limit(1)
+      .maybeSingle();
+
+    if (findError) {
+      console.error('Error finding inbound search:', findError);
+    }
 
     if (existingSearch) {
       searchId = existingSearch.id;
     } else {
-      // Crear un nuevo search para inbound leads
+      // Crear un nuevo search para inbound leads (sin pasar id, Supabase lo genera)
       const { data: newSearch, error: searchError } = await supabase
         .from('searches')
         .insert({
-          id: generateUUID(),
           business_type: 'inbound_lead',
           city: 'Lima',
           status: 'completed',
-          total_found: 0,
-          results_count: 0,
-          created_at: new Date().toISOString(),
         })
         .select('id')
         .single();
 
       if (searchError) {
         console.error('Error creating inbound search:', searchError);
-        return NextResponse.json({ error: 'Error al crear búsqueda' }, { status: 500 });
+        return NextResponse.json({
+          error: 'Error al crear búsqueda',
+          details: searchError.message
+        }, { status: 500 });
       }
       searchId = newSearch.id;
     }
 
-    // Crear el business (lead)
-    const businessId = generateUUID();
-    const { error: businessError } = await supabase
+    // Crear el business (lead) - sin pasar id, Supabase lo genera
+    const { data: newBusiness, error: businessError } = await supabase
       .from('businesses')
       .insert({
-        id: businessId,
         name: data.businessName,
         phone: formattedPhone,
         description,
         search_id: searchId,
-        // Decision makers con el contacto
         decision_makers: data.email || data.contactName ? [{
           email: data.email || null,
           firstName: data.contactName.split(' ')[0] || null,
           lastName: data.contactName.split(' ').slice(1).join(' ') || null,
           fullName: data.contactName,
           position: 'Contacto Inbound',
-          seniority: null,
-          department: null,
-          confidence: 100,
-          linkedin: null,
           phone: formattedPhone,
         }] : null,
-        // Marcar como lead caliente inbound
         lead_status: 'inbound',
-        sales_stage: 'interesado', // Van directo a interesado porque ellos nos buscaron
+        sales_stage: 'interesado',
         contacted_at: new Date().toISOString(),
         contact_actions: ['inbound_form'],
-        created_at: new Date().toISOString(),
-      });
+      })
+      .select('id')
+      .single();
 
     if (businessError) {
       console.error('Error creating inbound lead:', businessError);
-      return NextResponse.json({ error: 'Error al crear lead' }, { status: 500 });
+      return NextResponse.json({
+        error: 'Error al crear lead',
+        details: businessError.message
+      }, { status: 500 });
     }
 
-    // Registrar en contact_history
-    await supabase.from('contact_history').insert({
-      id: generateUUID(),
+    const businessId = newBusiness.id;
+
+    // Registrar en contact_history (sin pasar id)
+    const { error: historyError } = await supabase.from('contact_history').insert({
       business_id: businessId,
       contact_type: 'inbound_form',
       notes: `🔥 LEAD INBOUND - ${data.source}\n\n` +
@@ -136,8 +128,12 @@ export async function POST(request: Request) {
         (data.frequency ? `📅 Frecuencia: ${data.frequency}\n` : '') +
         (data.currentProvider ? `🏢 Proveedor actual: ${data.currentProvider === 'si' ? 'Sí tiene' : 'No tiene'}\n` : '') +
         (data.comments ? `💬 Comentarios: ${data.comments}\n` : ''),
-      created_at: new Date().toISOString(),
     });
+
+    if (historyError) {
+      console.error('Error creating contact history:', historyError);
+      // No fallamos por esto, el lead ya se creó
+    }
 
     return NextResponse.json({
       success: true,
@@ -147,7 +143,10 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Inbound lead error:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Error interno del servidor',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 

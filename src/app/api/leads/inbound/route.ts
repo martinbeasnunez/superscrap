@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { randomUUID } from 'crypto';
+
+// UUID generator compatible con Edge runtime
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 interface InboundLeadRequest {
   businessName: string;
@@ -61,7 +69,7 @@ export async function POST(request: Request) {
       const { data: newSearch, error: searchError } = await supabase
         .from('searches')
         .insert({
-          id: randomUUID(),
+          id: generateUUID(),
           business_type: 'inbound_lead',
           city: 'Lima',
           status: 'completed',
@@ -80,7 +88,7 @@ export async function POST(request: Request) {
     }
 
     // Crear el business (lead)
-    const businessId = randomUUID();
+    const businessId = generateUUID();
     const { error: businessError } = await supabase
       .from('businesses')
       .insert({
@@ -117,7 +125,7 @@ export async function POST(request: Request) {
 
     // Registrar en contact_history
     await supabase.from('contact_history').insert({
-      id: randomUUID(),
+      id: generateUUID(),
       business_id: businessId,
       contact_type: 'inbound_form',
       notes: `🔥 LEAD INBOUND - ${data.source}\n\n` +
@@ -130,9 +138,6 @@ export async function POST(request: Request) {
         (data.comments ? `💬 Comentarios: ${data.comments}\n` : ''),
       created_at: new Date().toISOString(),
     });
-
-    // Actualizar el conteo de la búsqueda
-    await supabase.rpc('increment_search_count', { search_id: searchId });
 
     return NextResponse.json({
       success: true,

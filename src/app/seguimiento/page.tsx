@@ -53,15 +53,15 @@ export default function PipelinePage() {
   }, []);
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+      {/* Header - Hidden on mobile, shown in top bar */}
+      <div className="hidden lg:flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pipeline de Ventas</h1>
           <p className="text-gray-500 mt-0.5">Gestiona tus leads y cierra más ventas</p>
         </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats - Desktop */}
         {stats && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-6 bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-100">
@@ -89,8 +89,8 @@ export default function PipelinePage() {
         )}
       </div>
 
-      {/* Tips collapsible */}
-      <div className="mb-4">
+      {/* Tips collapsible - Desktop only */}
+      <div className="hidden lg:block mb-4">
         <button
           onClick={() => setShowTips(!showTips)}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
@@ -152,7 +152,7 @@ export default function PipelinePage() {
       </div>
 
       {/* Kanban Board */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 overflow-x-auto">
+      <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-2 sm:p-3 lg:p-4 overflow-hidden">
         <KanbanBoard />
       </div>
     </div>

@@ -10,6 +10,11 @@ interface User {
   email: string;
 }
 
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
 const navigation = [
   {
     name: 'Home',
@@ -63,10 +68,9 @@ const navigation = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('superscrap_user');
@@ -91,36 +95,48 @@ export default function Sidebar() {
   };
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen bg-[#1a1d21] text-white flex flex-col transition-all duration-300 z-50 ${
-        collapsed ? 'w-16' : 'w-64'
-      }`}
-    >
-      {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
-        {!collapsed && (
+    <>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed left-0 top-0 h-screen bg-[#1a1d21] text-white flex flex-col z-50
+          transition-transform duration-300 ease-in-out
+          w-64
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
+        {/* Logo */}
+        <div className="h-14 lg:h-16 flex items-center justify-between px-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-[#F6653C] to-[#ff8a65] rounded-lg flex items-center justify-center font-bold text-sm">
               SS
             </div>
             <span className="font-semibold text-lg">SuperScrap</span>
           </div>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-        >
-          <svg className={`w-5 h-5 transition-transform ${collapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-        </button>
-      </div>
+          {/* Close button for mobile */}
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors lg:hidden"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-      {/* Quick action */}
-      {!collapsed && (
+        {/* Quick action */}
         <div className="p-4">
           <Link
             href="/buscar"
+            onClick={onClose}
             className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#F6653C] hover:bg-[#e55a35] text-white rounded-lg font-medium transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,47 +145,41 @@ export default function Sidebar() {
             Nueva búsqueda
           </Link>
         </div>
-      )}
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-        {navigation.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                active
-                  ? 'bg-[#F6653C]/20 text-[#F6653C]'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? item.name : undefined}
-            >
-              {item.icon}
-              {!collapsed && (
-                <>
-                  <span className="flex-1 font-medium">{item.name}</span>
-                  {item.badge && (
-                    <span className="px-2 py-0.5 bg-[#F6653C] text-white text-xs rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+          {navigation.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onClose}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                  active
+                    ? 'bg-[#F6653C]/20 text-[#F6653C]'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                {item.icon}
+                <span className="flex-1 font-medium">{item.name}</span>
+                {item.badge && (
+                  <span className="px-2 py-0.5 bg-[#F6653C] text-white text-xs rounded-full">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
 
-      {/* User section */}
-      <div className="border-t border-white/10 p-4">
-        {user ? (
-          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center font-medium text-sm flex-shrink-0">
-              {user.name.charAt(0).toUpperCase()}
-            </div>
-            {!collapsed && (
+        {/* User section */}
+        <div className="border-t border-white/10 p-4">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center font-medium text-sm flex-shrink-0">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.name}</p>
                 <button
@@ -179,20 +189,20 @@ export default function Sidebar() {
                   Cerrar sesión
                 </button>
               </div>
-            )}
-          </div>
-        ) : (
-          <Link
-            href="/login"
-            className={`flex items-center gap-2 text-gray-400 hover:text-white ${collapsed ? 'justify-center' : ''}`}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-            </svg>
-            {!collapsed && <span>Iniciar sesión</span>}
-          </Link>
-        )}
-      </div>
-    </aside>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 text-gray-400 hover:text-white"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <span>Iniciar sesión</span>
+            </Link>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }

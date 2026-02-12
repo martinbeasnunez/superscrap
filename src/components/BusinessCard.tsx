@@ -584,76 +584,76 @@ export default function BusinessCard({
 
   return (
     <div
-      className={`p-5 rounded-xl border-2 ${getMatchColor(matchPercent)} transition-all hover:shadow-lg ${leadStatus === 'discarded' ? 'opacity-50' : ''}`}
+      className={`p-3 sm:p-5 rounded-xl border-2 ${getMatchColor(matchPercent)} transition-all hover:shadow-lg ${leadStatus === 'discarded' ? 'opacity-50' : ''}`}
     >
       {/* Lead status + contact actions indicator */}
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
         {isPriorityDistrict(business.address) && (
-          <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-medium border border-amber-300">
-            ⭐ Zona top
+          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-100 text-amber-800 rounded text-[10px] sm:text-xs font-medium border border-amber-300">
+            ⭐ <span className="hidden sm:inline">Zona </span>top
           </span>
         )}
         {getLeadStatusLabel() && (
-          <span className={`px-2 py-1 rounded text-xs font-medium border ${getLeadStatusStyle()}`}>
+          <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium border ${getLeadStatusStyle()}`}>
             {getLeadStatusLabel()}
           </span>
         )}
         {contactActions.includes('whatsapp') && (
-          <span className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
-            📱 WhatsApp
+          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-50 text-green-700 rounded text-[10px] sm:text-xs font-medium">
+            📱 <span className="hidden sm:inline">WhatsApp</span>
           </span>
         )}
         {contactActions.includes('email') && (
-          <span className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-medium">
-            📧 Email
+          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-red-50 text-red-700 rounded text-[10px] sm:text-xs font-medium">
+            📧 <span className="hidden sm:inline">Email</span>
           </span>
         )}
         {contactActions.includes('call') && (
-          <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
-            📞 Llamada
+          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-50 text-blue-700 rounded text-[10px] sm:text-xs font-medium">
+            📞 <span className="hidden sm:inline">Llamada</span>
           </span>
         )}
         {business.contacted_by_name && contactActions.length > 0 && (
-          <span className="text-xs text-gray-500 self-center">
+          <span className="text-[10px] sm:text-xs text-gray-500 self-center hidden sm:inline">
             por {business.contacted_by_name}
           </span>
         )}
       </div>
 
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="flex justify-between items-start mb-2 sm:mb-3 gap-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
             {business.name}
           </h3>
           {business.business_type && (
-            <p className="text-xs text-gray-500 mt-0.5">{business.business_type}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 truncate">{business.business_type}</p>
           )}
           {business.address && (
             <a
               href={getGoogleMapsUrl(business.address, business.name)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1 inline-flex items-center gap-1"
+              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline mt-1 inline-flex items-center gap-1 truncate max-w-full"
             >
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
               </svg>
-              {business.address}
+              <span className="truncate">{business.address}</span>
             </a>
           )}
         </div>
         <div
-          className={`px-3 py-1 rounded-full text-white text-sm font-medium ${getMatchBadgeColor(matchPercent)}`}
+          className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-white text-xs sm:text-sm font-medium flex-shrink-0 ${getMatchBadgeColor(matchPercent)}`}
         >
-          {matchPercent}% match
+          {matchPercent}%
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
         {business.rating && (
           <span className="flex items-center gap-1">
             <svg
-              className="w-4 h-4 text-yellow-500"
+              className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -663,18 +663,18 @@ export default function BusinessCard({
           </span>
         )}
         {business.reviews_count && (
-          <span>({business.reviews_count} reseñas)</span>
+          <span className="hidden sm:inline">({business.reviews_count} reseñas)</span>
         )}
-        {business.phone && <span>{business.phone}</span>}
+        {business.phone && <span className="truncate">{business.phone}</span>}
       </div>
 
       {analysis && (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase mb-2">
-              Necesidades de lavandería
+            <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase mb-1.5 sm:mb-2">
+              Necesidades
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {requiredServices.map((service) => {
                 const serviceLower = service.toLowerCase();
                 const isDetected = analysis.detected_services.some((ds) => {
@@ -691,7 +691,7 @@ export default function BusinessCard({
                 return (
                   <span
                     key={service}
-                    className={`px-2 py-1 rounded text-xs font-medium ${
+                    className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium ${
                       isDetected
                         ? 'bg-green-200 text-green-800'
                         : 'bg-red-100 text-red-600'
@@ -705,98 +705,83 @@ export default function BusinessCard({
           </div>
 
           {analysis.evidence && (
-            <div>
+            <div className="hidden sm:block">
               <p className="text-xs font-medium text-gray-500 uppercase mb-1">
                 Análisis
               </p>
-              <p className="text-sm text-gray-700">{analysis.evidence}</p>
+              <p className="text-sm text-gray-700 line-clamp-2">{analysis.evidence}</p>
             </div>
           )}
         </div>
       )}
 
       {/* Decision Makers / Contactos */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <p className="text-xs font-medium text-gray-500 uppercase mb-2">
-          Contactos encontrados
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+        <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase mb-1.5 sm:mb-2">
+          Contactos ({business.decision_makers?.length || 0})
         </p>
         {business.decision_makers && business.decision_makers.length > 0 ? (
-          <div className="space-y-2">
-            {business.decision_makers.map((dm, idx) => {
+          <div className="space-y-1.5 sm:space-y-2">
+            {business.decision_makers.slice(0, 2).map((dm, idx) => {
               const isMobile = dm.phone ? isPeruvianMobile(dm.phone) : false;
               const dmWhatsAppMessage = isMobile && dm.phone
                 ? encodeURIComponent(getWhatsAppPitch(business.name, businessType))
                 : '';
               return (
-                <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+                <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-1.5 sm:p-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                       {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contacto')}
                     </p>
                     {dm.email && (
-                      <p className="text-xs text-gray-500 truncate">{dm.email}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 truncate">{dm.email}</p>
                     )}
                     {dm.position && (
-                      <p className="text-xs text-gray-500 truncate">{dm.position}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 truncate hidden sm:block">{dm.position}</p>
                     )}
                     {dm.phone && !dm.email && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <p className="text-[10px] sm:text-xs text-gray-500 flex items-center gap-1">
                         {isMobile ? '📱' : '☎️'} {dm.phone}
-                        <span className="text-gray-400">({isMobile ? 'celular' : 'fijo'})</span>
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 ml-2">
+                  <div className="flex items-center gap-0.5 sm:gap-2 ml-1 sm:ml-2 flex-shrink-0">
                     {dm.linkedin && (
                       <a
                         href={dm.linkedin}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                        className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-50 rounded hidden sm:block"
                         title="LinkedIn"
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                         </svg>
                       </a>
                     )}
                     {dm.email && (
-                      <>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(dm.email!);
-                            alert('Email copiado');
-                          }}
-                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                          title={`Copiar solo email: ${dm.email}`}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => {
-                            const pitch = getEmailPitch(business.name, businessType, analysis?.detected_services || []);
-                            setEmailModal({ to: dm.email!, subject: pitch.subject, body: pitch.body });
-                          }}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                          title="Ver pitch de email"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                      </>
+                      <button
+                        onClick={() => {
+                          const pitch = getEmailPitch(business.name, businessType, analysis?.detected_services || []);
+                          setEmailModal({ to: dm.email!, subject: pitch.subject, body: pitch.body });
+                        }}
+                        className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded"
+                        title="Ver pitch de email"
+                      >
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </button>
                     )}
                     {dm.phone && isMobile && (
                       <a
                         href={`https://wa.me/${getWhatsAppNumber(dm.phone)}?text=${dmWhatsAppMessage}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 text-green-600 hover:bg-green-50 rounded"
+                        className="p-1 sm:p-1.5 text-green-600 hover:bg-green-50 rounded"
                         title="WhatsApp"
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                         </svg>
                       </a>
@@ -804,10 +789,10 @@ export default function BusinessCard({
                     {dm.phone && (
                       <a
                         href={`tel:${dm.phone}`}
-                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
+                        className="p-1 sm:p-1.5 text-gray-600 hover:bg-gray-100 rounded"
                         title={`Llamar: ${dm.phone}`}
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                       </a>
@@ -816,32 +801,37 @@ export default function BusinessCard({
                 </div>
               );
             })}
+            {business.decision_makers.length > 2 && (
+              <p className="text-[10px] sm:text-xs text-gray-400 text-center">
+                +{business.decision_makers.length - 2} más
+              </p>
+            )}
           </div>
         ) : (
-          <p className="text-sm text-gray-400 italic">
-            No se encontraron contactos en el sitio web
+          <p className="text-xs sm:text-sm text-gray-400 italic">
+            Sin contactos
           </p>
         )}
       </div>
 
       {/* Action buttons */}
-      <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
         {showWebsite && (
           <a
             href={business.website!}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors hidden sm:inline-flex"
           >
-            Sitio web
+            Web
           </a>
         )}
         {business.phone && (
           <a
             href={`tel:${business.phone}`}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
           >
-            Llamar
+            📞 <span className="hidden sm:inline">Llamar</span>
           </a>
         )}
         {showWhatsApp && (
@@ -849,12 +839,12 @@ export default function BusinessCard({
             href={`https://wa.me/${getWhatsAppNumber(business.phone!)}?text=${whatsAppMessage}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1.5 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
+            className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-1"
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
             </svg>
-            WhatsApp
+            <span className="hidden sm:inline">WhatsApp</span>
           </a>
         )}
         {/* Botón de Llamada con IA */}
@@ -862,7 +852,7 @@ export default function BusinessCard({
           <button
             onClick={handleAICall}
             disabled={aiCallStatus === 'calling'}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 font-medium ${
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-lg transition-all flex items-center gap-1 sm:gap-1.5 font-medium ${
               aiCallStatus === 'success'
                 ? 'bg-green-100 text-green-700 border border-green-300'
                 : aiCallStatus === 'error'
@@ -874,23 +864,22 @@ export default function BusinessCard({
           >
             {aiCallStatus === 'calling' ? (
               <>
-                <span className="animate-spin">🤖</span>
-                <span>Llamando...</span>
+                <span className="animate-spin text-xs sm:text-sm">🤖</span>
+                <span className="hidden sm:inline">Llamando...</span>
               </>
             ) : aiCallStatus === 'success' ? (
               <>
-                <span>✅</span>
-                <span>¡Iniciada!</span>
+                <span className="text-xs sm:text-sm">✅</span>
+                <span className="hidden sm:inline">¡OK!</span>
               </>
             ) : aiCallStatus === 'error' ? (
               <>
-                <span>❌</span>
-                <span>Error</span>
+                <span className="text-xs sm:text-sm">❌</span>
               </>
             ) : (
               <>
-                <span>🤖</span>
-                <span>Llamada IA</span>
+                <span className="text-xs sm:text-sm">🤖</span>
+                <span className="hidden sm:inline">IA</span>
               </>
             )}
           </button>
@@ -899,15 +888,15 @@ export default function BusinessCard({
 
       {/* Resultado de llamada IA */}
       {aiCallResult && (
-        <div className={`mt-3 p-3 rounded-lg border-2 ${
+        <div className={`mt-2 sm:mt-3 p-2 sm:p-3 rounded-lg border-2 ${
           aiCallResult.outcome === 'interested' || aiCallResult.outcome === 'wants_quote'
             ? 'bg-green-50 border-green-300'
             : aiCallResult.outcome === 'not_interested'
               ? 'bg-red-50 border-red-300'
               : 'bg-gray-50 border-gray-300'
         }`}>
-          <div className="flex items-center gap-2 mb-1">
-            <span>
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+            <span className="text-sm">
               {aiCallResult.outcome === 'interested' && '🎯'}
               {aiCallResult.outcome === 'wants_quote' && '💰'}
               {aiCallResult.outcome === 'not_interested' && '❌'}
@@ -915,173 +904,169 @@ export default function BusinessCard({
               {aiCallResult.outcome === 'no_answer' && '📵'}
               {!['interested', 'wants_quote', 'not_interested', 'callback', 'no_answer'].includes(aiCallResult.outcome || '') && '📞'}
             </span>
-            <span className="font-medium text-sm">
+            <span className="font-medium text-xs sm:text-sm">
               {aiCallResult.outcome === 'interested' && '¡Interesado!'}
               {aiCallResult.outcome === 'wants_quote' && '¡Quiere cotización!'}
               {aiCallResult.outcome === 'not_interested' && 'No interesado'}
               {aiCallResult.outcome === 'callback' && 'Llamar después'}
               {aiCallResult.outcome === 'no_answer' && 'No contestó'}
-              {aiCallResult.outcome === 'completed' && 'Llamada completada'}
+              {aiCallResult.outcome === 'completed' && 'Completada'}
             </span>
           </div>
           {aiCallResult.summary && (
-            <p className="text-xs text-gray-600">{aiCallResult.summary}</p>
+            <p className="text-[10px] sm:text-xs text-gray-600 line-clamp-2">{aiCallResult.summary}</p>
           )}
         </div>
       )}
 
-      {/* Contact actions (múltiples) */}
-      <div className="mt-3 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500 mb-2">Acciones realizadas:</p>
-        <div className="flex flex-wrap gap-2">
+      {/* Contact actions y Lead status combinados para mobile */}
+      <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           <button
             onClick={() => toggleContactAction('whatsapp')}
             disabled={updating}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-full border transition-colors ${
               contactActions.includes('whatsapp')
                 ? 'bg-green-500 text-white border-green-500'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            📱 WhatsApp
+            📱 <span className="hidden sm:inline">WhatsApp</span>
           </button>
           <button
             onClick={() => toggleContactAction('email')}
             disabled={updating}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-full border transition-colors ${
               contactActions.includes('email')
                 ? 'bg-red-500 text-white border-red-500'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-red-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            📧 Email
+            📧 <span className="hidden sm:inline">Email</span>
           </button>
           <button
             onClick={() => toggleContactAction('call')}
             disabled={updating}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-full border transition-colors ${
               contactActions.includes('call')
                 ? 'bg-blue-500 text-white border-blue-500'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            📞 Llamada
+            📞 <span className="hidden sm:inline">Llamada</span>
           </button>
-        </div>
-      </div>
-
-      {/* Lead status (único) - Solo Prospecto y Descartado */}
-      <div className="mt-3 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500 mb-2">Estado:</p>
-        <div className="flex flex-wrap gap-2">
+          <span className="hidden sm:inline text-gray-300">|</span>
           <button
             onClick={() => toggleLeadStatus('prospect')}
             disabled={updating}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-full border transition-colors ${
               leadStatus === 'prospect'
                 ? 'bg-green-600 text-white border-green-600'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            🟢 Prospecto
+            🟢 <span className="hidden sm:inline">Prospecto</span>
           </button>
           <button
             onClick={() => toggleLeadStatus('discarded')}
             disabled={updating}
-            className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+            className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs rounded-full border transition-colors ${
               leadStatus === 'discarded'
                 ? 'bg-gray-400 text-white border-gray-400'
                 : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            ⚫ Descartado
+            ⚫ <span className="hidden sm:inline">Descartado</span>
           </button>
         </div>
       </div>
 
-      {/* Email Modal */}
+      {/* Email Modal - Responsive */}
       {emailModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-900">Email Pitch</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 sm:p-4" onClick={() => setEmailModal(null)}>
+          <div
+            className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl sm:max-w-2xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Email Pitch</h3>
               <button
                 onClick={() => setEmailModal(null)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1.5 hover:bg-gray-100 rounded"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="p-4 overflow-y-auto max-h-[70vh]">
-              <div className="mb-4">
+            <div className="p-3 sm:p-4 overflow-y-auto max-h-[60vh] sm:max-h-[70vh]">
+              <div className="mb-3 sm:mb-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs text-gray-500 uppercase flex-1">Para:</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">Para:</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.to); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                     title="Copiar email"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
                 </div>
-                <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.to}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded truncate">{emailModal.to}</p>
               </div>
-              <div className="mb-4">
+              <div className="mb-3 sm:mb-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs text-gray-500 uppercase flex-1">Asunto:</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">Asunto:</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.subject); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                     title="Copiar asunto"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
                 </div>
-                <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.subject}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">{emailModal.subject}</p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs text-gray-500 uppercase flex-1">Cuerpo:</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">Cuerpo:</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.body); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                     title="Copiar cuerpo"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
                 </div>
                 <div
-                  className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap"
+                  className="text-xs sm:text-sm text-gray-700 bg-gray-50 p-2 sm:p-3 rounded whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{
                     __html: emailModal.body
                       .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
                       .replace(/^• /gm, '<span class="text-blue-600">&#8226;</span> ')
-                      .replace(/---/g, '<hr class="my-3 border-gray-300">')
+                      .replace(/---/g, '<hr class="my-2 sm:my-3 border-gray-300">')
                   }}
                 />
               </div>
             </div>
-            <div className="p-4 border-t border-gray-200 flex gap-2 justify-end">
+            <div className="p-3 sm:p-4 border-t border-gray-200 flex gap-2 justify-end safe-area-bottom">
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(`Para: ${emailModal.to}\nAsunto: ${emailModal.subject}\n\n${emailModal.body}`);
                   alert('Copiado al portapapeles');
                 }}
-                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
                 Copiar todo
               </button>
               <button
                 onClick={() => setEmailModal(null)}
-                className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
               >
                 Cerrar
               </button>

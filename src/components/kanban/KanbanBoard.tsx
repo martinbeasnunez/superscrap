@@ -495,41 +495,41 @@ export default function KanbanBoard() {
     <div className="h-full">
       {/* Banner de seguimiento - Solo si hay leads que necesitan atención */}
       {followUpMetrics.needsAttention > 0 && (
-        <div className={`mb-4 p-4 rounded-xl border-2 ${
+        <div className={`mb-3 lg:mb-4 p-3 lg:p-4 rounded-xl border-2 ${
           followUpMetrics.finalCount > 0
             ? 'bg-gray-900 border-gray-700'
             : followUpMetrics.criticalCount > 0
               ? 'bg-red-50 border-red-200'
               : 'bg-orange-50 border-orange-200'
         }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`text-3xl ${followUpMetrics.finalCount > 0 ? '' : followUpMetrics.criticalCount > 0 ? 'animate-bounce' : 'animate-pulse'}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={`text-2xl sm:text-3xl ${followUpMetrics.finalCount > 0 ? '' : followUpMetrics.criticalCount > 0 ? 'animate-bounce' : 'animate-pulse'}`}>
                 {followUpMetrics.finalCount > 0 ? '💀' : followUpMetrics.criticalCount > 0 ? '🔥' : '⏰'}
               </div>
               <div>
-                <h3 className={`font-bold ${followUpMetrics.finalCount > 0 ? 'text-white' : followUpMetrics.criticalCount > 0 ? 'text-red-800' : 'text-orange-800'}`}>
+                <h3 className={`font-bold text-sm sm:text-base ${followUpMetrics.finalCount > 0 ? 'text-white' : followUpMetrics.criticalCount > 0 ? 'text-red-800' : 'text-orange-800'}`}>
                   ¡{followUpMetrics.needsAttention} leads necesitan seguimiento!
                 </h3>
-                <p className={`text-sm ${followUpMetrics.finalCount > 0 ? 'text-gray-300' : followUpMetrics.criticalCount > 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                <p className={`text-xs sm:text-sm hidden sm:block ${followUpMetrics.finalCount > 0 ? 'text-gray-300' : followUpMetrics.criticalCount > 0 ? 'text-red-600' : 'text-orange-600'}`}>
                   {getFollowUpTip(followUpMetrics.urgentCount, followUpMetrics.criticalCount, followUpMetrics.singleContactLeads, followUpMetrics.finalCount)}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2 text-sm">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs sm:text-sm">
               {followUpMetrics.finalCount > 0 && (
-                <span className="px-3 py-1 bg-gray-800 text-white rounded-full font-bold">
-                  💀 {followUpMetrics.finalCount} último intento (+9d)
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-800 text-white rounded-full font-bold">
+                  💀 {followUpMetrics.finalCount}
                 </span>
               )}
               {followUpMetrics.criticalCount > 0 && (
-                <span className="px-3 py-1 bg-red-200 text-red-800 rounded-full font-bold animate-pulse">
-                  🔥 {followUpMetrics.criticalCount} críticos (6-8d)
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-red-200 text-red-800 rounded-full font-bold animate-pulse">
+                  🔥 {followUpMetrics.criticalCount}
                 </span>
               )}
               {followUpMetrics.urgentCount > 0 && (
-                <span className="px-3 py-1 bg-orange-200 text-orange-800 rounded-full font-medium">
-                  ⏰ {followUpMetrics.urgentCount} urgentes (3-5d)
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-orange-200 text-orange-800 rounded-full font-medium">
+                  ⏰ {followUpMetrics.urgentCount}
                 </span>
               )}
             </div>
@@ -537,54 +537,41 @@ export default function KanbanBoard() {
         </div>
       )}
 
-      {/* Frase motivacional */}
-      <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+      {/* Frase motivacional - Hidden on mobile */}
+      <div className="hidden lg:block mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
         <p className="text-sm text-blue-800 italic">"{motivationalQuote.quote}"</p>
         <p className="text-xs text-blue-600 mt-1">— {motivationalQuote.author}</p>
       </div>
 
       {/* Stats rápidos con métricas de seguimiento */}
-      <div className="flex flex-wrap items-center gap-4 mb-4 text-sm">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 lg:mb-4 text-xs sm:text-sm">
         {/* Botón de Campaña IA destacado */}
         <button
           onClick={() => setShowAICampaign(true)}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-2"
+          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg sm:rounded-xl font-medium shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-1.5 sm:gap-2"
         >
-          <span className="text-lg">🤖</span>
-          <span>Campaña IA</span>
+          <span className="text-base sm:text-lg">🤖</span>
+          <span className="hidden sm:inline">Campaña IA</span>
+          <span className="sm:hidden">IA</span>
         </button>
 
-        <span className="border-l border-gray-300 h-6 mx-1"></span>
+        <span className="hidden sm:block border-l border-gray-300 h-6 mx-1"></span>
 
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> activos</span>
-        <span className="text-green-600"><strong>{columns.cliente.length}</strong> clientes</span>
-        <span className="text-amber-600"><strong>{columns.interesado.length + columns.cotizado.length}</strong> por cerrar</span>
-
-        <span className="border-l border-gray-300 h-4 mx-1"></span>
-
-        {/* Métricas de seguimiento */}
-        {followUpMetrics.recentCount > 0 && (
-          <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
-            ✓ {followUpMetrics.recentCount} al día
-          </span>
-        )}
-        {followUpMetrics.singleContactLeads > 0 && (
-          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs" title="Leads con solo 1 contacto - considera hacer follow-up">
-            💬 {followUpMetrics.singleContactLeads} con 1 solo contacto
-          </span>
-        )}
+        <span className="hidden sm:inline text-green-600"><strong>{columns.cliente.length}</strong> clientes</span>
+        <span className="hidden sm:inline text-amber-600"><strong>{columns.interesado.length + columns.cotizado.length}</strong> por cerrar</span>
 
         {/* Métricas de llamadas IA - Clickeable para ver insights */}
         {followUpMetrics.aiCallLeads > 0 && (
           <>
-            <span className="border-l border-gray-300 h-4 mx-1"></span>
+            <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
             <button
               onClick={() => setShowAIInsights(true)}
               className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-200 transition-colors cursor-pointer"
               title="Click para ver detalles de llamadas IA"
             >
-              🤖 {followUpMetrics.aiCallLeads} llamadas IA
+              🤖 {followUpMetrics.aiCallLeads}
             </button>
             {followUpMetrics.aiOutcomes.interested > 0 && (
               <button
@@ -592,16 +579,7 @@ export default function KanbanBoard() {
                 className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors cursor-pointer"
                 title="Click para ver leads interesados"
               >
-                🎯 {followUpMetrics.aiOutcomes.interested} interesados
-              </button>
-            )}
-            {followUpMetrics.aiOutcomes.voicemail > 0 && (
-              <button
-                onClick={() => setShowAIInsights(true)}
-                className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200 transition-colors cursor-pointer"
-                title="Click para ver buzones de voz"
-              >
-                📭 {followUpMetrics.aiOutcomes.voicemail} buzón
+                🎯 {followUpMetrics.aiOutcomes.interested}
               </button>
             )}
           </>
@@ -610,7 +588,7 @@ export default function KanbanBoard() {
 
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 -mx-2 px-2 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:snap-none">
           {COLUMN_ORDER.map((columnId) => (
             <KanbanColumn
               key={columnId}

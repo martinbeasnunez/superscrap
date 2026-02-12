@@ -986,7 +986,7 @@ function detectBrowserLocale(): Locale {
   if (typeof window === 'undefined') return 'es';
 
   // Check localStorage first
-  const saved = localStorage.getItem('superscrap_locale');
+  const saved = localStorage.getItem('orbit_locale');
   if (saved === 'en' || saved === 'es') return saved;
 
   // Detect from browser
@@ -1005,7 +1005,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
-    localStorage.setItem('superscrap_locale', newLocale);
+    localStorage.setItem('orbit_locale', newLocale);
   }, []);
 
   const t = useCallback((key: string): string => {

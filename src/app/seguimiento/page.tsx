@@ -78,7 +78,7 @@ export default function PipelinePage() {
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-amber-500">{stats.interested}</p>
+                <p className="text-2xl font-bold text-[#D4A84F]">{stats.interested}</p>
                 <p className="text-xs text-gray-500">{t('pipe.interested')}</p>
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
@@ -131,10 +131,10 @@ export default function PipelinePage() {
                   <p className="text-gray-500 text-xs">{t('pipe.guide_followup_desc')}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl">
+              <div className="flex items-start gap-3 p-3 bg-[#FFF8E7] rounded-xl">
                 <span className="text-xl">⭐</span>
                 <div>
-                  <p className="font-medium text-amber-700">{t('pipe.guide_interested')}</p>
+                  <p className="font-medium text-[#9A7A35]">{t('pipe.guide_interested')}</p>
                   <p className="text-gray-500 text-xs">{t('pipe.guide_interested_desc')}</p>
                 </div>
               </div>

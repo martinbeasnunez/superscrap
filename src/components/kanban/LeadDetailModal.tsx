@@ -594,7 +594,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
       // Obtener userId
       let userId = null;
       try {
-        const savedUser = localStorage.getItem('superscrap_user');
+        const savedUser = localStorage.getItem('orbit_user');
         if (savedUser) userId = JSON.parse(savedUser).id;
       } catch {}
 
@@ -1179,10 +1179,10 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             {loadingHistory ? (
               <div className="text-center py-4 text-gray-400">{t('common.loading')}</div>
             ) : contactHistory.length === 0 ? (
-              <div className="text-center py-6 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="text-center py-6 bg-[#FFF8E7] rounded-lg border border-[#FFD06D]">
                 <span className="text-2xl mb-2 block">📋</span>
-                <p className="text-amber-800 font-medium">{t('lead.no_contacts')}</p>
-                <p className="text-amber-600 text-xs mt-1">{t('lead.make_first_contact')}</p>
+                <p className="text-[#7C622A] font-medium">{t('lead.no_contacts')}</p>
+                <p className="text-[#B8923F] text-xs mt-1">{t('lead.make_first_contact')}</p>
               </div>
             ) : (
               <>
@@ -1283,7 +1283,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 ? 'bg-red-50 border-red-300'
                 : business.daysSinceContact >= 3
                   ? 'bg-blue-50 border-blue-300'
-                  : 'bg-amber-50 border-amber-300'
+                  : 'bg-[#FFF8E7] border-[#FFD06D]'
             }`}>
               <div className="flex items-center gap-2">
                 <span className="text-xl">
@@ -1291,7 +1291,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 </span>
                 <div>
                   <p className={`font-bold text-sm ${
-                    business.daysSinceContact >= 5 ? 'text-red-800' : business.daysSinceContact >= 3 ? 'text-blue-800' : 'text-amber-800'
+                    business.daysSinceContact >= 5 ? 'text-red-800' : business.daysSinceContact >= 3 ? 'text-blue-800' : 'text-[#7C622A]'
                   }`}>
                     {business.daysSinceContact >= 5
                       ? t('lead.urgent_days') + ' ' + business.daysSinceContact + ' ' + t('lead.days')
@@ -1301,7 +1301,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     }
                   </p>
                   <p className={`text-xs ${
-                    business.daysSinceContact >= 5 ? 'text-red-600' : business.daysSinceContact >= 3 ? 'text-blue-600' : 'text-amber-600'
+                    business.daysSinceContact >= 5 ? 'text-red-600' : business.daysSinceContact >= 3 ? 'text-blue-600' : 'text-[#B8923F]'
                   }`}>
                     {business.daysSinceContact >= 5
                       ? t('lead.interest_cools')

@@ -15,7 +15,7 @@ interface BusinessCardProps {
 function getUserIdFromStorage(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    const savedUser = localStorage.getItem('superscrap_user');
+    const savedUser = localStorage.getItem('orbit_user');
     if (savedUser) {
       const user = JSON.parse(savedUser);
       return user.id || null;
@@ -30,7 +30,7 @@ function getUserIdFromStorage(): string | null {
 function getUserEmailFromStorage(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    const savedUser = localStorage.getItem('superscrap_user');
+    const savedUser = localStorage.getItem('orbit_user');
     if (savedUser) {
       const user = JSON.parse(savedUser);
       return user.email || null;
@@ -591,7 +591,7 @@ export default function BusinessCard({
       {/* Lead status + contact actions indicator */}
       <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
         {isPriorityDistrict(business.address) && (
-          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-100 text-amber-800 rounded text-[10px] sm:text-xs font-medium border border-amber-300">
+          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-[#FFE9B3] text-[#7C622A] rounded text-[10px] sm:text-xs font-medium border border-[#FFD06D]">
             {t('biz.top_zone')}
           </span>
         )}

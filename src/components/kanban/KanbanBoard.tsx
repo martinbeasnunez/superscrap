@@ -327,7 +327,7 @@ export default function KanbanBoard() {
       case 'not_interested':
         return { label: `❌ ${summary || 'No interesado'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
       case 'callback':
-        return { label: `📅 ${summary || 'Llamar después'}`, color: 'text-amber-700', bg: 'bg-amber-100' };
+        return { label: `📅 ${summary || 'Llamar después'}`, color: 'text-[#9A7A35]', bg: 'bg-[#FFE9B3]' };
       case 'no_answer':
         return { label: `📵 ${summary || 'No contestó'}`, color: 'text-red-600', bg: 'bg-red-50' };
       case 'voicemail':
@@ -563,7 +563,7 @@ export default function KanbanBoard() {
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> {t('kanban.active')}</span>
         <span className="hidden sm:inline text-green-600"><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</span>
-        <span className="hidden sm:inline text-amber-600"><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</span>
+        <span className="hidden sm:inline text-[#B8923F]"><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</span>
 
         {/* Métricas de llamadas IA - Clickeable para ver insights */}
         {followUpMetrics.aiCallLeads > 0 && (
@@ -722,14 +722,14 @@ export default function KanbanBoard() {
             <div className="flex-1 overflow-y-auto">
             {/* ALERTA DE ACCIÓN - Leads pendientes de cotización */}
             {aiInsightsStats?.pendingQuotes && aiInsightsStats.pendingQuotes.length > 0 && (
-              <div className="mx-6 mt-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl">
+              <div className="mx-6 mt-4 p-4 bg-[#FFF8E7] border-2 border-[#FFD06D] rounded-xl">
                 <div className="flex items-start gap-3">
                   <span className="text-2xl">🔥</span>
                   <div className="flex-1">
-                    <h4 className="font-bold text-amber-800">
+                    <h4 className="font-bold text-[#7C622A]">
                       {aiInsightsStats.pendingQuotes.length} {t('ai.pending_quotes')}
                     </h4>
-                    <p className="text-sm text-amber-700 mt-1">
+                    <p className="text-sm text-[#9A7A35] mt-1">
                       {t('ai.pending_quotes_desc')}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -740,13 +740,13 @@ export default function KanbanBoard() {
                             setShowAIInsights(false);
                             setSelectedBusiness(lead);
                           }}
-                          className="px-3 py-1 bg-white border border-amber-300 rounded-full text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+                          className="px-3 py-1 bg-white border border-[#FFD06D] rounded-full text-sm font-medium text-[#7C622A] hover:bg-[#FFE9B3] transition-colors"
                         >
                           {lead.name.split(' ').slice(0, 2).join(' ')}
                         </button>
                       ))}
                       {aiInsightsStats.pendingQuotes.length > 5 && (
-                        <span className="px-3 py-1 text-sm text-amber-600">
+                        <span className="px-3 py-1 text-sm text-[#B8923F]">
                           +{aiInsightsStats.pendingQuotes.length - 5} más
                         </span>
                       )}
@@ -791,7 +791,7 @@ export default function KanbanBoard() {
                   <span className="text-gray-400">→</span>
                   {/* Cotizados (por IA) */}
                   <div className="flex-1 text-center">
-                    <div className="w-full bg-amber-500 text-white rounded-lg py-3 px-2">
+                    <div className="w-full bg-[#FFF8E7]0 text-white rounded-lg py-3 px-2">
                       <div className="text-xl font-bold">{aiInsightsStats.aiCotizados}</div>
                       <div className="text-xs opacity-90">{t('ai.funnel_quoted')}</div>
                     </div>

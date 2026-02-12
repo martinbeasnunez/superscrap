@@ -237,16 +237,16 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-[#FFD06D]/30 to-[#0890F1]/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur border border-amber-500/20">
+              <div className="bg-gradient-to-br from-[#FFD06D]/30 to-[#0890F1]/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur border border-[#FFD06D]/20">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-500/30 rounded-lg sm:rounded-xl flex items-center justify-center">
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#FFD06D]/30 rounded-lg sm:rounded-xl flex items-center justify-center">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFD06D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xl sm:text-2xl font-bold text-amber-300">{stats.today.prospects}</p>
-                    <p className="text-amber-200/70 text-[10px] sm:text-xs">{t('dash.prospects')}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-[#FFD06D]">{stats.today.prospects}</p>
+                    <p className="text-[#FFD06D]/70 text-[10px] sm:text-xs">{t('dash.prospects')}</p>
                   </div>
                 </div>
               </div>
@@ -266,7 +266,7 @@ export default function HomePage() {
                   <span className="sm:hidden">{t('dash.good')}</span>
                 </span>
               ) : (
-                <span className="text-amber-400 text-xs sm:text-sm">
+                <span className="text-[#E6B85E] text-xs sm:text-sm">
                   {t('dash.goal')}
                 </span>
               )}
@@ -478,7 +478,7 @@ export default function HomePage() {
                     {stats.insights.topDistricts.slice(0, 3).map((district, i) => (
                       <div key={district.name} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg sm:rounded-xl">
                         <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold ${
-                          i === 0 ? 'bg-amber-100 text-amber-700' :
+                          i === 0 ? 'bg-[#FFE9B3] text-[#9A7A35]' :
                           i === 1 ? 'bg-gray-200 text-gray-600' :
                           'bg-blue-100 text-blue-600'
                         }`}>

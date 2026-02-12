@@ -11,8 +11,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "SuperScrap CRM - Pipeline de Ventas",
-  description: "CRM para gestión de leads y pipeline de ventas B2B",
+  title: "ORBIT by Laundryheap - Sales Pipeline",
+  description: "CRM for B2B lead management and sales pipeline by Laundryheap",
 };
 
 export default function RootLayout({

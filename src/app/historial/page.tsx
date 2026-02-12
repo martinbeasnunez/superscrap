@@ -62,7 +62,7 @@ export default function HistorialPage() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      processing: 'bg-amber-50 text-amber-700 border-amber-200',
+      processing: 'bg-[#FFF8E7] text-[#9A7A35] border-[#FFD06D]',
       pending: 'bg-gray-50 text-gray-700 border-gray-200',
       failed: 'bg-red-50 text-red-700 border-red-200',
     };
@@ -159,8 +159,8 @@ export default function HistorialPage() {
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-50 rounded-lg sm:rounded-xl flex items-center justify-center">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#FFF8E7] rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#B8923F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>

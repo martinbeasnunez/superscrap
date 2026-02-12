@@ -32,7 +32,7 @@ const getPageTitle = (pathname: string, t: (key: string) => string) => {
   if (pathname === '/buscar') return t('nav.search');
   if (pathname === '/historial') return t('nav.history');
   if (pathname === '/landings') return t('nav.landings');
-  return 'SuperScrap';
+  return 'ORBIT';
 };
 
 export default function AppLayout({ children }: AppLayoutProps) {
@@ -47,12 +47,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const isPublicRoute = pathname === '/login' || isPublicLandingPage(pathname);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('superscrap_user');
+    const savedUser = localStorage.getItem('orbit_user');
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch {
-        localStorage.removeItem('superscrap_user');
+        localStorage.removeItem('orbit_user');
       }
     }
     setLoading(false);
@@ -66,7 +66,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fb]">
+      <div className="min-h-screen flex items-center justify-center bg-[#EDF0F2]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0890F1]"></div>
       </div>
     );
@@ -87,7 +87,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Layout con sidebar para usuarios autenticados
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
+    <div className="min-h-screen bg-[#EDF0F2]">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Mobile Header */}

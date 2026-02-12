@@ -77,9 +77,9 @@ export function getColumnConfig(t: (key: string) => string): Record<KanbanColumn
       title: t('col.interested'),
       shortTitle: t('col.interested_short'),
       icon: '⭐',
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
+      color: 'text-[#9A7A35]',
+      bgColor: 'bg-[#FFF8E7]',
+      borderColor: 'border-[#FFD06D]',
       description: t('col.interested_desc'),
     },
     cotizado: {

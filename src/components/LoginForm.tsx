@@ -47,7 +47,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       }
 
       // Guardar en localStorage
-      localStorage.setItem('superscrap_user', JSON.stringify(data.user));
+      localStorage.setItem('orbit_user', JSON.stringify(data.user));
       onLogin(data.user);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.unknown_error'));
@@ -62,10 +62,12 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0890F1] to-[#3AA8F5] p-12 flex-col justify-between">
         <div>
           <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center font-bold text-lg text-white">
-              SS
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6" viewBox="0 0 100 100" fill="white">
+                <path d="M50 10 C35 10, 10 25, 10 50 C10 75, 30 95, 50 95 C70 95, 90 75, 90 50 C90 25, 65 10, 50 10 Z M50 20 C42 20, 25 18, 20 40 C18 50, 25 65, 50 85 C75 65, 82 50, 80 40 C75 18, 58 20, 50 20 Z"/>
+              </svg>
             </div>
-            <span className="font-bold text-xl text-white">SuperScrap</span>
+            <span className="font-bold text-xl text-white">ORBIT</span>
           </div>
 
           <h1 className="text-4xl font-bold text-white mb-4">
@@ -124,10 +126,12 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#0890F1] to-[#3AA8F5] rounded-xl flex items-center justify-center font-bold text-lg text-white">
-              SS
+            <div className="w-10 h-10 bg-gradient-to-br from-[#0890F1] to-[#3AA8F5] rounded-xl flex items-center justify-center">
+              <svg className="w-6 h-6" viewBox="0 0 100 100" fill="white">
+                <path d="M50 10 C35 10, 10 25, 10 50 C10 75, 30 95, 50 95 C70 95, 90 75, 90 50 C90 25, 65 10, 50 10 Z M50 20 C42 20, 25 18, 20 40 C18 50, 25 65, 50 85 C75 65, 82 50, 80 40 C75 18, 58 20, 50 20 Z"/>
+              </svg>
             </div>
-            <span className="font-bold text-xl text-white">SuperScrap</span>
+            <span className="font-bold text-xl text-white">ORBIT</span>
           </div>
 
           <div className="text-center mb-8">

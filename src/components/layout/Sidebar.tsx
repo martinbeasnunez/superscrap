@@ -75,7 +75,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   ];
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('superscrap_user');
+    const savedUser = localStorage.getItem('orbit_user');
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
@@ -86,7 +86,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('superscrap_user');
+    localStorage.removeItem('orbit_user');
     window.location.href = '/login';
   };
 
@@ -118,10 +118,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="h-14 lg:h-16 flex items-center justify-between px-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#0890F1] to-[#3AA8F5] rounded-lg flex items-center justify-center font-bold text-sm">
-              SS
+            <div className="w-8 h-8 bg-[#0890F1] rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5" viewBox="0 0 100 100" fill="white">
+                <path d="M50 10 C35 10, 10 25, 10 50 C10 75, 30 95, 50 95 C70 95, 90 75, 90 50 C90 25, 65 10, 50 10 Z M50 20 C42 20, 25 18, 20 40 C18 50, 25 65, 50 85 C75 65, 82 50, 80 40 C75 18, 58 20, 50 20 Z"/>
+              </svg>
             </div>
-            <span className="font-semibold text-lg">SuperScrap</span>
+            <span className="font-semibold text-lg">ORBIT</span>
           </div>
           {/* Close button for mobile */}
           <button

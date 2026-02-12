@@ -276,7 +276,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                   ))}
                 </div>
                 {leadsWithoutAICall.length < quantity && (
-                  <p className="text-xs text-amber-600 mt-2">
+                  <p className="text-xs text-[#B8923F] mt-2">
                     ⚠️ {t('campaign.only_available').replace('leads', `${leadsWithoutAICall.length} leads`)}
                   </p>
                 )}
@@ -365,8 +365,8 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                   </div>
                 )}
                 {status === 'paused' && (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-full">
-                    <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFE9B3] text-[#9A7A35] rounded-full">
+                    <span className="w-2 h-2 bg-[#FFD06D] rounded-full"></span>
                     {t('campaign.paused')}
                   </div>
                 )}
@@ -404,9 +404,9 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                   <div className="text-xl font-bold text-green-600">{stats.completed}</div>
                   <div className="text-xs text-green-600">{t('campaign.started')}</div>
                 </div>
-                <div className="text-center p-3 bg-amber-50 rounded-xl">
-                  <div className="text-xl font-bold text-amber-600">{stats.calling}</div>
-                  <div className="text-xs text-amber-600">{t('campaign.calling_status')}</div>
+                <div className="text-center p-3 bg-[#FFF8E7] rounded-xl">
+                  <div className="text-xl font-bold text-[#B8923F]">{stats.calling}</div>
+                  <div className="text-xs text-[#B8923F]">{t('campaign.calling_status')}</div>
                 </div>
                 <div className="text-center p-3 bg-red-50 rounded-xl">
                   <div className="text-xl font-bold text-red-600">{stats.failed}</div>
@@ -469,7 +469,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 {status === 'running' && (
                   <button
                     onClick={pauseCampaign}
-                    className="flex-1 py-3 bg-amber-100 text-amber-700 rounded-xl font-medium hover:bg-amber-200 transition-colors"
+                    className="flex-1 py-3 bg-[#FFE9B3] text-[#9A7A35] rounded-xl font-medium hover:bg-[#FFD06D] transition-colors"
                   >
                     ⏸️ {t('campaign.pause')}
                   </button>

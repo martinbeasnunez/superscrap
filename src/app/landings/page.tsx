@@ -10,7 +10,7 @@ export default function LandingsPage() {
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const { t } = useI18n();
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://superscrap.vercel.app';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://orbit.laundryheap.com';
 
   const handleCopyUrl = (slug: string) => {
     const url = `${baseUrl}/landing/${slug}`;

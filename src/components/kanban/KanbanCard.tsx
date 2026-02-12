@@ -63,8 +63,8 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
     return {
       level: 'warning',
       message: t?.('card.2days') || '2 días',
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
+      color: 'text-[#B8923F]',
+      bgColor: 'bg-[#FFE9B3]',
       pulseColor: '',
     };
   }
@@ -99,7 +99,7 @@ function getAICallLabel(outcome: string | null, t?: (key: string) => string): { 
     case 'not_interested':
       return { text: `❌ ${t?.('biz.call_not_interested') || 'No interesado'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
     case 'callback':
-      return { text: `📅 ${t?.('biz.call_later') || 'Llamar después'}`, color: 'text-amber-700', bg: 'bg-amber-100' };
+      return { text: `📅 ${t?.('biz.call_later') || 'Llamar después'}`, color: 'text-[#9A7A35]', bg: 'bg-[#FFE9B3]' };
     case 'no_answer':
       return { text: `📵 ${t?.('biz.call_no_answer') || 'No contestó'}`, color: 'text-red-600', bg: 'bg-red-50' };
     case 'voicemail':
@@ -126,7 +126,7 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
   const getBorderStyle = () => {
     if (urgency.level === 'critical') return 'border-l-4 border-l-red-500';
     if (urgency.level === 'urgent') return 'border-l-4 border-l-blue-500';
-    if (urgency.level === 'warning') return 'border-l-4 border-l-amber-400';
+    if (urgency.level === 'warning') return 'border-l-4 border-l-[#E6B85E]';
     return '';
   };
 

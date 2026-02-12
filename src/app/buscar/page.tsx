@@ -21,7 +21,7 @@ export default function BusquedasPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('superscrap_user');
+    const savedUser = localStorage.getItem('orbit_user');
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);

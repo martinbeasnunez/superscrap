@@ -44,9 +44,9 @@ export function getColumnConfig(t: (key: string) => string): Record<KanbanColumn
       title: t('col.seg1'),
       shortTitle: t('col.seg1_short'),
       icon: '⏰',
-      color: 'text-orange-700',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-300',
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-300',
       description: t('col.seg1_desc'),
       isFollowUp: true,
     },
@@ -147,10 +147,10 @@ export default function KanbanColumn({ columnId, businesses, onCardClick }: Kanb
       flex flex-col rounded-xl ${config.bgColor} border-2 ${config.borderColor}
       min-w-[180px] w-[180px] sm:min-w-[220px] sm:w-[220px] lg:min-w-[240px] lg:w-[240px]
       snap-center flex-shrink-0
-      ${config.isFollowUp ? 'ring-2 ring-offset-1 ' + (columnId === 'seguimiento_2' ? 'ring-red-300' : 'ring-orange-300') : ''}
+      ${config.isFollowUp ? 'ring-2 ring-offset-1 ' + (columnId === 'seguimiento_2' ? 'ring-red-300' : 'ring-blue-300') : ''}
     `}>
       {/* Header */}
-      <div className={`px-2 sm:px-3 py-2 sm:py-2.5 border-b ${config.borderColor} ${config.isFollowUp ? 'bg-gradient-to-r ' + (columnId === 'seguimiento_2' ? 'from-red-100 to-red-50' : 'from-orange-100 to-orange-50') : ''}`}>
+      <div className={`px-2 sm:px-3 py-2 sm:py-2.5 border-b ${config.borderColor} ${config.isFollowUp ? 'bg-gradient-to-r ' + (columnId === 'seguimiento_2' ? 'from-red-100 to-red-50' : 'from-blue-100 to-blue-50') : ''}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <span className={`text-sm sm:text-base ${config.isFollowUp ? 'animate-pulse' : ''}`}>{config.icon}</span>
@@ -159,11 +159,11 @@ export default function KanbanColumn({ columnId, businesses, onCardClick }: Kanb
               <span className="hidden sm:inline">{config.title}</span>
             </h3>
           </div>
-          <span className={`text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 ${config.isFollowUp ? (columnId === 'seguimiento_2' ? 'bg-red-200 text-red-800' : 'bg-orange-200 text-orange-800') : config.bgColor + ' ' + config.color} border ${config.borderColor}`}>
+          <span className={`text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 ${config.isFollowUp ? (columnId === 'seguimiento_2' ? 'bg-red-200 text-red-800' : 'bg-blue-200 text-blue-800') : config.bgColor + ' ' + config.color} border ${config.borderColor}`}>
             {businesses.length}
           </span>
         </div>
-        <p className={`hidden sm:block text-xs mt-0.5 ${config.isFollowUp ? (columnId === 'seguimiento_2' ? 'text-red-600 font-medium' : 'text-orange-600 font-medium') : 'text-gray-500'}`}>
+        <p className={`hidden sm:block text-xs mt-0.5 ${config.isFollowUp ? (columnId === 'seguimiento_2' ? 'text-red-600 font-medium' : 'text-blue-600 font-medium') : 'text-gray-500'}`}>
           {config.description}
         </p>
       </div>
@@ -207,7 +207,7 @@ export default function KanbanColumn({ columnId, businesses, onCardClick }: Kanb
       {/* Footer con tip para columnas de seguimiento - Hidden on small mobile */}
       {config.isFollowUp && businesses.length > 0 && (
         <div className={`hidden sm:block px-2 py-1.5 border-t ${config.borderColor} text-center`}>
-          <p className={`text-xs font-medium ${columnId === 'seguimiento_2' ? 'text-red-700' : 'text-orange-700'}`}>
+          <p className={`text-xs font-medium ${columnId === 'seguimiento_2' ? 'text-red-700' : 'text-blue-700'}`}>
             {columnId === 'seguimiento_2'
               ? (t('kanban.act_today') || 'Act TODAY!')
               : (t('kanban.do_followup') || 'Follow up')

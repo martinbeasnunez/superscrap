@@ -10,7 +10,7 @@ const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
   loading: () => (
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
-        <div className="animate-spin h-10 w-10 border-3 border-[#F6653C] border-t-transparent rounded-full mx-auto mb-3"></div>
+        <div className="animate-spin h-10 w-10 border-3 border-[#0890F1] border-t-transparent rounded-full mx-auto mb-3"></div>
         <p className="text-gray-500">Cargando pipeline...</p>
       </div>
     </div>
@@ -73,7 +73,7 @@ export default function PipelinePage() {
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-orange-500">{stats.followUpNeeded}</p>
+                <p className="text-2xl font-bold text-blue-500">{stats.followUpNeeded}</p>
                 <p className="text-xs text-gray-500">{t('pipe.followup')}</p>
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
@@ -124,10 +124,10 @@ export default function PipelinePage() {
                   <p className="text-gray-500 text-xs">{t('pipe.guide_1st_desc')}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-xl">
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl">
                 <span className="text-xl">⏰</span>
                 <div>
-                  <p className="font-medium text-orange-700">{t('pipe.guide_followup')}</p>
+                  <p className="font-medium text-blue-700">{t('pipe.guide_followup')}</p>
                   <p className="text-gray-500 text-xs">{t('pipe.guide_followup_desc')}</p>
                 </div>
               </div>

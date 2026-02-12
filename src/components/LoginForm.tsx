@@ -57,9 +57,9 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#1a1d21]">
+    <div className="min-h-screen flex bg-[#1C2026]">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#F6653C] to-[#ff8a65] p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0890F1] to-[#3AA8F5] p-12 flex-col justify-between">
         <div>
           <div className="flex items-center gap-3 mb-12">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center font-bold text-lg text-white">
@@ -124,7 +124,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#F6653C] to-[#ff8a65] rounded-xl flex items-center justify-center font-bold text-lg text-white">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#0890F1] to-[#3AA8F5] rounded-xl flex items-center justify-center font-bold text-lg text-white">
               SS
             </div>
             <span className="font-bold text-xl text-white">SuperScrap</span>
@@ -145,7 +145,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('login.name_placeholder')}
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-[#F6653C] focus:border-transparent transition-all"
+                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-[#0890F1] focus:border-transparent transition-all"
                 disabled={loading}
               />
             </div>
@@ -159,7 +159,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
-                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-[#F6653C] focus:border-transparent transition-all"
+                className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-[#0890F1] focus:border-transparent transition-all"
                 disabled={loading}
               />
             </div>
@@ -173,7 +173,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-[#F6653C] text-white font-medium rounded-xl hover:bg-[#e55a35] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-[#0890F1] text-white font-medium rounded-xl hover:bg-[#0770C5] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

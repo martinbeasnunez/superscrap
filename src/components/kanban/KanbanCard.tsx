@@ -73,8 +73,8 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
     return {
       level: 'urgent',
       message: `${daysSinceContact}d - ${t?.('card.followup') || '¡Seguimiento!'}`,
-      color: 'text-orange-700',
-      bgColor: 'bg-orange-100',
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-100',
       pulseColor: 'animate-pulse',
     };
   }
@@ -125,7 +125,7 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
   // Borde especial según urgencia
   const getBorderStyle = () => {
     if (urgency.level === 'critical') return 'border-l-4 border-l-red-500';
-    if (urgency.level === 'urgent') return 'border-l-4 border-l-orange-500';
+    if (urgency.level === 'urgent') return 'border-l-4 border-l-blue-500';
     if (urgency.level === 'warning') return 'border-l-4 border-l-amber-400';
     return '';
   };

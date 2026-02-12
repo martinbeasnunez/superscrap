@@ -1282,7 +1282,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               business.daysSinceContact >= 5
                 ? 'bg-red-50 border-red-300'
                 : business.daysSinceContact >= 3
-                  ? 'bg-orange-50 border-orange-300'
+                  ? 'bg-blue-50 border-blue-300'
                   : 'bg-amber-50 border-amber-300'
             }`}>
               <div className="flex items-center gap-2">
@@ -1291,7 +1291,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 </span>
                 <div>
                   <p className={`font-bold text-sm ${
-                    business.daysSinceContact >= 5 ? 'text-red-800' : business.daysSinceContact >= 3 ? 'text-orange-800' : 'text-amber-800'
+                    business.daysSinceContact >= 5 ? 'text-red-800' : business.daysSinceContact >= 3 ? 'text-blue-800' : 'text-amber-800'
                   }`}>
                     {business.daysSinceContact >= 5
                       ? t('lead.urgent_days') + ' ' + business.daysSinceContact + ' ' + t('lead.days')
@@ -1301,7 +1301,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     }
                   </p>
                   <p className={`text-xs ${
-                    business.daysSinceContact >= 5 ? 'text-red-600' : business.daysSinceContact >= 3 ? 'text-orange-600' : 'text-amber-600'
+                    business.daysSinceContact >= 5 ? 'text-red-600' : business.daysSinceContact >= 3 ? 'text-blue-600' : 'text-amber-600'
                   }`}>
                     {business.daysSinceContact >= 5
                       ? t('lead.interest_cools')

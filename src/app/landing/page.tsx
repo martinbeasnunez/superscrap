@@ -35,11 +35,11 @@ export default function LandingsIndex() {
       <div className="bg-[#313131] text-white py-12 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 sm:px-5 py-2 text-xs sm:text-sm font-medium mb-6 sm:mb-8">
-            <span className="text-[#F6653C]">★</span>
+            <span className="text-[#0890F1]">★</span>
             <span>+800 empresas confían en nosotros</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Lavandería Industrial <span className="text-[#F6653C]">Especializada</span>
+            Lavandería Industrial <span className="text-[#0890F1]">Especializada</span>
           </h1>
           <p className="text-base sm:text-xl text-white/80 max-w-2xl mx-auto">
             Cada industria tiene necesidades únicas. Por eso ofrecemos soluciones específicas
@@ -55,7 +55,7 @@ export default function LandingsIndex() {
             <Link
               key={industry.slug}
               href={`/landing/${industry.slug}`}
-              className="group bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-1 border-2 border-gray-100 hover:border-[#F6653C]"
+              className="group bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all hover:-translate-y-1 border-2 border-gray-100 hover:border-[#0890F1]"
             >
               {/* Image */}
               <div className="h-48 relative overflow-hidden">
@@ -71,7 +71,7 @@ export default function LandingsIndex() {
 
               {/* Content */}
               <div className="p-6">
-                <h2 className="text-xl font-bold text-[#313131] mb-2 group-hover:text-[#F6653C] transition-colors">
+                <h2 className="text-xl font-bold text-[#313131] mb-2 group-hover:text-[#0890F1] transition-colors">
                   {industry.namePlural}
                 </h2>
                 <p className="text-gray-500 text-sm mb-4">
@@ -82,7 +82,7 @@ export default function LandingsIndex() {
                 <div className="space-y-2 mb-4">
                   {industry.benefits.slice(0, 2).map((benefit, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="text-[#F6653C] font-bold">✓</span>
+                      <span className="text-[#0890F1] font-bold">✓</span>
                       {benefit}
                     </div>
                   ))}
@@ -93,7 +93,7 @@ export default function LandingsIndex() {
                   <span className="text-sm font-semibold text-[#20B038]">
                     Ahorra hasta {industry.caseStudy.savings}
                   </span>
-                  <span className="text-[#F6653C] font-bold text-sm group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                  <span className="text-[#0890F1] font-bold text-sm group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                     Ver más
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

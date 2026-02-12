@@ -504,7 +504,7 @@ export default function KanbanBoard() {
             ? 'bg-gray-900 border-gray-700'
             : followUpMetrics.criticalCount > 0
               ? 'bg-red-50 border-red-200'
-              : 'bg-orange-50 border-orange-200'
+              : 'bg-blue-50 border-blue-200'
         }`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -512,10 +512,10 @@ export default function KanbanBoard() {
                 {followUpMetrics.finalCount > 0 ? '💀' : followUpMetrics.criticalCount > 0 ? '🔥' : '⏰'}
               </div>
               <div>
-                <h3 className={`font-bold text-sm sm:text-base ${followUpMetrics.finalCount > 0 ? 'text-white' : followUpMetrics.criticalCount > 0 ? 'text-red-800' : 'text-orange-800'}`}>
+                <h3 className={`font-bold text-sm sm:text-base ${followUpMetrics.finalCount > 0 ? 'text-white' : followUpMetrics.criticalCount > 0 ? 'text-red-800' : 'text-blue-800'}`}>
                   {followUpMetrics.needsAttention} {t('kanban.needs_followup')}
                 </h3>
-                <p className={`text-xs sm:text-sm hidden sm:block ${followUpMetrics.finalCount > 0 ? 'text-gray-300' : followUpMetrics.criticalCount > 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                <p className={`text-xs sm:text-sm hidden sm:block ${followUpMetrics.finalCount > 0 ? 'text-gray-300' : followUpMetrics.criticalCount > 0 ? 'text-red-600' : 'text-blue-600'}`}>
                   {getFollowUpTip(followUpMetrics.urgentCount, followUpMetrics.criticalCount, followUpMetrics.singleContactLeads, followUpMetrics.finalCount)}
                 </p>
               </div>
@@ -532,7 +532,7 @@ export default function KanbanBoard() {
                 </span>
               )}
               {followUpMetrics.urgentCount > 0 && (
-                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-orange-200 text-orange-800 rounded-full font-medium">
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-blue-200 text-blue-800 rounded-full font-medium">
                   ⏰ {followUpMetrics.urgentCount}
                 </span>
               )}

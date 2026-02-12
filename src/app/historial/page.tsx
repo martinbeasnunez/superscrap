@@ -116,7 +116,7 @@ export default function HistorialPage() {
     return (
       <div className="p-4 sm:p-8 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin h-10 w-10 border-3 border-[#F6653C] border-t-transparent rounded-full mx-auto mb-4"></div>
+          <div className="animate-spin h-10 w-10 border-3 border-[#0890F1] border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-gray-500">{t('hist.loading')}</p>
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function HistorialPage() {
         </div>
         <Link
           href="/buscar"
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F6653C] text-white rounded-xl hover:bg-[#e55a35] transition-colors font-medium text-sm sm:text-base"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0890F1] text-white rounded-xl hover:bg-[#0770C5] transition-colors font-medium text-sm sm:text-base"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -232,7 +232,7 @@ export default function HistorialPage() {
               </svg>
             </div>
             <p className="text-gray-500 mb-2">{t('hist.no_match')}</p>
-            <Link href="/buscar" className="inline-flex items-center gap-2 text-[#F6653C] hover:underline font-medium">
+            <Link href="/buscar" className="inline-flex items-center gap-2 text-[#0890F1] hover:underline font-medium">
               {t('hist.create_new')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -255,7 +255,7 @@ export default function HistorialPage() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-semibold text-gray-900 group-hover:text-[#F6653C] transition-colors">
+                    <h3 className="font-semibold text-gray-900 group-hover:text-[#0890F1] transition-colors">
                       {search.business_type}
                     </h3>
                     {getStatusBadge(search.status)}

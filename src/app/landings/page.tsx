@@ -99,8 +99,8 @@ export default function LandingsPage() {
         </div>
         <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F6653C]/10 rounded-lg sm:rounded-xl flex items-center justify-center">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#F6653C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#0890F1]/10 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#0890F1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
@@ -180,7 +180,7 @@ export default function LandingsPage() {
                 <Link
                   href={`/landing/${industry.slug}`}
                   target="_blank"
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#F6653C] text-white rounded-xl hover:bg-[#e55a35] transition-colors font-medium text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#0890F1] text-white rounded-xl hover:bg-[#0770C5] transition-colors font-medium text-sm"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

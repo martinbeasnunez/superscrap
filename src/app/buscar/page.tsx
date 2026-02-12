@@ -100,9 +100,9 @@ export default function BusquedasPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick tips */}
-          <div className="bg-gradient-to-br from-[#F6653C]/10 to-orange-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-[#F6653C]/20">
+          <div className="bg-gradient-to-br from-[#0890F1]/10 to-blue-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-[#0890F1]/20">
             <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-[#F6653C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-[#0890F1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               {t('search.tips_title')}
@@ -143,14 +143,14 @@ export default function BusquedasPage() {
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h3 className="font-semibold text-gray-900">{t('search.recent')}</h3>
-              <Link href="/historial" className="text-sm text-[#F6653C] hover:underline">
+              <Link href="/historial" className="text-sm text-[#0890F1] hover:underline">
                 {t('search.view_all')}
               </Link>
             </div>
 
             {loading ? (
               <div className="flex justify-center py-4">
-                <div className="animate-spin h-6 w-6 border-2 border-[#F6653C] border-t-transparent rounded-full"></div>
+                <div className="animate-spin h-6 w-6 border-2 border-[#0890F1] border-t-transparent rounded-full"></div>
               </div>
             ) : recentSearches.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
@@ -166,7 +166,7 @@ export default function BusquedasPage() {
                   >
                     <span className="text-xl">{getIcon(search.business_type)}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate group-hover:text-[#F6653C]">
+                      <p className="text-sm font-medium text-gray-900 truncate group-hover:text-[#0890F1]">
                         {search.business_type}
                       </p>
                       <p className="text-xs text-gray-500">{search.city}</p>

@@ -136,7 +136,7 @@ export default function HomePage() {
     return (
       <div className="p-4 sm:p-8 flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 sm:h-10 sm:w-10 border-3 border-[#F6653C] border-t-transparent rounded-full mx-auto mb-3 sm:mb-4"></div>
+          <div className="animate-spin h-8 w-8 sm:h-10 sm:w-10 border-3 border-[#0890F1] border-t-transparent rounded-full mx-auto mb-3 sm:mb-4"></div>
           <p className="text-gray-500 text-sm sm:text-base">{t('dash.loading')}</p>
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function HomePage() {
         </div>
         <Link
           href="/buscar"
-          className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-[#F6653C] text-white rounded-xl hover:bg-[#e55a35] transition-all font-semibold shadow-lg shadow-orange-200 hover:shadow-xl hover:shadow-orange-200"
+          className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-[#0890F1] text-white rounded-xl hover:bg-[#0770C5] transition-all font-semibold shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-200"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -177,7 +177,7 @@ export default function HomePage() {
       {stats && (
         <>
           {/* Actividad de Hoy - Card prominente */}
-          <div className="bg-gradient-to-br from-[#1a1d21] to-[#2d3138] rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
+          <div className="bg-gradient-to-br from-[#1C2026] to-[#202B93] rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div>
                 <h2 className="text-base sm:text-lg font-semibold text-white/90">{t('dash.activity_today')}</h2>
@@ -237,7 +237,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-500/30 to-orange-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur border border-amber-500/20">
+              <div className="bg-gradient-to-br from-[#FFD06D]/30 to-[#0890F1]/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur border border-amber-500/20">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-500/30 rounded-lg sm:rounded-xl flex items-center justify-center">
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,7 +337,7 @@ export default function HomePage() {
               {stats.total.needsFollowUp > 0 && (
                 <Link
                   href="/seguimiento"
-                  className="block bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white hover:shadow-lg hover:shadow-orange-200 transition-all group"
+                  className="block bg-gradient-to-r from-[#0890F1] to-sky-400 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white hover:shadow-lg hover:shadow-blue-200 transition-all group"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 sm:gap-4">
@@ -369,7 +369,7 @@ export default function HomePage() {
               <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-3 sm:mb-5">
                   <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{t('dash.your_pipeline')}</h3>
-                  <Link href="/seguimiento" className="text-xs sm:text-sm text-[#F6653C] hover:underline font-medium">
+                  <Link href="/seguimiento" className="text-xs sm:text-sm text-[#0890F1] hover:underline font-medium">
                     {t('dash.view_all')}
                   </Link>
                 </div>
@@ -399,7 +399,7 @@ export default function HomePage() {
                   </div>
                   <div className="h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-[#F6653C] to-amber-500 rounded-full transition-all"
+                      className="h-full bg-gradient-to-r from-[#0890F1] to-sky-400 rounded-full transition-all"
                       style={{
                         width: `${Math.min((stats.total.prospects / Math.max(stats.total.whatsapp + stats.total.email + stats.total.call, 1)) * 100, 100)}%`
                       }}
@@ -480,7 +480,7 @@ export default function HomePage() {
                         <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold ${
                           i === 0 ? 'bg-amber-100 text-amber-700' :
                           i === 1 ? 'bg-gray-200 text-gray-600' :
-                          'bg-orange-100 text-orange-600'
+                          'bg-blue-100 text-blue-600'
                         }`}>
                           {i + 1}
                         </span>
@@ -502,9 +502,9 @@ export default function HomePage() {
                 {stats.today.byUser.map((user, i) => (
                   <div key={user.name} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
                     <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0 ${
-                      i === 0 ? 'bg-gradient-to-br from-amber-400 to-orange-500' :
-                      i === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' :
-                      'bg-gradient-to-br from-orange-300 to-orange-400'
+                      i === 0 ? 'bg-gradient-to-br from-[#0890F1] to-[#0770C5]' :
+                      i === 1 ? 'bg-gradient-to-br from-[#3AA8F5] to-[#0890F1]' :
+                      'bg-gradient-to-br from-sky-300 to-sky-400'
                     }`}>
                       {user.name.charAt(0)}
                     </div>

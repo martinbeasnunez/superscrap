@@ -67,7 +67,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9fb]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F6653C]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0890F1]"></div>
       </div>
     );
   }
@@ -110,7 +110,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <CrmLanguageSelector />
           <Link
             href="/buscar"
-            className="p-2 -mr-2 text-[#F6653C] hover:bg-orange-50 rounded-lg transition-colors"
+            className="p-2 -mr-2 text-[#0890F1] hover:bg-blue-50 rounded-lg transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -130,7 +130,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           href="/estadisticas"
           className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
             pathname === '/estadisticas' || pathname === '/'
-              ? 'text-[#F6653C]'
+              ? 'text-[#0890F1]'
               : 'text-gray-500'
           }`}
         >
@@ -144,7 +144,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           href="/seguimiento"
           className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
             pathname === '/seguimiento'
-              ? 'text-[#F6653C]'
+              ? 'text-[#0890F1]'
               : 'text-gray-500'
           }`}
         >
@@ -158,7 +158,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           href="/buscar"
           className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
             pathname === '/buscar'
-              ? 'text-[#F6653C]'
+              ? 'text-[#0890F1]'
               : 'text-gray-500'
           }`}
         >
@@ -172,7 +172,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           href="/historial"
           className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${
             pathname === '/historial'
-              ? 'text-[#F6653C]'
+              ? 'text-[#0890F1]'
               : 'text-gray-500'
           }`}
         >

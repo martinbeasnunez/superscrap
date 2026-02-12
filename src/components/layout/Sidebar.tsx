@@ -109,7 +109,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed left-0 top-0 h-screen bg-[#1a1d21] text-white flex flex-col z-50
+          fixed left-0 top-0 h-screen bg-[#1C2026] text-white flex flex-col z-50
           transition-transform duration-300 ease-in-out
           w-64
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -118,7 +118,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="h-14 lg:h-16 flex items-center justify-between px-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#F6653C] to-[#ff8a65] rounded-lg flex items-center justify-center font-bold text-sm">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#0890F1] to-[#3AA8F5] rounded-lg flex items-center justify-center font-bold text-sm">
               SS
             </div>
             <span className="font-semibold text-lg">SuperScrap</span>
@@ -139,7 +139,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link
             href="/buscar"
             onClick={onClose}
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#F6653C] hover:bg-[#e55a35] text-white rounded-lg font-medium transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#0890F1] hover:bg-[#0770C5] text-white rounded-lg font-medium transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -159,14 +159,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                   active
-                    ? 'bg-[#F6653C]/20 text-[#F6653C]'
+                    ? 'bg-[#0890F1]/20 text-[#0890F1]'
                     : 'text-gray-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 {item.icon}
                 <span className="flex-1 font-medium">{item.name}</span>
                 {item.badge && (
-                  <span className="px-2 py-0.5 bg-[#F6653C] text-white text-xs rounded-full">
+                  <span className="px-2 py-0.5 bg-[#0890F1] text-white text-xs rounded-full">
                     {item.badge}
                   </span>
                 )}

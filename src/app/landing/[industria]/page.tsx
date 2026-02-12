@@ -79,7 +79,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
         <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center border border-gray-100">
-          <div className="w-20 h-20 bg-[#F6653C] rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-[#0890F1] rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
@@ -121,7 +121,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
             <div className="text-white">
               <div className="flex items-center justify-between mb-8">
                 <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-5 py-2 text-sm font-medium">
-                  <span className="text-[#F6653C]">★</span>
+                  <span className="text-[#0890F1]">★</span>
                   <span>{t('landing.trust_badge')}</span>
                 </div>
                 <LanguageSelector />
@@ -129,7 +129,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
 
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
                 {t('industry.hero_prefix')}{' '}
-                <span className="text-[#F6653C]">{loc.namePlural}</span>
+                <span className="text-[#0890F1]">{loc.namePlural}</span>
               </h1>
 
               <p className="text-base sm:text-xl text-white/90 mb-8 sm:mb-10 leading-relaxed">
@@ -140,7 +140,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
               <div className="space-y-4">
                 {loc.benefits.map((benefit, i) => (
                   <div key={i} className="flex items-center gap-4">
-                    <div className="w-8 h-8 bg-[#F6653C] rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-[#0890F1] rounded-full flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
@@ -168,7 +168,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                     required
                     value={formData.businessName}
                     onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                    className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131]"
+                    className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#0890F1] focus:border-[#0890F1] transition-all text-[#313131]"
                     placeholder={`Ej: ${config.name} Miraflores`}
                   />
                 </div>
@@ -182,7 +182,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                     required
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131]"
+                    className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#0890F1] focus:border-[#0890F1] transition-all text-[#313131]"
                     placeholder="Ej: María García"
                   />
                 </div>
@@ -197,7 +197,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131]"
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#0890F1] focus:border-[#0890F1] transition-all text-[#313131]"
                       placeholder="999 999 999"
                     />
                   </div>
@@ -209,7 +209,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131]"
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#0890F1] focus:border-[#0890F1] transition-all text-[#313131]"
                       placeholder="correo@empresa.com"
                     />
                   </div>
@@ -223,7 +223,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                     <select
                       value={formData.volume}
                       onChange={(e) => setFormData({ ...formData, volume: e.target.value })}
-                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131] bg-white"
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#0890F1] focus:border-[#0890F1] transition-all text-[#313131] bg-white"
                     >
                       <option value="">{t('industry.form_select')}</option>
                       {loc.formFields.volumeOptions.map((opt) => (
@@ -238,7 +238,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                     <select
                       value={formData.frequency}
                       onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131] bg-white"
+                      className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#0890F1] focus:border-[#0890F1] transition-all text-[#313131] bg-white"
                     >
                       <option value="">{t('industry.form_select')}</option>
                       <option value="diaria">{t('industry.form_frequency_daily')}</option>
@@ -261,7 +261,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                         value="no"
                         checked={formData.currentProvider === 'no'}
                         onChange={(e) => setFormData({ ...formData, currentProvider: e.target.value })}
-                        className="w-5 h-5 text-[#F6653C] border-2 border-gray-300 focus:ring-[#F6653C]"
+                        className="w-5 h-5 text-[#0890F1] border-2 border-gray-300 focus:ring-[#0890F1]"
                       />
                       <span className="text-[#313131] font-medium">{t('industry.form_no_internal')}</span>
                     </label>
@@ -272,7 +272,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                         value="si"
                         checked={formData.currentProvider === 'si'}
                         onChange={(e) => setFormData({ ...formData, currentProvider: e.target.value })}
-                        className="w-5 h-5 text-[#F6653C] border-2 border-gray-300 focus:ring-[#F6653C]"
+                        className="w-5 h-5 text-[#0890F1] border-2 border-gray-300 focus:ring-[#0890F1]"
                       />
                       <span className="text-[#313131] font-medium">{t('industry.form_yes_have')}</span>
                     </label>
@@ -288,7 +288,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-[#F6653C] hover:bg-[#E65C00] text-white font-bold py-5 px-8 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl text-lg"
+                  className="w-full bg-[#0890F1] hover:bg-[#0770C5] text-white font-bold py-5 px-8 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl text-lg"
                 >
                   {submitting ? (
                     <span className="flex items-center justify-center gap-3">
@@ -318,7 +318,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {loc.stats.map((stat, i) => (
               <div key={i}>
-                <p className="text-3xl md:text-4xl font-bold text-[#F6653C]">{stat.value}</p>
+                <p className="text-3xl md:text-4xl font-bold text-[#0890F1]">{stat.value}</p>
                 <p className="text-white/80 text-sm mt-1">{stat.label}</p>
               </div>
             ))}
@@ -354,7 +354,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="bg-gray-50 py-20">
         <div className="max-w-4xl mx-auto px-4">
           <div className="bg-white rounded-3xl shadow-lg p-8 md:p-12 relative">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-[#F6653C] rounded-full flex items-center justify-center">
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-[#0890F1] rounded-full flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
               </svg>
@@ -367,13 +367,13 @@ function LandingContent({ config }: { config: IndustryConfig }) {
 
               <div className="flex items-center justify-center gap-4">
                 <div
-                  className="w-16 h-16 rounded-full bg-cover bg-center border-4 border-[#F6653C]"
+                  className="w-16 h-16 rounded-full bg-cover bg-center border-4 border-[#0890F1]"
                   style={{ backgroundImage: `url('${config.testimonial.image}')` }}
                 />
                 <div className="text-left">
                   <p className="font-bold text-[#313131]">{loc.testimonial.name}</p>
                   <p className="text-gray-500 text-sm">{loc.testimonial.role}</p>
-                  <p className="text-[#F6653C] text-sm font-medium">{loc.testimonial.company}</p>
+                  <p className="text-[#0890F1] text-sm font-medium">{loc.testimonial.company}</p>
                 </div>
               </div>
             </div>
@@ -397,12 +397,12 @@ function LandingContent({ config }: { config: IndustryConfig }) {
               </div>
 
               <div className="p-6 flex flex-col items-center justify-center">
-                <div className="w-16 h-16 bg-[#F6653C] rounded-full flex items-center justify-center mb-3">
+                <div className="w-16 h-16 bg-[#0890F1] rounded-full flex items-center justify-center mb-3">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                 </div>
-                <p className="text-2xl font-bold text-[#F6653C]">-{config.caseStudy.savings}</p>
+                <p className="text-2xl font-bold text-[#0890F1]">-{config.caseStudy.savings}</p>
               </div>
 
               <div className="p-6">
@@ -426,7 +426,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-20 h-20 bg-[#F6653C] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
+              <div className="w-20 h-20 bg-[#0890F1] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
                 1
               </div>
               <h3 className="text-xl font-bold text-[#313131] mb-3">{t('industry.process_step1_title')}</h3>
@@ -434,7 +434,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
             </div>
 
             <div className="text-center">
-              <div className="w-20 h-20 bg-[#F6653C] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
+              <div className="w-20 h-20 bg-[#0890F1] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
                 2
               </div>
               <h3 className="text-xl font-bold text-[#313131] mb-3">{t('industry.process_step2_title')}</h3>
@@ -442,7 +442,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
             </div>
 
             <div className="text-center">
-              <div className="w-20 h-20 bg-[#F6653C] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
+              <div className="w-20 h-20 bg-[#0890F1] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
                 3
               </div>
               <h3 className="text-xl font-bold text-[#313131] mb-3">{t('industry.process_step3_title')}</h3>
@@ -453,7 +453,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
           <div className="mt-12 text-center">
             <button
               onClick={scrollToForm}
-              className="inline-block bg-[#F6653C] hover:bg-[#E65C00] text-white font-bold py-5 px-12 rounded-full transition-all shadow-lg hover:shadow-xl text-lg"
+              className="inline-block bg-[#0890F1] hover:bg-[#0770C5] text-white font-bold py-5 px-12 rounded-full transition-all shadow-lg hover:shadow-xl text-lg"
             >
               {t('industry.process_cta')}
             </button>
@@ -473,7 +473,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
 
           <div className="grid md:grid-cols-2 gap-6">
             {loc.painPoints.map((pain, i) => (
-              <div key={i} className="flex items-start gap-5 p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-[#F6653C] transition-all">
+              <div key={i} className="flex items-start gap-5 p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-[#0890F1] transition-all">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -481,7 +481,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                 </div>
                 <div>
                   <p className="text-[#313131] font-semibold text-lg">{pain}</p>
-                  <p className="text-[#F6653C] text-sm mt-2 font-medium">{t('industry.pain_solution')}</p>
+                  <p className="text-[#0890F1] text-sm mt-2 font-medium">{t('industry.pain_solution')}</p>
                 </div>
               </div>
             ))}
@@ -504,7 +504,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                   className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
                   <span className="font-semibold text-[#313131] text-lg pr-4">{item.question}</span>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${openFaq === i ? 'bg-[#F6653C] text-white' : 'bg-gray-100 text-gray-500'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${openFaq === i ? 'bg-[#0890F1] text-white' : 'bg-gray-100 text-gray-500'}`}>
                     <svg
                       className={`w-5 h-5 transition-transform ${openFaq === i ? 'rotate-180' : ''}`}
                       fill="none"
@@ -538,7 +538,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={scrollToForm}
-              className="inline-block bg-[#F6653C] hover:bg-[#E65C00] text-white font-bold py-5 px-12 rounded-full transition-all shadow-lg hover:shadow-xl text-lg"
+              className="inline-block bg-[#0890F1] hover:bg-[#0770C5] text-white font-bold py-5 px-12 rounded-full transition-all shadow-lg hover:shadow-xl text-lg"
             >
               {t('industry.final_cta_button')}
             </button>

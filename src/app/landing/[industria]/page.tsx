@@ -125,7 +125,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                 <span className="text-[#F6653C]">{config.namePlural}</span>
               </h1>
 
-              <p className="text-xl text-white/90 mb-10 leading-relaxed">
+              <p className="text-base sm:text-xl text-white/90 mb-8 sm:mb-10 leading-relaxed">
                 {config.textiles.join(', ')} impecables. Recojo y entrega en tu local.
                 <span className="font-bold text-white"> Ahorra hasta 40%</span> vs hacerlo internamente.
               </p>
@@ -145,7 +145,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
             </div>
 
             {/* Right - Form */}
-            <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10" id="form">
+            <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 md:p-10" id="form">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-[#313131]">Solicita tu Cotización</h2>
                 <p className="text-gray-500 mt-1">Sin compromiso</p>
@@ -180,7 +180,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-[#313131] mb-2">
                       Teléfono *
@@ -208,7 +208,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-[#313131] mb-2">
                       {config.formFields.volumeLabel}

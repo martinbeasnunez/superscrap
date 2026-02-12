@@ -28,20 +28,20 @@ export default function LandingsPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Landing Pages</h1>
-          <p className="text-gray-500 mt-1">Páginas optimizadas para SEO y conversión por industria</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Landing Pages</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Páginas optimizadas para SEO y conversión por industria</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 hidden sm:inline">
             {industries.length} landings activas
           </span>
           <button
             disabled
-            className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed font-medium"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed font-medium text-sm"
             title="Próximamente"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,68 +54,68 @@ export default function LandingsPage() {
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{industries.length}</p>
-              <p className="text-sm text-gray-500">Páginas activas</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{industries.length}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Activas</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">SEO</p>
-              <p className="text-sm text-gray-500">Optimizado</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">SEO</p>
+              <p className="text-xs sm:text-sm text-gray-500">Optimizado</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" />
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">JSON-LD</p>
-              <p className="text-sm text-gray-500">Schema.org</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">JSON-LD</p>
+              <p className="text-xs sm:text-sm text-gray-500">Schema.org</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#F6653C]/10 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#F6653C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#F6653C]/10 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#F6653C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">CRO</p>
-              <p className="text-sm text-gray-500">Conversión</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">CRO</p>
+              <p className="text-xs sm:text-sm text-gray-500">Conversión</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Landings Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {industries.map((industry) => (
           <div
             key={industry.slug}
-            className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-all"
+            className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-all"
           >
             {/* Preview Image */}
             <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
@@ -132,7 +132,7 @@ export default function LandingsPage() {
             </div>
 
             {/* Content */}
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               {/* SEO Info */}
               <div className="mb-4">
                 <p className="text-sm text-gray-600 line-clamp-2">{industry.seo.description}</p>
@@ -200,9 +200,9 @@ export default function LandingsPage() {
       </div>
 
       {/* Help section */}
-      <div className="mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+      <div className="mt-6 sm:mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-100">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
             <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>

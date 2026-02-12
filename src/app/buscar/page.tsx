@@ -80,17 +80,17 @@ export default function BusquedasPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Nueva Búsqueda</h1>
-        <p className="text-gray-500 mt-1">Encuentra negocios con necesidades de lavandería industrial</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nueva Búsqueda</h1>
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">Encuentra negocios con necesidades de lavandería industrial</p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Search Form */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <SearchForm userId={userId || ''} />
           </div>
         </div>
@@ -98,8 +98,8 @@ export default function BusquedasPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick tips */}
-          <div className="bg-gradient-to-br from-[#F6653C]/10 to-orange-50 rounded-2xl p-6 border border-[#F6653C]/20">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-[#F6653C]/10 to-orange-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-[#F6653C]/20">
+            <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
               <svg className="w-5 h-5 text-[#F6653C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -138,8 +138,8 @@ export default function BusquedasPage() {
           </div>
 
           {/* Recent searches */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h3 className="font-semibold text-gray-900">Búsquedas recientes</h3>
               <Link href="/historial" className="text-sm text-[#F6653C] hover:underline">
                 Ver todas

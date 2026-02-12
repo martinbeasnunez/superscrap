@@ -112,7 +112,7 @@ export default function HistorialPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[400px]">
+      <div className="p-4 sm:p-8 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin h-10 w-10 border-3 border-[#F6653C] border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-gray-500">Cargando historial...</p>
@@ -122,16 +122,16 @@ export default function HistorialPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Historial de Búsquedas</h1>
-          <p className="text-gray-500 mt-1">Todas las búsquedas realizadas por el equipo</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Historial de Búsquedas</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Todas las búsquedas realizadas por el equipo</p>
         </div>
         <Link
           href="/buscar"
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#F6653C] text-white rounded-xl hover:bg-[#e55a35] transition-colors font-medium"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F6653C] text-white rounded-xl hover:bg-[#e55a35] transition-colors font-medium text-sm sm:text-base"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -141,55 +141,55 @@ export default function HistorialPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{totalSearches}</p>
-              <p className="text-sm text-gray-500">Búsquedas</p>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{totalSearches}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Búsquedas</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-50 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{totalLeads}</p>
-              <p className="text-sm text-gray-500">Leads encontrados</p>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{totalLeads}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Leads</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-sm border border-gray-100">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-50 rounded-lg sm:rounded-xl flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{totalProspects}</p>
-              <p className="text-sm text-gray-500">Prospectos</p>
+            <div className="text-center sm:text-left">
+              <p className="text-lg sm:text-2xl font-bold text-gray-900">{totalProspects}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Prospectos</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 mb-6">
-        <span className="text-sm text-gray-500">Filtrar:</span>
-        <div className="flex bg-gray-100 rounded-xl p-1">
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto">
+        <span className="text-sm text-gray-500 hidden sm:inline">Filtrar:</span>
+        <div className="flex bg-gray-100 rounded-xl p-1 min-w-0">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
               filter === 'all'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -199,7 +199,7 @@ export default function HistorialPage() {
           </button>
           <button
             onClick={() => setFilter('with_prospects')}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
               filter === 'with_prospects'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -209,7 +209,7 @@ export default function HistorialPage() {
           </button>
           <button
             onClick={() => setFilter('completed')}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
               filter === 'completed'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -221,7 +221,7 @@ export default function HistorialPage() {
       </div>
 
       {/* Searches List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {filteredSearches.length === 0 ? (
           <div className="p-12 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -243,10 +243,10 @@ export default function HistorialPage() {
               <Link
                 key={search.id}
                 href={`/busquedas/${search.id}`}
-                className="flex items-center p-5 hover:bg-gray-50 transition-colors group"
+                className="flex items-center p-3 sm:p-5 hover:bg-gray-50 transition-colors group"
               >
                 {/* Icon */}
-                <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-2xl mr-4 group-hover:bg-gray-200 transition-colors">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-lg sm:rounded-xl flex items-center justify-center text-xl sm:text-2xl mr-3 sm:mr-4 flex-shrink-0 group-hover:bg-gray-200 transition-colors">
                   {getIcon(search.business_type)}
                 </div>
 
@@ -271,7 +271,7 @@ export default function HistorialPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center gap-6">
+                <div className="hidden sm:flex items-center gap-6">
                   {search.matching_results !== null && (
                     <div className="text-center">
                       <p className="text-lg font-bold text-gray-700">{search.matching_results}</p>

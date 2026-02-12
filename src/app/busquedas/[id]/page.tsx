@@ -150,7 +150,7 @@ export default function SearchDetailPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
         <Link
           href="/busquedas"
           className="text-blue-600 hover:text-blue-800 mb-6 inline-block"
@@ -158,13 +158,13 @@ export default function SearchDetailPage({
           ← Volver al historial
         </Link>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-8 mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2">
             {search.business_type} en {search.city}
           </h1>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className="text-gray-500">Servicios buscados:</span>
+            <span className="text-gray-500 text-sm sm:text-base">Servicios buscados:</span>
             {search.required_services.map((service) => (
               <span
                 key={service}
@@ -175,15 +175,15 @@ export default function SearchDetailPage({
             ))}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6 text-gray-600">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm sm:text-base text-gray-600">
               <span>
                 <strong className="text-gray-900">{search.total_results}</strong>{' '}
-                negocios encontrados
+                encontrados
               </span>
               <span>
                 <strong className="text-green-600">{search.matching_results}</strong>{' '}
-                coinciden con tus criterios
+                coinciden
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -225,8 +225,8 @@ export default function SearchDetailPage({
           )}
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Resultados</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Resultados</h2>
           <div className="flex gap-2">
             <button
               onClick={() => setFilter('all')}
@@ -308,7 +308,7 @@ export default function SearchDetailPage({
                           <div className="flex-1 h-px bg-gray-300"></div>
                         </div>
                       )}
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                         {groupBusinesses.map((business) => (
                           <BusinessCard
                             key={business.id}

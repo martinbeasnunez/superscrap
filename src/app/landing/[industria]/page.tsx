@@ -2,7 +2,8 @@
 
 import { useState, use } from 'react';
 import { notFound } from 'next/navigation';
-import { getIndustryBySlug, type IndustryConfig } from '@/lib/landing-config';
+import { getIndustryBySlug, getLocalized, type IndustryConfig } from '@/lib/landing-config';
+import { I18nProvider, useI18n, LanguageSelector } from '@/lib/i18n';
 
 interface FormData {
   businessName: string;
@@ -16,6 +17,9 @@ interface FormData {
 }
 
 function LandingContent({ config }: { config: IndustryConfig }) {
+  const { locale, t } = useI18n();
+  const loc = getLocalized(config, locale);
+
   const [formData, setFormData] = useState<FormData>({
     businessName: '',
     contactName: '',
@@ -80,9 +84,9 @@ function LandingContent({ config }: { config: IndustryConfig }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-[#313131] mb-3">¡Solicitud Recibida!</h2>
+          <h2 className="text-2xl font-bold text-[#313131] mb-3">{t('industry.success_title')}</h2>
           <p className="text-gray-600 mb-8">
-            Nuestro equipo te contactará pronto con una cotización personalizada.
+            {t('industry.success_desc')}
           </p>
           <a
             href={`https://wa.me/51928113653?text=Hola!%20Acabo%20de%20solicitar%20cotización%20para%20mi%20${config.name.toLowerCase()}`}
@@ -93,7 +97,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
-            Escríbenos por WhatsApp
+            {t('industry.success_whatsapp')}
           </a>
         </div>
       </div>
@@ -115,23 +119,26 @@ function LandingContent({ config }: { config: IndustryConfig }) {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Left - Content */}
             <div className="text-white">
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-5 py-2 text-sm font-medium mb-8">
-                <span className="text-[#F6653C]">★</span>
-                <span>+800 empresas confían en nosotros</span>
+              <div className="flex items-center justify-between mb-8">
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-5 py-2 text-sm font-medium">
+                  <span className="text-[#F6653C]">★</span>
+                  <span>{t('landing.trust_badge')}</span>
+                </div>
+                <LanguageSelector />
               </div>
 
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Lavandería Industrial para{' '}
-                <span className="text-[#F6653C]">{config.namePlural}</span>
+                {t('industry.hero_prefix')}{' '}
+                <span className="text-[#F6653C]">{loc.namePlural}</span>
               </h1>
 
               <p className="text-base sm:text-xl text-white/90 mb-8 sm:mb-10 leading-relaxed">
-                {config.textiles.join(', ')} impecables. Recojo y entrega en tu local.
-                <span className="font-bold text-white"> Ahorra hasta 40%</span> vs hacerlo internamente.
+                {loc.textiles.join(', ')} {t('industry.hero_suffix_1')}
+                <span className="font-bold text-white"> {t('industry.hero_suffix_2')}</span> {t('industry.hero_suffix_3')}
               </p>
 
               <div className="space-y-4">
-                {config.benefits.map((benefit, i) => (
+                {loc.benefits.map((benefit, i) => (
                   <div key={i} className="flex items-center gap-4">
                     <div className="w-8 h-8 bg-[#F6653C] rounded-full flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,14 +154,14 @@ function LandingContent({ config }: { config: IndustryConfig }) {
             {/* Right - Form */}
             <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 md:p-10" id="form">
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-[#313131]">Solicita tu Cotización</h2>
-                <p className="text-gray-500 mt-1">Sin compromiso</p>
+                <h2 className="text-2xl font-bold text-[#313131]">{t('industry.form_title')}</h2>
+                <p className="text-gray-500 mt-1">{t('industry.form_subtitle')}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <label className="block text-sm font-semibold text-[#313131] mb-2">
-                    Nombre del {config.name} *
+                    {t('industry.form_business_name')} {loc.name} *
                   </label>
                   <input
                     type="text"
@@ -168,7 +175,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
 
                 <div>
                   <label className="block text-sm font-semibold text-[#313131] mb-2">
-                    Tu Nombre *
+                    {t('industry.form_your_name')} *
                   </label>
                   <input
                     type="text"
@@ -183,7 +190,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-[#313131] mb-2">
-                      Teléfono *
+                      {t('industry.form_phone')} *
                     </label>
                     <input
                       type="tel"
@@ -211,40 +218,40 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-[#313131] mb-2">
-                      {config.formFields.volumeLabel}
+                      {loc.formFields.volumeLabel}
                     </label>
                     <select
                       value={formData.volume}
                       onChange={(e) => setFormData({ ...formData, volume: e.target.value })}
                       className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131] bg-white"
                     >
-                      <option value="">Seleccionar</option>
-                      {config.formFields.volumeOptions.map((opt) => (
+                      <option value="">{t('industry.form_select')}</option>
+                      {loc.formFields.volumeOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-[#313131] mb-2">
-                      Frecuencia
+                      {t('industry.form_frequency')}
                     </label>
                     <select
                       value={formData.frequency}
                       onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
                       className="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#F6653C] focus:border-[#F6653C] transition-all text-[#313131] bg-white"
                     >
-                      <option value="">Seleccionar</option>
-                      <option value="diaria">Diaria</option>
-                      <option value="3x-semana">3 veces/semana</option>
-                      <option value="2x-semana">2 veces/semana</option>
-                      <option value="semanal">Semanal</option>
+                      <option value="">{t('industry.form_select')}</option>
+                      <option value="diaria">{t('industry.form_frequency_daily')}</option>
+                      <option value="3x-semana">{t('industry.form_frequency_3x')}</option>
+                      <option value="2x-semana">{t('industry.form_frequency_2x')}</option>
+                      <option value="semanal">{t('industry.form_frequency_weekly')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-[#313131] mb-3">
-                    ¿Actualmente tienen proveedor de lavandería?
+                    {t('industry.form_current_provider')}
                   </label>
                   <div className="flex gap-6">
                     <label className="flex items-center gap-3 cursor-pointer">
@@ -256,7 +263,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                         onChange={(e) => setFormData({ ...formData, currentProvider: e.target.value })}
                         className="w-5 h-5 text-[#F6653C] border-2 border-gray-300 focus:ring-[#F6653C]"
                       />
-                      <span className="text-[#313131] font-medium">No / Interno</span>
+                      <span className="text-[#313131] font-medium">{t('industry.form_no_internal')}</span>
                     </label>
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
@@ -267,14 +274,14 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                         onChange={(e) => setFormData({ ...formData, currentProvider: e.target.value })}
                         className="w-5 h-5 text-[#F6653C] border-2 border-gray-300 focus:ring-[#F6653C]"
                       />
-                      <span className="text-[#313131] font-medium">Sí, tenemos uno</span>
+                      <span className="text-[#313131] font-medium">{t('industry.form_yes_have')}</span>
                     </label>
                   </div>
                 </div>
 
                 {error && (
                   <div className="bg-red-50 text-red-600 px-5 py-4 rounded-2xl text-sm font-medium">
-                    {error}
+                    {t('industry.form_error')}
                   </div>
                 )}
 
@@ -289,15 +296,15 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Enviando...
+                      {t('industry.form_sending')}
                     </span>
                   ) : (
-                    'SOLICITAR COTIZACIÓN GRATIS'
+                    t('industry.form_submit')
                   )}
                 </button>
 
                 <p className="text-xs text-gray-400 text-center">
-                  Sin compromiso • Respuesta rápida
+                  {t('industry.form_disclaimer')}
                 </p>
               </form>
             </div>
@@ -309,7 +316,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="bg-[#313131] py-10">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {config.stats.map((stat, i) => (
+            {loc.stats.map((stat, i) => (
               <div key={i}>
                 <p className="text-3xl md:text-4xl font-bold text-[#F6653C]">{stat.value}</p>
                 <p className="text-white/80 text-sm mt-1">{stat.label}</p>
@@ -323,10 +330,10 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="py-20">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#313131] mb-4">
-            Calidad que se ve y se siente
+            {t('industry.gallery_title')}
           </h2>
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
-            Textiles impecables, siempre a tiempo. Así trabajamos para {config.namePlural.toLowerCase()}.
+            {t('industry.gallery_desc_prefix')} {loc.namePlural.toLowerCase()}.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -355,7 +362,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
 
             <div className="text-center pt-6">
               <p className="text-xl md:text-2xl text-[#313131] leading-relaxed mb-8 italic">
-                &ldquo;{config.testimonial.quote}&rdquo;
+                &ldquo;{loc.testimonial.quote}&rdquo;
               </p>
 
               <div className="flex items-center justify-center gap-4">
@@ -364,9 +371,9 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                   style={{ backgroundImage: `url('${config.testimonial.image}')` }}
                 />
                 <div className="text-left">
-                  <p className="font-bold text-[#313131]">{config.testimonial.name}</p>
-                  <p className="text-gray-500 text-sm">{config.testimonial.role}</p>
-                  <p className="text-[#F6653C] text-sm font-medium">{config.testimonial.company}</p>
+                  <p className="font-bold text-[#313131]">{loc.testimonial.name}</p>
+                  <p className="text-gray-500 text-sm">{loc.testimonial.role}</p>
+                  <p className="text-[#F6653C] text-sm font-medium">{loc.testimonial.company}</p>
                 </div>
               </div>
             </div>
@@ -378,15 +385,15 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="py-20">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#313131] mb-4">
-            Caso Real: Ahorro de {config.caseStudy.savings}
+            {t('industry.case_study_title')} {config.caseStudy.savings}
           </h2>
-          <p className="text-center text-gray-500 mb-12">{config.caseStudy.location}</p>
+          <p className="text-center text-gray-500 mb-12">{loc.caseStudy.location}</p>
 
           <div className="bg-white rounded-3xl shadow-lg p-8 md:p-12 border-2 border-gray-100">
             <div className="grid md:grid-cols-3 gap-8 text-center">
               <div className="p-6">
-                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Antes</p>
-                <p className="text-2xl md:text-3xl font-bold text-[#313131]">{config.caseStudy.before}</p>
+                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">{t('industry.case_study_before')}</p>
+                <p className="text-2xl md:text-3xl font-bold text-[#313131]">{loc.caseStudy.before}</p>
               </div>
 
               <div className="p-6 flex flex-col items-center justify-center">
@@ -399,8 +406,8 @@ function LandingContent({ config }: { config: IndustryConfig }) {
               </div>
 
               <div className="p-6">
-                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Ahora</p>
-                <p className="text-2xl md:text-3xl font-bold text-[#20B038]">{config.caseStudy.after}</p>
+                <p className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">{t('industry.case_study_after')}</p>
+                <p className="text-2xl md:text-3xl font-bold text-[#20B038]">{loc.caseStudy.after}</p>
               </div>
             </div>
           </div>
@@ -411,10 +418,10 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="bg-gray-50 py-20">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#313131] mb-4">
-            Así de fácil funciona
+            {t('industry.process_title')}
           </h2>
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
-            Tú solo apilas los textiles. Nosotros hacemos el resto.
+            {t('industry.process_desc')}
           </p>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -422,24 +429,24 @@ function LandingContent({ config }: { config: IndustryConfig }) {
               <div className="w-20 h-20 bg-[#F6653C] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
                 1
               </div>
-              <h3 className="text-xl font-bold text-[#313131] mb-3">Recogemos</h3>
-              <p className="text-gray-600">Pasamos por tu local en el horario que prefieras. Sin que muevas un dedo.</p>
+              <h3 className="text-xl font-bold text-[#313131] mb-3">{t('industry.process_step1_title')}</h3>
+              <p className="text-gray-600">{t('industry.process_step1_desc')}</p>
             </div>
 
             <div className="text-center">
               <div className="w-20 h-20 bg-[#F6653C] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
                 2
               </div>
-              <h3 className="text-xl font-bold text-[#313131] mb-3">Procesamos</h3>
-              <p className="text-gray-600">Lavado industrial, secado controlado y doblado profesional.</p>
+              <h3 className="text-xl font-bold text-[#313131] mb-3">{t('industry.process_step2_title')}</h3>
+              <p className="text-gray-600">{t('industry.process_step2_desc')}</p>
             </div>
 
             <div className="text-center">
               <div className="w-20 h-20 bg-[#F6653C] rounded-full flex items-center justify-center mx-auto mb-6 text-white text-3xl font-bold">
                 3
               </div>
-              <h3 className="text-xl font-bold text-[#313131] mb-3">Entregamos</h3>
-              <p className="text-gray-600">Textiles impecables, listos para usar. Siempre a tiempo.</p>
+              <h3 className="text-xl font-bold text-[#313131] mb-3">{t('industry.process_step3_title')}</h3>
+              <p className="text-gray-600">{t('industry.process_step3_desc')}</p>
             </div>
           </div>
 
@@ -448,7 +455,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
               onClick={scrollToForm}
               className="inline-block bg-[#F6653C] hover:bg-[#E65C00] text-white font-bold py-5 px-12 rounded-full transition-all shadow-lg hover:shadow-xl text-lg"
             >
-              PROBAR 1 SEMANA GRATIS
+              {t('industry.process_cta')}
             </button>
           </div>
         </div>
@@ -458,14 +465,14 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="py-20">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#313131] mb-4">
-            ¿Te suena familiar?
+            {t('industry.pain_title')}
           </h2>
           <p className="text-center text-gray-500 mb-12">
-            Problemas comunes que resolvemos para {config.namePlural.toLowerCase()}
+            {t('industry.pain_desc_prefix')} {loc.namePlural.toLowerCase()}
           </p>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {config.painPoints.map((pain, i) => (
+            {loc.painPoints.map((pain, i) => (
               <div key={i} className="flex items-start gap-5 p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-[#F6653C] transition-all">
                 <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,7 +481,7 @@ function LandingContent({ config }: { config: IndustryConfig }) {
                 </div>
                 <div>
                   <p className="text-[#313131] font-semibold text-lg">{pain}</p>
-                  <p className="text-[#F6653C] text-sm mt-2 font-medium">→ Nosotros lo solucionamos</p>
+                  <p className="text-[#F6653C] text-sm mt-2 font-medium">{t('industry.pain_solution')}</p>
                 </div>
               </div>
             ))}
@@ -486,11 +493,11 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="bg-gray-50 py-20">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#313131] mb-12">
-            Preguntas Frecuentes
+            {t('industry.faq_title')}
           </h2>
 
           <div className="space-y-4">
-            {config.faq.map((item, i) => (
+            {loc.faq.map((item, i) => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden border-2 border-gray-100">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -523,17 +530,17 @@ function LandingContent({ config }: { config: IndustryConfig }) {
       <div className="bg-[#313131] py-20">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            ¿Listo para ahorrar hasta 40%?
+            {t('industry.final_cta_title')}
           </h2>
           <p className="text-xl text-white/80 mb-10">
-            Únete a +800 empresas que ya confían en GetLavado
+            {t('industry.final_cta_desc')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={scrollToForm}
               className="inline-block bg-[#F6653C] hover:bg-[#E65C00] text-white font-bold py-5 px-12 rounded-full transition-all shadow-lg hover:shadow-xl text-lg"
             >
-              SOLICITAR COTIZACIÓN GRATIS
+              {t('industry.final_cta_button')}
             </button>
             <a
               href="https://wa.me/51928113653"
@@ -544,11 +551,11 @@ function LandingContent({ config }: { config: IndustryConfig }) {
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
-              WhatsApp
+              {t('industry.final_cta_whatsapp')}
             </a>
           </div>
           <p className="mt-6 text-white/60 text-sm">
-            Sin compromiso • Respuesta rápida • Prueba gratis
+            {t('industry.final_cta_disclaimer')}
           </p>
         </div>
       </div>
@@ -572,5 +579,9 @@ export default function IndustryLanding({ params }: { params: Promise<{ industri
     notFound();
   }
 
-  return <LandingContent config={config} />;
+  return (
+    <I18nProvider>
+      <LandingContent config={config} />
+    </I18nProvider>
+  );
 }

@@ -3,6 +3,7 @@
 import { Droppable } from '@hello-pangea/dnd';
 import { KanbanBusiness, KanbanColumnId } from '@/app/api/kanban/route';
 import KanbanCard from './KanbanCard';
+import { useI18n } from '@/lib/i18n';
 
 interface ColumnConfig {
   id: KanbanColumnId;
@@ -16,101 +17,119 @@ interface ColumnConfig {
   isFollowUp?: boolean;
 }
 
-export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = {
-  nuevo: {
-    id: 'nuevo',
-    title: 'Nuevos',
-    shortTitle: 'Nuevos',
-    icon: '📋',
-    color: 'text-gray-700',
-    bgColor: 'bg-gray-50',
-    borderColor: 'border-gray-200',
-    description: 'Sin contactar aún',
-  },
-  contactado: {
-    id: 'contactado',
-    title: '1er Contacto',
-    shortTitle: '1er',
-    icon: '💬',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    description: 'Contactados hace 0-2 días',
-  },
-  seguimiento_1: {
-    id: 'seguimiento_1',
-    title: 'Seguimiento 1',
-    shortTitle: 'Seg 1',
-    icon: '⏰',
-    color: 'text-orange-700',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-300',
-    description: '3-5 días sin respuesta',
-    isFollowUp: true,
-  },
-  seguimiento_2: {
-    id: 'seguimiento_2',
-    title: 'Seguimiento 2',
-    shortTitle: 'Seg 2',
-    icon: '🔥',
-    color: 'text-red-700',
-    bgColor: 'bg-red-50',
-    borderColor: 'border-red-300',
-    description: '6-8 días - ¡URGENTE!',
-    isFollowUp: true,
-  },
-  seguimiento_3: {
-    id: 'seguimiento_3',
-    title: 'Último Intento',
-    shortTitle: 'Último',
-    icon: '💀',
-    color: 'text-gray-900',
-    bgColor: 'bg-gray-100',
-    borderColor: 'border-gray-400',
-    description: '9+ días - Sí o No',
-    isFollowUp: true,
-  },
-  interesado: {
-    id: 'interesado',
-    title: 'Interesados',
-    shortTitle: 'Interés',
-    icon: '⭐',
-    color: 'text-amber-700',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
-    description: 'Respondieron con interés',
-  },
-  cotizado: {
-    id: 'cotizado',
-    title: 'Cotizados',
-    shortTitle: 'Cotiz',
-    icon: '💰',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200',
-    description: 'Tienen cotización',
-  },
-  cliente: {
-    id: 'cliente',
-    title: 'Clientes',
-    shortTitle: 'Cliente',
-    icon: '🎉',
-    color: 'text-green-700',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
-    description: '¡Venta cerrada!',
-  },
-  perdido: {
-    id: 'perdido',
-    title: 'Perdidos',
-    shortTitle: 'Perdido',
-    icon: '❌',
-    color: 'text-gray-500',
-    bgColor: 'bg-gray-50',
-    borderColor: 'border-gray-200',
-    description: 'No interesados',
-  },
-};
+export function getColumnConfig(t: (key: string) => string): Record<KanbanColumnId, ColumnConfig> {
+  return {
+    nuevo: {
+      id: 'nuevo',
+      title: t('col.new'),
+      shortTitle: t('col.new'),
+      icon: '📋',
+      color: 'text-gray-700',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      description: t('col.new_desc'),
+    },
+    contactado: {
+      id: 'contactado',
+      title: t('col.first'),
+      shortTitle: t('col.first_short'),
+      icon: '💬',
+      color: 'text-blue-700',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      description: t('col.first_desc'),
+    },
+    seguimiento_1: {
+      id: 'seguimiento_1',
+      title: t('col.seg1'),
+      shortTitle: t('col.seg1_short'),
+      icon: '⏰',
+      color: 'text-orange-700',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-300',
+      description: t('col.seg1_desc'),
+      isFollowUp: true,
+    },
+    seguimiento_2: {
+      id: 'seguimiento_2',
+      title: t('col.seg2'),
+      shortTitle: t('col.seg2_short'),
+      icon: '🔥',
+      color: 'text-red-700',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-300',
+      description: t('col.seg2_desc'),
+      isFollowUp: true,
+    },
+    seguimiento_3: {
+      id: 'seguimiento_3',
+      title: t('col.last'),
+      shortTitle: t('col.last_short'),
+      icon: '💀',
+      color: 'text-gray-900',
+      bgColor: 'bg-gray-100',
+      borderColor: 'border-gray-400',
+      description: t('col.last_desc'),
+      isFollowUp: true,
+    },
+    interesado: {
+      id: 'interesado',
+      title: t('col.interested'),
+      shortTitle: t('col.interested_short'),
+      icon: '⭐',
+      color: 'text-amber-700',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      description: t('col.interested_desc'),
+    },
+    cotizado: {
+      id: 'cotizado',
+      title: t('col.quoted'),
+      shortTitle: t('col.quoted_short'),
+      icon: '💰',
+      color: 'text-purple-700',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      description: t('col.quoted_desc'),
+    },
+    cliente: {
+      id: 'cliente',
+      title: t('col.customer'),
+      shortTitle: t('col.customer_short'),
+      icon: '🎉',
+      color: 'text-green-700',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      description: t('col.customer_desc'),
+    },
+    perdido: {
+      id: 'perdido',
+      title: t('col.lost'),
+      shortTitle: t('col.lost_short'),
+      icon: '❌',
+      color: 'text-gray-500',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      description: t('col.lost_desc'),
+    },
+  };
+}
+
+// Static fallback for non-i18n contexts
+export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = getColumnConfig((key: string) => {
+  const fallback: Record<string, string> = {
+    'col.new': 'Nuevos', 'col.new_desc': 'Sin contactar aún',
+    'col.first': '1er Contacto', 'col.first_short': '1er', 'col.first_desc': 'Contactados hace 0-2 días',
+    'col.seg1': 'Seguimiento 1', 'col.seg1_short': 'Seg 1', 'col.seg1_desc': '3-5 días sin respuesta',
+    'col.seg2': 'Seguimiento 2', 'col.seg2_short': 'Seg 2', 'col.seg2_desc': '6-8 días - ¡URGENTE!',
+    'col.last': 'Último Intento', 'col.last_short': 'Último', 'col.last_desc': '9+ días - Sí o No',
+    'col.interested': 'Interesados', 'col.interested_short': 'Interés', 'col.interested_desc': 'Respondieron con interés',
+    'col.quoted': 'Cotizados', 'col.quoted_short': 'Cotiz', 'col.quoted_desc': 'Tienen cotización',
+    'col.customer': 'Clientes', 'col.customer_short': 'Cliente', 'col.customer_desc': '¡Venta cerrada!',
+    'col.lost': 'Perdidos', 'col.lost_short': 'Perdido', 'col.lost_desc': 'No interesados',
+  };
+  return fallback[key] || key;
+});
 
 interface KanbanColumnProps {
   columnId: KanbanColumnId;
@@ -119,7 +138,9 @@ interface KanbanColumnProps {
 }
 
 export default function KanbanColumn({ columnId, businesses, onCardClick }: KanbanColumnProps) {
-  const config = COLUMN_CONFIG[columnId];
+  const { t } = useI18n();
+  const columnConfig = getColumnConfig(t);
+  const config = columnConfig[columnId];
 
   return (
     <div className={`
@@ -162,10 +183,10 @@ export default function KanbanColumn({ columnId, businesses, onCardClick }: Kanb
             {businesses.length === 0 ? (
               <div className={`flex items-center justify-center h-12 sm:h-16 text-xs ${config.isFollowUp ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
                 {snapshot.isDraggingOver
-                  ? 'Suelta aquí'
+                  ? t('kanban.drop_here') || 'Drop here'
                   : config.isFollowUp
                     ? '✅'
-                    : 'Sin leads'
+                    : t('kanban.no_leads') || 'No leads'
                 }
               </div>
             ) : (
@@ -188,8 +209,8 @@ export default function KanbanColumn({ columnId, businesses, onCardClick }: Kanb
         <div className={`hidden sm:block px-2 py-1.5 border-t ${config.borderColor} text-center`}>
           <p className={`text-xs font-medium ${columnId === 'seguimiento_2' ? 'text-red-700' : 'text-orange-700'}`}>
             {columnId === 'seguimiento_2'
-              ? '¡Actúa HOY!'
-              : 'Haz follow-up'
+              ? (t('kanban.act_today') || 'Act TODAY!')
+              : (t('kanban.do_followup') || 'Follow up')
             }
           </p>
         </div>

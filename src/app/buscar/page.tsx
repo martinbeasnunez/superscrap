@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import SearchForm from '@/components/SearchForm';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 
 interface RecentSearch {
   id: string;
@@ -14,6 +15,7 @@ interface RecentSearch {
 }
 
 export default function BusquedasPage() {
+  const { t } = useI18n();
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -83,8 +85,8 @@ export default function BusquedasPage() {
     <div className="p-4 sm:p-8">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Nueva Búsqueda</h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">Encuentra negocios con necesidades de lavandería industrial</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('search.title')}</h1>
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('search.subtitle')}</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
@@ -103,35 +105,35 @@ export default function BusquedasPage() {
               <svg className="w-5 h-5 text-[#F6653C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Tips de búsqueda
+              {t('search.tips_title')}
             </h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
                 <span className="text-lg">🏨</span>
                 <div>
-                  <p className="font-medium text-gray-800">Hoteles</p>
-                  <p className="text-gray-600 text-xs">Sábanas, toallas, batas</p>
+                  <p className="font-medium text-gray-800">{t('search.hotels')}</p>
+                  <p className="text-gray-600 text-xs">{t('search.hotels_desc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
                 <span className="text-lg">🍽️</span>
                 <div>
-                  <p className="font-medium text-gray-800">Restaurantes</p>
-                  <p className="text-gray-600 text-xs">Manteles, servilletas, uniformes</p>
+                  <p className="font-medium text-gray-800">{t('search.restaurants')}</p>
+                  <p className="text-gray-600 text-xs">{t('search.restaurants_desc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
                 <span className="text-lg">🏥</span>
                 <div>
-                  <p className="font-medium text-gray-800">Clínicas</p>
-                  <p className="text-gray-600 text-xs">Sábanas médicas, batas, uniformes</p>
+                  <p className="font-medium text-gray-800">{t('search.clinics')}</p>
+                  <p className="text-gray-600 text-xs">{t('search.clinics_desc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-white/60 rounded-xl">
                 <span className="text-lg">🛡️</span>
                 <div>
-                  <p className="font-medium text-gray-800">Seguridad</p>
-                  <p className="text-gray-600 text-xs">Uniformes en volumen</p>
+                  <p className="font-medium text-gray-800">{t('search.security')}</p>
+                  <p className="text-gray-600 text-xs">{t('search.security_desc')}</p>
                 </div>
               </div>
             </div>
@@ -140,9 +142,9 @@ export default function BusquedasPage() {
           {/* Recent searches */}
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h3 className="font-semibold text-gray-900">Búsquedas recientes</h3>
+              <h3 className="font-semibold text-gray-900">{t('search.recent')}</h3>
               <Link href="/historial" className="text-sm text-[#F6653C] hover:underline">
-                Ver todas
+                {t('search.view_all')}
               </Link>
             </div>
 
@@ -152,7 +154,7 @@ export default function BusquedasPage() {
               </div>
             ) : recentSearches.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">
-                No hay búsquedas aún
+                {t('search.no_searches')}
               </p>
             ) : (
               <div className="space-y-2">

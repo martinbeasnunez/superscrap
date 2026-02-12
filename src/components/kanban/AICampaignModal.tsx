@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { KanbanBusiness } from '@/app/api/kanban/route';
+import { useI18n } from '@/lib/i18n';
 
 interface AICampaignModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface CallResult {
 }
 
 export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComplete }: AICampaignModalProps) {
+  const { t } = useI18n();
   const [target, setTarget] = useState<CampaignTarget>('nuevos');
   const [quantity, setQuantity] = useState(10);
   const [status, setStatus] = useState<CampaignStatus>('idle');
@@ -176,7 +178,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
   // Cerrar y limpiar
   const handleClose = () => {
     if (status === 'running') {
-      if (!confirm('¿Seguro que quieres cancelar la campaña en curso?')) return;
+      if (!confirm(t('campaign.confirm_cancel'))) return;
     }
     setStatus('idle');
     setCallResults([]);
@@ -203,8 +205,8 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 <span className="text-2xl">🤖</span>
               </div>
               <div>
-                <h2 className="text-xl font-bold">Campaña IA</h2>
-                <p className="text-purple-200 text-sm">Llamadas automáticas masivas</p>
+                <h2 className="text-xl font-bold">{t('campaign.title')}</h2>
+                <p className="text-purple-200 text-sm">{t('campaign.subtitle')}</p>
               </div>
             </div>
             <button
@@ -225,13 +227,13 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
               {/* Selector de target */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  ¿A quién quieres llamar?
+                  {t('campaign.who_to_call')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { value: 'nuevos', label: 'Nuevos', icon: '🆕', count: leads.nuevos.filter(l => !l.aiCallResult?.hasAICall && l.phone).length },
-                    { value: 'seguimiento', label: 'Seguimiento', icon: '🔄', count: leads.seguimiento.filter(l => !l.aiCallResult?.hasAICall && l.phone).length },
-                    { value: 'ambos', label: 'Todos', icon: '📋', count: [...leads.nuevos, ...leads.seguimiento].filter(l => !l.aiCallResult?.hasAICall && l.phone).length },
+                    { value: 'nuevos', label: t('campaign.new'), icon: '🆕', count: leads.nuevos.filter(l => !l.aiCallResult?.hasAICall && l.phone).length },
+                    { value: 'seguimiento', label: t('campaign.followup'), icon: '🔄', count: leads.seguimiento.filter(l => !l.aiCallResult?.hasAICall && l.phone).length },
+                    { value: 'ambos', label: t('campaign.all'), icon: '📋', count: [...leads.nuevos, ...leads.seguimiento].filter(l => !l.aiCallResult?.hasAICall && l.phone).length },
                   ].map(opt => (
                     <button
                       key={opt.value}
@@ -244,7 +246,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                     >
                       <div className="text-2xl mb-1">{opt.icon}</div>
                       <div className="font-medium text-gray-900">{opt.label}</div>
-                      <div className="text-xs text-gray-500">{opt.count} disponibles</div>
+                      <div className="text-xs text-gray-500">{opt.count} {t('campaign.available')}</div>
                     </button>
                   ))}
                 </div>
@@ -253,7 +255,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
               {/* Selector de cantidad */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  ¿Cuántas llamadas?
+                  {t('campaign.how_many')}
                 </label>
                 <div className="flex gap-2">
                   {[5, 10, 25, 50].map(num => (
@@ -275,7 +277,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 </div>
                 {leadsWithoutAICall.length < quantity && (
                   <p className="text-xs text-amber-600 mt-2">
-                    ⚠️ Solo hay {leadsWithoutAICall.length} leads disponibles sin llamada IA previa
+                    ⚠️ {t('campaign.only_available').replace('leads', `${leadsWithoutAICall.length} leads`)}
                   </p>
                 )}
               </div>
@@ -283,14 +285,14 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
               {/* Preview de leads */}
               <div className="mb-6 p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-700">Preview de llamadas</span>
+                  <span className="text-sm font-medium text-gray-700">{t('campaign.preview')}</span>
                   <div className="flex items-center gap-2">
                     {excludedLeads.size > 0 && (
                       <button
                         onClick={restoreExcludedLeads}
                         className="text-xs text-purple-600 hover:text-purple-800 hover:underline"
                       >
-                        Restaurar {excludedLeads.size} quitados
+                        {t('campaign.restore')} ({excludedLeads.size})
                       </button>
                     )}
                     <span className="text-xs text-gray-500">{leadsToCall.length} leads</span>
@@ -317,7 +319,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                   ))}
                   {leadsToCall.length > 8 && (
                     <p className="text-xs text-gray-400 text-center pt-1">
-                      y {leadsToCall.length - 8} más...
+                      +{leadsToCall.length - 8} {t('campaign.and_more')}
                     </p>
                   )}
                 </div>
@@ -328,12 +330,12 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 <div className="flex items-start gap-3">
                   <span className="text-xl">⏱️</span>
                   <div>
-                    <p className="text-sm font-medium text-blue-900">Tiempo estimado</p>
+                    <p className="text-sm font-medium text-blue-900">{t('campaign.estimated_time')}</p>
                     <p className="text-xs text-blue-700">
-                      ~{Math.ceil(leadsToCall.length * (delayBetweenCalls + 2) / 60)} minutos para {leadsToCall.length} llamadas
+                      ~{Math.ceil(leadsToCall.length * (delayBetweenCalls + 2) / 60)} {t('campaign.minutes_for')} {leadsToCall.length} llamadas
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
-                      Las llamadas se hacen con {delayBetweenCalls}s de intervalo para evitar saturación
+                      {t('campaign.interval_info').replace('intervalo', `${delayBetweenCalls}s intervalo`)}
                     </p>
                   </div>
                 </div>
@@ -349,7 +351,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                     : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:scale-[1.02]'
                 }`}
               >
-                🚀 Iniciar Campaña ({leadsToCall.length} llamadas)
+                🚀 {t('campaign.start')} ({leadsToCall.length} llamadas)
               </button>
             </>
           ) : (
@@ -359,19 +361,19 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 {status === 'running' && (
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    Campaña en curso...
+                    {t('campaign.running')}
                   </div>
                 )}
                 {status === 'paused' && (
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-700 rounded-full">
                     <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                    Campaña pausada
+                    {t('campaign.paused')}
                   </div>
                 )}
                 {status === 'completed' && (
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full">
                     <span className="text-lg">🎉</span>
-                    ¡Campaña completada!
+                    {t('campaign.completed')}
                   </div>
                 )}
               </div>
@@ -379,7 +381,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
               {/* Barra de progreso */}
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600">Progreso</span>
+                  <span className="text-gray-600">{t('campaign.progress')}</span>
                   <span className="font-bold text-purple-700">
                     {stats.completed + stats.failed} / {stats.total}
                   </span>
@@ -396,19 +398,19 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
               <div className="grid grid-cols-4 gap-3 mb-6">
                 <div className="text-center p-3 bg-gray-50 rounded-xl">
                   <div className="text-xl font-bold text-gray-900">{stats.total}</div>
-                  <div className="text-xs text-gray-500">Total</div>
+                  <div className="text-xs text-gray-500">{t('campaign.total')}</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-xl">
                   <div className="text-xl font-bold text-green-600">{stats.completed}</div>
-                  <div className="text-xs text-green-600">Iniciadas</div>
+                  <div className="text-xs text-green-600">{t('campaign.started')}</div>
                 </div>
                 <div className="text-center p-3 bg-amber-50 rounded-xl">
                   <div className="text-xl font-bold text-amber-600">{stats.calling}</div>
-                  <div className="text-xs text-amber-600">Llamando</div>
+                  <div className="text-xs text-amber-600">{t('campaign.calling_status')}</div>
                 </div>
                 <div className="text-center p-3 bg-red-50 rounded-xl">
                   <div className="text-xl font-bold text-red-600">{stats.failed}</div>
-                  <div className="text-xs text-red-600">Fallidas</div>
+                  <div className="text-xs text-red-600">{t('campaign.failed')}</div>
                 </div>
               </div>
 
@@ -452,10 +454,10 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 truncate">{result.leadName}</p>
                       <p className="text-xs text-gray-500">
-                        {result.status === 'pending' && 'En espera...'}
-                        {result.status === 'calling' && '📞 Llamando...'}
-                        {result.status === 'completed' && '✅ Llamada iniciada'}
-                        {result.status === 'failed' && `❌ ${result.error || 'Error'}`}
+                        {result.status === 'pending' && t('campaign.waiting')}
+                        {result.status === 'calling' && `📞 ${t('campaign.calling')}`}
+                        {result.status === 'completed' && `✅ ${t('campaign.call_started')}`}
+                        {result.status === 'failed' && `❌ ${result.error || t('campaign.call_error')}`}
                       </p>
                     </div>
                   </div>
@@ -469,7 +471,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                     onClick={pauseCampaign}
                     className="flex-1 py-3 bg-amber-100 text-amber-700 rounded-xl font-medium hover:bg-amber-200 transition-colors"
                   >
-                    ⏸️ Pausar
+                    ⏸️ {t('campaign.pause')}
                   </button>
                 )}
                 {status === 'paused' && (
@@ -477,7 +479,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                     onClick={resumeCampaign}
                     className="flex-1 py-3 bg-green-100 text-green-700 rounded-xl font-medium hover:bg-green-200 transition-colors"
                   >
-                    ▶️ Reanudar
+                    ▶️ {t('campaign.resume')}
                   </button>
                 )}
                 <button
@@ -488,7 +490,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {status === 'completed' ? '🎉 Cerrar' : 'Cancelar'}
+                  {status === 'completed' ? `🎉 ${t('campaign.close_done')}` : t('common.cancel')}
                 </button>
               </div>
             </>

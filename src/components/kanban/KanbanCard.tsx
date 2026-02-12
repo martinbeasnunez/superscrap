@@ -2,6 +2,7 @@
 
 import { Draggable } from '@hello-pangea/dnd';
 import { KanbanBusiness } from '@/app/api/kanban/route';
+import { useI18n } from '@/lib/i18n';
 
 interface KanbanCardProps {
   business: KanbanBusiness;
@@ -27,7 +28,7 @@ function extractDistrict(address: string | null): string {
 }
 
 // Determina el nivel de urgencia de follow-up
-function getFollowUpUrgency(daysSinceContact: number | null, contactCount: number): {
+function getFollowUpUrgency(daysSinceContact: number | null, contactCount: number, t?: (key: string) => string): {
   level: 'none' | 'ok' | 'warning' | 'urgent' | 'critical';
   message: string;
   color: string;
@@ -41,7 +42,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact === 0) {
     return {
       level: 'ok',
-      message: 'Hoy',
+      message: t?.('card.today') || 'Hoy',
       color: 'text-green-600',
       bgColor: 'bg-green-100',
       pulseColor: '',
@@ -51,7 +52,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact === 1) {
     return {
       level: 'ok',
-      message: 'Ayer',
+      message: t?.('card.yesterday') || 'Ayer',
       color: 'text-green-600',
       bgColor: 'bg-green-100',
       pulseColor: '',
@@ -61,7 +62,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact === 2) {
     return {
       level: 'warning',
-      message: '2 días',
+      message: t?.('card.2days') || '2 días',
       color: 'text-amber-600',
       bgColor: 'bg-amber-100',
       pulseColor: '',
@@ -71,7 +72,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact >= 3 && daysSinceContact <= 4) {
     return {
       level: 'urgent',
-      message: `${daysSinceContact}d - ¡Seguimiento!`,
+      message: `${daysSinceContact}d - ${t?.('card.followup') || '¡Seguimiento!'}`,
       color: 'text-orange-700',
       bgColor: 'bg-orange-100',
       pulseColor: 'animate-pulse',
@@ -81,7 +82,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   // 5+ días - crítico
   return {
     level: 'critical',
-    message: `${daysSinceContact}d - ¡URGENTE!`,
+    message: `${daysSinceContact}d - ${t?.('card.urgent') || '¡URGENTE!'}`,
     color: 'text-red-700',
     bgColor: 'bg-red-100',
     pulseColor: 'animate-pulse',
@@ -89,26 +90,27 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
 }
 
 // Obtener label corto del resultado de llamada IA
-function getAICallLabel(outcome: string | null): { text: string; color: string; bg: string } {
+function getAICallLabel(outcome: string | null, t?: (key: string) => string): { text: string; color: string; bg: string } {
   switch (outcome) {
     case 'wants_quote':
-      return { text: '💰 Quiere cotización', color: 'text-green-700', bg: 'bg-green-100' };
+      return { text: `💰 ${t?.('biz.call_wants_quote') || 'Quiere cotización'}`, color: 'text-green-700', bg: 'bg-green-100' };
     case 'interested':
-      return { text: '🎯 Interesado', color: 'text-blue-700', bg: 'bg-blue-100' };
+      return { text: `🎯 ${t?.('biz.call_interested') || 'Interesado'}`, color: 'text-blue-700', bg: 'bg-blue-100' };
     case 'not_interested':
-      return { text: '❌ No interesado', color: 'text-gray-600', bg: 'bg-gray-100' };
+      return { text: `❌ ${t?.('biz.call_not_interested') || 'No interesado'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
     case 'callback':
-      return { text: '📅 Llamar después', color: 'text-amber-700', bg: 'bg-amber-100' };
+      return { text: `📅 ${t?.('biz.call_later') || 'Llamar después'}`, color: 'text-amber-700', bg: 'bg-amber-100' };
     case 'no_answer':
-      return { text: '📵 No contestó', color: 'text-red-600', bg: 'bg-red-50' };
+      return { text: `📵 ${t?.('biz.call_no_answer') || 'No contestó'}`, color: 'text-red-600', bg: 'bg-red-50' };
     case 'voicemail':
-      return { text: '📭 Buzón de voz', color: 'text-gray-500', bg: 'bg-gray-50' };
+      return { text: `📭 ${t?.('card.voicemail') || 'Buzón de voz'}`, color: 'text-gray-500', bg: 'bg-gray-50' };
     default:
-      return { text: '🤖 Llamada IA', color: 'text-purple-700', bg: 'bg-purple-100' };
+      return { text: `🤖 ${t?.('card.ai_call') || 'Llamada IA'}`, color: 'text-purple-700', bg: 'bg-purple-100' };
   }
 }
 
 export default function KanbanCard({ business, index, onClick }: KanbanCardProps) {
+  const { t } = useI18n();
   const district = extractDistrict(business.address);
   const hasWhatsapp = business.contact_actions?.includes('whatsapp');
   const hasEmail = business.contact_actions?.includes('email');
@@ -117,8 +119,8 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
   const hasAICall = business.aiCallResult?.hasAICall;
   const isInbound = business.lead_status === 'inbound';
 
-  const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount);
-  const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null) : null;
+  const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount, t);
+  const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null, t) : null;
 
   // Borde especial según urgencia
   const getBorderStyle = () => {
@@ -148,7 +150,7 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
           {isInbound && (
             <div className="mb-2 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-300 animate-pulse">
               <span>🔥</span>
-              LEAD INBOUND - ¡Llamar YA!
+              {t('card.inbound_call_now')}
             </div>
           )}
 
@@ -205,10 +207,10 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
           <div className="mt-1.5 flex items-center justify-between">
             {business.contactCount > 0 ? (
               <span className="text-xs text-gray-500">
-                {business.contactCount} {business.contactCount === 1 ? 'contacto' : 'contactos'}
+                {business.contactCount} {business.contactCount === 1 ? t('lead.contact_singular') : t('lead.contact_plural')}
               </span>
             ) : (
-              <span className="text-xs text-gray-400 italic">Sin contactar</span>
+              <span className="text-xs text-gray-400 italic">{t('card.not_contacted')}</span>
             )}
 
             {urgency.level === 'ok' && hasAnyContact && (

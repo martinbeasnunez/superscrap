@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 
 interface LoginFormProps {
   onLogin: (user: { id: string; name: string; email: string }) => void;
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,12 +19,12 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
     setError('');
 
     if (!name.trim()) {
-      setError('Ingresa tu nombre');
+      setError(t('login.name_required'));
       return;
     }
 
     if (!email.trim() || !email.includes('@')) {
-      setError('Ingresa un email válido');
+      setError(t('login.email_invalid'));
       return;
     }
 
@@ -41,14 +43,14 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al iniciar sesión');
+        throw new Error(data.error || t('login.login_error'));
       }
 
       // Guardar en localStorage
       localStorage.setItem('superscrap_user', JSON.stringify(data.user));
       onLogin(data.user);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : t('login.unknown_error'));
     } finally {
       setLoading(false);
     }
@@ -67,10 +69,10 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
           </div>
 
           <h1 className="text-4xl font-bold text-white mb-4">
-            CRM de Prospección B2B
+            {t('login.crm_title')}
           </h1>
           <p className="text-white/80 text-lg max-w-md">
-            Encuentra negocios, gestiona tu pipeline de ventas y cierra más deals.
+            {t('login.crm_desc')}
           </p>
         </div>
 
@@ -82,8 +84,8 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               </svg>
             </div>
             <div>
-              <p className="text-white font-medium">Búsqueda inteligente</p>
-              <p className="text-white/70 text-sm">Google Maps + Directorios B2B</p>
+              <p className="text-white font-medium">{t('login.smart_search')}</p>
+              <p className="text-white/70 text-sm">{t('login.smart_search_desc')}</p>
             </div>
           </div>
 
@@ -94,8 +96,8 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               </svg>
             </div>
             <div>
-              <p className="text-white font-medium">Pipeline Kanban</p>
-              <p className="text-white/70 text-sm">Gestiona leads visualmente</p>
+              <p className="text-white font-medium">{t('login.pipeline')}</p>
+              <p className="text-white/70 text-sm">{t('login.pipeline_desc')}</p>
             </div>
           </div>
 
@@ -106,14 +108,14 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               </svg>
             </div>
             <div>
-              <p className="text-white font-medium">Métricas en tiempo real</p>
-              <p className="text-white/70 text-sm">Conversión y rendimiento</p>
+              <p className="text-white font-medium">{t('login.metrics')}</p>
+              <p className="text-white/70 text-sm">{t('login.metrics_desc')}</p>
             </div>
           </div>
         </div>
 
         <p className="text-white/50 text-sm">
-          © 2024 GetLavado - Equipo de Ventas B2B
+          {t('login.copyright')}
         </p>
       </div>
 
@@ -129,20 +131,20 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Bienvenido</h2>
-            <p className="text-gray-400">Ingresa para continuar</p>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('login.welcome')}</h2>
+            <p className="text-gray-400">{t('login.enter_to_continue')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Nombre
+                {t('login.name')}
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Tu nombre"
+                placeholder={t('login.name_placeholder')}
                 className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-[#F6653C] focus:border-transparent transition-all"
                 disabled={loading}
               />
@@ -150,7 +152,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email
+                {t('login.email')}
               </label>
               <input
                 type="email"
@@ -176,11 +178,11 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               {loading ? (
                 <>
                   <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                  Ingresando...
+                  {t('login.logging_in')}
                 </>
               ) : (
                 <>
-                  Ingresar
+                  {t('login.login')}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>

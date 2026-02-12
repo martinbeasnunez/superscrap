@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BusinessWithAnalysis, ContactAction, LeadStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/lib/i18n';
 
 interface BusinessCardProps {
   business: BusinessWithAnalysis;
@@ -362,6 +363,7 @@ export default function BusinessCard({
   requiredServices,
   businessType,
 }: BusinessCardProps) {
+  const { t } = useI18n();
   const [contactActions, setContactActions] = useState<ContactAction[]>(
     migrateContactStatus(business)
   );
@@ -382,7 +384,7 @@ export default function BusinessCard({
 
     if (!currentUserId) {
       console.error('No se encontró userId en localStorage');
-      alert('Error: No se pudo identificar tu usuario. Por favor recarga la página.');
+      alert(t('biz.user_error'));
       return;
     }
 
@@ -576,8 +578,8 @@ export default function BusinessCard({
 
   const getLeadStatusLabel = () => {
     switch (leadStatus) {
-      case 'prospect': return 'Prospecto';
-      case 'discarded': return 'Descartado';
+      case 'prospect': return t('biz.prospect');
+      case 'discarded': return t('biz.discarded');
       default: return null;
     }
   };
@@ -590,7 +592,7 @@ export default function BusinessCard({
       <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
         {isPriorityDistrict(business.address) && (
           <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-amber-100 text-amber-800 rounded text-[10px] sm:text-xs font-medium border border-amber-300">
-            ⭐ <span className="hidden sm:inline">Zona </span>top
+            {t('biz.top_zone')}
           </span>
         )}
         {getLeadStatusLabel() && (
@@ -663,7 +665,7 @@ export default function BusinessCard({
           </span>
         )}
         {business.reviews_count && (
-          <span className="hidden sm:inline">({business.reviews_count} reseñas)</span>
+          <span className="hidden sm:inline">({business.reviews_count} {t('biz.reviews')})</span>
         )}
         {business.phone && <span className="truncate">{business.phone}</span>}
       </div>
@@ -672,7 +674,7 @@ export default function BusinessCard({
         <div className="space-y-2 sm:space-y-3">
           <div>
             <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase mb-1.5 sm:mb-2">
-              Necesidades
+              {t('biz.needs')}
             </p>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {requiredServices.map((service) => {
@@ -707,7 +709,7 @@ export default function BusinessCard({
           {analysis.evidence && (
             <div className="hidden sm:block">
               <p className="text-xs font-medium text-gray-500 uppercase mb-1">
-                Análisis
+                {t('biz.analysis')}
               </p>
               <p className="text-sm text-gray-700 line-clamp-2">{analysis.evidence}</p>
             </div>
@@ -718,7 +720,7 @@ export default function BusinessCard({
       {/* Decision Makers / Contactos */}
       <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
         <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase mb-1.5 sm:mb-2">
-          Contactos ({business.decision_makers?.length || 0})
+          {t('biz.contacts')} ({business.decision_makers?.length || 0})
         </p>
         {business.decision_makers && business.decision_makers.length > 0 ? (
           <div className="space-y-1.5 sm:space-y-2">
@@ -809,7 +811,7 @@ export default function BusinessCard({
           </div>
         ) : (
           <p className="text-xs sm:text-sm text-gray-400 italic">
-            Sin contactos
+            {t('biz.no_contacts')}
           </p>
         )}
       </div>
@@ -831,7 +833,7 @@ export default function BusinessCard({
             href={`tel:${business.phone}`}
             className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1"
           >
-            📞 <span className="hidden sm:inline">Llamar</span>
+            📞 <span className="hidden sm:inline">{t('biz.call')}</span>
           </a>
         )}
         {showWhatsApp && (
@@ -865,12 +867,12 @@ export default function BusinessCard({
             {aiCallStatus === 'calling' ? (
               <>
                 <span className="animate-spin text-xs sm:text-sm">🤖</span>
-                <span className="hidden sm:inline">Llamando...</span>
+                <span className="hidden sm:inline">{t('biz.calling')}</span>
               </>
             ) : aiCallStatus === 'success' ? (
               <>
                 <span className="text-xs sm:text-sm">✅</span>
-                <span className="hidden sm:inline">¡OK!</span>
+                <span className="hidden sm:inline">{t('biz.call_ok')}</span>
               </>
             ) : aiCallStatus === 'error' ? (
               <>
@@ -905,12 +907,12 @@ export default function BusinessCard({
               {!['interested', 'wants_quote', 'not_interested', 'callback', 'no_answer'].includes(aiCallResult.outcome || '') && '📞'}
             </span>
             <span className="font-medium text-xs sm:text-sm">
-              {aiCallResult.outcome === 'interested' && '¡Interesado!'}
-              {aiCallResult.outcome === 'wants_quote' && '¡Quiere cotización!'}
-              {aiCallResult.outcome === 'not_interested' && 'No interesado'}
-              {aiCallResult.outcome === 'callback' && 'Llamar después'}
-              {aiCallResult.outcome === 'no_answer' && 'No contestó'}
-              {aiCallResult.outcome === 'completed' && 'Completada'}
+              {aiCallResult.outcome === 'interested' && t('biz.call_interested')}
+              {aiCallResult.outcome === 'wants_quote' && t('biz.call_wants_quote')}
+              {aiCallResult.outcome === 'not_interested' && t('biz.call_not_interested')}
+              {aiCallResult.outcome === 'callback' && t('biz.call_later')}
+              {aiCallResult.outcome === 'no_answer' && t('biz.call_no_answer')}
+              {aiCallResult.outcome === 'completed' && t('biz.call_completed')}
             </span>
           </div>
           {aiCallResult.summary && (
@@ -965,7 +967,7 @@ export default function BusinessCard({
                 : 'bg-white text-gray-600 border-gray-300 hover:border-green-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            🟢 <span className="hidden sm:inline">Prospecto</span>
+            🟢 <span className="hidden sm:inline">{t('biz.prospect')}</span>
           </button>
           <button
             onClick={() => toggleLeadStatus('discarded')}
@@ -976,7 +978,7 @@ export default function BusinessCard({
                 : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            ⚫ <span className="hidden sm:inline">Descartado</span>
+            ⚫ <span className="hidden sm:inline">{t('biz.discarded')}</span>
           </button>
         </div>
       </div>
@@ -989,7 +991,7 @@ export default function BusinessCard({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Email Pitch</h3>
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{t('biz.email_pitch')}</h3>
               <button
                 onClick={() => setEmailModal(null)}
                 className="p-1.5 hover:bg-gray-100 rounded"
@@ -1002,7 +1004,7 @@ export default function BusinessCard({
             <div className="p-3 sm:p-4 overflow-y-auto max-h-[60vh] sm:max-h-[70vh]">
               <div className="mb-3 sm:mb-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">Para:</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">{t('biz.to')}</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.to); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
@@ -1017,7 +1019,7 @@ export default function BusinessCard({
               </div>
               <div className="mb-3 sm:mb-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">Asunto:</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">{t('biz.subject')}</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.subject); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
@@ -1032,7 +1034,7 @@ export default function BusinessCard({
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">Cuerpo:</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 uppercase flex-1">{t('biz.body')}</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.body); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
@@ -1058,17 +1060,17 @@ export default function BusinessCard({
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(`Para: ${emailModal.to}\nAsunto: ${emailModal.subject}\n\n${emailModal.body}`);
-                  alert('Copiado al portapapeles');
+                  alert(t('lead.copied') || 'Copied to clipboard');
                 }}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                Copiar todo
+                {t('biz.copy_all')}
               </button>
               <button
                 onClick={() => setEmailModal(null)}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
               >
-                Cerrar
+                {t('biz.close')}
               </button>
             </div>
           </div>

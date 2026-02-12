@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { KanbanBusiness, KanbanColumnId, DecisionMaker } from '@/app/api/kanban/route';
-import { COLUMN_CONFIG } from './KanbanColumn';
+import { useI18n } from '@/lib/i18n';
+import { COLUMN_CONFIG, getColumnConfig } from './KanbanColumn';
 
 interface LeadDetailModalProps {
   business: KanbanBusiness | null;
@@ -543,6 +544,9 @@ function getActionLabel(action: string): string {
 }
 
 export default function LeadDetailModal({ business, currentColumn, onClose, onStageChange, onActionRegistered }: LeadDetailModalProps) {
+  const { t } = useI18n();
+  const columnConfigI18n = getColumnConfig(t);
+
   const [contactHistory, setContactHistory] = useState<ContactHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -759,7 +763,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     audio.onerror = () => {
       setAudioLoading(null);
       setPlayingAudioId(null);
-      alert('Error al cargar el audio de la llamada');
+      alert(t('lead.audio_error'));
     };
 
     audio.load();
@@ -831,7 +835,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   if (!business) return null;
 
   const showWhatsApp = isPeruvianMobile(business.phone);
-  const currentConfig = COLUMN_CONFIG[currentStage];
+  const currentConfig = columnConfigI18n[currentStage];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 sm:p-4" onClick={onClose}>
@@ -872,7 +876,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
           {/* Etapa actual */}
           <div className="mb-4">
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Etapa</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('lead.stage')}</label>
             <div className="relative mt-1">
               <button
                 onClick={() => setShowStageMenu(!showStageMenu)}
@@ -886,7 +890,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
               {showStageMenu && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                  {Object.values(COLUMN_CONFIG).map((config) => (
+                  {Object.values(columnConfigI18n).map((config) => (
                     <button
                       key={config.id}
                       onClick={() => handleStageChange(config.id)}
@@ -953,7 +957,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
           {/* Descripción */}
           {business.description && (
             <div className="mb-4">
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block">Descripción</label>
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block">{t('lead.description')}</label>
               <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{business.description}</p>
             </div>
           )}
@@ -962,7 +966,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
           {business.decision_makers && business.decision_makers.length > 0 && (
             <div className="mb-4">
               <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">
-                Contactos ({business.decision_makers.length})
+                {t('biz.contacts')} ({business.decision_makers.length})
               </label>
               <div className="space-y-2">
                 {business.decision_makers.map((dm, idx) => {
@@ -1044,7 +1048,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
           {/* Acciones rápidas */}
           <div className="mb-4">
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">Acciones</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">{t('lead.actions')}</label>
             <div className="grid grid-cols-3 gap-2">
               {showWhatsApp && (
                 <button
@@ -1068,7 +1072,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   {actionLoading === 'call' ? (
                     <span className="animate-spin">⏳</span>
                   ) : (
-                    <>📞 <span className="hidden sm:inline">Llamar</span></>
+                    <>📞 <span className="hidden sm:inline">{t('biz.call')}</span></>
                   )}
                 </button>
               )}
@@ -1106,29 +1110,29 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   {aiCallStatus === 'calling' ? (
                     <>
                       <span className="animate-spin">🤖</span>
-                      <span>Llamando...</span>
+                      <span>{t('biz.calling')}</span>
                     </>
                   ) : aiCallStatus === 'success' ? (
                     <>
                       <span>✅</span>
-                      <span>¡Llamada iniciada!</span>
+                      <span>{t('lead.call_started')}</span>
                     </>
                   ) : aiCallStatus === 'error' ? (
                     <>
                       <span>❌</span>
-                      <span>Error - Reintentar</span>
+                      <span>{t('lead.error_retry')}</span>
                     </>
                   ) : (
                     <>
                       <span>🤖</span>
-                      <span className="hidden sm:inline">Llamar con Agente IA</span>
-                      <span className="sm:hidden">Llamada IA</span>
+                      <span className="hidden sm:inline">{t('lead.ai_call')}</span>
+                      <span className="sm:hidden">{t('lead.ai_call_short')}</span>
                       <span className="text-[10px] sm:text-xs opacity-75 hidden sm:inline">(Auto)</span>
                     </>
                   )}
                 </button>
                 <p className="text-[10px] sm:text-xs text-gray-500 text-center mt-1">
-                  El agente IA calificará este lead automáticamente
+                  {t('lead.ai_will_qualify')}
                 </p>
 
                 {/* Resultado de la llamada IA */}
@@ -1150,12 +1154,12 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         {!['interested', 'wants_quote', 'not_interested', 'callback', 'no_answer'].includes(aiCallResult.outcome || '') && '📞'}
                       </span>
                       <span className="font-medium text-xs sm:text-sm">
-                        {aiCallResult.outcome === 'interested' && '¡Interesado!'}
-                        {aiCallResult.outcome === 'wants_quote' && '¡Quiere cotización!'}
-                        {aiCallResult.outcome === 'not_interested' && 'No interesado'}
-                        {aiCallResult.outcome === 'callback' && 'Llamar después'}
-                        {aiCallResult.outcome === 'no_answer' && 'No contestó / Colgó'}
-                        {aiCallResult.outcome === 'completed' && 'Llamada completada'}
+                        {aiCallResult.outcome === 'interested' && t('biz.call_interested')}
+                        {aiCallResult.outcome === 'wants_quote' && t('biz.call_wants_quote')}
+                        {aiCallResult.outcome === 'not_interested' && t('biz.call_not_interested')}
+                        {aiCallResult.outcome === 'callback' && t('biz.call_later')}
+                        {aiCallResult.outcome === 'no_answer' && t('biz.call_no_answer')}
+                        {aiCallResult.outcome === 'completed' && t('biz.call_completed')}
                       </span>
                     </div>
                     {aiCallResult.summary && (
@@ -1170,32 +1174,32 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
           {/* Historial de contactos */}
           <div>
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">
-              Historial de seguimiento ({contactHistory.length})
+              {t('lead.history')} ({contactHistory.length})
             </label>
             {loadingHistory ? (
-              <div className="text-center py-4 text-gray-400">Cargando...</div>
+              <div className="text-center py-4 text-gray-400">{t('common.loading')}</div>
             ) : contactHistory.length === 0 ? (
               <div className="text-center py-6 bg-amber-50 rounded-lg border border-amber-200">
                 <span className="text-2xl mb-2 block">📋</span>
-                <p className="text-amber-800 font-medium">Sin contactos registrados</p>
-                <p className="text-amber-600 text-xs mt-1">¡Haz tu primer contacto ahora!</p>
+                <p className="text-amber-800 font-medium">{t('lead.no_contacts')}</p>
+                <p className="text-amber-600 text-xs mt-1">{t('lead.make_first_contact')}</p>
               </div>
             ) : (
               <>
                 {/* Tip de seguimiento si solo hay 1 contacto */}
                 {contactHistory.length === 1 && (
                   <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
-                    💡 <strong>Tip:</strong> Un solo contacto rara vez cierra una venta. Los mejores vendedores hacen 3-5 follow-ups.
+                    💡 <strong>Tip:</strong> {t('lead.tip_single_contact')}
                   </div>
                 )}
                 {contactHistory.length >= 2 && contactHistory.length < 5 && (
                   <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700">
-                    ✅ <strong>¡Buen trabajo!</strong> {contactHistory.length} contactos. Continúa así para cerrar esta venta.
+                    ✅ <strong>{t('lead.tip_good_work')}</strong> {contactHistory.length} {t('lead.contact_plural')}.
                   </div>
                 )}
                 {contactHistory.length >= 5 && (
                   <div className="mb-2 p-2 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-700">
-                    🏆 <strong>¡Excelente persistencia!</strong> {contactHistory.length} contactos. Este lead tiene alta probabilidad de cierre.
+                    🏆 <strong>{t('lead.tip_excellent')}</strong> {contactHistory.length} {t('lead.contact_plural')}.
                   </div>
                 )}
 
@@ -1290,18 +1294,18 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     business.daysSinceContact >= 5 ? 'text-red-800' : business.daysSinceContact >= 3 ? 'text-orange-800' : 'text-amber-800'
                   }`}>
                     {business.daysSinceContact >= 5
-                      ? '¡Urgente! Último contacto hace ' + business.daysSinceContact + ' días'
+                      ? t('lead.urgent_days') + ' ' + business.daysSinceContact + ' ' + t('lead.days')
                       : business.daysSinceContact >= 3
-                        ? 'Necesita seguimiento (' + business.daysSinceContact + ' días)'
-                        : 'Han pasado ' + business.daysSinceContact + ' días'
+                        ? t('lead.needs_followup_days') + ' (' + business.daysSinceContact + ' ' + t('lead.days') + ')'
+                        : t('lead.days_passed') + ' ' + business.daysSinceContact + ' ' + t('lead.days')
                     }
                   </p>
                   <p className={`text-xs ${
                     business.daysSinceContact >= 5 ? 'text-red-600' : business.daysSinceContact >= 3 ? 'text-orange-600' : 'text-amber-600'
                   }`}>
                     {business.daysSinceContact >= 5
-                      ? 'El interés se enfría rápido. Haz un follow-up HOY.'
-                      : 'Un mensaje ahora puede mantener el interés vivo.'
+                      ? t('lead.interest_cools')
+                      : t('lead.message_keeps_interest')
                     }
                   </p>
                 </div>
@@ -1313,13 +1317,13 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         {/* Footer */}
         <div className="px-4 sm:px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center safe-area-bottom">
           <span className="text-xs text-gray-500">
-            {business.contactCount} {business.contactCount === 1 ? 'contacto' : 'contactos'}
+            {business.contactCount} {business.contactCount === 1 ? t('lead.contact_singular') : t('lead.contact_plural')}
           </span>
           <button
             onClick={onClose}
             className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors text-sm"
           >
-            Cerrar
+            {t('biz.close')}
           </button>
         </div>
       </div>
@@ -1332,7 +1336,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-900">Email Pitch</h3>
+              <h3 className="font-semibold text-gray-900">{t('biz.email_pitch')}</h3>
               <button
                 onClick={() => setEmailModal(null)}
                 className="p-1 hover:bg-gray-100 rounded"
@@ -1345,7 +1349,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             <div className="p-4 overflow-y-auto max-h-[70vh]">
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs text-gray-500 uppercase flex-1">Para:</p>
+                  <p className="text-xs text-gray-500 uppercase flex-1">{t('biz.to')}</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.to); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
@@ -1362,7 +1366,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               </div>
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs text-gray-500 uppercase flex-1">Asunto:</p>
+                  <p className="text-xs text-gray-500 uppercase flex-1">{t('biz.subject')}</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.subject); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
@@ -1377,7 +1381,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs text-gray-500 uppercase flex-1">Cuerpo:</p>
+                  <p className="text-xs text-gray-500 uppercase flex-1">{t('biz.body')}</p>
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.body); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
@@ -1402,18 +1406,18 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             <div className="p-4 border-t border-gray-200 flex gap-2 justify-end">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`Para: ${emailModal.to}\nAsunto: ${emailModal.subject}\n\n${emailModal.body}`);
-                  alert('Copiado al portapapeles');
+                  navigator.clipboard.writeText(`${t('biz.to')} ${emailModal.to}\n${t('biz.subject')} ${emailModal.subject}\n\n${emailModal.body}`);
+                  alert(t('lead.copied'));
                 }}
                 className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                Copiar todo
+                {t('biz.copy_all')}
               </button>
               <button
                 onClick={() => setEmailModal(null)}
                 className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
               >
-                Cerrar
+                {t('biz.close')}
               </button>
             </div>
           </div>

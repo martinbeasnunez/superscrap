@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SearchWithResults, BusinessWithAnalysis } from '@/types';
 import BusinessCard, { isPriorityDistrict } from '@/components/BusinessCard';
+import { useI18n } from '@/lib/i18n';
 
 export default function SearchDetailPage({
   params,
@@ -13,6 +14,7 @@ export default function SearchDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [data, setData] = useState<{
     search: SearchWithResults;
     businesses: BusinessWithAnalysis[];
@@ -25,7 +27,7 @@ export default function SearchDetailPage({
   const [loadMoreMessage, setLoadMoreMessage] = useState('');
 
   const handleDelete = async () => {
-    if (!confirm('¿Estás seguro de eliminar esta búsqueda? Se perderán todos los negocios encontrados.')) {
+    if (!confirm(t('detail.confirm_delete'))) {
       return;
     }
 
@@ -38,10 +40,10 @@ export default function SearchDetailPage({
       if (response.ok) {
         router.push('/busquedas');
       } else {
-        alert('Error al eliminar la búsqueda');
+        alert(t('detail.delete_error'));
       }
     } catch {
-      alert('Error al eliminar la búsqueda');
+      alert(t('detail.delete_error'));
     } finally {
       setDeleting(false);
     }
@@ -57,7 +59,7 @@ export default function SearchDetailPage({
       const result = await response.json();
 
       if (response.ok) {
-        setLoadMoreMessage(`+${result.added} negocios agregados`);
+        setLoadMoreMessage(`+${result.added} ${t('detail.added')}`);
         // Recargar datos
         const refreshResponse = await fetch(`/api/searches/${id}`);
         if (refreshResponse.ok) {
@@ -65,10 +67,10 @@ export default function SearchDetailPage({
           setData(refreshedData);
         }
       } else {
-        setLoadMoreMessage(result.error || 'Error al cargar más');
+        setLoadMoreMessage(result.error || t('detail.load_error'));
       }
     } catch {
-      setLoadMoreMessage('Error de conexión');
+      setLoadMoreMessage(t('detail.connection_error'));
     } finally {
       setLoadingMore(false);
     }
@@ -79,12 +81,12 @@ export default function SearchDetailPage({
       try {
         const response = await fetch(`/api/searches/${id}`);
         if (!response.ok) {
-          throw new Error('Búsqueda no encontrada');
+          throw new Error(t('detail.not_found'));
         }
         const result = await response.json();
         setData(result);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error desconocido');
+        setError(err instanceof Error ? err.message : t('detail.unknown_error'));
       } finally {
         setLoading(false);
       }
@@ -116,7 +118,7 @@ export default function SearchDetailPage({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-gray-600">Cargando resultados...</p>
+          <p className="text-gray-600">{t('detail.loading')}</p>
         </div>
       </div>
     );
@@ -126,9 +128,9 @@ export default function SearchDetailPage({
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Error al cargar'}</p>
+          <p className="text-red-600 mb-4">{error || t('detail.error_loading')}</p>
           <Link href="/" className="text-blue-600 hover:text-blue-800">
-            ← Volver al inicio
+            {t('detail.back_home')}
           </Link>
         </div>
       </div>
@@ -155,7 +157,7 @@ export default function SearchDetailPage({
           href="/busquedas"
           className="text-blue-600 hover:text-blue-800 mb-6 inline-block"
         >
-          ← Volver al historial
+          {t('detail.back')}
         </Link>
 
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-8 mb-6 sm:mb-8">
@@ -164,7 +166,7 @@ export default function SearchDetailPage({
           </h1>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className="text-gray-500 text-sm sm:text-base">Servicios buscados:</span>
+            <span className="text-gray-500 text-sm sm:text-base">{t('detail.services')}</span>
             {search.required_services.map((service) => (
               <span
                 key={service}
@@ -179,11 +181,11 @@ export default function SearchDetailPage({
             <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm sm:text-base text-gray-600">
               <span>
                 <strong className="text-gray-900">{search.total_results}</strong>{' '}
-                encontrados
+                {t('detail.found')}
               </span>
               <span>
                 <strong className="text-green-600">{search.matching_results}</strong>{' '}
-                coinciden
+                {t('detail.match')}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -198,14 +200,14 @@ export default function SearchDetailPage({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Buscando...
+                    {t('detail.searching')}
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    +20 más
+                    {t('detail.load_more')}
                   </>
                 )}
               </button>
@@ -214,7 +216,7 @@ export default function SearchDetailPage({
                 disabled={deleting}
                 className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
               >
-                {deleting ? 'Eliminando...' : 'Eliminar'}
+                {deleting ? t('detail.deleting') : t('detail.delete')}
               </button>
             </div>
           </div>
@@ -226,7 +228,7 @@ export default function SearchDetailPage({
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Resultados</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{t('detail.results')}</h2>
           <div className="flex gap-2">
             <button
               onClick={() => setFilter('all')}
@@ -236,7 +238,7 @@ export default function SearchDetailPage({
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
-              Todos ({businesses.length})
+              {t('detail.all')} ({businesses.length})
             </button>
             <button
               onClick={() => setFilter('matching')}
@@ -246,7 +248,7 @@ export default function SearchDetailPage({
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
-              Coinciden ({businesses.filter((b) => b.analysis?.matches_requirements).length})
+              {t('detail.matching')} ({businesses.filter((b) => b.analysis?.matches_requirements).length})
             </button>
           </div>
         </div>
@@ -255,8 +257,8 @@ export default function SearchDetailPage({
           <div className="text-center py-12 bg-white rounded-xl">
             <p className="text-gray-500">
               {filter === 'matching'
-                ? 'Ningún negocio coincide con todos los criterios'
-                : 'No se encontraron negocios'}
+                ? t('detail.no_match')
+                : t('detail.no_businesses')}
             </p>
           </div>
         ) : (
@@ -264,7 +266,7 @@ export default function SearchDetailPage({
             // Agrupar negocios por fecha (dia)
             const groupedByDate: Record<string, typeof sortedBusinesses> = {};
             sortedBusinesses.forEach((business) => {
-              const date = new Date(business.created_at).toLocaleDateString('es-PE', {
+              const date = new Date(business.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-PE', {
                 day: 'numeric',
                 month: 'short',
                 hour: '2-digit',
@@ -286,10 +288,10 @@ export default function SearchDetailPage({
                   const firstBusiness = groupBusinesses[0];
                   const groupDate = new Date(firstBusiness.created_at);
                   const isToday = new Date().toDateString() === groupDate.toDateString();
-                  const timeLabel = groupDate.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+                  const timeLabel = groupDate.toLocaleTimeString(locale === 'en' ? 'en-US' : 'es-PE', { hour: '2-digit', minute: '2-digit' });
                   const dateLabel = isToday
-                    ? `Hoy ${timeLabel}`
-                    : groupDate.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }) + ` ${timeLabel}`;
+                    ? `${t('detail.today')} ${timeLabel}`
+                    : groupDate.toLocaleDateString(locale === 'en' ? 'en-US' : 'es-PE', { day: 'numeric', month: 'short' }) + ` ${timeLabel}`;
 
                   return (
                     <div key={hourKey}>

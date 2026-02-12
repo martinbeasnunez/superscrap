@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { getAllIndustries } from '@/lib/landing-config';
+import { useI18n } from '@/lib/i18n';
 
 export default function LandingsPage() {
   const industries = getAllIndustries();
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const { t } = useI18n();
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://superscrap.vercel.app';
 
@@ -32,12 +34,12 @@ export default function LandingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Landing Pages</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Páginas optimizadas para SEO y conversión por industria</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('ladm.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('ladm.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500 hidden sm:inline">
-            {industries.length} landings activas
+            {industries.length} {t('ladm.active')}
           </span>
           <button
             disabled
@@ -47,8 +49,8 @@ export default function LandingsPage() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Crear landing
-            <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded ml-1">Pronto</span>
+            {t('ladm.create')}
+            <span className="text-xs bg-gray-200 px-1.5 py-0.5 rounded ml-1">{t('ladm.soon')}</span>
           </button>
         </div>
       </div>
@@ -64,7 +66,7 @@ export default function LandingsPage() {
             </div>
             <div>
               <p className="text-lg sm:text-2xl font-bold text-gray-900">{industries.length}</p>
-              <p className="text-xs sm:text-sm text-gray-500">Activas</p>
+              <p className="text-xs sm:text-sm text-gray-500">{t('ladm.pages_active')}</p>
             </div>
           </div>
         </div>
@@ -77,7 +79,7 @@ export default function LandingsPage() {
             </div>
             <div>
               <p className="text-lg sm:text-2xl font-bold text-gray-900">SEO</p>
-              <p className="text-xs sm:text-sm text-gray-500">Optimizado</p>
+              <p className="text-xs sm:text-sm text-gray-500">{t('ladm.seo')}</p>
             </div>
           </div>
         </div>
@@ -91,7 +93,7 @@ export default function LandingsPage() {
             </div>
             <div>
               <p className="text-lg sm:text-2xl font-bold text-gray-900">JSON-LD</p>
-              <p className="text-xs sm:text-sm text-gray-500">Schema.org</p>
+              <p className="text-xs sm:text-sm text-gray-500">{t('ladm.schema')}</p>
             </div>
           </div>
         </div>
@@ -104,7 +106,7 @@ export default function LandingsPage() {
             </div>
             <div>
               <p className="text-lg sm:text-2xl font-bold text-gray-900">CRO</p>
-              <p className="text-xs sm:text-sm text-gray-500">Conversión</p>
+              <p className="text-xs sm:text-sm text-gray-500">{t('ladm.conversion')}</p>
             </div>
           </div>
         </div>
@@ -184,14 +186,14 @@ export default function LandingsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
-                  Ver página
+                  {t('ladm.view_page')}
                 </Link>
                 <button
                   onClick={() => handleCopyUrl(industry.slug)}
                   className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm"
                   title="Copiar URL completa"
                 >
-                  {copiedUrl === industry.slug ? '¡Copiado!' : 'Copiar'}
+                  {copiedUrl === industry.slug ? t('ladm.copied') : t('ladm.copy')}
                 </button>
               </div>
             </div>
@@ -208,23 +210,23 @@ export default function LandingsPage() {
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 mb-2">¿Cómo usar las Landing Pages?</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">{t('ladm.how_to')}</h3>
             <ul className="text-sm text-gray-600 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Comparte las URLs en campañas de Google Ads segmentadas por industria</span>
+                <span>{t('ladm.tip1')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Usa las páginas para SEO orgánico con keywords específicos</span>
+                <span>{t('ladm.tip2')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Incluye los links en tus mensajes de WhatsApp a prospectos</span>
+                <span>{t('ladm.tip3')}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Los formularios de contacto crean leads automáticamente en el Pipeline</span>
+                <span>{t('ladm.tip4')}</span>
               </li>
             </ul>
           </div>

@@ -6,7 +6,8 @@ import { KanbanBusiness, KanbanColumnId, KanbanResponse } from '@/app/api/kanban
 import KanbanColumn from './KanbanColumn';
 import LeadDetailModal from './LeadDetailModal';
 import AICampaignModal from './AICampaignModal';
-import { COLUMN_CONFIG } from './KanbanColumn';
+import { COLUMN_CONFIG, getColumnConfig } from './KanbanColumn';
+import { useI18n } from '@/lib/i18n';
 
 const COLUMN_ORDER: KanbanColumnId[] = [
   'nuevo',
@@ -75,14 +76,17 @@ export default function KanbanBoard() {
   const [quoteIndex] = useState(() => Math.floor(Math.random() * FOLLOW_UP_QUOTES.length));
   const motivationalQuote = FOLLOW_UP_QUOTES[quoteIndex];
 
+  const { t } = useI18n();
+  const columnConfig = getColumnConfig(t);
+
   const fetchKanbanData = useCallback(async () => {
     try {
       const response = await fetch('/api/kanban');
-      if (!response.ok) throw new Error('Error al cargar datos');
+      if (!response.ok) throw new Error('Error loading kanban data');
       const data: KanbanResponse = await response.json();
       setColumns(data.columns);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -334,7 +338,7 @@ export default function KanbanBoard() {
     }
   };
 
-  // Formatear fecha de llamada
+  // Formatear fecha de llamada (inside component to use t())
   const formatCallDate = (dateStr: string | null) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
@@ -342,11 +346,11 @@ export default function KanbanBoard() {
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return `Hoy ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t('ai.today_at')} ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
     } else if (diffDays === 1) {
-      return `Ayer ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t('ai.yesterday_at')} ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
     } else if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
+      return `${diffDays} ${t('ai.days_ago')}`;
     } else {
       return date.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
     }
@@ -466,7 +470,7 @@ export default function KanbanBoard() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
-          <p className="text-gray-500">Cargando pipeline...</p>
+          <p className="text-gray-500">{t('kanban.loading')}</p>
         </div>
       </div>
     );
@@ -481,7 +485,7 @@ export default function KanbanBoard() {
             onClick={fetchKanbanData}
             className="mt-2 px-4 py-2 bg-red-100 hover:bg-red-200 rounded-lg text-sm"
           >
-            Reintentar
+            {t('kanban.retry')}
           </button>
         </div>
       </div>
@@ -509,7 +513,7 @@ export default function KanbanBoard() {
               </div>
               <div>
                 <h3 className={`font-bold text-sm sm:text-base ${followUpMetrics.finalCount > 0 ? 'text-white' : followUpMetrics.criticalCount > 0 ? 'text-red-800' : 'text-orange-800'}`}>
-                  ¡{followUpMetrics.needsAttention} leads necesitan seguimiento!
+                  {followUpMetrics.needsAttention} {t('kanban.needs_followup')}
                 </h3>
                 <p className={`text-xs sm:text-sm hidden sm:block ${followUpMetrics.finalCount > 0 ? 'text-gray-300' : followUpMetrics.criticalCount > 0 ? 'text-red-600' : 'text-orange-600'}`}>
                   {getFollowUpTip(followUpMetrics.urgentCount, followUpMetrics.criticalCount, followUpMetrics.singleContactLeads, followUpMetrics.finalCount)}
@@ -550,17 +554,16 @@ export default function KanbanBoard() {
           onClick={() => setShowAICampaign(true)}
           className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg sm:rounded-xl font-medium shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-1.5 sm:gap-2"
         >
-          <span className="text-base sm:text-lg">🤖</span>
-          <span className="hidden sm:inline">Campaña IA</span>
-          <span className="sm:hidden">IA</span>
+          <span className="hidden sm:inline">{t('kanban.ai_campaign')}</span>
+          <span className="sm:hidden">{t('kanban.ai_short')}</span>
         </button>
 
         <span className="hidden sm:block border-l border-gray-300 h-6 mx-1"></span>
 
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
-        <span className="text-blue-600"><strong>{activeLeads}</strong> activos</span>
-        <span className="hidden sm:inline text-green-600"><strong>{columns.cliente.length}</strong> clientes</span>
-        <span className="hidden sm:inline text-amber-600"><strong>{columns.interesado.length + columns.cotizado.length}</strong> por cerrar</span>
+        <span className="text-blue-600"><strong>{activeLeads}</strong> {t('kanban.active')}</span>
+        <span className="hidden sm:inline text-green-600"><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</span>
+        <span className="hidden sm:inline text-amber-600"><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</span>
 
         {/* Métricas de llamadas IA - Clickeable para ver insights */}
         {followUpMetrics.aiCallLeads > 0 && (
@@ -623,10 +626,10 @@ export default function KanbanBoard() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    🤖 Insights de Llamadas IA
+                    {t('ai.insights_title')}
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {aiCallLeadsList.length} llamadas {insightsTimeFilter === 'today' ? 'hoy' : insightsTimeFilter === 'week' ? 'esta semana' : insightsTimeFilter === 'month' ? 'este mes' : 'en total'}
+                    {aiCallLeadsList.length} {t('ai.calls')} {insightsTimeFilter === 'today' ? t('ai.today').toLowerCase() : insightsTimeFilter === 'week' ? t('ai.this_week').toLowerCase() : insightsTimeFilter === 'month' ? t('ai.this_month').toLowerCase() : t('ai.all_time').toLowerCase()}
                   </p>
                 </div>
                 <button
@@ -642,10 +645,10 @@ export default function KanbanBoard() {
               {/* Filtro de tiempo */}
               <div className="flex gap-2 mt-3">
                 {[
-                  { value: 'today', label: 'Hoy' },
-                  { value: 'week', label: 'Esta semana' },
-                  { value: 'month', label: 'Este mes' },
-                  { value: 'all', label: 'Todo' },
+                  { value: 'today', label: t('ai.today') },
+                  { value: 'week', label: t('ai.this_week') },
+                  { value: 'month', label: t('ai.this_month') },
+                  { value: 'all', label: t('ai.all_time') },
                 ].map(({ value, label }) => (
                   <button
                     key={value}
@@ -665,20 +668,20 @@ export default function KanbanBoard() {
               {aiInsightsStats && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                    🎯 {aiInsightsStats.outcomes.interested} interesados
+                    🎯 {aiInsightsStats.outcomes.interested} {t('ai.interested')}
                   </span>
                   <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                    ❌ {aiInsightsStats.outcomes.notInterested} no interesados
+                    ❌ {aiInsightsStats.outcomes.notInterested} {t('ai.not_interested')}
                   </span>
                   <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm">
-                    📵 {aiInsightsStats.outcomes.noAnswer} no contestaron
+                    📵 {aiInsightsStats.outcomes.noAnswer} {t('ai.no_answer')}
                   </span>
                   <span className="px-3 py-1 bg-gray-50 text-gray-500 rounded-full text-sm">
-                    📭 {aiInsightsStats.outcomes.voicemail} buzón de voz
+                    📭 {aiInsightsStats.outcomes.voicemail} {t('ai.voicemail')}
                   </span>
                   {aiInsightsStats.outcomes.other > 0 && (
                     <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm">
-                      📞 {aiInsightsStats.outcomes.other} otros
+                      📞 {aiInsightsStats.outcomes.other} {t('ai.others')}
                     </span>
                   )}
                 </div>
@@ -689,15 +692,15 @@ export default function KanbanBoard() {
                 <div className="grid grid-cols-4 gap-3 mt-4 pt-3 border-t border-purple-100">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-700">{aiInsightsStats.connectionRate}%</div>
-                    <div className="text-xs text-gray-500">Tasa de conexión</div>
+                    <div className="text-xs text-gray-500">{t('ai.connection_rate')}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">{aiInsightsStats.interestRate}%</div>
-                    <div className="text-xs text-gray-500">Tasa de interés</div>
+                    <div className="text-xs text-gray-500">{t('ai.interest_rate')}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">{aiInsightsStats.avgPerDay}</div>
-                    <div className="text-xs text-gray-500">Llamadas/día</div>
+                    <div className="text-xs text-gray-500">{t('ai.calls_day')}</div>
                   </div>
                   {/* Cambios de etapa por IA - inline */}
                   <div className="text-center">
@@ -709,7 +712,7 @@ export default function KanbanBoard() {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500">Movidos por IA</div>
+                    <div className="text-xs text-gray-500">{t('ai.moved_by_ai')}</div>
                   </div>
                 </div>
               )}
@@ -724,10 +727,10 @@ export default function KanbanBoard() {
                   <span className="text-2xl">🔥</span>
                   <div className="flex-1">
                     <h4 className="font-bold text-amber-800">
-                      ¡{aiInsightsStats.pendingQuotes.length} leads esperan cotización!
+                      {aiInsightsStats.pendingQuotes.length} {t('ai.pending_quotes')}
                     </h4>
                     <p className="text-sm text-amber-700 mt-1">
-                      Estos leads mostraron interés pero aún no les has enviado cotización:
+                      {t('ai.pending_quotes_desc')}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {aiInsightsStats.pendingQuotes.slice(0, 5).map(lead => (
@@ -757,14 +760,14 @@ export default function KanbanBoard() {
             {aiInsightsStats && (
               <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
                 <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                  📊 Funnel de Conversión
+                  📊 {t('ai.conversion_funnel')}
                 </h4>
                 <div className="flex items-center justify-between gap-2">
                   {/* Llamadas */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-blue-500 text-white rounded-lg py-3 px-2">
                       <div className="text-xl font-bold">{aiCallLeadsList.length}</div>
-                      <div className="text-xs opacity-90">Llamadas</div>
+                      <div className="text-xs opacity-90">{t('ai.funnel_calls')}</div>
                     </div>
                   </div>
                   <span className="text-gray-400">→</span>
@@ -772,7 +775,7 @@ export default function KanbanBoard() {
                   <div className="flex-1 text-center">
                     <div className="w-full bg-purple-500 text-white rounded-lg py-3 px-2" style={{ width: `${Math.max(60, aiInsightsStats.connectionRate)}%`, margin: '0 auto' }}>
                       <div className="text-xl font-bold">{aiInsightsStats.connected}</div>
-                      <div className="text-xs opacity-90">Conectaron</div>
+                      <div className="text-xs opacity-90">{t('ai.funnel_connected')}</div>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.connectionRate}%</div>
                   </div>
@@ -781,7 +784,7 @@ export default function KanbanBoard() {
                   <div className="flex-1 text-center">
                     <div className="w-full bg-green-500 text-white rounded-lg py-3 px-2" style={{ width: `${Math.max(50, aiInsightsStats.interestRate)}%`, margin: '0 auto' }}>
                       <div className="text-xl font-bold">{aiInsightsStats.outcomes.interested}</div>
-                      <div className="text-xs opacity-90">Interesados</div>
+                      <div className="text-xs opacity-90">{t('ai.funnel_interested')}</div>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.interestRate}%</div>
                   </div>
@@ -790,7 +793,7 @@ export default function KanbanBoard() {
                   <div className="flex-1 text-center">
                     <div className="w-full bg-amber-500 text-white rounded-lg py-3 px-2">
                       <div className="text-xl font-bold">{aiInsightsStats.aiCotizados}</div>
-                      <div className="text-xs opacity-90">Cotizados</div>
+                      <div className="text-xs opacity-90">{t('ai.funnel_quoted')}</div>
                     </div>
                   </div>
                   <span className="text-gray-400">→</span>
@@ -798,7 +801,7 @@ export default function KanbanBoard() {
                   <div className="flex-1 text-center">
                     <div className="w-full bg-emerald-600 text-white rounded-lg py-3 px-2">
                       <div className="text-xl font-bold">{aiInsightsStats.aiClientes}</div>
-                      <div className="text-xs opacity-90">Clientes</div>
+                      <div className="text-xs opacity-90">{t('ai.funnel_customers')}</div>
                     </div>
                   </div>
                 </div>
@@ -811,9 +814,9 @@ export default function KanbanBoard() {
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">🔄</span>
                   <div>
-                    <h4 className="font-semibold text-gray-800">Cambios de etapa por IA</h4>
+                    <h4 className="font-semibold text-gray-800">{t('ai.stage_changes')}</h4>
                     <p className="text-sm text-gray-600">
-                      La IA movió <strong className="text-indigo-700">{aiInsightsStats.totalAIMoves}</strong> leads automáticamente
+                      {t('ai.stage_changes_desc')} <strong className="text-indigo-700">{aiInsightsStats.totalAIMoves}</strong>
                     </p>
                   </div>
                 </div>
@@ -823,7 +826,7 @@ export default function KanbanBoard() {
                       <span className="text-lg">🎯</span>
                       <div>
                         <div className="text-lg font-bold text-green-700">{aiInsightsStats.movedToInteresado}</div>
-                        <div className="text-xs text-gray-500">→ Interesados</div>
+                        <div className="text-xs text-gray-500">{t('ai.to_interested')}</div>
                       </div>
                     </div>
                   )}
@@ -832,7 +835,7 @@ export default function KanbanBoard() {
                       <span className="text-lg">❌</span>
                       <div>
                         <div className="text-lg font-bold text-gray-600">{aiInsightsStats.movedToPerdido}</div>
-                        <div className="text-xs text-gray-500">→ Perdidos</div>
+                        <div className="text-xs text-gray-500">{t('ai.to_lost')}</div>
                       </div>
                     </div>
                   )}
@@ -847,18 +850,17 @@ export default function KanbanBoard() {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">⏰</span>
                     <div>
-                      <h4 className="font-semibold text-gray-800">Mejor horario para llamar</h4>
+                      <h4 className="font-semibold text-gray-800">{t('ai.best_time')}</h4>
                       <p className="text-sm text-gray-600">
                         <span className="font-bold text-green-700">
                           {aiInsightsStats.bestHour}:00 - {aiInsightsStats.bestHour + 1}:00
                         </span>
-                        {' '}tiene {aiInsightsStats.bestHourRate}% de conexión
+                        {' '}{aiInsightsStats.bestHourRate}% {t('ai.connection_at')}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-gray-500">Tip: programa tus campañas</div>
-                    <div className="text-xs text-gray-500">en este horario</div>
+                    <div className="text-xs text-gray-500">{t('ai.tip_schedule')}</div>
                   </div>
                 </div>
               </div>
@@ -869,7 +871,7 @@ export default function KanbanBoard() {
               <div className="space-y-3">
                 {aiCallLeadsList.map((lead) => {
                   const outcomeInfo = getOutcomeInfo(lead.aiCallResult?.outcome || null, lead.aiCallResult?.shortSummary);
-                  const columnConfig = COLUMN_CONFIG[lead.currentColumn as KanbanColumnId];
+                  const leadColumnConfig = columnConfig[lead.currentColumn as KanbanColumnId];
                   const conversationId = lead.aiCallResult?.conversationId;
                   const isPlaying = playingAudioId === conversationId;
                   const isLoading = audioLoading === conversationId;
@@ -890,8 +892,8 @@ export default function KanbanBoard() {
                           {/* Nombre y etapa */}
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-semibold text-gray-900 truncate">{lead.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-xs ${columnConfig?.bgColor || 'bg-gray-100'} ${columnConfig?.color || 'text-gray-600'}`}>
-                              {columnConfig?.icon} {columnConfig?.title || lead.currentColumn}
+                            <span className={`px-2 py-0.5 rounded text-xs ${leadColumnConfig?.bgColor || 'bg-gray-100'} ${leadColumnConfig?.color || 'text-gray-600'}`}>
+                              {leadColumnConfig?.icon} {leadColumnConfig?.title || lead.currentColumn}
                             </span>
                           </div>
 
@@ -962,7 +964,7 @@ export default function KanbanBoard() {
                           }}
                           className="text-sm text-purple-600 hover:text-purple-800 font-medium"
                         >
-                          Ver detalle →
+                          {t('ai.view_detail')}
                         </button>
                       </div>
                     </div>
@@ -973,8 +975,8 @@ export default function KanbanBoard() {
               {aiCallLeadsList.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   <span className="text-4xl mb-4 block">🤖</span>
-                  <p className="font-medium">No hay llamadas IA registradas</p>
-                  <p className="text-sm mt-1">Las llamadas del agente IA aparecerán aquí</p>
+                  <p className="font-medium">{t('ai.no_calls')}</p>
+                  <p className="text-sm mt-1">{t('ai.no_calls_desc')}</p>
                 </div>
               )}
             </div>
@@ -984,20 +986,20 @@ export default function KanbanBoard() {
             <div className="flex-shrink-0 px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <span>
-                  Conectaron: <strong className="text-blue-600">{aiInsightsStats?.connected || 0}</strong> de {aiCallLeadsList.length}
+                  {t('ai.connected')} <strong className="text-blue-600">{aiInsightsStats?.connected || 0}</strong> de {aiCallLeadsList.length}
                 </span>
                 <span className="text-gray-300">|</span>
                 <span>
-                  Interesados: <strong className="text-green-600">
+                  {t('ai.interested_of')} <strong className="text-green-600">
                     {aiInsightsStats?.outcomes.interested || 0}
-                  </strong> ({aiInsightsStats?.interestRate || 0}% de conectados)
+                  </strong> ({aiInsightsStats?.interestRate || 0}% {t('ai.of_connected')})
                 </span>
               </div>
               <button
                 onClick={() => setShowAIInsights(false)}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
               >
-                Cerrar
+                {t('biz.close')}
               </button>
             </div>
           </div>

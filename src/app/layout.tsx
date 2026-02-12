@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import AppLayout from "@/components/layout/AppLayout";
+import { I18nProvider } from "@/lib/i18n";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${plusJakarta.variable} font-sans antialiased`}>
-        <AppLayout>{children}</AppLayout>
+        <I18nProvider>
+          <AppLayout>{children}</AppLayout>
+        </I18nProvider>
       </body>
     </html>
   );

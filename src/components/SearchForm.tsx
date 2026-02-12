@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/lib/i18n';
 
 interface ProgressState {
   stage: string;
@@ -18,6 +19,7 @@ interface SearchFormProps {
 
 export default function SearchForm({ userId }: SearchFormProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [businessType, setBusinessType] = useState('');
   const [city, setCity] = useState('Lima');
   const [source, setSource] = useState<'google' | 'directorio'>('google');
@@ -139,7 +141,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
       {/* Selector de fuente */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Buscar en
+          {t('sf.search_in')}
         </label>
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -153,9 +155,9 @@ export default function SearchForm({ userId }: SearchFormProps) {
             }`}
           >
             <span className="block text-lg mb-1">🗺️</span>
-            Google Maps
+            {t('sf.google_maps')}
             <span className="block text-xs font-normal text-gray-500 mt-1">
-              Hoteles, spas, restaurantes
+              {t('sf.google_maps_desc')}
             </span>
           </button>
           <button
@@ -169,9 +171,9 @@ export default function SearchForm({ userId }: SearchFormProps) {
             }`}
           >
             <span className="block text-lg mb-1">🏭</span>
-            Directorio Industrial
+            {t('sf.directory')}
             <span className="block text-xs font-normal text-gray-500 mt-1">
-              Fabricas, talleres, empresas
+              {t('sf.directory_desc')}
             </span>
           </button>
         </div>
@@ -179,15 +181,15 @@ export default function SearchForm({ userId }: SearchFormProps) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          {source === 'google' ? 'Tipo de negocio' : 'Buscar empresas de'}
+          {source === 'google' ? t('sf.business_type') : t('sf.search_businesses')}
         </label>
         <input
           type="text"
           value={businessType}
           onChange={(e) => setBusinessType(e.target.value)}
           placeholder={source === 'google'
-            ? "ej: hotel 5 estrellas, spa, clinica..."
-            : "ej: empresa de seguridad, limpieza..."}
+            ? t('sf.placeholder_maps')
+            : t('sf.placeholder_dir')}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={loading}
         />
@@ -316,15 +318,15 @@ export default function SearchForm({ userId }: SearchFormProps) {
             return (
               <>
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-xs text-gray-500">Sugerencias ({suggestions.length} combinaciones):</p>
+                  <p className="text-xs text-gray-500">{t('sf.suggestions')} ({suggestions.length} {t('sf.combinations')}):</p>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                      <span className="text-green-700">{usedCount} buscadas</span>
+                      <span className="text-green-700">{usedCount} {t('sf.searched')}</span>
                     </span>
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                      <span className="text-blue-700">{pendingCount} pendientes</span>
+                      <span className="text-blue-700">{pendingCount} {t('sf.pending')}</span>
                     </span>
                   </div>
                 </div>
@@ -358,7 +360,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
                       onClick={() => setShowAllSuggestions(true)}
                       className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors font-medium"
                     >
-                      +{hiddenPendingCount} mas →
+                      +{hiddenPendingCount} {t('sf.more')}
                     </button>
                   )}
                   {showAllSuggestions && pendingSuggestions.length > 50 && (
@@ -367,14 +369,14 @@ export default function SearchForm({ userId }: SearchFormProps) {
                       onClick={() => setShowAllSuggestions(false)}
                       className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
                     >
-                      ← Mostrar menos
+                      {t('sf.show_less')}
                     </button>
                   )}
 
                   {/* Separador si hay usadas */}
                   {usedSuggestions.length > 0 && visiblePending.length > 0 && (
                     <div className="w-full border-t border-gray-200 my-1 pt-1">
-                      <span className="text-xs text-gray-400">Ya buscadas:</span>
+                      <span className="text-xs text-gray-400">{t('sf.already_searched')}</span>
                     </div>
                   )}
 
@@ -400,13 +402,13 @@ export default function SearchForm({ userId }: SearchFormProps) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Ciudad
+          {t('sf.city')}
         </label>
         <input
           type="text"
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          placeholder="ej: Lima, Arequipa..."
+          placeholder={t('sf.city_placeholder')}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={loading}
         />
@@ -415,7 +417,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
       {/* Info sobre detección automática */}
       <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
         <p className="text-sm text-gray-600">
-          <span className="font-medium text-gray-800">Detección automática:</span> La IA analizará cada negocio para identificar si necesita servicios de lavandería (uniformes, toallas, manteles, ropa de cama).
+          <span className="font-medium text-gray-800">{t('sf.auto_detection')}</span> {t('sf.auto_detection_desc')}
         </p>
       </div>
 
@@ -456,14 +458,14 @@ export default function SearchForm({ userId }: SearchFormProps) {
                 />
               </div>
               <div className="flex justify-between text-sm text-blue-700">
-                <span>{progress.current} de {progress.total} negocios</span>
+                <span>{progress.current} {t('sf.progress')} {progress.total} {t('sf.businesses')}</span>
                 {getEstimatedTime() && (
-                  <span>Tiempo restante: {getEstimatedTime()}</span>
+                  <span>{t('sf.time_remaining')} {getEstimatedTime()}</span>
                 )}
               </div>
               {progress.businessName && (
                 <p className="text-xs text-blue-600 mt-1 truncate">
-                  Analizando: {progress.businessName}
+                  {t('sf.analyzing')} {progress.businessName}
                 </p>
               )}
             </>
@@ -494,10 +496,10 @@ export default function SearchForm({ userId }: SearchFormProps) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            Procesando...
+            {t('sf.processing')}
           </span>
         ) : (
-          'Buscar negocios'
+          t('sf.search_button')
         )}
       </button>
     </form>

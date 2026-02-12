@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 
 interface ContactStats {
   whatsapp: number;
@@ -30,6 +31,7 @@ export default function HistorialPage() {
   const [searches, setSearches] = useState<SearchWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'with_prospects' | 'completed'>('all');
+  const { t, locale } = useI18n();
 
   useEffect(() => {
     async function fetchSearches() {
@@ -48,7 +50,7 @@ export default function HistorialPage() {
   }, []);
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('es-PE', {
+    return new Date(date).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-PE', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -65,10 +67,10 @@ export default function HistorialPage() {
       failed: 'bg-red-50 text-red-700 border-red-200',
     };
     const labels: Record<string, string> = {
-      completed: 'Completada',
-      processing: 'Procesando',
-      pending: 'Pendiente',
-      failed: 'Error',
+      completed: t('status.completed'),
+      processing: t('status.processing'),
+      pending: t('status.pending'),
+      failed: t('status.failed'),
     };
     return (
       <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${styles[status]}`}>
@@ -115,7 +117,7 @@ export default function HistorialPage() {
       <div className="p-4 sm:p-8 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin h-10 w-10 border-3 border-[#F6653C] border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-500">Cargando historial...</p>
+          <p className="text-gray-500">{t('hist.loading')}</p>
         </div>
       </div>
     );
@@ -126,8 +128,8 @@ export default function HistorialPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Historial de Búsquedas</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">Todas las búsquedas realizadas por el equipo</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('hist.title')}</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{t('hist.subtitle')}</p>
         </div>
         <Link
           href="/buscar"
@@ -136,7 +138,7 @@ export default function HistorialPage() {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Nueva búsqueda
+          {t('hist.new_search')}
         </Link>
       </div>
 
@@ -151,7 +153,7 @@ export default function HistorialPage() {
             </div>
             <div className="text-center sm:text-left">
               <p className="text-lg sm:text-2xl font-bold text-gray-900">{totalSearches}</p>
-              <p className="text-xs sm:text-sm text-gray-500">Búsquedas</p>
+              <p className="text-xs sm:text-sm text-gray-500">{t('hist.searches')}</p>
             </div>
           </div>
         </div>
@@ -164,7 +166,7 @@ export default function HistorialPage() {
             </div>
             <div className="text-center sm:text-left">
               <p className="text-lg sm:text-2xl font-bold text-gray-900">{totalLeads}</p>
-              <p className="text-xs sm:text-sm text-gray-500">Leads</p>
+              <p className="text-xs sm:text-sm text-gray-500">{t('hist.leads')}</p>
             </div>
           </div>
         </div>
@@ -177,7 +179,7 @@ export default function HistorialPage() {
             </div>
             <div className="text-center sm:text-left">
               <p className="text-lg sm:text-2xl font-bold text-gray-900">{totalProspects}</p>
-              <p className="text-xs sm:text-sm text-gray-500">Prospectos</p>
+              <p className="text-xs sm:text-sm text-gray-500">{t('hist.prospects')}</p>
             </div>
           </div>
         </div>
@@ -185,7 +187,7 @@ export default function HistorialPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto">
-        <span className="text-sm text-gray-500 hidden sm:inline">Filtrar:</span>
+        <span className="text-sm text-gray-500 hidden sm:inline">{t('hist.filter')}</span>
         <div className="flex bg-gray-100 rounded-xl p-1 min-w-0">
           <button
             onClick={() => setFilter('all')}
@@ -195,7 +197,7 @@ export default function HistorialPage() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Todas ({searches.length})
+            {t('hist.all')} ({searches.length})
           </button>
           <button
             onClick={() => setFilter('with_prospects')}
@@ -205,7 +207,7 @@ export default function HistorialPage() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Con prospectos ({searches.filter(s => s.contact_stats.prospects > 0).length})
+            {t('hist.with_prospects')} ({searches.filter(s => s.contact_stats.prospects > 0).length})
           </button>
           <button
             onClick={() => setFilter('completed')}
@@ -215,7 +217,7 @@ export default function HistorialPage() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Completadas ({searches.filter(s => s.status === 'completed').length})
+            {t('hist.completed')} ({searches.filter(s => s.status === 'completed').length})
           </button>
         </div>
       </div>
@@ -229,9 +231,9 @@ export default function HistorialPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <p className="text-gray-500 mb-2">No hay búsquedas que coincidan</p>
+            <p className="text-gray-500 mb-2">{t('hist.no_match')}</p>
             <Link href="/buscar" className="inline-flex items-center gap-2 text-[#F6653C] hover:underline font-medium">
-              Crear nueva búsqueda
+              {t('hist.create_new')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -275,7 +277,7 @@ export default function HistorialPage() {
                   {search.matching_results !== null && (
                     <div className="text-center">
                       <p className="text-lg font-bold text-gray-700">{search.matching_results}</p>
-                      <p className="text-xs text-gray-500">Leads</p>
+                      <p className="text-xs text-gray-500">{t('hist.leads')}</p>
                     </div>
                   )}
                   {search.contact_stats.whatsapp > 0 && (
@@ -287,7 +289,7 @@ export default function HistorialPage() {
                   {search.contact_stats.prospects > 0 && (
                     <div className="text-center">
                       <p className="text-lg font-bold text-purple-600">{search.contact_stats.prospects}</p>
-                      <p className="text-xs text-gray-500">Prospectos</p>
+                      <p className="text-xs text-gray-500">{t('hist.prospects')}</p>
                     </div>
                   )}
                   <svg className="w-5 h-5 text-gray-300 group-hover:text-gray-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">

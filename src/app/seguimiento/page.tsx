@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useI18n } from '@/lib/i18n';
 
 // Cargar KanbanBoard dinámicamente para evitar problemas de SSR con drag-drop
 const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
@@ -26,6 +27,7 @@ interface QuickStats {
 export default function PipelinePage() {
   const [stats, setStats] = useState<QuickStats | null>(null);
   const [showTips, setShowTips] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     // Fetch quick stats
@@ -57,8 +59,8 @@ export default function PipelinePage() {
       {/* Header - Hidden on mobile, shown in top bar */}
       <div className="hidden lg:flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pipeline de Ventas</h1>
-          <p className="text-gray-500 mt-0.5">Gestiona tus leads y cierra más ventas</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('pipe.title')}</h1>
+          <p className="text-gray-500 mt-0.5">{t('pipe.subtitle')}</p>
         </div>
 
         {/* Quick Stats - Desktop */}
@@ -67,22 +69,22 @@ export default function PipelinePage() {
             <div className="flex items-center gap-6 bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-100">
               <div className="text-center">
                 <p className="text-2xl font-bold text-gray-900">{stats.newLeads}</p>
-                <p className="text-xs text-gray-500">Nuevos</p>
+                <p className="text-xs text-gray-500">{t('pipe.new')}</p>
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-orange-500">{stats.followUpNeeded}</p>
-                <p className="text-xs text-gray-500">Follow-up</p>
+                <p className="text-xs text-gray-500">{t('pipe.followup')}</p>
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-amber-500">{stats.interested}</p>
-                <p className="text-xs text-gray-500">Interesados</p>
+                <p className="text-xs text-gray-500">{t('pipe.interested')}</p>
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-purple-500">{stats.quoted}</p>
-                <p className="text-xs text-gray-500">Cotizados</p>
+                <p className="text-xs text-gray-500">{t('pipe.quoted')}</p>
               </div>
             </div>
           </div>
@@ -102,7 +104,7 @@ export default function PipelinePage() {
           >
             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
           </svg>
-          {showTips ? 'Ocultar guía' : 'Ver guía del pipeline'}
+          {showTips ? t('pipe.hide_guide') : t('pipe.show_guide')}
         </button>
 
         {showTips && (
@@ -111,29 +113,29 @@ export default function PipelinePage() {
               <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
                 <span className="text-xl">📋</span>
                 <div>
-                  <p className="font-medium text-gray-900">Nuevos</p>
-                  <p className="text-gray-500 text-xs">Sin contactar. ¡Haz el primer contacto!</p>
+                  <p className="font-medium text-gray-900">{t('pipe.new')}</p>
+                  <p className="text-gray-500 text-xs">{t('pipe.guide_new')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl">
                 <span className="text-xl">💬</span>
                 <div>
-                  <p className="font-medium text-blue-700">1er Contacto</p>
-                  <p className="text-gray-500 text-xs">Contactados hace 0-2 días</p>
+                  <p className="font-medium text-blue-700">{t('pipe.guide_1st')}</p>
+                  <p className="text-gray-500 text-xs">{t('pipe.guide_1st_desc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-xl">
                 <span className="text-xl">⏰</span>
                 <div>
-                  <p className="font-medium text-orange-700">Seguimiento</p>
-                  <p className="text-gray-500 text-xs">3+ días sin respuesta</p>
+                  <p className="font-medium text-orange-700">{t('pipe.guide_followup')}</p>
+                  <p className="text-gray-500 text-xs">{t('pipe.guide_followup_desc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl">
                 <span className="text-xl">⭐</span>
                 <div>
-                  <p className="font-medium text-amber-700">Interesados</p>
-                  <p className="text-gray-500 text-xs">Respondieron con interés</p>
+                  <p className="font-medium text-amber-700">{t('pipe.guide_interested')}</p>
+                  <p className="text-gray-500 text-xs">{t('pipe.guide_interested_desc')}</p>
                 </div>
               </div>
             </div>
@@ -141,10 +143,8 @@ export default function PipelinePage() {
             <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
               <div className="text-3xl">🎯</div>
               <div>
-                <p className="font-semibold text-emerald-800">La clave del éxito: El seguimiento</p>
-                <p className="text-sm text-emerald-700 mt-1">
-                  <strong>80% de ventas</strong> requieren 5+ follow-ups. Solo <strong>44% de vendedores</strong> hacen más de 1 contacto.
-                </p>
+                <p className="font-semibold text-emerald-800">{t('pipe.success_key')}</p>
+                <p className="text-sm text-emerald-700 mt-1">{t('pipe.success_desc')}</p>
               </div>
             </div>
           </div>

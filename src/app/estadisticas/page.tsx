@@ -358,11 +358,11 @@ export default function HomePage() {
                   </div>
                   <p className="text-2xl sm:text-4xl font-bold text-blue-700">{stats.scoring.orca.count}</p>
                   <p className="text-[10px] sm:text-sm text-blue-600 mt-0.5 sm:mt-1">{t('dash.high_potential')}</p>
-                  {stats.scoring.orca.revenueMax > 0 && (
+                  {stats.scoring.orca.count > 0 && stats.scoring.orca.revenueMax > 0 && (
                     <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-blue-100">
-                      <p className="text-[10px] sm:text-xs text-blue-500">{t('dash.estimated_value')}</p>
+                      <p className="text-[10px] sm:text-xs text-blue-500">{t('dash.avg_per_lead')}</p>
                       <p className="text-sm sm:text-lg font-bold text-blue-700">
-                        S/{(stats.scoring.orca.revenueMin / 1000).toFixed(0)}k - S/{(stats.scoring.orca.revenueMax / 1000).toFixed(0)}k
+                        ~S/{Math.round(stats.scoring.orca.revenueMax / stats.scoring.orca.count).toLocaleString()}
                         <span className="text-[10px] sm:text-xs font-normal text-blue-500"> /{t('dash.month_short')}</span>
                       </p>
                     </div>
@@ -378,11 +378,11 @@ export default function HomePage() {
                   </div>
                   <p className="text-2xl sm:text-4xl font-bold text-emerald-700">{stats.scoring.delfin.count}</p>
                   <p className="text-[10px] sm:text-sm text-emerald-600 mt-0.5 sm:mt-1">{t('dash.medium_potential')}</p>
-                  {stats.scoring.delfin.revenueMax > 0 && (
+                  {stats.scoring.delfin.count > 0 && stats.scoring.delfin.revenueMax > 0 && (
                     <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-emerald-100">
-                      <p className="text-[10px] sm:text-xs text-emerald-500">{t('dash.estimated_value')}</p>
+                      <p className="text-[10px] sm:text-xs text-emerald-500">{t('dash.avg_per_lead')}</p>
                       <p className="text-sm sm:text-lg font-bold text-emerald-700">
-                        S/{(stats.scoring.delfin.revenueMin / 1000).toFixed(0)}k - S/{(stats.scoring.delfin.revenueMax / 1000).toFixed(0)}k
+                        ~S/{Math.round(stats.scoring.delfin.revenueMax / stats.scoring.delfin.count).toLocaleString()}
                         <span className="text-[10px] sm:text-xs font-normal text-emerald-500"> /{t('dash.month_short')}</span>
                       </p>
                     </div>
@@ -390,18 +390,24 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Total pipeline value */}
-              {(stats.scoring.orca.revenueMax + stats.scoring.delfin.revenueMax) > 0 && (
-                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    {t('dash.total_pipeline_value')}
-                  </p>
-                  <p className="text-sm sm:text-lg font-bold text-gray-900">
-                    S/{((stats.scoring.orca.revenueMin + stats.scoring.delfin.revenueMin) / 1000).toFixed(0)}k - S/{((stats.scoring.orca.revenueMax + stats.scoring.delfin.revenueMax) / 1000).toFixed(0)}k
-                    <span className="text-[10px] sm:text-xs font-normal text-gray-500"> /{t('dash.month_short')}</span>
-                  </p>
-                </div>
-              )}
+              {/* Total pipeline value - formatted clearly */}
+              {(stats.scoring.orca.revenueMax + stats.scoring.delfin.revenueMax) > 0 && (() => {
+                const totalMax = stats.scoring!.orca.revenueMax + stats.scoring!.delfin.revenueMax;
+                const formatted = totalMax >= 1000000
+                  ? `S/${(totalMax / 1000000).toFixed(1)}M`
+                  : `S/${Math.round(totalMax).toLocaleString()}`;
+                return (
+                  <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      {t('dash.total_pipeline_value')}
+                    </p>
+                    <p className="text-sm sm:text-lg font-bold text-gray-900">
+                      {formatted}
+                      <span className="text-[10px] sm:text-xs font-normal text-gray-500"> /{t('dash.month_short')}</span>
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* Scoring coverage */}
               <div className="mt-2 sm:mt-3">

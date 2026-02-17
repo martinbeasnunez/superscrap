@@ -125,9 +125,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'dash.calls_short': 'llam',
     // Scoring
     'dash.scoring_title': 'Potencial de leads',
-    'dash.high_potential': 'Alto potencial (>S/4k/mes)',
-    'dash.medium_potential': 'Potencial medio (S/500-2k/mes)',
-    'dash.estimated_value': 'Valor estimado',
+    'dash.high_potential': 'Alto potencial (>S/4,000/mes)',
+    'dash.medium_potential': 'Potencial medio (S/500-2,000/mes)',
+    'dash.avg_per_lead': 'Promedio por lead',
     'dash.month_short': 'mes',
     'dash.total_pipeline_value': 'Valor total del pipeline',
     // Sales tips
@@ -618,9 +618,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'dash.calls_short': 'calls',
     // Scoring
     'dash.scoring_title': 'Lead potential',
-    'dash.high_potential': 'High potential (>S/4k/mo)',
-    'dash.medium_potential': 'Medium potential (S/500-2k/mo)',
-    'dash.estimated_value': 'Estimated value',
+    'dash.high_potential': 'High potential (>S/4,000/mo)',
+    'dash.medium_potential': 'Medium potential (S/500-2,000/mo)',
+    'dash.avg_per_lead': 'Average per lead',
     'dash.month_short': 'mo',
     'dash.total_pipeline_value': 'Total pipeline value',
     // Sales tips

@@ -77,3 +77,15 @@ CREATE POLICY "Allow all for searches" ON searches FOR ALL USING (true) WITH CHE
 CREATE POLICY "Allow all for businesses" ON businesses FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all for service_analyses" ON service_analyses FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all for contact_history" ON contact_history FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================================
+-- Migration 003: Orca/Delfin Potential Scoring
+-- ============================================================
+ALTER TABLE service_analyses
+  ADD COLUMN potential_score INTEGER,
+  ADD COLUMN potential_tier TEXT CHECK (potential_tier IN ('orca', 'delfin', 'unknown')),
+  ADD COLUMN estimated_revenue_min INTEGER,
+  ADD COLUMN estimated_revenue_max INTEGER,
+  ADD COLUMN potential_signals TEXT[];
+
+CREATE INDEX idx_analyses_tier ON service_analyses(potential_tier);

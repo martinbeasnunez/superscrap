@@ -80,6 +80,12 @@ export interface ServiceAnalysis {
   matches_requirements: boolean;
   match_percentage: number;
   analyzed_at: string;
+  // Orca/Delfin scoring
+  potential_score: number | null;
+  potential_tier: PotentialTier | null;
+  estimated_revenue_min: number | null;
+  estimated_revenue_max: number | null;
+  potential_signals: string[] | null;
 }
 
 export interface BusinessWithAnalysis extends Business {
@@ -120,4 +126,15 @@ export interface OpenAIAnalysisResponse {
   detected_services: string[];
   confidence: number;
   evidence: string;
+}
+
+// Clasificación de potencial de revenue: Orca (>S/4k/mes) vs Delfin (S/500-2k/mes)
+export type PotentialTier = 'orca' | 'delfin' | 'unknown';
+
+export interface PotentialScore {
+  score: number;          // 0-100
+  tier: PotentialTier;
+  revenue: { min: number; max: number; label: string };
+  signals: string[];      // ["Hotel 5 estrellas (+45)", "Distrito premium (+10)"]
+  industry: string;
 }

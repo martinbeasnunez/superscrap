@@ -907,6 +907,31 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           </div>
 
+          {/* Orca/Delfin Scoring */}
+          {business.potential_tier && business.potential_tier !== 'unknown' && (
+            <div className={`mb-4 p-3 rounded-lg border-2 ${
+              business.potential_tier === 'orca'
+                ? 'bg-blue-50 border-blue-200'
+                : 'bg-emerald-50 border-emerald-200'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-base">
+                  {business.potential_tier === 'orca' ? '🐋 ORCA' : '🐬 DELFIN'}
+                </span>
+                <span className="text-xs font-medium text-gray-500">
+                  Score: {business.potential_score}/100
+                </span>
+              </div>
+              {business.estimated_revenue_min != null && business.estimated_revenue_max != null && (
+                <p className={`text-sm font-medium ${
+                  business.potential_tier === 'orca' ? 'text-blue-700' : 'text-emerald-700'
+                }`}>
+                  Revenue estimado: S/{business.estimated_revenue_min.toLocaleString()} - S/{business.estimated_revenue_max.toLocaleString()}/mes
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Info de contacto */}
           <div className="space-y-3 mb-4">
             {business.phone && (

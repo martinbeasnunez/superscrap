@@ -21,7 +21,7 @@ export default function SearchDetailPage({
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<'all' | 'matching'>('all');
+  const [filter, setFilter] = useState<'all' | 'matching' | 'orca' | 'delfin'>('all');
   const [deleting, setDeleting] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreMessage, setLoadMoreMessage] = useState('');
@@ -138,13 +138,21 @@ export default function SearchDetailPage({
   }
 
   const { search, businesses } = data;
-  const filteredBusinesses =
-    filter === 'matching'
-      ? businesses.filter((b) => b.analysis?.matches_requirements)
-      : businesses;
+  const filteredBusinesses = businesses.filter((b) => {
+    if (filter === 'matching') return b.analysis?.matches_requirements;
+    if (filter === 'orca') return b.analysis?.potential_tier === 'orca';
+    if (filter === 'delfin') return b.analysis?.potential_tier === 'delfin';
+    return true;
+  });
 
-  // Sort by priority district (top zones first)
+  // Sort: Orcas first, then priority district, then rest
   const sortedBusinesses = [...filteredBusinesses].sort((a, b) => {
+    // Tier priority: orca > delfin > unknown
+    const tierVal = (biz: BusinessWithAnalysis) =>
+      biz.analysis?.potential_tier === 'orca' ? 2 : biz.analysis?.potential_tier === 'delfin' ? 1 : 0;
+    const tierDiff = tierVal(b) - tierVal(a);
+    if (tierDiff !== 0) return tierDiff;
+    // Then priority district
     const aPriority = isPriorityDistrict(a.address) ? 1 : 0;
     const bPriority = isPriorityDistrict(b.address) ? 1 : 0;
     return bPriority - aPriority;
@@ -250,6 +258,30 @@ export default function SearchDetailPage({
             >
               {t('detail.matching')} ({businesses.filter((b) => b.analysis?.matches_requirements).length})
             </button>
+            {businesses.some(b => b.analysis?.potential_tier === 'orca') && (
+              <button
+                onClick={() => setFilter('orca')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === 'orca'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                🐋 Orcas ({businesses.filter((b) => b.analysis?.potential_tier === 'orca').length})
+              </button>
+            )}
+            {businesses.some(b => b.analysis?.potential_tier === 'delfin') && (
+              <button
+                onClick={() => setFilter('delfin')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === 'delfin'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                🐬 Delfines ({businesses.filter((b) => b.analysis?.potential_tier === 'delfin').length})
+              </button>
+            )}
           </div>
         </div>
 

@@ -595,6 +595,26 @@ export default function BusinessCard({
             {t('biz.top_zone')}
           </span>
         )}
+        {analysis?.potential_tier === 'orca' && (
+          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-800 rounded text-[10px] sm:text-xs font-bold border border-blue-300 flex items-center gap-1">
+            🐋 <span className="hidden sm:inline">ORCA</span>
+            {analysis.estimated_revenue_min != null && analysis.estimated_revenue_max != null && (
+              <span className="font-normal text-blue-600 hidden sm:inline">
+                S/{(analysis.estimated_revenue_min / 1000).toFixed(0)}k-{(analysis.estimated_revenue_max / 1000).toFixed(0)}k
+              </span>
+            )}
+          </span>
+        )}
+        {analysis?.potential_tier === 'delfin' && (
+          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-emerald-50 text-emerald-700 rounded text-[10px] sm:text-xs font-medium border border-emerald-200 flex items-center gap-1">
+            🐬 <span className="hidden sm:inline">DELFIN</span>
+            {analysis.estimated_revenue_min != null && analysis.estimated_revenue_max != null && (
+              <span className="font-normal text-emerald-500 hidden sm:inline">
+                S/{analysis.estimated_revenue_min.toLocaleString()}-{analysis.estimated_revenue_max.toLocaleString()}
+              </span>
+            )}
+          </span>
+        )}
         {getLeadStatusLabel() && (
           <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium border ${getLeadStatusStyle()}`}>
             {getLeadStatusLabel()}

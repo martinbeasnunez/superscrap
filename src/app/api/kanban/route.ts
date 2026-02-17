@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { SalesStage } from '@/types';
+import { SalesStage, PotentialTier } from '@/types';
 
 // Columnas del pipeline comercial con seguimiento
 export type KanbanColumnId =
@@ -57,6 +57,11 @@ export interface KanbanBusiness {
   contactCount: number;
   decision_makers: DecisionMaker[] | null;
   aiCallResult: AICallResult | null;
+  // Orca/Delfin scoring
+  potential_tier: PotentialTier | null;
+  potential_score: number | null;
+  estimated_revenue_min: number | null;
+  estimated_revenue_max: number | null;
 }
 
 export interface KanbanResponse {
@@ -119,6 +124,12 @@ export async function GET() {
         searches (
           business_type,
           city
+        ),
+        service_analyses (
+          potential_score,
+          potential_tier,
+          estimated_revenue_min,
+          estimated_revenue_max
         )
       `)
       .order('contacted_at', { ascending: false, nullsFirst: false });
@@ -225,6 +236,9 @@ export async function GET() {
         daysSinceContact = Math.floor((now.getTime() - contactDate.getTime()) / (1000 * 60 * 60 * 24));
       }
 
+      // service_analyses is a 1:many relation but we only need the first record
+      const analysis = Array.isArray(b.service_analyses) ? b.service_analyses[0] : null;
+
       const kanbanBusiness: KanbanBusiness = {
         id: b.id,
         name: b.name,
@@ -246,36 +260,70 @@ export async function GET() {
         daysSinceContact,
         contactCount: contactCountMap[b.id] || 0,
         aiCallResult: aiCallMap[b.id] || null,
+        potential_tier: (analysis?.potential_tier as PotentialTier) || null,
+        potential_score: analysis?.potential_score || null,
+        estimated_revenue_min: analysis?.estimated_revenue_min || null,
+        estimated_revenue_max: analysis?.estimated_revenue_max || null,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);
       columns[columnId].push(kanbanBusiness);
     });
 
-    // Ordenar cada columna
-    // Nuevos: por nombre
-    columns.nuevo.sort((a, b) => a.name.localeCompare(b.name));
-    // Contactados: más antiguos primero (pronto pasarán a seguimiento)
-    columns.contactado.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
-    // Seguimiento 1: más antiguos primero (más urgente)
-    columns.seguimiento_1.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
-    // Seguimiento 2: más antiguos primero (crítico)
-    columns.seguimiento_2.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
-    // Seguimiento 3: más antiguos primero (último intento)
-    columns.seguimiento_3.sort((a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
-    // Interesados: inbound primero, luego más recientes primero
+    // Helper: tier priority (orca=2, delfin=1, unknown/null=0)
+    const tierPriority = (b: KanbanBusiness) =>
+      b.potential_tier === 'orca' ? 2 : b.potential_tier === 'delfin' ? 1 : 0;
+
+    // Ordenar cada columna (Orcas primero dentro de cada columna, luego criterio original)
+    // Nuevos: orcas primero, luego por nombre
+    columns.nuevo.sort((a, b) => {
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
+      return a.name.localeCompare(b.name);
+    });
+    // Contactados: orcas primero, luego más antiguos primero
+    columns.contactado.sort((a, b) => {
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
+      return (b.daysSinceContact || 0) - (a.daysSinceContact || 0);
+    });
+    // Seguimiento 1-3: orcas primero, luego más antiguos primero
+    columns.seguimiento_1.sort((a, b) => {
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
+      return (b.daysSinceContact || 0) - (a.daysSinceContact || 0);
+    });
+    columns.seguimiento_2.sort((a, b) => {
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
+      return (b.daysSinceContact || 0) - (a.daysSinceContact || 0);
+    });
+    columns.seguimiento_3.sort((a, b) => {
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
+      return (b.daysSinceContact || 0) - (a.daysSinceContact || 0);
+    });
+    // Interesados: orcas primero, inbound primero, luego más recientes
     columns.interesado.sort((a, b) => {
-      // Leads inbound siempre van primero
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
       const aInbound = a.lead_status === 'inbound' ? 1 : 0;
       const bInbound = b.lead_status === 'inbound' ? 1 : 0;
       if (aInbound !== bInbound) return bInbound - aInbound;
-      // Luego por fecha de contacto (más recientes primero)
       return (a.daysSinceContact || 0) - (b.daysSinceContact || 0);
     });
-    // Cotizados: más recientes primero
-    columns.cotizado.sort((a, b) => (a.daysSinceContact || 0) - (b.daysSinceContact || 0));
-    // Clientes: por nombre
-    columns.cliente.sort((a, b) => a.name.localeCompare(b.name));
+    // Cotizados: orcas primero, luego más recientes
+    columns.cotizado.sort((a, b) => {
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
+      return (a.daysSinceContact || 0) - (b.daysSinceContact || 0);
+    });
+    // Clientes: orcas primero, luego por nombre
+    columns.cliente.sort((a, b) => {
+      const tp = tierPriority(b) - tierPriority(a);
+      if (tp !== 0) return tp;
+      return a.name.localeCompare(b.name);
+    });
     // Perdidos: por nombre
     columns.perdido.sort((a, b) => a.name.localeCompare(b.name));
 

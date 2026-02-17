@@ -565,6 +565,35 @@ export default function KanbanBoard() {
         <span className="hidden sm:inline text-green-600"><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</span>
         <span className="hidden sm:inline text-[#B8923F]"><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</span>
 
+        {/* Orca/Delfin pipeline metrics */}
+        {(() => {
+          const allLeads = COLUMN_ORDER.flatMap(col => columns[col]);
+          const orcaCount = allLeads.filter(l => l.potential_tier === 'orca').length;
+          const delfinCount = allLeads.filter(l => l.potential_tier === 'delfin').length;
+          if (orcaCount === 0 && delfinCount === 0) return null;
+
+          // Pipeline value = sum of avg revenue for active leads (not perdido/cliente)
+          const activeCols: KanbanColumnId[] = ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
+          const activeOrcas = activeCols.flatMap(col => columns[col]).filter(l => l.potential_tier === 'orca');
+          const pipelineValue = activeOrcas.reduce((sum, l) => {
+            const avg = ((l.estimated_revenue_min || 0) + (l.estimated_revenue_max || 0)) / 2;
+            return sum + avg;
+          }, 0);
+
+          return (
+            <>
+              <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
+              <span className="text-blue-700 font-medium">🐋 {orcaCount}</span>
+              <span className="text-emerald-600">🐬 {delfinCount}</span>
+              {pipelineValue > 0 && (
+                <span className="hidden sm:inline text-blue-600 text-xs">
+                  ~S/{(pipelineValue / 1000).toFixed(0)}k/mes
+                </span>
+              )}
+            </>
+          );
+        })()}
+
         {/* Métricas de llamadas IA - Clickeable para ver insights */}
         {followUpMetrics.aiCallLeads > 0 && (
           <>

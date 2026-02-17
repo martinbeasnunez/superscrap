@@ -261,6 +261,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'kanban.active': 'activos',
     'kanban.customers': 'clientes',
     'kanban.to_close': 'por cerrar',
+    'kanban.pipeline_month': '/mes pipeline',
+    'tier.estimated_revenue': 'Revenue estimado',
+    'tier.per_month': '/mes',
+    'tier.score': 'Puntaje potencial',
     // Kanban columns
     'col.new': 'Nuevos',
     'col.new_desc': 'Sin contactar aún',
@@ -743,6 +747,10 @@ const translations: Record<Locale, Record<string, string>> = {
     'kanban.active': 'active',
     'kanban.customers': 'customers',
     'kanban.to_close': 'to close',
+    'kanban.pipeline_month': '/month pipeline',
+    'tier.estimated_revenue': 'Estimated revenue',
+    'tier.per_month': '/month',
+    'tier.score': 'Potential score',
     // Kanban columns
     'col.new': 'New',
     'col.new_desc': 'Not contacted yet',

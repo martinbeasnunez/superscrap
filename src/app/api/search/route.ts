@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { searchLocalBusinesses } from '@/lib/serpapi';
 import { analyzeBusinessServices } from '@/lib/openai';
 import { scrapeWebsiteDeep, searchKeywordsInContent } from '@/lib/scraper';
+import { calculatePotentialScore } from '@/lib/scoring';
 
 // Distritos prioritarios de Lima
 const PRIORITY_DISTRICTS = [
@@ -237,6 +238,15 @@ export async function POST(request: NextRequest) {
         matchingCount++;
       }
 
+      // Calcular potencial Orca/Delfin
+      const potential = calculatePotentialScore({
+        name: result.title,
+        businessType: result.type || businessType,
+        rating: result.rating || null,
+        reviewsCount: result.reviews || null,
+        address: result.address || null,
+      });
+
       await supabase.from('service_analyses').insert({
         business_id: business.id,
         detected_services: analysis.detected_services,
@@ -244,6 +254,11 @@ export async function POST(request: NextRequest) {
         evidence: analysis.evidence,
         matches_requirements: matchesRequirements,
         match_percentage: matchPercentage,
+        potential_score: potential.score,
+        potential_tier: potential.tier,
+        estimated_revenue_min: potential.revenue.min,
+        estimated_revenue_max: potential.revenue.max,
+        potential_signals: potential.signals,
       });
 
       // Small delay to avoid rate limits

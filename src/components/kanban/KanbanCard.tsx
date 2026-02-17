@@ -122,11 +122,12 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
   const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount, t);
   const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null, t) : null;
 
-  // Borde especial según urgencia
+  // Borde especial según urgencia (Orcas sin urgencia tienen borde azul)
   const getBorderStyle = () => {
     if (urgency.level === 'critical') return 'border-l-4 border-l-red-500';
     if (urgency.level === 'urgent') return 'border-l-4 border-l-blue-500';
     if (urgency.level === 'warning') return 'border-l-4 border-l-[#E6B85E]';
+    if (business.potential_tier === 'orca') return 'border-l-4 border-l-blue-400';
     return '';
   };
 
@@ -152,6 +153,23 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
               <span>🔥</span>
               {t('card.inbound_call_now')}
             </div>
+          )}
+
+          {/* Orca/Delfin tier badge */}
+          {business.potential_tier === 'orca' && (
+            <div className="mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
+              🐋 ORCA
+              {business.estimated_revenue_min != null && business.estimated_revenue_max != null && (
+                <span className="font-normal opacity-75">
+                  ~S/{((business.estimated_revenue_min + business.estimated_revenue_max) / 2 / 1000).toFixed(0)}k/mes
+                </span>
+              )}
+            </div>
+          )}
+          {business.potential_tier === 'delfin' && (
+            <span className="mb-1.5 px-1.5 py-0.5 rounded text-[10px] text-emerald-600 bg-emerald-50 inline-block">
+              🐬
+            </span>
           )}
 
           {/* Badge de urgencia - prominente arriba */}

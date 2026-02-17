@@ -48,6 +48,12 @@ interface Stats {
     bestType: { name: string; rate: number; prospects: number } | null;
     topDistricts: { name: string; prospects: number }[];
   };
+  scoring?: {
+    orca: { count: number; revenueMin: number; revenueMax: number };
+    delfin: { count: number; revenueMin: number; revenueMax: number };
+    unknown: number;
+    total: number;
+  };
 }
 
 // Componente para mostrar comparación semanal
@@ -328,6 +334,88 @@ export default function HomePage() {
               />
             </div>
           </div>
+
+          {/* Orca/Delfin Scoring */}
+          {stats.scoring && (stats.scoring.orca.count > 0 || stats.scoring.delfin.count > 0) && (
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 mb-4 sm:mb-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="font-semibold text-gray-900 text-sm sm:text-base flex items-center gap-2">
+                  <span className="text-lg sm:text-xl">🎯</span>
+                  {t('dash.scoring_title')}
+                </h3>
+                <Link href="/seguimiento" className="text-xs sm:text-sm text-[#0890F1] hover:underline font-medium">
+                  {t('dash.view_pipeline')} →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {/* Orca card */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-blue-100">
+                  <div className="absolute top-1 right-1 sm:top-2 sm:right-2 text-3xl sm:text-5xl opacity-10">🐋</div>
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <span className="text-xl sm:text-2xl">🐋</span>
+                    <span className="px-1.5 sm:px-2 py-0.5 bg-blue-600 text-white text-[10px] sm:text-xs font-bold rounded">ORCA</span>
+                  </div>
+                  <p className="text-2xl sm:text-4xl font-bold text-blue-700">{stats.scoring.orca.count}</p>
+                  <p className="text-[10px] sm:text-sm text-blue-600 mt-0.5 sm:mt-1">{t('dash.high_potential')}</p>
+                  {stats.scoring.orca.revenueMax > 0 && (
+                    <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-blue-100">
+                      <p className="text-[10px] sm:text-xs text-blue-500">{t('dash.estimated_value')}</p>
+                      <p className="text-sm sm:text-lg font-bold text-blue-700">
+                        S/{(stats.scoring.orca.revenueMin / 1000).toFixed(0)}k - S/{(stats.scoring.orca.revenueMax / 1000).toFixed(0)}k
+                        <span className="text-[10px] sm:text-xs font-normal text-blue-500"> /{t('dash.month_short')}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Delfin card */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-emerald-100">
+                  <div className="absolute top-1 right-1 sm:top-2 sm:right-2 text-3xl sm:text-5xl opacity-10">🐬</div>
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <span className="text-xl sm:text-2xl">🐬</span>
+                    <span className="px-1.5 sm:px-2 py-0.5 bg-emerald-600 text-white text-[10px] sm:text-xs font-bold rounded">DELFIN</span>
+                  </div>
+                  <p className="text-2xl sm:text-4xl font-bold text-emerald-700">{stats.scoring.delfin.count}</p>
+                  <p className="text-[10px] sm:text-sm text-emerald-600 mt-0.5 sm:mt-1">{t('dash.medium_potential')}</p>
+                  {stats.scoring.delfin.revenueMax > 0 && (
+                    <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-emerald-100">
+                      <p className="text-[10px] sm:text-xs text-emerald-500">{t('dash.estimated_value')}</p>
+                      <p className="text-sm sm:text-lg font-bold text-emerald-700">
+                        S/{(stats.scoring.delfin.revenueMin / 1000).toFixed(0)}k - S/{(stats.scoring.delfin.revenueMax / 1000).toFixed(0)}k
+                        <span className="text-[10px] sm:text-xs font-normal text-emerald-500"> /{t('dash.month_short')}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Total pipeline value */}
+              {(stats.scoring.orca.revenueMax + stats.scoring.delfin.revenueMax) > 0 && (
+                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    {t('dash.total_pipeline_value')}
+                  </p>
+                  <p className="text-sm sm:text-lg font-bold text-gray-900">
+                    S/{((stats.scoring.orca.revenueMin + stats.scoring.delfin.revenueMin) / 1000).toFixed(0)}k - S/{((stats.scoring.orca.revenueMax + stats.scoring.delfin.revenueMax) / 1000).toFixed(0)}k
+                    <span className="text-[10px] sm:text-xs font-normal text-gray-500"> /{t('dash.month_short')}</span>
+                  </p>
+                </div>
+              )}
+
+              {/* Scoring coverage */}
+              <div className="mt-2 sm:mt-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden flex">
+                    <div className="bg-blue-500 h-full" style={{ width: `${stats.scoring.total > 0 ? (stats.scoring.orca.count / stats.scoring.total) * 100 : 0}%` }} />
+                    <div className="bg-emerald-500 h-full" style={{ width: `${stats.scoring.total > 0 ? (stats.scoring.delfin.count / stats.scoring.total) * 100 : 0}%` }} />
+                    <div className="bg-gray-300 h-full" style={{ width: `${stats.scoring.total > 0 ? (stats.scoring.unknown / stats.scoring.total) * 100 : 0}%` }} />
+                  </div>
+                  <span className="text-[10px] sm:text-xs text-gray-400 flex-shrink-0">{stats.scoring.total} leads</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Grid principal */}
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">

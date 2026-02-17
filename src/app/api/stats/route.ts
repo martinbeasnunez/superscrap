@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ContactAction, LeadStatus } from '@/types';
+import { PotentialTier } from '@/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -315,6 +316,30 @@ export async function GET() {
       .slice(0, 3)
       .map(([name, stats]) => ({ name, prospects: stats.prospects }));
 
+    // Orca/Delfin scoring stats
+    const { data: scoringData } = await supabase
+      .from('service_analyses')
+      .select('potential_tier, potential_score, estimated_revenue_min, estimated_revenue_max')
+      .not('potential_tier', 'is', null);
+
+    let orcaCount = 0, delfinCount = 0, unknownCount = 0;
+    let orcaRevenueMin = 0, orcaRevenueMax = 0;
+    let delfinRevenueMin = 0, delfinRevenueMax = 0;
+
+    scoringData?.forEach((s: { potential_tier: string | null; potential_score: number | null; estimated_revenue_min: number | null; estimated_revenue_max: number | null }) => {
+      if (s.potential_tier === 'orca') {
+        orcaCount++;
+        orcaRevenueMin += s.estimated_revenue_min || 0;
+        orcaRevenueMax += s.estimated_revenue_max || 0;
+      } else if (s.potential_tier === 'delfin') {
+        delfinCount++;
+        delfinRevenueMin += s.estimated_revenue_min || 0;
+        delfinRevenueMax += s.estimated_revenue_max || 0;
+      } else {
+        unknownCount++;
+      }
+    });
+
     return NextResponse.json({
       total: {
         searches: totalSearches || 0,
@@ -352,6 +377,12 @@ export async function GET() {
       insights: {
         bestType,
         topDistricts,
+      },
+      scoring: {
+        orca: { count: orcaCount, revenueMin: orcaRevenueMin, revenueMax: orcaRevenueMax },
+        delfin: { count: delfinCount, revenueMin: delfinRevenueMin, revenueMax: delfinRevenueMax },
+        unknown: unknownCount,
+        total: (scoringData?.length || 0),
       },
     });
   } catch (error) {

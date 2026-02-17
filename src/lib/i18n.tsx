@@ -123,6 +123,13 @@ const translations: Record<Locale, Record<string, string>> = {
     'dash.top_zones': 'Top zonas',
     'dash.team_activity': 'Actividad del equipo hoy',
     'dash.calls_short': 'llam',
+    // Scoring
+    'dash.scoring_title': 'Potencial de leads',
+    'dash.high_potential': 'Alto potencial (>S/4k/mes)',
+    'dash.medium_potential': 'Potencial medio (S/500-2k/mes)',
+    'dash.estimated_value': 'Valor estimado',
+    'dash.month_short': 'mes',
+    'dash.total_pipeline_value': 'Valor total del pipeline',
     // Sales tips
     'dash.tip_followup_title': 'El follow-up es la clave',
     'dash.tip_followup_desc': '80% de las ventas requieren 5+ contactos. Solo 44% de vendedores hacen más de 1 follow-up.',
@@ -609,6 +616,13 @@ const translations: Record<Locale, Record<string, string>> = {
     'dash.top_zones': 'Top zones',
     'dash.team_activity': 'Team activity today',
     'dash.calls_short': 'calls',
+    // Scoring
+    'dash.scoring_title': 'Lead potential',
+    'dash.high_potential': 'High potential (>S/4k/mo)',
+    'dash.medium_potential': 'Medium potential (S/500-2k/mo)',
+    'dash.estimated_value': 'Estimated value',
+    'dash.month_short': 'mo',
+    'dash.total_pipeline_value': 'Total pipeline value',
     // Sales tips
     'dash.tip_followup_title': 'Follow-up is key',
     'dash.tip_followup_desc': '80% of sales require 5+ contacts. Only 44% of salespeople make more than 1 follow-up.',

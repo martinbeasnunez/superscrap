@@ -54,6 +54,17 @@ interface Stats {
     unknown: number;
     total: number;
   };
+  coaching?: {
+    prospectBreakdown: { orca: number; delfin: number; unknown: number; total: number };
+    conversionByTier: {
+      orca: { contacted: number; prospects: number; rate: number; contactsPerConversion: number };
+      delfin: { contacted: number; prospects: number; rate: number; contactsPerConversion: number };
+    };
+    growth: {
+      targetOrcas: number; orcaContactsNeeded: number;
+      targetDelfines: number; delfinContactsNeeded: number;
+    };
+  };
 }
 
 // Componente para mostrar comparación semanal
@@ -420,6 +431,111 @@ export default function HomePage() {
                   <span className="text-[10px] sm:text-xs text-gray-400 flex-shrink-0">{stats.scoring.total} leads</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Coaching de ventas */}
+          {stats.coaching && stats.coaching.prospectBreakdown.total > 0 && (
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 mb-4 sm:mb-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className="font-semibold text-gray-900 text-sm sm:text-base flex items-center gap-2">
+                  <span className="text-lg sm:text-xl">🧭</span>
+                  {t('coaching.title')}
+                </h3>
+              </div>
+
+              {/* Prospect breakdown */}
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                <p className="text-xs sm:text-sm text-gray-600 mb-2">
+                  {t('coaching.of_your')} <span className="font-bold text-gray-900">{stats.coaching.prospectBreakdown.total}</span> {t('coaching.prospects_colon')}
+                </p>
+                <div className="flex items-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg">🐋</span>
+                    <span className="text-xl sm:text-2xl font-bold text-blue-700">{stats.coaching.prospectBreakdown.orca}</span>
+                    <span className="text-[10px] sm:text-xs text-blue-600 font-medium">Orcas</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg">🐬</span>
+                    <span className="text-xl sm:text-2xl font-bold text-emerald-700">{stats.coaching.prospectBreakdown.delfin}</span>
+                    <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">Delfines</span>
+                  </div>
+                  {stats.coaching.prospectBreakdown.unknown > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xl sm:text-2xl font-bold text-gray-400">{stats.coaching.prospectBreakdown.unknown}</span>
+                      <span className="text-[10px] sm:text-xs text-gray-400">{t('coaching.unscored')}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Conversion insights */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="bg-blue-50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-blue-100">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="text-sm">🐋</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-blue-800">{t('coaching.conversion')}</span>
+                  </div>
+                  {stats.coaching.conversionByTier.orca.contactsPerConversion > 0 ? (
+                    <>
+                      <p className="text-xs sm:text-sm text-blue-700">
+                        {t('coaching.every')} <span className="font-bold text-blue-900">{stats.coaching.conversionByTier.orca.contactsPerConversion}</span> {t('coaching.contacts_1_prospect')}
+                      </p>
+                      <p className="text-[10px] text-blue-500 mt-1">
+                        {stats.coaching.conversionByTier.orca.rate}% {t('coaching.conv_rate')}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-blue-400">{t('coaching.no_data_yet')}</p>
+                  )}
+                </div>
+
+                <div className="bg-emerald-50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-emerald-100">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="text-sm">🐬</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-emerald-800">{t('coaching.conversion')}</span>
+                  </div>
+                  {stats.coaching.conversionByTier.delfin.contactsPerConversion > 0 ? (
+                    <>
+                      <p className="text-xs sm:text-sm text-emerald-700">
+                        {t('coaching.every')} <span className="font-bold text-emerald-900">{stats.coaching.conversionByTier.delfin.contactsPerConversion}</span> {t('coaching.contacts_1_prospect')}
+                      </p>
+                      <p className="text-[10px] text-emerald-500 mt-1">
+                        {stats.coaching.conversionByTier.delfin.rate}% {t('coaching.conv_rate')}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-emerald-400">{t('coaching.no_data_yet')}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Growth recommendation */}
+              {stats.coaching.conversionByTier.orca.contactsPerConversion > 0 && (
+                <div className="bg-gradient-to-r from-[#0890F1]/5 to-sky-50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-[#0890F1]/20">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-sm sm:text-base">🚀</span>
+                    <span className="text-xs sm:text-sm font-semibold text-gray-900">{t('coaching.growth_plan')}</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-700">
+                    {t('coaching.to_get')} <span className="font-bold text-blue-700">{stats.coaching.growth.targetOrcas} {t('coaching.more_orcas')}</span>, {t('coaching.need_to_contact')} <span className="font-bold text-[#0890F1]">~{stats.coaching.growth.orcaContactsNeeded}</span> {t('coaching.new_leads')}
+                  </p>
+                  {stats.coaching.conversionByTier.delfin.contactsPerConversion > 0 && (
+                    <p className="text-xs sm:text-sm text-gray-700 mt-1">
+                      {t('coaching.to_get')} <span className="font-bold text-emerald-700">{stats.coaching.growth.targetDelfines} {t('coaching.more_delfines')}</span>, {t('coaching.need_to_contact')} <span className="font-bold text-emerald-600">~{stats.coaching.growth.delfinContactsNeeded}</span> {t('coaching.new_leads')}
+                    </p>
+                  )}
+                  <Link
+                    href="/buscar"
+                    className="inline-flex items-center gap-1.5 mt-2.5 sm:mt-3 px-3 py-1.5 bg-[#0890F1] text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-[#0770C5] transition-colors"
+                  >
+                    {t('coaching.search_orcas')}
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

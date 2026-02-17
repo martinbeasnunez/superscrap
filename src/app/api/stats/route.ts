@@ -340,6 +340,39 @@ export async function GET() {
       }
     });
 
+    // Coaching: join businesses with service_analyses for tier-aware pipeline data
+    const { data: coachingData } = await supabase
+      .from('businesses')
+      .select('id, sales_stage, contact_actions, lead_status, service_analyses (potential_tier)')
+      .not('service_analyses', 'is', null);
+
+    let orcaProspects = 0, delfinProspects = 0, unknownProspects = 0;
+    let orcaContacted = 0, delfinContacted = 0;
+
+    coachingData?.forEach((b: any) => {
+      const tier = (b.service_analyses as any)?.[0]?.potential_tier || 'unknown';
+      const stage = b.sales_stage as string | null;
+      const leadStatus = b.lead_status as string | null;
+      const actions: string[] = b.contact_actions || [];
+
+      const isProspect = stage === 'interesado' || stage === 'cotizado'
+        || (!stage && leadStatus === 'prospect');
+      const isContacted = actions.length > 0 || (stage && stage !== 'nuevo');
+
+      if (tier === 'orca') {
+        if (isContacted) orcaContacted++;
+        if (isProspect) orcaProspects++;
+      } else if (tier === 'delfin') {
+        if (isContacted) delfinContacted++;
+        if (isProspect) delfinProspects++;
+      } else {
+        if (isProspect) unknownProspects++;
+      }
+    });
+
+    const orcaConvRate = orcaContacted > 0 ? orcaProspects / orcaContacted : 0;
+    const delfinConvRate = delfinContacted > 0 ? delfinProspects / delfinContacted : 0;
+
     return NextResponse.json({
       total: {
         searches: totalSearches || 0,
@@ -383,6 +416,34 @@ export async function GET() {
         delfin: { count: delfinCount, revenueMin: delfinRevenueMin, revenueMax: delfinRevenueMax },
         unknown: unknownCount,
         total: (scoringData?.length || 0),
+      },
+      coaching: {
+        prospectBreakdown: {
+          orca: orcaProspects,
+          delfin: delfinProspects,
+          unknown: unknownProspects,
+          total: orcaProspects + delfinProspects + unknownProspects,
+        },
+        conversionByTier: {
+          orca: {
+            contacted: orcaContacted,
+            prospects: orcaProspects,
+            rate: orcaContacted > 0 ? Math.round((orcaProspects / orcaContacted) * 100) : 0,
+            contactsPerConversion: orcaConvRate > 0 ? Math.ceil(1 / orcaConvRate) : 0,
+          },
+          delfin: {
+            contacted: delfinContacted,
+            prospects: delfinProspects,
+            rate: delfinContacted > 0 ? Math.round((delfinProspects / delfinContacted) * 100) : 0,
+            contactsPerConversion: delfinConvRate > 0 ? Math.ceil(1 / delfinConvRate) : 0,
+          },
+        },
+        growth: {
+          targetOrcas: 5,
+          orcaContactsNeeded: orcaConvRate > 0 ? Math.ceil(5 / orcaConvRate) : 0,
+          targetDelfines: 10,
+          delfinContactsNeeded: delfinConvRate > 0 ? Math.ceil(10 / delfinConvRate) : 0,
+        },
       },
     });
   } catch (error) {

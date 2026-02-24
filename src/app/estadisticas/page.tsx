@@ -544,87 +544,106 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Industry breakdown - Delfines */}
-              {stats.coaching.industryBreakdown?.delfin && stats.coaching.industryBreakdown.delfin.length > 0 && (
+              {/* Industry funnel breakdown */}
+              {stats.coaching.industryBreakdown && (stats.coaching.industryBreakdown.delfin.length > 0 || stats.coaching.industryBreakdown.orca.length > 0) && (
                 <div className="mb-3 sm:mb-4">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-sm">🐬</span>
-                    <span className="text-[10px] sm:text-xs font-semibold text-emerald-800">
-                      {t('coaching.by_industry')} ({stats.coaching.industryBreakdown.delfin.reduce((s, i) => s + i.total, 0)})
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <span className="text-sm">📊</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-gray-800">
+                      {t('coaching.funnel_title')}
                     </span>
                   </div>
-                  <div className="space-y-1">
-                    {stats.coaching.industryBreakdown.delfin.map((item) => {
-                      const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
-                      const activeCount = item.prospect + item.quoted;
-                      return (
-                        <div key={`delfin-${item.industry}`} className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50">
-                          <span className="text-sm flex-shrink-0">{info.emoji}</span>
-                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 flex-1 min-w-0 truncate">{info.label}</span>
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                            <span className="text-[10px] sm:text-xs text-gray-500">{item.total}</span>
-                            {item.contacted > 0 && (
-                              <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">
-                                {item.contacted} {t('coaching.contacted_short')}
-                              </span>
-                            )}
-                            {activeCount > 0 && (
-                              <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
-                                {activeCount} {t('coaching.active_short')}
-                              </span>
-                            )}
-                            {item.closed > 0 && (
-                              <span className="text-[10px] px-1 py-0.5 rounded bg-green-600 text-white font-medium">
-                                {item.closed} {t('coaching.closed_short')}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
-              {/* Industry breakdown - Orcas */}
-              {stats.coaching.industryBreakdown?.orca && stats.coaching.industryBreakdown.orca.length > 0 && (
-                <div className="mb-3 sm:mb-4">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-sm">🐋</span>
-                    <span className="text-[10px] sm:text-xs font-semibold text-blue-800">
-                      {t('coaching.by_industry')} ({stats.coaching.industryBreakdown.orca.reduce((s, i) => s + i.total, 0)})
-                    </span>
+                  {/* Funnel legend */}
+                  <div className="flex items-center gap-3 mb-2 px-1">
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-gray-300" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.found')}</span></div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-sky-400" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.contacted_label')}</span></div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-400" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.interested_label')}</span></div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-500" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.quoted_label')}</span></div>
+                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.closed_label')}</span></div>
                   </div>
-                  <div className="space-y-1">
-                    {stats.coaching.industryBreakdown.orca.map((item) => {
-                      const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
-                      const activeCount = item.prospect + item.quoted;
-                      return (
-                        <div key={`orca-${item.industry}`} className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-blue-50/50 rounded-lg border border-blue-100/50">
-                          <span className="text-sm flex-shrink-0">{info.emoji}</span>
-                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 flex-1 min-w-0 truncate">{info.label}</span>
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                            <span className="text-[10px] sm:text-xs text-gray-500">{item.total}</span>
-                            {item.contacted > 0 && (
-                              <span className="text-[10px] px-1 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
-                                {item.contacted} {t('coaching.contacted_short')}
-                              </span>
-                            )}
-                            {activeCount > 0 && (
-                              <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
-                                {activeCount} {t('coaching.active_short')}
-                              </span>
-                            )}
-                            {item.closed > 0 && (
-                              <span className="text-[10px] px-1 py-0.5 rounded bg-green-600 text-white font-medium">
-                                {item.closed} {t('coaching.closed_short')}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+
+                  {/* Delfin industries */}
+                  {stats.coaching.industryBreakdown.delfin.length > 0 && (
+                    <>
+                      <div className="flex items-center gap-1.5 mb-1.5 mt-2">
+                        <span className="text-xs">🐬</span>
+                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-700">Delfines</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {stats.coaching.industryBreakdown.delfin.map((item) => {
+                          const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
+                          return (
+                            <div key={`d-${item.industry}`} className="bg-gray-50 rounded-lg p-2 sm:p-2.5">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-sm">{info.emoji}</span>
+                                  <span className="text-[10px] sm:text-xs font-semibold text-gray-800">{info.label}</span>
+                                </div>
+                                <span className="text-[10px] sm:text-xs text-gray-400">{item.total} leads</span>
+                              </div>
+                              {/* Funnel bar */}
+                              <div className="flex items-center gap-0.5 h-3 sm:h-4 rounded overflow-hidden bg-gray-200">
+                                {item.total > 0 && (
+                                  <>
+                                    {/* Contacted portion */}
+                                    <div className="bg-sky-400 h-full rounded-l" style={{ width: `${(item.contacted / item.total) * 100}%` }} />
+                                    {/* Uncontacted fills rest */}
+                                  </>
+                                )}
+                              </div>
+                              {/* Funnel numbers */}
+                              <div className="flex items-center gap-2 sm:gap-3 mt-1.5">
+                                <span className="text-[10px] sm:text-xs text-sky-600 font-medium">{item.contacted} {t('coaching.contacted_label')}</span>
+                                {item.prospect > 0 && <span className="text-[10px] sm:text-xs text-amber-600 font-medium">{item.prospect} {t('coaching.interested_label')}</span>}
+                                {item.quoted > 0 && <span className="text-[10px] sm:text-xs text-orange-600 font-medium">{item.quoted} {t('coaching.quoted_label')}</span>}
+                                {item.closed > 0 && <span className="text-[10px] sm:text-xs text-green-600 font-bold">✓ {item.closed} {t('coaching.closed_label')}</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Orca industries */}
+                  {stats.coaching.industryBreakdown.orca.length > 0 && (
+                    <>
+                      <div className="flex items-center gap-1.5 mb-1.5 mt-3">
+                        <span className="text-xs">🐋</span>
+                        <span className="text-[10px] sm:text-xs font-semibold text-blue-700">Orcas</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {stats.coaching.industryBreakdown.orca.map((item) => {
+                          const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
+                          return (
+                            <div key={`o-${item.industry}`} className="bg-gray-50 rounded-lg p-2 sm:p-2.5">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-sm">{info.emoji}</span>
+                                  <span className="text-[10px] sm:text-xs font-semibold text-gray-800">{info.label}</span>
+                                </div>
+                                <span className="text-[10px] sm:text-xs text-gray-400">{item.total} leads</span>
+                              </div>
+                              {/* Funnel bar */}
+                              <div className="flex items-center gap-0.5 h-3 sm:h-4 rounded overflow-hidden bg-gray-200">
+                                {item.total > 0 && (
+                                  <div className="bg-sky-400 h-full rounded-l" style={{ width: `${(item.contacted / item.total) * 100}%` }} />
+                                )}
+                              </div>
+                              {/* Funnel numbers */}
+                              <div className="flex items-center gap-2 sm:gap-3 mt-1.5">
+                                <span className="text-[10px] sm:text-xs text-sky-600 font-medium">{item.contacted} {t('coaching.contacted_label')}</span>
+                                {item.prospect > 0 && <span className="text-[10px] sm:text-xs text-amber-600 font-medium">{item.prospect} {t('coaching.interested_label')}</span>}
+                                {item.quoted > 0 && <span className="text-[10px] sm:text-xs text-orange-600 font-medium">{item.quoted} {t('coaching.quoted_label')}</span>}
+                                {item.closed > 0 && <span className="text-[10px] sm:text-xs text-green-600 font-bold">✓ {item.closed} {t('coaching.closed_label')}</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 

@@ -672,38 +672,37 @@ export default function KanbanBoard() {
         )}
       </div>
 
-      {/* Filtro por industria */}
+      {/* Filtro por industria — compact select */}
       {availableIndustries.length > 1 && (
-        <div className="flex items-center gap-1.5 mb-2 lg:mb-3 overflow-x-auto pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
-          <span className="text-xs text-gray-400 flex-shrink-0 hidden sm:block">{t('kanban.filter_industry')}:</span>
-          <button
-            onClick={() => setIndustryFilter('all')}
-            className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-              industryFilter === 'all'
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        <div className="flex items-center gap-1.5 mb-2 lg:mb-3">
+          <select
+            value={industryFilter}
+            onChange={(e) => setIndustryFilter(e.target.value as IndustryCategory | 'all')}
+            className={`text-xs sm:text-sm px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+              industryFilter !== 'all'
+                ? 'bg-[#0890F1] text-white border-[#0890F1]'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
             }`}
           >
-            {t('kanban.filter_all')} ({COLUMN_ORDER.reduce((sum, col) => sum + columns[col].length, 0)})
-          </button>
-          {availableIndustries.map(({ industry, count }) => {
-            const info = INDUSTRY_LABELS[industry] || INDUSTRY_LABELS.other;
-            return (
-              <button
-                key={industry}
-                onClick={() => setIndustryFilter(industryFilter === industry ? 'all' : industry)}
-                className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
-                  industryFilter === industry
-                    ? 'bg-[#0890F1] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <span>{info.emoji}</span>
-                <span className="hidden sm:inline">{info.label}</span>
-                <span className="text-[10px] opacity-75">{count}</span>
-              </button>
-            );
-          })}
+            <option value="all">🏢 {t('kanban.filter_all')} ({COLUMN_ORDER.reduce((sum, col) => sum + columns[col].length, 0)})</option>
+            {availableIndustries.map(({ industry, count }) => {
+              const info = INDUSTRY_LABELS[industry] || INDUSTRY_LABELS.other;
+              return (
+                <option key={industry} value={industry}>
+                  {info.emoji} {info.label} ({count})
+                </option>
+              );
+            })}
+          </select>
+          {industryFilter !== 'all' && (
+            <button
+              onClick={() => setIndustryFilter('all')}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              title="Limpiar filtro"
+            >
+              ✕
+            </button>
+          )}
         </div>
       )}
 

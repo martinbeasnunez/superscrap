@@ -39,6 +39,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useI18n();
@@ -55,8 +56,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
         localStorage.removeItem('orbit_user');
       }
     }
+    // Restore sidebar collapsed state
+    const savedCollapsed = localStorage.getItem('orbit_sidebar_collapsed');
+    if (savedCollapsed === 'true') setSidebarCollapsed(true);
     setLoading(false);
   }, []);
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('orbit_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   // Cerrar sidebar cuando cambia la ruta
   useEffect(() => {
@@ -88,7 +100,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Layout con sidebar para usuarios autenticados
   return (
     <div className="min-h-screen bg-[#EDF0F2]">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />
 
       {/* Mobile Header */}
       <header className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-30 lg:hidden">
@@ -120,7 +132,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       {/* Main content */}
-      <main className="lg:ml-64 pt-14 lg:pt-0 min-h-screen transition-all duration-300">
+      <main className={`${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'} pt-14 lg:pt-0 min-h-screen transition-all duration-300`}>
         {children}
       </main>
 

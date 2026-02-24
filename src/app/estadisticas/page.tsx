@@ -10,6 +10,7 @@ interface IndustryItem {
   contacted: number;
   prospect: number;
   quoted: number;
+  closed: number;
 }
 
 const INDUSTRY_LABELS: Record<string, { emoji: string; label: string }> = {
@@ -572,6 +573,11 @@ export default function HomePage() {
                                 {activeCount} {t('coaching.active_short')}
                               </span>
                             )}
+                            {item.closed > 0 && (
+                              <span className="text-[10px] px-1 py-0.5 rounded bg-green-600 text-white font-medium">
+                                {item.closed} {t('coaching.closed_short')}
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
@@ -607,6 +613,11 @@ export default function HomePage() {
                             {activeCount > 0 && (
                               <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
                                 {activeCount} {t('coaching.active_short')}
+                              </span>
+                            )}
+                            {item.closed > 0 && (
+                              <span className="text-[10px] px-1 py-0.5 rounded bg-green-600 text-white font-medium">
+                                {item.closed} {t('coaching.closed_short')}
                               </span>
                             )}
                           </div>

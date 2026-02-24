@@ -351,7 +351,7 @@ export async function GET() {
     let orcaContacted = 0, delfinContacted = 0;
 
     // Industry breakdown by tier
-    const industryByTier: Record<string, Record<string, { total: number; contacted: number; prospect: number; quoted: number }>> = {
+    const industryByTier: Record<string, Record<string, { total: number; contacted: number; prospect: number; quoted: number; closed: number }>> = {
       orca: {},
       delfin: {},
     };
@@ -381,12 +381,13 @@ export async function GET() {
         const businessType = (b.searches as any)?.business_type || null;
         const industry = detectIndustry(businessType, b.name || '');
         if (!industryByTier[tier][industry]) {
-          industryByTier[tier][industry] = { total: 0, contacted: 0, prospect: 0, quoted: 0 };
+          industryByTier[tier][industry] = { total: 0, contacted: 0, prospect: 0, quoted: 0, closed: 0 };
         }
         industryByTier[tier][industry].total++;
         if (isContacted) industryByTier[tier][industry].contacted++;
         if (stage === 'interesado') industryByTier[tier][industry].prospect++;
         if (stage === 'cotizado') industryByTier[tier][industry].quoted++;
+        if (stage === 'cliente') industryByTier[tier][industry].closed++;
       }
     });
 
@@ -394,7 +395,7 @@ export async function GET() {
     const delfinConvRate = delfinContacted > 0 ? delfinProspects / delfinContacted : 0;
 
     // Build sorted industry breakdown arrays (top industries first)
-    const buildIndustryBreakdown = (tierData: Record<string, { total: number; contacted: number; prospect: number; quoted: number }>) =>
+    const buildIndustryBreakdown = (tierData: Record<string, { total: number; contacted: number; prospect: number; quoted: number; closed: number }>) =>
       Object.entries(tierData)
         .map(([industry, data]) => ({ industry, ...data }))
         .sort((a, b) => b.total - a.total)

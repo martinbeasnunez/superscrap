@@ -150,6 +150,7 @@ const translations: Record<Locale, Record<string, string>> = {
     'coaching.by_industry': 'Por industria',
     'coaching.contacted_short': 'cont.',
     'coaching.active_short': 'activos',
+    'coaching.closed_short': 'cerrados',
     // Sales tips
     'dash.tip_followup_title': 'El follow-up es la clave',
     'dash.tip_followup_desc': '80% de las ventas requieren 5+ contactos. Solo 44% de vendedores hacen más de 1 follow-up.',
@@ -663,6 +664,7 @@ const translations: Record<Locale, Record<string, string>> = {
     'coaching.by_industry': 'By industry',
     'coaching.contacted_short': 'cont.',
     'coaching.active_short': 'active',
+    'coaching.closed_short': 'closed',
     // Sales tips
     'dash.tip_followup_title': 'Follow-up is key',
     'dash.tip_followup_desc': '80% of sales require 5+ contacts. Only 44% of salespeople make more than 1 follow-up.',

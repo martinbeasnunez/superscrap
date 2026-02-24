@@ -544,108 +544,115 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Industry funnel breakdown */}
-              {stats.coaching.industryBreakdown && (stats.coaching.industryBreakdown.delfin.length > 0 || stats.coaching.industryBreakdown.orca.length > 0) && (
-                <div className="mb-3 sm:mb-4">
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <span className="text-sm">📊</span>
-                    <span className="text-[10px] sm:text-xs font-semibold text-gray-800">
-                      {t('coaching.funnel_title')}
-                    </span>
-                  </div>
+              {/* Smart industry insights + compact table */}
+              {stats.coaching.industryBreakdown && (() => {
+                const allItems = [
+                  ...stats.coaching!.industryBreakdown.delfin.map(i => ({ ...i, tier: 'delfin' as const })),
+                  ...stats.coaching!.industryBreakdown.orca.map(i => ({ ...i, tier: 'orca' as const })),
+                ];
+                // Find winning industries (have closed or quoted deals)
+                const winners = allItems.filter(i => i.closed > 0).sort((a, b) => b.closed - a.closed);
+                const hotProspects = allItems.filter(i => i.closed === 0 && (i.prospect + i.quoted) > 0).sort((a, b) => (b.prospect + b.quoted) - (a.prospect + a.quoted));
+                // Merge and dedupe by industry (combine orca+delfin for same industry)
+                const merged: Record<string, IndustryItem & { tier: string }> = {};
+                allItems.forEach(i => {
+                  if (!merged[i.industry]) merged[i.industry] = { ...i };
+                  else {
+                    merged[i.industry].total += i.total;
+                    merged[i.industry].contacted += i.contacted;
+                    merged[i.industry].prospect += i.prospect;
+                    merged[i.industry].quoted += i.quoted;
+                    merged[i.industry].closed += i.closed;
+                    merged[i.industry].tier = 'mixed';
+                  }
+                });
+                const sortedIndustries = Object.values(merged).sort((a, b) => {
+                  // Sort by: closed first, then prospect+quoted, then contacted
+                  const aScore = a.closed * 1000 + (a.prospect + a.quoted) * 100 + a.contacted;
+                  const bScore = b.closed * 1000 + (b.prospect + b.quoted) * 100 + b.contacted;
+                  return bScore - aScore;
+                }).slice(0, 6);
+                const maxTotal = Math.max(...sortedIndustries.map(i => i.total), 1);
 
-                  {/* Funnel legend */}
-                  <div className="flex items-center gap-3 mb-2 px-1">
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-gray-300" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.found')}</span></div>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-sky-400" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.contacted_label')}</span></div>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-400" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.interested_label')}</span></div>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-500" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.quoted_label')}</span></div>
-                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /><span className="text-[9px] sm:text-[10px] text-gray-400">{t('coaching.closed_label')}</span></div>
-                  </div>
+                if (sortedIndustries.length === 0) return null;
 
-                  {/* Delfin industries */}
-                  {stats.coaching.industryBreakdown.delfin.length > 0 && (
-                    <>
-                      <div className="flex items-center gap-1.5 mb-1.5 mt-2">
-                        <span className="text-xs">🐬</span>
-                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-700">Delfines</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        {stats.coaching.industryBreakdown.delfin.map((item) => {
-                          const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
+                return (
+                  <div className="mb-3 sm:mb-4">
+                    {/* Smart insights */}
+                    {(winners.length > 0 || hotProspects.length > 0) && (
+                      <div className="space-y-1.5 mb-3">
+                        {winners.slice(0, 2).map(w => {
+                          const info = INDUSTRY_LABELS[w.industry] || INDUSTRY_LABELS.other;
                           return (
-                            <div key={`d-${item.industry}`} className="bg-gray-50 rounded-lg p-2 sm:p-2.5">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-sm">{info.emoji}</span>
-                                  <span className="text-[10px] sm:text-xs font-semibold text-gray-800">{info.label}</span>
-                                </div>
-                                <span className="text-[10px] sm:text-xs text-gray-400">{item.total} leads</span>
-                              </div>
-                              {/* Funnel bar */}
-                              <div className="flex items-center gap-0.5 h-3 sm:h-4 rounded overflow-hidden bg-gray-200">
-                                {item.total > 0 && (
-                                  <>
-                                    {/* Contacted portion */}
-                                    <div className="bg-sky-400 h-full rounded-l" style={{ width: `${(item.contacted / item.total) * 100}%` }} />
-                                    {/* Uncontacted fills rest */}
-                                  </>
-                                )}
-                              </div>
-                              {/* Funnel numbers */}
-                              <div className="flex items-center gap-2 sm:gap-3 mt-1.5">
-                                <span className="text-[10px] sm:text-xs text-sky-600 font-medium">{item.contacted} {t('coaching.contacted_label')}</span>
-                                {item.prospect > 0 && <span className="text-[10px] sm:text-xs text-amber-600 font-medium">{item.prospect} {t('coaching.interested_label')}</span>}
-                                {item.quoted > 0 && <span className="text-[10px] sm:text-xs text-orange-600 font-medium">{item.quoted} {t('coaching.quoted_label')}</span>}
-                                {item.closed > 0 && <span className="text-[10px] sm:text-xs text-green-600 font-bold">✓ {item.closed} {t('coaching.closed_label')}</span>}
-                              </div>
+                            <div key={`win-${w.industry}`} className="flex items-start gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-100">
+                              <span className="text-sm mt-0.5">🔥</span>
+                              <p className="text-[10px] sm:text-xs text-green-800">
+                                <span className="font-bold">{info.emoji} {info.label}</span> {t('coaching.insight_winning')} — {w.closed} {t('coaching.closed_label').toLowerCase()}{w.prospect + w.quoted > 0 ? `, ${w.prospect + w.quoted} ${t('coaching.insight_in_pipeline')}` : ''}. <span className="font-semibold">{t('coaching.insight_keep_pushing')}</span>
+                              </p>
+                            </div>
+                          );
+                        })}
+                        {hotProspects.slice(0, 1).map(h => {
+                          const info = INDUSTRY_LABELS[h.industry] || INDUSTRY_LABELS.other;
+                          return (
+                            <div key={`hot-${h.industry}`} className="flex items-start gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100">
+                              <span className="text-sm mt-0.5">⚡</span>
+                              <p className="text-[10px] sm:text-xs text-amber-800">
+                                <span className="font-bold">{info.emoji} {info.label}</span> — {h.prospect + h.quoted} {t('coaching.insight_almost')}. {t('coaching.insight_close_them')}
+                              </p>
                             </div>
                           );
                         })}
                       </div>
-                    </>
-                  )}
+                    )}
 
-                  {/* Orca industries */}
-                  {stats.coaching.industryBreakdown.orca.length > 0 && (
-                    <>
-                      <div className="flex items-center gap-1.5 mb-1.5 mt-3">
-                        <span className="text-xs">🐋</span>
-                        <span className="text-[10px] sm:text-xs font-semibold text-blue-700">Orcas</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        {stats.coaching.industryBreakdown.orca.map((item) => {
-                          const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
-                          return (
-                            <div key={`o-${item.industry}`} className="bg-gray-50 rounded-lg p-2 sm:p-2.5">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-sm">{info.emoji}</span>
-                                  <span className="text-[10px] sm:text-xs font-semibold text-gray-800">{info.label}</span>
-                                </div>
-                                <span className="text-[10px] sm:text-xs text-gray-400">{item.total} leads</span>
-                              </div>
-                              {/* Funnel bar */}
-                              <div className="flex items-center gap-0.5 h-3 sm:h-4 rounded overflow-hidden bg-gray-200">
-                                {item.total > 0 && (
-                                  <div className="bg-sky-400 h-full rounded-l" style={{ width: `${(item.contacted / item.total) * 100}%` }} />
-                                )}
-                              </div>
-                              {/* Funnel numbers */}
-                              <div className="flex items-center gap-2 sm:gap-3 mt-1.5">
-                                <span className="text-[10px] sm:text-xs text-sky-600 font-medium">{item.contacted} {t('coaching.contacted_label')}</span>
-                                {item.prospect > 0 && <span className="text-[10px] sm:text-xs text-amber-600 font-medium">{item.prospect} {t('coaching.interested_label')}</span>}
-                                {item.quoted > 0 && <span className="text-[10px] sm:text-xs text-orange-600 font-medium">{item.quoted} {t('coaching.quoted_label')}</span>}
-                                {item.closed > 0 && <span className="text-[10px] sm:text-xs text-green-600 font-bold">✓ {item.closed} {t('coaching.closed_label')}</span>}
-                              </div>
+                    {/* Compact industry table */}
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-sm">📊</span>
+                      <span className="text-[10px] sm:text-xs font-semibold text-gray-800">{t('coaching.funnel_title')}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {sortedIndustries.map((item) => {
+                        const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
+                        const barWidth = (item.total / maxTotal) * 100;
+                        const contactedPct = item.total > 0 ? (item.contacted / item.total) * barWidth : 0;
+                        const prospectPct = item.total > 0 ? (item.prospect / item.total) * barWidth : 0;
+                        const quotedPct = item.total > 0 ? (item.quoted / item.total) * barWidth : 0;
+                        const closedPct = item.total > 0 ? (item.closed / item.total) * barWidth : 0;
+                        return (
+                          <div key={item.industry} className="flex items-center gap-2 py-1">
+                            <div className="flex items-center gap-1 w-24 sm:w-28 flex-shrink-0">
+                              <span className="text-xs">{info.emoji}</span>
+                              <span className="text-[10px] sm:text-xs text-gray-700 truncate">{info.label}</span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+                            {/* Stacked bar */}
+                            <div className="flex-1 flex items-center h-4 sm:h-5 bg-gray-100 rounded overflow-hidden">
+                              {closedPct > 0 && <div className="bg-green-500 h-full" style={{ width: `${closedPct}%` }} />}
+                              {quotedPct > 0 && <div className="bg-orange-400 h-full" style={{ width: `${quotedPct}%` }} />}
+                              {prospectPct > 0 && <div className="bg-amber-400 h-full" style={{ width: `${prospectPct}%` }} />}
+                              {contactedPct > 0 && <div className="bg-sky-300 h-full" style={{ width: `${contactedPct}%` }} />}
+                            </div>
+                            {/* Compact numbers */}
+                            <div className="flex items-center gap-1 flex-shrink-0 w-20 sm:w-24 justify-end">
+                              <span className="text-[10px] text-gray-400">{item.total}</span>
+                              <span className="text-[10px] text-sky-600">{item.contacted}</span>
+                              {(item.prospect + item.quoted) > 0 && <span className="text-[10px] text-amber-600 font-medium">{item.prospect + item.quoted}</span>}
+                              {item.closed > 0 && <span className="text-[10px] text-green-600 font-bold">✓{item.closed}</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Mini legend */}
+                    <div className="flex items-center gap-2 mt-1.5 px-1">
+                      <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-sky-300" /><span className="text-[9px] text-gray-400">{t('coaching.contacted_label')}</span></div>
+                      <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-amber-400" /><span className="text-[9px] text-gray-400">{t('coaching.interested_label')}</span></div>
+                      <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-orange-400" /><span className="text-[9px] text-gray-400">{t('coaching.quoted_label')}</span></div>
+                      <div className="flex items-center gap-0.5"><div className="w-1.5 h-1.5 rounded-full bg-green-500" /><span className="text-[9px] text-gray-400">{t('coaching.closed_label')}</span></div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Growth recommendation */}
               {stats.coaching.conversionByTier.orca.contactsPerConversion > 0 && (

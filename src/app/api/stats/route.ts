@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ContactAction, LeadStatus } from '@/types';
 import { PotentialTier } from '@/types';
+import { detectIndustry } from '@/lib/scoring';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -343,11 +344,17 @@ export async function GET() {
     // Coaching: join businesses with service_analyses for tier-aware pipeline data
     const { data: coachingData } = await supabase
       .from('businesses')
-      .select('id, sales_stage, contact_actions, lead_status, service_analyses (potential_tier)')
+      .select('id, name, sales_stage, contact_actions, lead_status, search_id, service_analyses (potential_tier), searches (business_type)')
       .not('service_analyses', 'is', null);
 
     let orcaProspects = 0, delfinProspects = 0, unknownProspects = 0;
     let orcaContacted = 0, delfinContacted = 0;
+
+    // Industry breakdown by tier
+    const industryByTier: Record<string, Record<string, { total: number; contacted: number; prospect: number; quoted: number }>> = {
+      orca: {},
+      delfin: {},
+    };
 
     coachingData?.forEach((b: any) => {
       const tier = (b.service_analyses as any)?.[0]?.potential_tier || 'unknown';
@@ -368,10 +375,30 @@ export async function GET() {
       } else {
         if (isProspect) unknownProspects++;
       }
+
+      // Industry breakdown for orca and delfin
+      if (tier === 'orca' || tier === 'delfin') {
+        const businessType = (b.searches as any)?.business_type || null;
+        const industry = detectIndustry(businessType, b.name || '');
+        if (!industryByTier[tier][industry]) {
+          industryByTier[tier][industry] = { total: 0, contacted: 0, prospect: 0, quoted: 0 };
+        }
+        industryByTier[tier][industry].total++;
+        if (isContacted) industryByTier[tier][industry].contacted++;
+        if (stage === 'interesado') industryByTier[tier][industry].prospect++;
+        if (stage === 'cotizado') industryByTier[tier][industry].quoted++;
+      }
     });
 
     const orcaConvRate = orcaContacted > 0 ? orcaProspects / orcaContacted : 0;
     const delfinConvRate = delfinContacted > 0 ? delfinProspects / delfinContacted : 0;
+
+    // Build sorted industry breakdown arrays (top industries first)
+    const buildIndustryBreakdown = (tierData: Record<string, { total: number; contacted: number; prospect: number; quoted: number }>) =>
+      Object.entries(tierData)
+        .map(([industry, data]) => ({ industry, ...data }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 8);
 
     return NextResponse.json({
       total: {
@@ -443,6 +470,10 @@ export async function GET() {
           orcaContactsNeeded: orcaConvRate > 0 ? Math.ceil(5 / orcaConvRate) : 0,
           targetDelfines: 10,
           delfinContactsNeeded: delfinConvRate > 0 ? Math.ceil(10 / delfinConvRate) : 0,
+        },
+        industryBreakdown: {
+          orca: buildIndustryBreakdown(industryByTier.orca),
+          delfin: buildIndustryBreakdown(industryByTier.delfin),
         },
       },
     });

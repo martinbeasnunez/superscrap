@@ -2,7 +2,7 @@ import { PotentialScore, PotentialTier } from '@/types';
 
 // ===================== INDUSTRY DETECTION =====================
 
-type IndustryCategory =
+export type IndustryCategory =
   | 'hotel_luxury'     // 5 estrellas, resort
   | 'hotel_mid'        // 4 estrellas, boutique
   | 'hotel_budget'     // 3 estrellas, hostal
@@ -22,7 +22,7 @@ type IndustryCategory =
   | 'residence'        // casa de reposo, geriatrica
   | 'other';
 
-function detectIndustry(businessType: string | null, name: string): IndustryCategory {
+export function detectIndustry(businessType: string | null, name: string): IndustryCategory {
   const type = (businessType || '').toLowerCase();
   const nameLower = name.toLowerCase();
   const combined = `${type} ${nameLower}`;

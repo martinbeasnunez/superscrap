@@ -4,6 +4,35 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
 
+interface IndustryItem {
+  industry: string;
+  total: number;
+  contacted: number;
+  prospect: number;
+  quoted: number;
+}
+
+const INDUSTRY_LABELS: Record<string, { emoji: string; label: string }> = {
+  hotel_luxury: { emoji: '🏨', label: 'Hoteles 5★' },
+  hotel_mid: { emoji: '🏨', label: 'Hoteles 3-4★' },
+  hotel_budget: { emoji: '🛏️', label: 'Hostales' },
+  hospital: { emoji: '🏥', label: 'Hospitales' },
+  clinic: { emoji: '⚕️', label: 'Clínicas' },
+  club: { emoji: '🏌️', label: 'Clubes' },
+  spa_premium: { emoji: '💆', label: 'Spas Premium' },
+  spa_basic: { emoji: '💆', label: 'Spas' },
+  gym_premium: { emoji: '🏋️', label: 'Gyms Premium' },
+  gym_basic: { emoji: '🏋️', label: 'Gyms' },
+  restaurant_gourmet: { emoji: '🍽️', label: 'Restaurantes Gourmet' },
+  restaurant_mid: { emoji: '🍽️', label: 'Restaurantes' },
+  security: { emoji: '🛡️', label: 'Seguridad' },
+  cleaning: { emoji: '🧹', label: 'Limpieza' },
+  industrial: { emoji: '🏭', label: 'Industrial' },
+  events: { emoji: '🎪', label: 'Eventos' },
+  residence: { emoji: '🏠', label: 'Residencias' },
+  other: { emoji: '🏢', label: 'Otros' },
+};
+
 interface UserStats {
   name: string;
   whatsapp: number;
@@ -63,6 +92,10 @@ interface Stats {
     growth: {
       targetOrcas: number; orcaContactsNeeded: number;
       targetDelfines: number; delfinContactsNeeded: number;
+    };
+    industryBreakdown: {
+      orca: IndustryItem[];
+      delfin: IndustryItem[];
     };
   };
 }
@@ -509,6 +542,80 @@ export default function HomePage() {
                   )}
                 </div>
               </div>
+
+              {/* Industry breakdown - Delfines */}
+              {stats.coaching.industryBreakdown?.delfin && stats.coaching.industryBreakdown.delfin.length > 0 && (
+                <div className="mb-3 sm:mb-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-sm">🐬</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-emerald-800">
+                      {t('coaching.by_industry')} ({stats.coaching.industryBreakdown.delfin.reduce((s, i) => s + i.total, 0)})
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {stats.coaching.industryBreakdown.delfin.map((item) => {
+                      const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
+                      const activeCount = item.prospect + item.quoted;
+                      return (
+                        <div key={`delfin-${item.industry}`} className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50">
+                          <span className="text-sm flex-shrink-0">{info.emoji}</span>
+                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 flex-1 min-w-0 truncate">{info.label}</span>
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                            <span className="text-[10px] sm:text-xs text-gray-500">{item.total}</span>
+                            {item.contacted > 0 && (
+                              <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">
+                                {item.contacted} {t('coaching.contacted_short')}
+                              </span>
+                            )}
+                            {activeCount > 0 && (
+                              <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
+                                {activeCount} {t('coaching.active_short')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Industry breakdown - Orcas */}
+              {stats.coaching.industryBreakdown?.orca && stats.coaching.industryBreakdown.orca.length > 0 && (
+                <div className="mb-3 sm:mb-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-sm">🐋</span>
+                    <span className="text-[10px] sm:text-xs font-semibold text-blue-800">
+                      {t('coaching.by_industry')} ({stats.coaching.industryBreakdown.orca.reduce((s, i) => s + i.total, 0)})
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {stats.coaching.industryBreakdown.orca.map((item) => {
+                      const info = INDUSTRY_LABELS[item.industry] || INDUSTRY_LABELS.other;
+                      const activeCount = item.prospect + item.quoted;
+                      return (
+                        <div key={`orca-${item.industry}`} className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-blue-50/50 rounded-lg border border-blue-100/50">
+                          <span className="text-sm flex-shrink-0">{info.emoji}</span>
+                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 flex-1 min-w-0 truncate">{info.label}</span>
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                            <span className="text-[10px] sm:text-xs text-gray-500">{item.total}</span>
+                            {item.contacted > 0 && (
+                              <span className="text-[10px] px-1 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+                                {item.contacted} {t('coaching.contacted_short')}
+                              </span>
+                            )}
+                            {activeCount > 0 && (
+                              <span className="text-[10px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
+                                {activeCount} {t('coaching.active_short')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Growth recommendation */}
               {stats.coaching.conversionByTier.orca.contactsPerConversion > 0 && (

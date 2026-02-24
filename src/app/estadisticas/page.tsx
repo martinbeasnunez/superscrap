@@ -621,9 +621,12 @@ export default function HomePage() {
                         const closedPct = item.total > 0 ? (item.closed / item.total) * barWidth : 0;
                         return (
                           <div key={item.industry} className="flex items-center gap-2 py-1">
-                            <div className="flex items-center gap-1 w-24 sm:w-28 flex-shrink-0">
+                            <div className="flex items-center gap-1 w-28 sm:w-36 flex-shrink-0">
                               <span className="text-xs">{info.emoji}</span>
                               <span className="text-[10px] sm:text-xs text-gray-700 truncate">{info.label}</span>
+                              <span className="text-[9px] sm:text-[10px] opacity-70 flex-shrink-0">
+                                {item.tier === 'orca' ? '🐋' : item.tier === 'delfin' ? '🐬' : '🐋🐬'}
+                              </span>
                             </div>
                             {/* Stacked bar */}
                             <div className="flex-1 flex items-center h-4 sm:h-5 bg-gray-100 rounded overflow-hidden">

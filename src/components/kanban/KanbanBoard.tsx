@@ -8,6 +8,7 @@ import LeadDetailModal from './LeadDetailModal';
 import AICampaignModal from './AICampaignModal';
 import { COLUMN_CONFIG, getColumnConfig } from './KanbanColumn';
 import { useI18n } from '@/lib/i18n';
+import { detectIndustry, IndustryCategory } from '@/lib/scoring';
 
 const COLUMN_ORDER: KanbanColumnId[] = [
   'nuevo',
@@ -29,6 +30,27 @@ const FOLLOW_UP_QUOTES = [
   { quote: "El que persevera, vende.", author: "Dicho de ventas" },
   { quote: "Cada follow-up te acerca más al cierre.", author: "Principio de ventas" },
 ];
+
+const INDUSTRY_LABELS: Record<string, { emoji: string; label: string }> = {
+  hotel_luxury: { emoji: '🏨', label: 'Hoteles 5★' },
+  hotel_mid: { emoji: '🏨', label: 'Hoteles 3-4★' },
+  hotel_budget: { emoji: '🛏️', label: 'Hostales' },
+  hospital: { emoji: '🏥', label: 'Hospitales' },
+  clinic: { emoji: '⚕️', label: 'Clínicas' },
+  club: { emoji: '🏌️', label: 'Clubes' },
+  spa_premium: { emoji: '💆', label: 'Spas Premium' },
+  spa_basic: { emoji: '💆', label: 'Spas' },
+  gym_premium: { emoji: '🏋️', label: 'Gyms Premium' },
+  gym_basic: { emoji: '🏋️', label: 'Gyms' },
+  restaurant_gourmet: { emoji: '🍽️', label: 'Rest. Gourmet' },
+  restaurant_mid: { emoji: '🍽️', label: 'Restaurantes' },
+  security: { emoji: '🛡️', label: 'Seguridad' },
+  cleaning: { emoji: '🧹', label: 'Limpieza' },
+  industrial: { emoji: '🏭', label: 'Industrial' },
+  events: { emoji: '🎪', label: 'Eventos' },
+  residence: { emoji: '🏠', label: 'Residencias' },
+  other: { emoji: '🏢', label: 'Otros' },
+};
 
 // Tips de seguimiento según situación
 function getFollowUpTip(urgentCount: number, criticalCount: number, contactedWithoutFollowUp: number, finalCount?: number): string {
@@ -66,6 +88,7 @@ export default function KanbanBoard() {
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [showAICampaign, setShowAICampaign] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
+  const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -139,6 +162,37 @@ export default function KanbanBoard() {
       aiOutcomes,
     };
   }, [columns]);
+
+  // Detect industries from all leads and build filter options
+  const availableIndustries = useMemo(() => {
+    const allLeads = COLUMN_ORDER.flatMap(col => columns[col]);
+    const industryCounts: Record<string, number> = {};
+    allLeads.forEach(lead => {
+      const industry = detectIndustry(lead.business_type, lead.name);
+      industryCounts[industry] = (industryCounts[industry] || 0) + 1;
+    });
+    // Sort by count descending, filter out industries with 0
+    return Object.entries(industryCounts)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([industry, count]) => ({ industry: industry as IndustryCategory, count }));
+  }, [columns]);
+
+  // Filtered columns based on industry filter
+  const filteredColumns = useMemo(() => {
+    if (industryFilter === 'all') return columns;
+    const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
+      nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
+      seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
+    };
+    COLUMN_ORDER.forEach(col => {
+      filtered[col] = columns[col].filter(lead => {
+        const industry = detectIndustry(lead.business_type, lead.name);
+        return industry === industryFilter;
+      });
+    });
+    return filtered;
+  }, [columns, industryFilter]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -618,6 +672,41 @@ export default function KanbanBoard() {
         )}
       </div>
 
+      {/* Filtro por industria */}
+      {availableIndustries.length > 1 && (
+        <div className="flex items-center gap-1.5 mb-2 lg:mb-3 overflow-x-auto pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
+          <span className="text-xs text-gray-400 flex-shrink-0 hidden sm:block">{t('kanban.filter_industry')}:</span>
+          <button
+            onClick={() => setIndustryFilter('all')}
+            className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              industryFilter === 'all'
+                ? 'bg-gray-900 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {t('kanban.filter_all')} ({COLUMN_ORDER.reduce((sum, col) => sum + columns[col].length, 0)})
+          </button>
+          {availableIndustries.map(({ industry, count }) => {
+            const info = INDUSTRY_LABELS[industry] || INDUSTRY_LABELS.other;
+            return (
+              <button
+                key={industry}
+                onClick={() => setIndustryFilter(industryFilter === industry ? 'all' : industry)}
+                className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                  industryFilter === industry
+                    ? 'bg-[#0890F1] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span>{info.emoji}</span>
+                <span className="hidden sm:inline">{info.label}</span>
+                <span className="text-[10px] opacity-75">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 -mx-2 px-2 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:snap-none">
@@ -625,7 +714,7 @@ export default function KanbanBoard() {
             <KanbanColumn
               key={columnId}
               columnId={columnId}
-              businesses={columns[columnId]}
+              businesses={filteredColumns[columnId]}
               onCardClick={handleCardClick}
             />
           ))}

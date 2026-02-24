@@ -458,6 +458,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'kanban.no_leads': 'Sin leads',
     'kanban.act_today': '¡Actúa HOY!',
     'kanban.do_followup': 'Haz follow-up',
+    'kanban.filter_industry': 'Filtrar',
+    'kanban.filter_all': 'Todos',
 
     // ==================== KANBAN CARD ====================
     'card.today': 'Hoy',
@@ -978,6 +980,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'kanban.no_leads': 'No leads',
     'kanban.act_today': 'Act TODAY!',
     'kanban.do_followup': 'Follow up',
+    'kanban.filter_industry': 'Filter',
+    'kanban.filter_all': 'All',
 
     // ==================== KANBAN CARD ====================
     'card.today': 'Today',

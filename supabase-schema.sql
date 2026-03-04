@@ -89,3 +89,9 @@ ALTER TABLE service_analyses
   ADD COLUMN potential_signals TEXT[];
 
 CREATE INDEX idx_analyses_tier ON service_analyses(potential_tier);
+
+-- ============================================================
+-- Migration 004: Enable RLS on users table (security fix)
+-- ============================================================
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all for users" ON users FOR ALL USING (true) WITH CHECK (true);

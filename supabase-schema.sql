@@ -95,3 +95,29 @@ CREATE INDEX idx_analyses_tier ON service_analyses(potential_tier);
 -- ============================================================
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all for users" ON users FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================================
+-- Migration 005: ORBIT v2 - Dedup, DM focus, Auto followup
+-- ============================================================
+
+-- Dedup: unique index on external_id (exclude paginas amarillas synthetic IDs)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_external_id_unique
+  ON businesses(external_id) WHERE external_id IS NOT NULL AND external_id NOT LIKE 'pa-%';
+
+-- Dedup: phone index for fast lookup
+CREATE INDEX IF NOT EXISTS idx_businesses_phone ON businesses(phone) WHERE phone IS NOT NULL;
+
+-- Email template tracking
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS last_email_template_id TEXT;
+
+-- Primary decision maker index
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS primary_dm_index INTEGER DEFAULT NULL;
+
+-- Auto follow-up via Kapso
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_last_sent TIMESTAMPTZ;
+
+-- Extend contact_history action types for auto WhatsApp
+ALTER TABLE contact_history DROP CONSTRAINT IF EXISTS contact_history_action_type_check;
+ALTER TABLE contact_history ADD CONSTRAINT contact_history_action_type_check
+  CHECK (action_type IN ('whatsapp', 'email', 'call', 'ai_call', 'stage_change', 'auto_whatsapp'));

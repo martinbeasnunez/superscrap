@@ -13,7 +13,10 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { contact_actions, lead_status, sales_stage, user_id, previous_stage } = body;
+    const {
+      contact_actions, lead_status, sales_stage, user_id, previous_stage,
+      primary_dm_index, auto_followup_enabled, last_email_template_id,
+    } = body;
 
     // Validar contact_actions (array de acciones)
     if (contact_actions !== undefined) {
@@ -68,6 +71,17 @@ export async function PATCH(
 
     if (sales_stage !== undefined) {
       updateData.sales_stage = sales_stage;
+    }
+
+    // v2 fields
+    if (primary_dm_index !== undefined) {
+      updateData.primary_dm_index = primary_dm_index;
+    }
+    if (auto_followup_enabled !== undefined) {
+      updateData.auto_followup_enabled = auto_followup_enabled;
+    }
+    if (last_email_template_id !== undefined) {
+      updateData.last_email_template_id = last_email_template_id;
     }
 
     console.log('Updating business:', id, 'with data:', updateData);

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { searchLocalBusinesses } from '@/lib/serpapi';
 import { analyzeBusinessServices } from '@/lib/openai';
 import { scrapeWebsiteForContacts, searchKeywordsInContent } from '@/lib/scraper';
+import { findExistingBusiness } from '@/lib/dedup';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -71,33 +72,26 @@ export async function POST(
       });
     }
 
-    // 4. Obtener IDs existentes para evitar duplicados
-    const { data: existingBusinesses } = await supabase
-      .from('businesses')
-      .select('external_id')
-      .eq('search_id', id);
-
-    const existingIds = new Set(existingBusinesses?.map((b) => b.external_id) || []);
-
-    // Filtrar duplicados
-    const uniqueResults = newResults.filter(
-      (r) => !existingIds.has(r.place_id)
-    );
-
-    if (uniqueResults.length === 0) {
-      return NextResponse.json({
-        message: 'Todos los negocios encontrados ya existen',
-        added: 0,
-        total: currentCount,
-      });
-    }
-
     const requiredServices = search.required_services || [];
     let savedCount = 0;
     let matchingCount = 0;
+    let skippedCount = 0;
 
-    // 5. Procesar y guardar nuevos negocios
-    for (const result of uniqueResults) {
+    // 5. Procesar y guardar nuevos negocios (with global dedup)
+    for (const result of newResults) {
+      // Global dedup: check across ALL searches, not just current one
+      const dedup = await findExistingBusiness(
+        result.place_id,
+        result.phone,
+        result.title,
+        result.address,
+      );
+
+      if (dedup.isDuplicate) {
+        skippedCount++;
+        console.log(`Dedup: skipped "${result.title}" (match: ${dedup.matchType})`);
+        continue;
+      }
       // Scraping del sitio web
       let websiteContent: string | null = null;
       let websiteKeywordMatches: { service: string; found: boolean; keywords: string[] }[] = [];
@@ -273,6 +267,7 @@ export async function POST(
       added: savedCount,
       matching: matchingCount,
       total: newTotal,
+      duplicatesFiltered: skippedCount,
       loadedAt: new Date().toISOString(),
     });
   } catch (error) {

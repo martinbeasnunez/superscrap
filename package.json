@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
+    "@kapso/whatsapp-cloud-api": "^0.2.0",
     "@supabase/supabase-js": "^2.90.1",
     "next": "16.1.1",
     "openai": "^6.15.0",

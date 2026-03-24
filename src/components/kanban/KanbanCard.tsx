@@ -187,6 +187,40 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
             {business.name}
           </h4>
 
+          {/* Decision maker indicator */}
+          {(() => {
+            const dms = business.decision_makers;
+            const primaryDM = dms && dms.length > 0
+              ? dms[business.primary_dm_index ?? 0] || dms[0]
+              : null;
+            if (primaryDM) {
+              const dmName = primaryDM.fullName || primaryDM.firstName || primaryDM.email?.split('@')[0] || 'Contacto';
+              return (
+                <div className="mt-0.5 flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-50 text-green-700 font-medium truncate max-w-full">
+                    👤 {dmName}{primaryDM.position ? ` · ${primaryDM.position}` : ''}
+                  </span>
+                </div>
+              );
+            }
+            return (
+              <div className="mt-0.5">
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-50 text-red-500 font-medium">
+                  {t('card.no_dm')}
+                </span>
+              </div>
+            );
+          })()}
+
+          {/* Auto follow-up badge */}
+          {business.auto_followup_enabled && (
+            <div className="mt-0.5">
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-50 text-purple-700 font-medium">
+                🤖 {t('card.auto_followup')}
+              </span>
+            </div>
+          )}
+
           {/* Info secundaria */}
           <div className="flex items-center justify-between mt-1.5">
             <div className="flex items-center gap-1.5 min-w-0">

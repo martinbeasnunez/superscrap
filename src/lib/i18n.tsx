@@ -218,6 +218,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'sf.processing': 'Procesando...',
     'sf.search_button': 'Buscar negocios',
 
+    // Search dedup
+    'search.duplicates_filtered': 'duplicados filtrados',
+
+    // Decision makers
+    'card.no_dm': 'Sin contacto clave',
+    'card.auto_followup': 'Auto',
+    'lead.no_dm_warning': 'Sin contacto clave identificado',
+    'lead.no_dm_hint': 'Asegurate de hablar con quien decide',
+    'lead.set_primary': 'Marcar como contacto principal',
+    'lead.primary_contact': 'Contacto principal',
+    'lead.auto_followup': 'Seguimiento automatico',
+    'lead.auto_followup_desc': 'Enviar WhatsApp automaticamente cada 3 dias',
+    'lead.send_kapso': 'Enviar por Kapso',
+    'lead.send_manual': 'Abrir WhatsApp Web',
+    'lead.regenerate': 'Regenerar pitch',
+
     // ==================== HISTORY (HISTORIAL) ====================
     'hist.loading': 'Cargando historial...',
     'hist.title': 'Historial de Búsquedas',
@@ -739,6 +755,22 @@ const translations: Record<Locale, Record<string, string>> = {
     'sf.analyzing': 'Analyzing:',
     'sf.processing': 'Processing...',
     'sf.search_button': 'Search businesses',
+
+    // Search dedup
+    'search.duplicates_filtered': 'duplicates filtered',
+
+    // Decision makers
+    'card.no_dm': 'No key contact',
+    'card.auto_followup': 'Auto',
+    'lead.no_dm_warning': 'No key contact identified',
+    'lead.no_dm_hint': 'Make sure you are talking to the decision maker',
+    'lead.set_primary': 'Set as primary contact',
+    'lead.primary_contact': 'Primary contact',
+    'lead.auto_followup': 'Auto follow-up',
+    'lead.auto_followup_desc': 'Auto-send WhatsApp every 3 days',
+    'lead.send_kapso': 'Send via Kapso',
+    'lead.send_manual': 'Open WhatsApp Web',
+    'lead.regenerate': 'Regenerate pitch',
 
     // ==================== HISTORY ====================
     'hist.loading': 'Loading history...',

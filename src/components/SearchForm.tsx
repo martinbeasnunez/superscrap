@@ -11,6 +11,7 @@ interface ProgressState {
   total?: number;
   businessName?: string;
   searchId?: string;
+  duplicatesFiltered?: number;
 }
 
 interface SearchFormProps {
@@ -466,6 +467,13 @@ export default function SearchForm({ userId }: SearchFormProps) {
               {progress.businessName && (
                 <p className="text-xs text-blue-600 mt-1 truncate">
                   {t('sf.analyzing')} {progress.businessName}
+                </p>
+              )}
+              {progress.duplicatesFiltered && progress.duplicatesFiltered > 0 && (
+                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-amber-100 rounded text-[10px] font-medium">
+                    {progress.duplicatesFiltered} {t('search.duplicates_filtered')}
+                  </span>
                 </p>
               )}
             </>

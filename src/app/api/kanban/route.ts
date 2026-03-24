@@ -62,6 +62,10 @@ export interface KanbanBusiness {
   potential_score: number | null;
   estimated_revenue_min: number | null;
   estimated_revenue_max: number | null;
+  // v2 fields
+  primary_dm_index: number | null;
+  auto_followup_enabled: boolean;
+  last_email_template_id: string | null;
 }
 
 export interface KanbanResponse {
@@ -121,6 +125,9 @@ export async function GET() {
         sales_stage,
         contacted_at,
         search_id,
+        primary_dm_index,
+        auto_followup_enabled,
+        last_email_template_id,
         searches (
           business_type,
           city
@@ -264,6 +271,9 @@ export async function GET() {
         potential_score: analysis?.potential_score || null,
         estimated_revenue_min: analysis?.estimated_revenue_min || null,
         estimated_revenue_max: analysis?.estimated_revenue_max || null,
+        primary_dm_index: b.primary_dm_index ?? null,
+        auto_followup_enabled: b.auto_followup_enabled ?? false,
+        last_email_template_id: b.last_email_template_id ?? null,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

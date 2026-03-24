@@ -4,6 +4,7 @@ import { searchLocalBusinesses } from '@/lib/serpapi';
 import { analyzeBusinessServices } from '@/lib/openai';
 import { scrapeWebsiteDeep, searchKeywordsInContent } from '@/lib/scraper';
 import { calculatePotentialScore } from '@/lib/scoring';
+import { findExistingBusiness } from '@/lib/dedup';
 
 // Distritos prioritarios de Lima
 const PRIORITY_DISTRICTS = [
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
     // 3. Guardar negocios y analizar
     let matchingCount = 0;
     let savedCount = 0;
+    let skippedCount = 0;
 
     for (const result of localResults) {
       // Intentar scraping del sitio web para más contexto
@@ -202,6 +204,20 @@ export async function POST(request: NextRequest) {
       );
       const matchPercentage = matchCount / requiredServices.length;
       const matchesRequirements = matchPercentage >= 0.5;
+
+      // Dedup: check if business already exists in DB
+      const dedup = await findExistingBusiness(
+        result.place_id,
+        result.phone,
+        result.title,
+        result.address,
+      );
+
+      if (dedup.isDuplicate) {
+        skippedCount++;
+        console.log(`Dedup: skipped "${result.title}" (match: ${dedup.matchType})`);
+        continue;
+      }
 
       // Guardar negocio
       const { data: business, error: businessError } = await supabase
@@ -281,6 +297,7 @@ export async function POST(request: NextRequest) {
       message: 'Búsqueda completada',
       totalResults: savedCount,
       matchingResults: matchingCount,
+      duplicatesFiltered: skippedCount,
     });
   } catch (error) {
     console.error('Search error:', error);

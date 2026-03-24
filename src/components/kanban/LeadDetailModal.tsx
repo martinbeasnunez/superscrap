@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { KanbanBusiness, KanbanColumnId, DecisionMaker } from '@/app/api/kanban/route';
 import { useI18n } from '@/lib/i18n';
 import { COLUMN_CONFIG, getColumnConfig } from './KanbanColumn';
+import { getRenderedEmailTemplate } from '@/lib/email-templates';
 
 interface LeadDetailModalProps {
   business: KanbanBusiness | null;
@@ -661,12 +662,46 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     registerAction('call');
   };
 
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
+
   const handleEmailClick = (email?: string) => {
     if (!business) return;
-    const pitch = getEmailPitch(business.name, business.business_type, currentStage, business.contactCount);
+    const pitch = getRenderedEmailTemplate(
+      business.name,
+      business.business_type,
+      currentStage,
+      business.contactCount || 0,
+      business.last_email_template_id,
+    );
+    setCurrentTemplateId(pitch.id);
     const targetEmail = email || (business.decision_makers?.find(dm => dm.email)?.email) || '';
     setEmailModal({ to: targetEmail, subject: pitch.subject, body: pitch.body });
     registerAction('email');
+    // Track which template was used
+    fetch(`/api/businesses/${business.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ last_email_template_id: pitch.id }),
+    }).catch(() => {});
+  };
+
+  const handleRegenerateEmail = () => {
+    if (!business || !emailModal) return;
+    const pitch = getRenderedEmailTemplate(
+      business.name,
+      business.business_type,
+      currentStage,
+      business.contactCount || 0,
+      currentTemplateId,
+    );
+    setCurrentTemplateId(pitch.id);
+    setEmailModal({ ...emailModal, subject: pitch.subject, body: pitch.body });
+    // Track new template
+    fetch(`/api/businesses/${business.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ last_email_template_id: pitch.id }),
+    }).catch(() => {});
   };
 
   const handleStageChange = (newStage: KanbanColumnId) => {
@@ -979,40 +1014,59 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           </div>
 
-          {/* Descripción */}
-          {business.description && (
-            <div className="mb-4">
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block">{t('lead.description')}</label>
-              <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{business.description}</p>
+          {/* Decision Makers / Contactos - ELEVATED (v2) */}
+          {(!business.decision_makers || business.decision_makers.length === 0) && (
+            <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+              <p className="text-sm font-bold text-red-700">{t('lead.no_dm_warning')}</p>
+              <p className="text-xs text-red-500 mt-1">{t('lead.no_dm_hint')}</p>
             </div>
           )}
 
-          {/* Decision Makers / Contactos */}
           {business.decision_makers && business.decision_makers.length > 0 && (
-            <div className="mb-4">
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">
+            <div className={`mb-4 border-l-4 ${business.decision_makers.length > 0 ? 'border-green-400' : 'border-red-400'} pl-3`}>
+              <label className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2 block">
                 {t('biz.contacts')} ({business.decision_makers.length})
               </label>
               <div className="space-y-2">
                 {business.decision_makers.map((dm, idx) => {
                   const isMobile = dm.phone ? isPeruvianMobile(dm.phone) : false;
+                  const isPrimary = idx === (business.primary_dm_index ?? 0);
                   return (
-                    <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 sm:p-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                          {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contacto')}
-                        </p>
-                        {dm.position && (
-                          <p className="text-[10px] sm:text-xs text-gray-500 truncate">{dm.position}</p>
-                        )}
-                        {dm.email && (
-                          <p className="text-[10px] sm:text-xs text-blue-600 truncate">{dm.email}</p>
-                        )}
-                        {dm.phone && (
-                          <p className="text-[10px] sm:text-xs text-gray-500">
-                            {isMobile ? '📱' : '☎️'} {dm.phone}
+                    <div key={idx} className={`flex items-center justify-between rounded-lg p-2 sm:p-3 ${isPrimary ? 'bg-green-50 ring-1 ring-green-200' : 'bg-gray-50'}`}>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {/* Primary contact star */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newIdx = idx;
+                            fetch(`/api/businesses/${business.id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ primary_dm_index: newIdx }),
+                            }).then(() => onActionRegistered()).catch(() => {});
+                          }}
+                          className={`flex-shrink-0 text-lg ${isPrimary ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'}`}
+                          title={t('lead.set_primary')}
+                        >
+                          {isPrimary ? '★' : '☆'}
+                        </button>
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                            {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contacto')}
+                            {isPrimary && <span className="ml-1 text-[10px] text-green-600 font-normal">({t('lead.primary_contact')})</span>}
                           </p>
-                        )}
+                          {dm.position && (
+                            <p className="text-[10px] sm:text-xs text-gray-500 truncate">{dm.position}</p>
+                          )}
+                          {dm.email && (
+                            <p className="text-[10px] sm:text-xs text-blue-600 truncate">{dm.email}</p>
+                          )}
+                          {dm.phone && (
+                            <p className="text-[10px] sm:text-xs text-gray-500">
+                              {isMobile ? '📱' : '☎️'} {dm.phone}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-0.5 sm:gap-1 ml-1 sm:ml-2 flex-shrink-0">
                         {dm.linkedin && (
@@ -1071,6 +1125,14 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           )}
 
+          {/* Descripcion */}
+          {business.description && (
+            <div className="mb-4">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block">{t('lead.description')}</label>
+              <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{business.description}</p>
+            </div>
+          )}
+
           {/* Acciones rápidas */}
           <div className="mb-4">
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">{t('lead.actions')}</label>
@@ -1114,7 +1176,62 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               </button>
             </div>
 
-            {/* Botón de Llamada con IA - Solo para columnas de prospección */}
+            {/* Kapso send + auto follow-up */}
+            {showWhatsApp && (
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={async () => {
+                    if (!business?.phone) return;
+                    setActionLoading('kapso');
+                    try {
+                      const pitch = getWhatsAppPitch(business.name, business.business_type, currentStage, business.contactCount);
+                      const res = await fetch('/api/whatsapp/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          businessId: business.id,
+                          phone: business.phone,
+                          message: pitch,
+                        }),
+                      });
+                      if (res.ok) {
+                        onActionRegistered();
+                        await fetchContactHistory();
+                      }
+                    } catch (err) {
+                      console.error('Kapso send error:', err);
+                    } finally {
+                      setActionLoading(null);
+                    }
+                  }}
+                  disabled={actionLoading === 'kapso'}
+                  className="flex-1 px-3 py-2 text-sm bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1 font-medium disabled:opacity-50"
+                >
+                  {actionLoading === 'kapso' ? <span className="animate-spin">⏳</span> : <>{t('lead.send_kapso')}</>}
+                </button>
+                <button
+                  onClick={async () => {
+                    const newValue = !business.auto_followup_enabled;
+                    await fetch(`/api/businesses/${business.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ auto_followup_enabled: newValue }),
+                    });
+                    onActionRegistered();
+                  }}
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-1 font-medium ${
+                    business.auto_followup_enabled
+                      ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-300'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  title={t('lead.auto_followup_desc')}
+                >
+                  🤖 {t('lead.auto_followup')} {business.auto_followup_enabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
+            )}
+
+            {/* Boton de Llamada con IA - Solo para columnas de prospeccion */}
             {/* El agente IA solo llama en: nuevo, contactado, seguimiento_1, seguimiento_2 */}
             {/* En interesados, cotizados, clientes, perdidos es trabajo humano */}
             {business.phone && ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3'].includes(currentStage) && (
@@ -1428,22 +1545,33 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 />
               </div>
             </div>
-            <div className="p-4 border-t border-gray-200 flex gap-2 justify-end">
+            <div className="p-4 border-t border-gray-200 flex gap-2 justify-between">
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(`${t('biz.to')} ${emailModal.to}\n${t('biz.subject')} ${emailModal.subject}\n\n${emailModal.body}`);
-                  alert(t('lead.copied'));
-                }}
-                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                onClick={handleRegenerateEmail}
+                className="px-4 py-2 text-sm bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors flex items-center gap-1"
               >
-                {t('biz.copy_all')}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {t('lead.regenerate')}
               </button>
-              <button
-                onClick={() => setEmailModal(null)}
-                className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
-              >
-                {t('biz.close')}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${t('biz.to')} ${emailModal.to}\n${t('biz.subject')} ${emailModal.subject}\n\n${emailModal.body}`);
+                    alert(t('lead.copied'));
+                  }}
+                  className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  {t('biz.copy_all')}
+                </button>
+                <button
+                  onClick={() => setEmailModal(null)}
+                  className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+                >
+                  {t('biz.close')}
+                </button>
+              </div>
             </div>
           </div>
         </div>

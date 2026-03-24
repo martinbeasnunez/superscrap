@@ -2,14 +2,26 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendWhatsAppMessage } from '@/lib/kapso';
 
-// This endpoint is called by a cron job or manually to send auto follow-ups
+// B2B follow-up cadence (industry standard)
+// Starts aggressive, spaces out over time
+function getDaysToWait(stage: string): number {
+  switch (stage) {
+    case 'contactado':
+    case 'seguimiento_1': return 2;   // Lead fresco → follow-up rápido
+    case 'seguimiento_2': return 4;   // Ya lo contactaste 2x → dar más espacio
+    case 'seguimiento_3': return 7;   // Último intento → no presionar
+    case 'interesado': return 2;      // Lead caliente → no dejar enfriar
+    case 'cotizado': return 3;        // Push al cierre pero sin acosar
+    default: return 3;
+  }
+}
+
 // GET /api/whatsapp/auto-followup
 export async function GET() {
   try {
     const now = new Date();
-    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-    // Find businesses with auto_followup_enabled that haven't been contacted in 3+ days
+    // Get all businesses with auto_followup_enabled
     const { data: businesses, error } = await supabase
       .from('businesses')
       .select(`
@@ -19,7 +31,7 @@ export async function GET() {
       `)
       .eq('auto_followup_enabled', true)
       .not('phone', 'is', null)
-      .lt('contacted_at', threeDaysAgo.toISOString())
+      .not('contacted_at', 'is', null)
       .not('sales_stage', 'in', '("cliente","perdido")')
       .limit(50);
 
@@ -49,29 +61,36 @@ export async function GET() {
     const errors: string[] = [];
 
     for (const biz of businesses) {
-      if (!biz.phone) {
+      if (!biz.phone || !biz.contacted_at) {
+        skipped++;
+        continue;
+      }
+
+      const stage = biz.sales_stage || 'contactado';
+      const daysToWait = getDaysToWait(stage);
+      const cutoff = new Date(now.getTime() - daysToWait * 24 * 60 * 60 * 1000);
+      const lastContact = new Date(biz.contacted_at);
+
+      // Skip if not enough time has passed for this stage
+      if (lastContact > cutoff) {
         skipped++;
         continue;
       }
 
       const contactCount = contactCountMap[biz.id] || 0;
-      const stage = biz.sales_stage || 'nuevo';
       const businessType = (biz as any).searches?.business_type || biz.business_type;
 
-      // Generate a simple follow-up pitch
       const pitch = generateAutoFollowUpPitch(biz.name, businessType, stage, contactCount);
 
       const result = await sendWhatsAppMessage(biz.phone, pitch);
 
       if (result.success) {
-        // Log auto-sent message
         await supabase.from('contact_history').insert({
           business_id: biz.id,
           action_type: 'auto_whatsapp',
-          notes: `🤖 Auto follow-up: ${pitch.substring(0, 100)}...`,
+          notes: `🤖 Auto follow-up (${stage}, ${daysToWait}d cadence): ${pitch.substring(0, 80)}...`,
         });
 
-        // Update contacted_at and auto_followup_last_sent
         await supabase
           .from('businesses')
           .update({
@@ -109,7 +128,6 @@ function generateAutoFollowUpPitch(
   stage: string,
   contactCount: number,
 ): string {
-  // Short, direct follow-up messages for auto-send
   if (contactCount >= 5) {
     return `Hola! De GetLavado para *${businessName}*. Les he escrito antes sobre lavanderia industrial. Solo queria saber: les interesa cotizar? Un "si" o "no" me ayuda. Gracias!`;
   }
@@ -126,6 +144,5 @@ function generateAutoFollowUpPitch(
     return `Hola! De GetLavado para *${businessName}*. Queria saber si revisaron la cotizacion. Tienen alguna duda? Pueden probar 1 semana sin compromiso si les ayuda a decidir.`;
   }
 
-  // Default follow-up
   return `Hola! De GetLavado para *${businessName}*. Les escribi hace unos dias sobre lavanderia industrial. Queria hacer seguimiento rapido. Tienen 5 min esta semana para una llamada?`;
 }

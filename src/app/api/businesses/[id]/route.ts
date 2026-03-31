@@ -139,20 +139,6 @@ export async function PATCH(
       const autoSendStages = ['contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
       if (autoSendStages.includes(sales_stage) && data.phone) {
         try {
-          // Dedup: don't send if last WhatsApp was < 1 hour ago
-          const { data: recentMsg } = await supabase
-            .from('contact_history')
-            .select('created_at')
-            .eq('business_id', id)
-            .in('action_type', ['whatsapp', 'auto_whatsapp'])
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          const lastSentAt = recentMsg?.created_at ? new Date(recentMsg.created_at) : null;
-          const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-          if (lastSentAt && lastSentAt > oneHourAgo) {
-            console.log(`Skipping auto-send: last WhatsApp was ${Math.round((Date.now() - lastSentAt.getTime()) / 60000)} min ago`);
-          } else {
           const { getWhatsAppPitchServer } = await import('@/lib/whatsapp-pitch');
           const contactCount = await supabase
             .from('contact_history')
@@ -179,7 +165,6 @@ export async function PATCH(
           } else {
             console.error('Auto WhatsApp send failed:', result.error);
           }
-          } // close else from dedup check
         } catch (err) {
           console.error('Auto WhatsApp error:', err);
         }

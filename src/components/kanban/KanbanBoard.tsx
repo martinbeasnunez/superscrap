@@ -103,7 +103,7 @@ export default function KanbanBoard() {
   const { t } = useI18n();
   const columnConfig = getColumnConfig(t);
 
-  const [whatsappStats, setWhatsappStats] = useState({ sentToday: 0, repliesUnread: 0 });
+  const [whatsappStats, setWhatsappStats] = useState({ sentToday: 0, sentManualToday: 0, sentAutoToday: 0, repliesUnread: 0 });
 
   const fetchKanbanData = useCallback(async () => {
     try {

@@ -73,20 +73,63 @@ export async function GET() {
     const userMap = new Map<string, string>();
     users?.forEach((u) => userMap.set(u.id, u.name));
 
+    // Get actual contact_history for accurate today/week counts
+    const { data: historyEntries } = await supabase
+      .from('contact_history')
+      .select('action_type, created_at')
+      .gte('created_at', lastWeekStartISO)
+      .in('action_type', ['whatsapp', 'auto_whatsapp', 'email', 'call'])
+      .limit(5000);
+
+    // Count from contact_history (accurate, event-based)
+    let whatsappTodayManual = 0, whatsappTodayAuto = 0;
+    let emailTodayHist = 0, callTodayHist = 0;
+    let whatsappThisWeekHist = 0, emailThisWeekHist = 0, callThisWeekHist = 0;
+    let whatsappLastWeekHist = 0, emailLastWeekHist = 0, callLastWeekHist = 0;
+
+    historyEntries?.forEach(h => {
+      const isToday = h.created_at && h.created_at >= todayISO;
+      const isThisWeek = h.created_at && h.created_at >= thisWeekStartISO;
+      const isLastWeek = h.created_at && h.created_at >= lastWeekStartISO && h.created_at <= lastWeekEndISO;
+
+      if (h.action_type === 'whatsapp') {
+        if (isToday) whatsappTodayManual++;
+        if (isThisWeek) whatsappThisWeekHist++;
+        if (isLastWeek) whatsappLastWeekHist++;
+      } else if (h.action_type === 'auto_whatsapp') {
+        if (isToday) whatsappTodayAuto++;
+        if (isThisWeek) whatsappThisWeekHist++;
+        if (isLastWeek) whatsappLastWeekHist++;
+      } else if (h.action_type === 'email') {
+        if (isToday) emailTodayHist++;
+        if (isThisWeek) emailThisWeekHist++;
+        if (isLastWeek) emailLastWeekHist++;
+      } else if (h.action_type === 'call') {
+        if (isToday) callTodayHist++;
+        if (isThisWeek) callThisWeekHist++;
+        if (isLastWeek) callLastWeekHist++;
+      }
+    });
+
     // Contadores totales
     let whatsappTotal = 0, emailTotal = 0, callTotal = 0;
     let prospectsTotal = 0, discardedTotal = 0;
 
-    // Contadores de hoy
-    let whatsappToday = 0, emailToday = 0, callToday = 0;
+    // Contadores de hoy (from contact_history, accurate)
+    const whatsappToday = whatsappTodayManual + whatsappTodayAuto;
+    const emailToday = emailTodayHist;
+    const callToday = callTodayHist;
     let prospectsToday = 0, discardedToday = 0;
 
-    // Contadores de semana actual
-    let whatsappThisWeek = 0, emailThisWeek = 0, callThisWeek = 0;
+    // Contadores de semana (from contact_history)
+    const whatsappThisWeek = whatsappThisWeekHist;
+    const emailThisWeek = emailThisWeekHist;
+    const callThisWeek = callThisWeekHist;
     let prospectsThisWeek = 0;
 
-    // Contadores de semana pasada
-    let whatsappLastWeek = 0, emailLastWeek = 0, callLastWeek = 0;
+    const whatsappLastWeek = whatsappLastWeekHist;
+    const emailLastWeek = emailLastWeekHist;
+    const callLastWeek = callLastWeekHist;
     let prospectsLastWeek = 0;
 
     // Stats por usuario (solo hoy)
@@ -120,25 +163,10 @@ export async function GET() {
       // Descartado = sales_stage 'perdido' O lead_status 'discarded' (legacy)
       const isDiscarded = salesStage === 'perdido' || (!salesStage && leadStatus === 'discarded');
 
-      // Contar acciones
-      if (actions.includes('whatsapp')) {
-        whatsappTotal++;
-        if (isToday) whatsappToday++;
-        if (isThisWeek) whatsappThisWeek++;
-        if (isLastWeek) whatsappLastWeek++;
-      }
-      if (actions.includes('email')) {
-        emailTotal++;
-        if (isToday) emailToday++;
-        if (isThisWeek) emailThisWeek++;
-        if (isLastWeek) emailLastWeek++;
-      }
-      if (actions.includes('call')) {
-        callTotal++;
-        if (isToday) callToday++;
-        if (isThisWeek) callThisWeek++;
-        if (isLastWeek) callLastWeek++;
-      }
+      // Contar totales (leads contactados por canal, all time)
+      if (actions.includes('whatsapp')) whatsappTotal++;
+      if (actions.includes('email')) emailTotal++;
+      if (actions.includes('call')) callTotal++;
 
       // Contar estados usando sales_stage
       if (isProspect) {
@@ -415,6 +443,8 @@ export async function GET() {
       today: {
         searches: searchesToday || 0,
         whatsapp: whatsappToday,
+        whatsappManual: whatsappTodayManual,
+        whatsappAuto: whatsappTodayAuto,
         email: emailToday,
         call: callToday,
         prospects: prospectsToday,

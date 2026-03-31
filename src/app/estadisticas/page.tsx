@@ -66,6 +66,8 @@ interface Stats {
   today: {
     searches: number;
     whatsapp: number;
+    whatsappManual: number;
+    whatsappAuto: number;
     email: number;
     call: number;
     prospects: number;
@@ -255,7 +257,12 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-xl sm:text-2xl font-bold">{stats.today.whatsapp}</p>
-                    <p className="text-white/60 text-[10px] sm:text-xs">{t('dash.whatsapp')}</p>
+                    <p className="text-white/60 text-[10px] sm:text-xs">
+                      WhatsApp
+                      {stats.today.whatsappAuto > 0 && (
+                        <span className="text-purple-300"> ({stats.today.whatsappAuto} auto)</span>
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>

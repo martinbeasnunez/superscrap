@@ -158,17 +158,11 @@ export async function GET() {
     const aiCallMap: Record<string, AICallResult> = {};
     // Track unread WhatsApp replies: store latest reply per business
     const replyMap: Record<string, { text: string; date: string }> = {};
-    // Track businesses contacted today
-    const todayStartISO = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    // Track businesses contacted today (todayStartISO set after `now` is declared below)
     const contactedTodaySet = new Set<string>();
 
     contactHistory?.forEach(c => {
       contactCountMap[c.business_id] = (contactCountMap[c.business_id] || 0) + 1;
-
-      // Track contacted today
-      if ((c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') && c.created_at && c.created_at >= todayStartISO) {
-        contactedTodaySet.add(c.business_id);
-      }
 
       // Track WhatsApp replies
       if (c.action_type === 'whatsapp_reply') {
@@ -243,6 +237,14 @@ export async function GET() {
 
     // Calcular días desde último contacto y clasificar
     const now = new Date();
+    const todayStartISO = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+    // Populate contactedTodaySet
+    contactHistory?.forEach(c => {
+      if ((c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') && c.created_at && c.created_at >= todayStartISO) {
+        contactedTodaySet.add(c.business_id);
+      }
+    });
     const columns: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [],
       contactado: [],

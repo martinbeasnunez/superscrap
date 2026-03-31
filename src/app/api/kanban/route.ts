@@ -69,6 +69,8 @@ export interface KanbanBusiness {
   // Reply tracking
   has_unread_reply: boolean;
   last_reply_text: string | null;
+  // Today tracking
+  contacted_today: boolean;
 }
 
 export interface WhatsAppStats {
@@ -156,9 +158,17 @@ export async function GET() {
     const aiCallMap: Record<string, AICallResult> = {};
     // Track unread WhatsApp replies: store latest reply per business
     const replyMap: Record<string, { text: string; date: string }> = {};
+    // Track businesses contacted today
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const contactedTodaySet = new Set<string>();
 
     contactHistory?.forEach(c => {
       contactCountMap[c.business_id] = (contactCountMap[c.business_id] || 0) + 1;
+
+      // Track contacted today
+      if ((c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') && c.created_at && c.created_at >= todayStart) {
+        contactedTodaySet.add(c.business_id);
+      }
 
       // Track WhatsApp replies
       if (c.action_type === 'whatsapp_reply') {
@@ -285,6 +295,7 @@ export async function GET() {
         last_email_template_id: b.last_email_template_id ?? null,
         has_unread_reply: !!replyMap[b.id],
         last_reply_text: replyMap[b.id]?.text || null,
+        contacted_today: contactedTodaySet.has(b.id),
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

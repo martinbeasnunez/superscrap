@@ -89,7 +89,7 @@ export default function KanbanBoard() {
   const [showAICampaign, setShowAICampaign] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
-  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'no_phone'>('all');
+  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'sent_today' | 'no_phone'>('all');
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -208,6 +208,7 @@ export default function KanbanBoard() {
         }
         if (phoneFilter === 'whatsapp' && !hasWhatsApp(lead.phone)) return false;
         if (phoneFilter === 'replied' && !lead.has_unread_reply) return false;
+        if (phoneFilter === 'sent_today' && !lead.contacted_today) return false;
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
         return true;
       });
@@ -688,9 +689,9 @@ export default function KanbanBoard() {
             )}
             {whatsappStats.sentToday > 0 && (
               <button
-                onClick={() => setPhoneFilter(phoneFilter === 'whatsapp' ? 'all' : 'whatsapp')}
+                onClick={() => setPhoneFilter(phoneFilter === 'sent_today' ? 'all' : 'sent_today')}
                 className={`text-xs transition-colors cursor-pointer ${
-                  phoneFilter === 'whatsapp'
+                  phoneFilter === 'sent_today'
                     ? 'text-green-700 font-bold'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
@@ -721,6 +722,7 @@ export default function KanbanBoard() {
         >
           <option value="all">📱 Todos</option>
           <option value="whatsapp">📱 Con WhatsApp</option>
+          <option value="sent_today">📤 Enviados hoy</option>
           <option value="replied">💬 Respondieron</option>
           <option value="no_phone">🚫 Sin WhatsApp</option>
         </select>

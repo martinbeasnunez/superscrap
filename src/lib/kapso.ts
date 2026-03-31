@@ -11,7 +11,10 @@ function getClient() {
   if (!apiKey) {
     throw new Error('KAPSO_API_KEY is not set');
   }
-  return new WhatsAppClient({ kapsoApiKey: apiKey });
+  return new WhatsAppClient({
+    baseUrl: 'https://api.kapso.ai/meta/whatsapp',
+    kapsoApiKey: apiKey,
+  });
 }
 
 function normalizePhoneForKapso(phone: string): string {

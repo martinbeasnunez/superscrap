@@ -89,7 +89,7 @@ export default function KanbanBoard() {
   const [showAICampaign, setShowAICampaign] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
-  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'no_phone'>('all');
+  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'no_phone'>('all');
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -207,6 +207,7 @@ export default function KanbanBoard() {
           if (industry !== industryFilter) return false;
         }
         if (phoneFilter === 'whatsapp' && !hasWhatsApp(lead.phone)) return false;
+        if (phoneFilter === 'replied' && !lead.has_unread_reply) return false;
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
         return true;
       });
@@ -674,13 +675,23 @@ export default function KanbanBoard() {
           <>
             <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
             {whatsappStats.repliesUnread > 0 && (
-              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold animate-pulse">
+              <button
+                onClick={() => setPhoneFilter(phoneFilter === 'replied' ? 'all' : 'replied')}
+                className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                  phoneFilter === 'replied'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-green-100 text-green-700 animate-pulse hover:bg-green-200'
+                }`}
+              >
                 💬 {whatsappStats.repliesUnread} {whatsappStats.repliesUnread === 1 ? 'respuesta' : 'respuestas'}
-              </span>
+              </button>
             )}
             {whatsappStats.sentToday > 0 && (
               <span className="text-gray-500 text-xs">
                 📱 {whatsappStats.sentToday} enviados hoy
+                {whatsappStats.sentAutoToday > 0 && (
+                  <span className="text-purple-500"> ({whatsappStats.sentAutoToday} auto)</span>
+                )}
               </span>
             )}
           </>
@@ -724,6 +735,7 @@ export default function KanbanBoard() {
         >
           <option value="all">📱 Todos</option>
           <option value="whatsapp">📱 Con WhatsApp</option>
+          <option value="replied">💬 Respondieron</option>
           <option value="no_phone">🚫 Sin WhatsApp</option>
         </select>
         {phoneFilter !== 'all' && (

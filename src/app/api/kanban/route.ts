@@ -73,6 +73,8 @@ export interface KanbanBusiness {
 
 export interface WhatsAppStats {
   sentToday: number;
+  sentManualToday: number;
+  sentAutoToday: number;
   repliesUnread: number;
 }
 
@@ -348,13 +350,16 @@ export async function GET() {
 
     // WhatsApp stats
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    const sentToday = contactHistory?.filter(c =>
+    const todayMessages = contactHistory?.filter(c =>
       (c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') &&
       c.created_at && c.created_at >= todayStart
-    ).length || 0;
+    ) || [];
+    const sentToday = todayMessages.length;
+    const sentManualToday = todayMessages.filter(c => c.action_type === 'whatsapp').length;
+    const sentAutoToday = todayMessages.filter(c => c.action_type === 'auto_whatsapp').length;
     const repliesUnread = Object.keys(replyMap).length;
 
-    const whatsappStats: WhatsAppStats = { sentToday, repliesUnread };
+    const whatsappStats: WhatsAppStats = { sentToday, sentManualToday, sentAutoToday, repliesUnread };
 
     return NextResponse.json({ columns, counts, whatsappStats });
   } catch (error) {

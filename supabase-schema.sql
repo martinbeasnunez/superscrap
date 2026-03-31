@@ -117,7 +117,7 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS primary_dm_index INTEGER DEFAULT
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_enabled BOOLEAN DEFAULT FALSE;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_last_sent TIMESTAMPTZ;
 
--- Extend contact_history action types for auto WhatsApp
+-- Extend contact_history action types for auto WhatsApp + replies
 ALTER TABLE contact_history DROP CONSTRAINT IF EXISTS contact_history_action_type_check;
 ALTER TABLE contact_history ADD CONSTRAINT contact_history_action_type_check
-  CHECK (action_type IN ('whatsapp', 'email', 'call', 'ai_call', 'stage_change', 'auto_whatsapp'));
+  CHECK (action_type IN ('whatsapp', 'email', 'call', 'ai_call', 'stage_change', 'auto_whatsapp', 'whatsapp_reply'));

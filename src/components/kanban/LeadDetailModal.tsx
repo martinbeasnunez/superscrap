@@ -525,6 +525,8 @@ function formatTimeAgo(dateStr: string): string {
 function getActionIcon(action: string): string {
   switch (action) {
     case 'whatsapp': return '📱';
+    case 'auto_whatsapp': return '🤖';
+    case 'whatsapp_reply': return '💬';
     case 'email': return '📧';
     case 'call': return '📞';
     case 'ai_call': return '🤖';
@@ -535,7 +537,9 @@ function getActionIcon(action: string): string {
 
 function getActionLabel(action: string): string {
   switch (action) {
-    case 'whatsapp': return 'WhatsApp';
+    case 'whatsapp': return 'WhatsApp enviado';
+    case 'auto_whatsapp': return 'Auto WhatsApp';
+    case 'whatsapp_reply': return 'Respuesta recibida';
     case 'email': return 'Email';
     case 'call': return 'Llamada';
     case 'ai_call': return 'Llamada IA';
@@ -1354,6 +1358,8 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   {contactHistory.map((h, idx) => {
                     const isAICall = h.notes?.startsWith('🤖');
                     const isStageChange = h.action_type === 'stage_change';
+                    const isWhatsApp = h.action_type === 'whatsapp' || h.action_type === 'auto_whatsapp';
+                    const isReply = h.action_type === 'whatsapp_reply';
                     // Extraer conversation_id de las notas para reproducir audio
                     const convIdMatch = h.notes?.match(/conv_[a-z0-9]+/);
                     const conversationId = convIdMatch ? convIdMatch[0] : null;
@@ -1364,14 +1370,16 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                       <div key={h.id} className={`text-sm rounded-lg px-3 py-2 ${
                         isAICall
                           ? 'bg-purple-50 border border-purple-200'
-                          : isStageChange
-                            ? 'bg-blue-50 border border-blue-200'
-                            : 'bg-gray-50'
+                          : isReply
+                            ? 'bg-green-50 border border-green-300'
+                            : isStageChange
+                              ? 'bg-blue-50 border border-blue-200'
+                              : 'bg-gray-50'
                       }`}>
                         <div className="flex items-center gap-2">
                           <span className="text-gray-400 text-xs font-medium">#{contactHistory.length - idx}</span>
                           <span>{isAICall ? '🤖' : getActionIcon(h.action_type)}</span>
-                          <span className="text-gray-700">
+                          <span className={`${isReply ? 'text-green-700 font-semibold' : 'text-gray-700'}`}>
                             {isAICall ? 'Llamada IA' : getActionLabel(h.action_type)}
                           </span>
                           <span className="text-gray-400 text-xs ml-auto">{formatTimeAgo(h.created_at)}</span>
@@ -1413,6 +1421,16 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         {h.notes && h.action_type === 'stage_change' && (
                           <div className="mt-1 text-xs text-blue-600">
                             {h.notes.replace('📋 ', '')}
+                          </div>
+                        )}
+                        {h.notes && isWhatsApp && (
+                          <div className="mt-2 text-xs text-gray-600 whitespace-pre-line border-t border-gray-200 pt-2 max-h-24 overflow-y-auto">
+                            {h.notes}
+                          </div>
+                        )}
+                        {h.notes && isReply && (
+                          <div className="mt-2 text-xs text-green-800 whitespace-pre-line border-t border-green-200 pt-2 font-medium">
+                            {h.notes}
                           </div>
                         )}
                       </div>

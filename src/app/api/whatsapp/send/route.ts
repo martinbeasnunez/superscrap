@@ -26,9 +26,7 @@ export async function POST(request: NextRequest) {
       business_id: businessId,
       user_id: userId || null,
       action_type: actionType,
-      notes: isAutoFollowUp
-        ? `🤖 Auto-enviado via Kapso: ${message.substring(0, 100)}...`
-        : `📱 Enviado via Kapso: ${message.substring(0, 100)}...`,
+      notes: message,
     });
 
     // Update business contact status

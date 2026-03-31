@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ContactAction, LeadStatus, SalesStage } from '@/types';
+import { sendWhatsAppMessage } from '@/lib/kapso';
 
 const validContactActions: ContactAction[] = ['whatsapp', 'email', 'call'];
 const validLeadStatuses: LeadStatus[] = ['no_contact', 'prospect', 'discarded'];
@@ -132,6 +133,41 @@ export async function PATCH(
         console.error('Error inserting stage history:', historyError);
       } else {
         console.log('Stage history inserted successfully');
+      }
+
+      // Auto-send WhatsApp when moving to follow-up stages
+      const autoSendStages = ['seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
+      if (autoSendStages.includes(sales_stage) && data.phone) {
+        try {
+          const { getWhatsAppPitchServer } = await import('@/lib/whatsapp-pitch');
+          const contactCount = await supabase
+            .from('contact_history')
+            .select('id', { count: 'exact', head: true })
+            .eq('business_id', id)
+            .in('action_type', ['whatsapp', 'auto_whatsapp', 'call', 'ai_call', 'email']);
+          const count = contactCount.count || 0;
+          const pitch = getWhatsAppPitchServer(data.name, data.business_type, sales_stage, count);
+          const result = await sendWhatsAppMessage(data.phone, pitch);
+          if (result.success) {
+            await supabase.from('contact_history').insert({
+              business_id: id,
+              action_type: 'auto_whatsapp',
+              notes: pitch,
+            });
+            // Update contact tracking
+            const currentActions = data.contact_actions || [];
+            const newActions = currentActions.includes('whatsapp') ? currentActions : [...currentActions, 'whatsapp'];
+            await supabase.from('businesses').update({
+              contact_actions: newActions,
+              contacted_at: new Date().toISOString(),
+            }).eq('id', id);
+            console.log(`Auto-sent WhatsApp for stage change to ${sales_stage}`);
+          } else {
+            console.error('Auto WhatsApp send failed:', result.error);
+          }
+        } catch (err) {
+          console.error('Auto WhatsApp error:', err);
+        }
       }
     }
 

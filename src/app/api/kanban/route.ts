@@ -71,9 +71,15 @@ export interface KanbanBusiness {
   last_reply_text: string | null;
 }
 
+export interface WhatsAppStats {
+  sentToday: number;
+  repliesUnread: number;
+}
+
 export interface KanbanResponse {
   columns: Record<KanbanColumnId, KanbanBusiness[]>;
   counts: Record<KanbanColumnId, number>;
+  whatsappStats: WhatsAppStats;
 }
 
 // Clasificar negocio en columna
@@ -340,7 +346,17 @@ export async function GET() {
       perdido: columns.perdido.length,
     };
 
-    return NextResponse.json({ columns, counts });
+    // WhatsApp stats
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const sentToday = contactHistory?.filter(c =>
+      (c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') &&
+      c.created_at && c.created_at >= todayStart
+    ).length || 0;
+    const repliesUnread = Object.keys(replyMap).length;
+
+    const whatsappStats: WhatsAppStats = { sentToday, repliesUnread };
+
+    return NextResponse.json({ columns, counts, whatsappStats });
   } catch (error) {
     console.error('Kanban error:', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });

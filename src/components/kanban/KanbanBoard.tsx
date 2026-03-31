@@ -103,12 +103,15 @@ export default function KanbanBoard() {
   const { t } = useI18n();
   const columnConfig = getColumnConfig(t);
 
+  const [whatsappStats, setWhatsappStats] = useState({ sentToday: 0, repliesUnread: 0 });
+
   const fetchKanbanData = useCallback(async () => {
     try {
       const response = await fetch('/api/kanban');
       if (!response.ok) throw new Error('Error loading kanban data');
       const data: KanbanResponse = await response.json();
       setColumns(data.columns);
+      if (data.whatsappStats) setWhatsappStats(data.whatsappStats);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -665,6 +668,23 @@ export default function KanbanBoard() {
             </>
           );
         })()}
+
+        {/* WhatsApp stats */}
+        {(whatsappStats.sentToday > 0 || whatsappStats.repliesUnread > 0) && (
+          <>
+            <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
+            {whatsappStats.repliesUnread > 0 && (
+              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold animate-pulse">
+                💬 {whatsappStats.repliesUnread} {whatsappStats.repliesUnread === 1 ? 'respuesta' : 'respuestas'}
+              </span>
+            )}
+            {whatsappStats.sentToday > 0 && (
+              <span className="text-gray-500 text-xs">
+                📱 {whatsappStats.sentToday} enviados hoy
+              </span>
+            )}
+          </>
+        )}
 
         {/* Métricas de llamadas IA - Clickeable para ver insights */}
         {followUpMetrics.aiCallLeads > 0 && (

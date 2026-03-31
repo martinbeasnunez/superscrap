@@ -1195,11 +1195,16 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         }),
                       });
                       if (res.ok) {
+                        alert('✅ WhatsApp enviado por Kapso');
                         onActionRegistered();
                         await fetchContactHistory();
+                      } else {
+                        const data = await res.json().catch(() => ({}));
+                        alert(`❌ Error enviando WhatsApp: ${data.error || 'Error desconocido'}`);
                       }
                     } catch (err) {
                       console.error('Kapso send error:', err);
+                      alert('❌ Error de conexión con Kapso');
                     } finally {
                       setActionLoading(null);
                     }

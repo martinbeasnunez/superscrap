@@ -145,11 +145,12 @@ export async function GET() {
     }
 
     // Obtener conteo de contactos y llamadas IA por negocio
-    // Nota: Obtenemos TODOS los registros de contact_history en lugar de filtrar
-    // por business_id con .in() porque Supabase tiene límites en queries IN con muchos valores
+    // Fetch contact history - exclude stage_change to reduce volume
     const { data: contactHistory } = await supabase
       .from('contact_history')
-      .select('business_id, action_type, notes, created_at');
+      .select('business_id, action_type, notes, created_at')
+      .neq('action_type', 'stage_change')
+      .limit(5000);
 
     const contactCountMap: Record<string, number> = {};
     const aiCallMap: Record<string, AICallResult> = {};

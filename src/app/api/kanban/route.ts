@@ -360,8 +360,7 @@ export async function GET() {
       perdido: columns.perdido.length,
     };
 
-    // WhatsApp stats
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    // WhatsApp stats (reuses todayStart from above)
     const todayMessages = contactHistory?.filter(c =>
       (c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') &&
       c.created_at && c.created_at >= todayStart

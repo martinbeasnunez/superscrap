@@ -89,6 +89,7 @@ export default function KanbanBoard() {
   const [showAICampaign, setShowAICampaign] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
+  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'no_phone'>('all');
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -178,21 +179,37 @@ export default function KanbanBoard() {
       .map(([industry, count]) => ({ industry: industry as IndustryCategory, count }));
   }, [columns]);
 
-  // Filtered columns based on industry filter
+  // Helper: check if phone is WhatsApp-capable (Peruvian mobile)
+  const hasWhatsApp = (phone: string | null): boolean => {
+    if (!phone) return false;
+    const cleaned = phone.replace(/\D/g, '');
+    return (
+      (cleaned.length === 9 && cleaned.startsWith('9')) ||
+      (cleaned.length === 11 && cleaned.startsWith('519')) ||
+      (cleaned.length === 12 && cleaned.startsWith('519'))
+    );
+  };
+
+  // Filtered columns based on industry + phone filters
   const filteredColumns = useMemo(() => {
-    if (industryFilter === 'all') return columns;
+    if (industryFilter === 'all' && phoneFilter === 'all') return columns;
     const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
       seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
     };
     COLUMN_ORDER.forEach(col => {
       filtered[col] = columns[col].filter(lead => {
-        const industry = detectIndustry(lead.business_type, lead.name);
-        return industry === industryFilter;
+        if (industryFilter !== 'all') {
+          const industry = detectIndustry(lead.business_type, lead.name);
+          if (industry !== industryFilter) return false;
+        }
+        if (phoneFilter === 'whatsapp' && !hasWhatsApp(lead.phone)) return false;
+        if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
+        return true;
       });
     });
     return filtered;
-  }, [columns, industryFilter]);
+  }, [columns, industryFilter, phoneFilter]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -670,6 +687,33 @@ export default function KanbanBoard() {
               </button>
             )}
           </>
+        )}
+      </div>
+
+      {/* Filtros */}
+      <div className="flex items-center gap-2 mb-2 lg:mb-3 flex-wrap">
+        {/* Filtro WhatsApp */}
+        <select
+          value={phoneFilter}
+          onChange={(e) => setPhoneFilter(e.target.value as 'all' | 'whatsapp' | 'no_phone')}
+          className={`text-xs sm:text-sm px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+            phoneFilter !== 'all'
+              ? 'bg-green-600 text-white border-green-600'
+              : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <option value="all">📱 Todos</option>
+          <option value="whatsapp">📱 Con WhatsApp</option>
+          <option value="no_phone">🚫 Sin WhatsApp</option>
+        </select>
+        {phoneFilter !== 'all' && (
+          <button
+            onClick={() => setPhoneFilter('all')}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            title="Limpiar filtro"
+          >
+            ✕
+          </button>
         )}
       </div>
 

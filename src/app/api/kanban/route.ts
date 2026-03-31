@@ -77,34 +77,21 @@ export interface KanbanResponse {
 }
 
 // Clasificar negocio en columna
-// - Stages "finales" (interesado, cotizado, cliente, perdido) se respetan siempre
-// - Stages de seguimiento se reclasifican por días para mostrar urgencia visual
+// SIEMPRE respetar el sales_stage de la DB — el vendedor controla el pipeline
 function classifyBusiness(business: KanbanBusiness): KanbanColumnId {
   const salesStage = business.sales_stage;
-  const daysSinceContact = business.daysSinceContact;
-  const hasContact = business.contact_actions && business.contact_actions.length > 0;
 
-  // Stages "finales" - NUNCA reclasificar automáticamente
-  const finalStages: KanbanColumnId[] = ['interesado', 'cotizado', 'cliente', 'perdido'];
-  if (salesStage && finalStages.includes(salesStage as KanbanColumnId)) {
+  // Si tiene un stage válido en DB, usarlo siempre
+  const validStages: KanbanColumnId[] = [
+    'nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2',
+    'seguimiento_3', 'interesado', 'cotizado', 'cliente', 'perdido'
+  ];
+  if (salesStage && validStages.includes(salesStage as KanbanColumnId)) {
     return salesStage as KanbanColumnId;
   }
 
-  // Sin contacto = nuevo
-  if (!hasContact || daysSinceContact === null) {
-    return 'nuevo';
-  }
-
-  // Con contacto - clasificar por días para mostrar urgencia
-  if (daysSinceContact >= 9) {
-    return 'seguimiento_3'; // 9+ días = último intento
-  } else if (daysSinceContact >= 6) {
-    return 'seguimiento_2'; // 6-8 días = urgente
-  } else if (daysSinceContact >= 3) {
-    return 'seguimiento_1'; // 3-5 días = necesita follow-up
-  } else {
-    return 'contactado'; // 0-2 días = reciente
-  }
+  // Fallback: sin stage = nuevo
+  return 'nuevo';
 }
 
 export async function GET() {

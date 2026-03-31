@@ -136,7 +136,7 @@ export async function PATCH(
       }
 
       // Auto-send WhatsApp when moving to follow-up stages
-      const autoSendStages = ['seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
+      const autoSendStages = ['contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
       if (autoSendStages.includes(sales_stage) && data.phone) {
         try {
           const { getWhatsAppPitchServer } = await import('@/lib/whatsapp-pitch');

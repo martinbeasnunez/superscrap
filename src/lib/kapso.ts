@@ -1,4 +1,4 @@
-import { WhatsAppClient } from '@kapso/whatsapp-cloud-api';
+import { WhatsAppClient, buildTemplatePayload } from '@kapso/whatsapp-cloud-api';
 
 export interface KapsoSendResult {
   success: boolean;
@@ -53,6 +53,53 @@ export async function sendWhatsAppMessage(
     };
   } catch (error) {
     console.error('Kapso send error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// Send using approved template (works outside 24h window)
+export async function sendWhatsAppTemplate(
+  to: string,
+  businessName: string,
+): Promise<KapsoSendResult> {
+  try {
+    const client = getClient();
+    const phoneNumberId = process.env.KAPSO_PHONE_NUMBER_ID;
+
+    if (!phoneNumberId) {
+      return { success: false, error: 'KAPSO_PHONE_NUMBER_ID is not set' };
+    }
+
+    const normalizedTo = normalizePhoneForKapso(to);
+
+    const template = buildTemplatePayload({
+      name: 'getlavado_followup',
+      language: 'es',
+      components: [
+        {
+          type: 'body',
+          parameters: [
+            { type: 'text', text: businessName },
+          ],
+        },
+      ],
+    });
+
+    const result = await client.messages.sendTemplate({
+      phoneNumberId,
+      to: normalizedTo,
+      template,
+    });
+
+    return {
+      success: true,
+      messageId: result?.messages?.[0]?.id || 'sent',
+    };
+  } catch (error) {
+    console.error('Kapso template send error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

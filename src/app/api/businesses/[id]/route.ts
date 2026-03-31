@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ContactAction, LeadStatus, SalesStage } from '@/types';
-import { sendWhatsAppMessage } from '@/lib/kapso';
+import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/kapso';
 
 const validContactActions: ContactAction[] = ['whatsapp', 'email', 'call'];
 const validLeadStatuses: LeadStatus[] = ['no_contact', 'prospect', 'discarded'];
@@ -147,7 +147,11 @@ export async function PATCH(
             .in('action_type', ['whatsapp', 'auto_whatsapp', 'call', 'ai_call', 'email']);
           const count = contactCount.count || 0;
           const pitch = getWhatsAppPitchServer(data.name, data.business_type, sales_stage, count);
-          const result = await sendWhatsAppMessage(data.phone, pitch);
+          // Try text first, fall back to template if outside 24h window
+          let result = await sendWhatsAppMessage(data.phone, pitch);
+          if (!result.success && (result.error?.includes('24-hour') || result.error?.includes('Re-engagement'))) {
+            result = await sendWhatsAppTemplate(data.phone, data.name);
+          }
           if (result.success) {
             await supabase.from('contact_history').insert({
               business_id: id,

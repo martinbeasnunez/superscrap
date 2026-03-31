@@ -56,7 +56,7 @@ export async function GET() {
       .not('phone', 'is', null)
       .not('contacted_at', 'is', null)
       .not('sales_stage', 'in', '("nuevo","cliente","perdido")')
-      .limit(100);
+      .limit(20);
 
     if (error) {
       console.error('Error fetching auto-followup businesses:', error);
@@ -195,8 +195,8 @@ export async function GET() {
         skipped++;
       }
 
-      // Rate limit: 1 message per second
-      await new Promise(r => setTimeout(r, 1000));
+      // Rate limit: 3 seconds between messages (anti-spam)
+      await new Promise(r => setTimeout(r, 3000));
     }
 
     return NextResponse.json({

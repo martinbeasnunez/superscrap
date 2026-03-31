@@ -114,7 +114,7 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS last_email_template_id TEXT;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS primary_dm_index INTEGER DEFAULT NULL;
 
 -- Auto follow-up via Kapso
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_enabled BOOLEAN DEFAULT TRUE;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_last_sent TIMESTAMPTZ;
 
 -- Extend contact_history action types for auto WhatsApp + replies

@@ -687,38 +687,24 @@ export default function KanbanBoard() {
               </button>
             )}
             {whatsappStats.sentToday > 0 && (
-              <span className="text-gray-500 text-xs">
+              <button
+                onClick={() => setPhoneFilter(phoneFilter === 'whatsapp' ? 'all' : 'whatsapp')}
+                className={`text-xs transition-colors cursor-pointer ${
+                  phoneFilter === 'whatsapp'
+                    ? 'text-green-700 font-bold'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
                 📱 {whatsappStats.sentToday} enviados hoy
                 {whatsappStats.sentAutoToday > 0 && (
                   <span className="text-purple-500"> ({whatsappStats.sentAutoToday} auto)</span>
                 )}
-              </span>
-            )}
-          </>
-        )}
-
-        {/* Métricas de llamadas IA - Clickeable para ver insights */}
-        {followUpMetrics.aiCallLeads > 0 && (
-          <>
-            <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
-            <button
-              onClick={() => setShowAIInsights(true)}
-              className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-200 transition-colors cursor-pointer"
-              title="Click para ver detalles de llamadas IA"
-            >
-              🤖 {followUpMetrics.aiCallLeads}
-            </button>
-            {followUpMetrics.aiOutcomes.interested > 0 && (
-              <button
-                onClick={() => setShowAIInsights(true)}
-                className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors cursor-pointer"
-                title="Click para ver leads interesados"
-              >
-                🎯 {followUpMetrics.aiOutcomes.interested}
               </button>
             )}
           </>
         )}
+
+        {/* Métricas de llamadas IA — OCULTO TEMPORALMENTE */}
       </div>
 
       {/* Filtros */}

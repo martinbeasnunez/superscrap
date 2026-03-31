@@ -34,7 +34,7 @@ function getNextStage(stage: string): string | null {
     'contactado': 'seguimiento_1',
     'seguimiento_1': 'seguimiento_2',
     'seguimiento_2': 'seguimiento_3',
-    'seguimiento_3': 'perdido',
+    // seguimiento_3: no auto-advance — vendedor decide manualmente
   };
   return flow[stage] || null;
 }
@@ -146,20 +146,8 @@ export async function GET() {
         continue;
       }
 
-      // seguimiento_3 → perdido: just move, don't send
-      if (nextStage === 'perdido') {
-        await supabase.from('contact_history').insert({
-          business_id: biz.id,
-          action_type: 'stage_change',
-          notes: `📋 Auto: Sin respuesta después de seguimiento 3 → Perdido`,
-        });
-        await supabase.from('businesses').update({
-          sales_stage: 'perdido',
-          auto_followup_enabled: false,
-        }).eq('id', biz.id);
-        lost++;
-        continue;
-      }
+      // seguimiento_3: no auto-move to perdido — vendedor decides
+      // Lead stays in seguimiento_3, no more auto messages sent
 
       // Auto-advance + send pitch for new stage
       const contactCount = contactCountMap[biz.id] || 0;

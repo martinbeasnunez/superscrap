@@ -155,6 +155,17 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
             </div>
           )}
 
+          {/* Badge RESPONDIÓ — lead respondió por WhatsApp */}
+          {business.has_unread_reply && (
+            <div className="mb-1.5 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-green-50 to-emerald-100 text-green-800 border border-green-400 animate-pulse">
+              <span>💬</span>
+              Respondió
+              {business.last_reply_text && (
+                <span className="font-normal truncate max-w-[140px]">• {business.last_reply_text}</span>
+              )}
+            </div>
+          )}
+
           {/* Orca/Delfin tier badge */}
           {business.potential_tier === 'orca' && (
             <div className="mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">

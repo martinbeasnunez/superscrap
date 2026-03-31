@@ -284,6 +284,16 @@ export default function KanbanBoard() {
     setTimeout(() => fetchKanbanData(), 500);
   };
 
+  // Sync selectedBusiness when columns data refreshes
+  useEffect(() => {
+    if (selectedBusiness) {
+      const freshBiz = Object.values(columns).flat().find(b => b.id === selectedBusiness.id);
+      if (freshBiz && JSON.stringify(freshBiz) !== JSON.stringify(selectedBusiness)) {
+        setSelectedBusiness(freshBiz);
+      }
+    }
+  }, [columns]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Obtener todos los leads con llamadas IA para el modal de insights
   const aiCallLeadsList = useMemo(() => {
     const allLeads = COLUMN_ORDER.flatMap(col =>

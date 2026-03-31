@@ -249,22 +249,11 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
 
             {/* Indicadores de acción */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {hasAICall && <span className="text-sm" title="Llamada con Agente IA">🤖</span>}
               {hasWhatsapp && <span className="text-xs opacity-70" title="WhatsApp enviado">📱</span>}
               {hasEmail && <span className="text-xs opacity-70" title="Email enviado">📧</span>}
-              {hasCall && !hasAICall && <span className="text-xs opacity-70" title="Llamada realizada">📞</span>}
+              {hasCall && <span className="text-xs opacity-70" title="Llamada realizada">📞</span>}
             </div>
           </div>
-
-          {/* Resultado de llamada IA */}
-          {hasAICall && aiLabel && (
-            <div className={`mt-1.5 px-2 py-1 rounded text-xs font-medium ${aiLabel.bg} ${aiLabel.color}`}>
-              {aiLabel.text}
-              {business.aiCallResult?.contactName && (
-                <span className="font-normal opacity-80"> • {business.aiCallResult.contactName}</span>
-              )}
-            </div>
-          )}
 
           {/* Contador de contactos + tiempo desde último */}
           <div className="mt-1.5 flex items-center justify-between">

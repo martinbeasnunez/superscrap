@@ -1085,10 +1085,8 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               </div>
             )}
 
-            {/* Boton de Llamada con IA - Solo para columnas de prospeccion */}
-            {/* El agente IA solo llama en: nuevo, contactado, seguimiento_1, seguimiento_2 */}
-            {/* En interesados, cotizados, clientes, perdidos es trabajo humano */}
-            {business.phone && ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3'].includes(currentStage) && (
+            {/* Boton de Llamada con IA - OCULTO TEMPORALMENTE */}
+            {false && business.phone && ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3'].includes(currentStage) && (
               <div className="mt-3">
                 <button
                   onClick={handleAICall}

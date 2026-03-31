@@ -603,16 +603,7 @@ export default function KanbanBoard() {
 
       {/* Stats rápidos con métricas de seguimiento */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 lg:mb-4 text-xs sm:text-sm">
-        {/* Botón de Campaña IA destacado */}
-        <button
-          onClick={() => setShowAICampaign(true)}
-          className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg sm:rounded-xl font-medium shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:scale-105 transition-all flex items-center gap-1.5 sm:gap-2"
-        >
-          <span className="hidden sm:inline">{t('kanban.ai_campaign')}</span>
-          <span className="sm:hidden">{t('kanban.ai_short')}</span>
-        </button>
-
-        <span className="hidden sm:block border-l border-gray-300 h-6 mx-1"></span>
+        {/* Botón de Campaña IA — OCULTO TEMPORALMENTE */}
 
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> {t('kanban.active')}</span>

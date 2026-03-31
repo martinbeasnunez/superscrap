@@ -11,8 +11,16 @@ export function getWhatsAppPitchServer(businessName: string, businessType: strin
   // OVERRIDE: Contact count takes priority over stage
   // ═══════════════════════════════════════════════════════
 
-  // 5+ contactos → Pattern interrupt: ángulo completamente nuevo
-  if (contacts >= 5 && !['interesado', 'cotizado', 'cliente'].includes(stage)) {
+  // ═══════════════════════════════════════════════════════
+  // SEGUIMIENTO 3 — Quincenal rotation (nunca repite)
+  // Each message uses a different psychological angle
+  // ═══════════════════════════════════════════════════════
+  if (stage === 'seguimiento_3') {
+    return getSeguimiento3Pitch(businessName, typeLower, contacts);
+  }
+
+  // 5+ contactos en otras etapas → Pattern interrupt
+  if (contacts >= 5 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
     return `Buenas! Soy Alejandro de GetLavado 👋
 
 Cambiando de tema: ¿sabían que el *72% de negocios* en Lima que tercerizan textiles ahorran más de S/2,000/mes?
@@ -32,13 +40,6 @@ Cualquier respuesta va 👍`;
   // ═══════════════════════════════════════════════════════
   // STAGE-SPECIFIC PITCHES
   // ═══════════════════════════════════════════════════════
-
-  // SEGUIMIENTO 3 — Binary close + respeto (último intento)
-  if (stage === 'seguimiento_3') {
-    return `Hola! Soy Alejandro de GetLavado, último mensaje lo prometo 🤝
-
-¿Les interesa una cotización sin compromiso? Un "sí" o "no" me ayuda a cerrar el tema de mi lado.`;
-  }
 
   // SEGUIMIENTO 2 — Loss aversion + competitor pressure
   if (stage === 'seguimiento_2') {
@@ -191,4 +192,87 @@ En salud no hay margen de error. Ofrecemos protocolos de esterilización certifi
 +800 negocios en Lima ya nos eligieron. Recogemos, lavamos y entregamos — ustedes solo apilan.
 
 ¿Manejan toallas, uniformes, sábanas o manteles en *${name}*? Les armo cotización sin compromiso`;
+}
+
+// ═══════════════════════════════════════════════════════
+// SEGUIMIENTO 3: Rotación quincenal (5 ángulos diferentes)
+// Usa contactCount como índice para no repetir
+// Cada ángulo usa un framework psicológico distinto
+// ═══════════════════════════════════════════════════════
+function getSeguimiento3Pitch(name: string, type: string, contacts: number): string {
+  // Detectar industria para personalizar
+  let sector = 'negocio';
+  if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) sector = 'hotel';
+  else if (type.includes('gym') || type.includes('gimnasio') || type.includes('fitness') || type.includes('club') || type.includes('deport')) sector = 'gym';
+  else if (type.includes('spa') || type.includes('masaje') || type.includes('wellness') || type.includes('sauna')) sector = 'spa';
+  else if (type.includes('clinic') || type.includes('hospital') || type.includes('medic') || type.includes('odonto') || type.includes('dental')) sector = 'clínica';
+  else if (type.includes('restaurante') || type.includes('comida') || type.includes('cevich') || type.includes('cocina')) sector = 'restaurante';
+
+  const pitches = [
+    // Round 1: Binary close + respeto (primer intento en seg3)
+    `Hola! Soy Alejandro de GetLavado 🤝
+
+Sé que están ocupados en *${name}*. Solo quería cerrar el tema de mi lado:
+
+¿Les interesa una cotización sin compromiso? Un "sí" o "no" me ayuda mucho.`,
+
+    // Round 2: Noticia del sector — relevancia contextual
+    sector === 'hotel'
+      ? `Hola! Soy Alejandro de GetLavado
+
+Dato: este mes *3 hoteles* en Lima nos contrataron. La tendencia es tercerizar para bajar costos fijos.
+
+¿En *${name}* siguen manejando el lavado internamente? Solo curiosidad 🤔`
+      : sector === 'gym'
+      ? `Hola! Soy Alejandro de GetLavado
+
+Dato: este mes *4 gimnasios* en Lima empezaron a tercerizar sus toallas con nosotros. La tendencia está clara.
+
+¿En *${name}* cómo lo manejan actualmente? 🤔`
+      : sector === 'clínica'
+      ? `Hola! Soy Alejandro de GetLavado
+
+Dato: las clínicas que tercerizan lavandería reducen *infecciones cruzadas* y cumplen mejor los protocolos MINSA.
+
+¿En *${name}* ya evaluaron esta opción? 🏥`
+      : sector === 'restaurante'
+      ? `Hola! Soy Alejandro de GetLavado
+
+Dato: varios restaurantes en Lima están tercerizando manteles para *liberar personal de cocina*. El ROI es inmediato.
+
+¿En *${name}* cuántas horas le dedican al lavado? 🍽️`
+      : `Hola! Soy Alejandro de GetLavado
+
+Dato: este mes varios negocios de su zona empezaron a tercerizar textiles con nosotros. La tendencia crece.
+
+¿En *${name}* cómo lo manejan actualmente? 🤔`,
+
+    // Round 3: Caso de éxito cercano — social proof fresco
+    `Hola! Soy Alejandro de GetLavado
+
+Le cuento: un ${sector === 'negocio' ? 'negocio' : sector} parecido a *${name}* nos eligió hace 2 semanas y ya redujo *30% su gasto* en textiles.
+
+Si quieren les comparto qué hicimos diferente. Solo me dicen 📊`,
+
+    // Round 4: Oferta temporal — urgencia real
+    `Hola! Soy Alejandro de GetLavado
+
+Tenemos *capacidad libre* este mes y puedo hacerles precio especial para *${name}*. No sé cuánto dure la disponibilidad.
+
+¿Les armo una propuesta rápida? Sin compromiso 💬`,
+
+    // Round 5: Cierre definitivo — respeto total
+    `Hola! Soy Alejandro de GetLavado
+
+Último check para *${name}* 🤝
+
+Entiendo si no es el momento. Solo necesito saber: ¿lo descartamos o lo dejamos pendiente para más adelante?
+
+Cualquier respuesta me sirve, gracias!`,
+  ];
+
+  // Rotate based on contact count (subtract base contacts before seg3)
+  // First time in seg3 usually has ~4-5 contacts, so we subtract 4
+  const index = Math.max(0, contacts - 4) % pitches.length;
+  return pitches[index];
 }

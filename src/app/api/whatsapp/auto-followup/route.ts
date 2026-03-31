@@ -21,7 +21,7 @@ function getDaysToWait(stage: string): number {
     case 'contactado': return 2;
     case 'seguimiento_1': return 3;
     case 'seguimiento_2': return 4;
-    case 'seguimiento_3': return 7;
+    case 'seguimiento_3': return 14; // quincenal — rotación de ángulos
     case 'interesado': return 2;
     case 'cotizado': return 3;
     default: return 3;
@@ -115,8 +115,8 @@ export async function GET() {
       // Determine next stage
       const nextStage = getNextStage(stage);
 
-      // interesado/cotizado: don't auto-advance, just re-send
-      if (stage === 'interesado' || stage === 'cotizado') {
+      // seguimiento_3/interesado/cotizado: don't auto-advance, just re-send with rotation
+      if (stage === 'seguimiento_3' || stage === 'interesado' || stage === 'cotizado') {
         const contactCount = contactCountMap[biz.id] || 0;
         const businessType = (biz as any).searches?.business_type || biz.business_type;
         const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);

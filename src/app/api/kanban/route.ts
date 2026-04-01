@@ -362,14 +362,16 @@ export async function GET() {
       perdido: columns.perdido.length,
     };
 
-    // WhatsApp stats (reuses todayStart from above)
-    const todayMessages = contactHistory?.filter(c =>
-      (c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') &&
-      c.created_at && c.created_at >= todayStartISO
-    ) || [];
-    const sentToday = todayMessages.length;
-    const sentManualToday = todayMessages.filter(c => c.action_type === 'whatsapp').length;
-    const sentAutoToday = todayMessages.filter(c => c.action_type === 'auto_whatsapp').length;
+    // WhatsApp stats — separate query for accurate today counts
+    const { data: todayHistory } = await supabase
+      .from('contact_history')
+      .select('action_type')
+      .in('action_type', ['whatsapp', 'auto_whatsapp'])
+      .gte('created_at', todayStartISO);
+
+    const sentToday = todayHistory?.length || 0;
+    const sentManualToday = todayHistory?.filter(c => c.action_type === 'whatsapp').length || 0;
+    const sentAutoToday = todayHistory?.filter(c => c.action_type === 'auto_whatsapp').length || 0;
     const repliesUnread = Object.keys(replyMap).length;
 
     const whatsappStats: WhatsAppStats = { sentToday, sentManualToday, sentAutoToday, repliesUnread };

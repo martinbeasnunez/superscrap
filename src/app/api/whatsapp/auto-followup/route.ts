@@ -42,12 +42,14 @@ function getNextStage(stage: string): string | null {
 // GET /api/whatsapp/auto-followup
 export async function GET() {
   // DISABLED: Waiting for Meta to approve per-stage templates (seg1, seg2, seg3)
-  // Sending the same generic template repeatedly = spam. Re-enable once
-  // each stage has its own approved template with different messaging.
-  return NextResponse.json({
-    sent: 0, skipped: 0, advanced: 0, lost: 0, total: 0,
-    message: 'Auto-followup disabled — waiting for per-stage templates approval from Meta',
-  });
+  // Sending the same generic template repeatedly = spam. Re-enable by setting to true
+  const ENABLED = false;
+  if (!ENABLED) {
+    return NextResponse.json({
+      sent: 0, skipped: 0, advanced: 0, lost: 0, total: 0,
+      message: 'Auto-followup paused — waiting for per-stage templates approval from Meta',
+    });
+  }
 
   try {
     const now = new Date();

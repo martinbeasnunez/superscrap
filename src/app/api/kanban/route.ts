@@ -237,7 +237,11 @@ export async function GET() {
 
     // Calcular días desde último contacto y clasificar
     const now = new Date();
-    const todayStartISO = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    // Today start in Peru time (UTC-5)
+    const peruOffset = -5 * 60;
+    const peruNow = new Date(now.getTime() + (peruOffset - now.getTimezoneOffset()) * 60000);
+    const peruToday = new Date(peruNow.getFullYear(), peruNow.getMonth(), peruNow.getDate());
+    const todayStartISO = new Date(peruToday.getTime() - peruOffset * 60000).toISOString();
 
     // Populate contactedTodaySet
     contactHistory?.forEach(c => {

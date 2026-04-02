@@ -1030,7 +1030,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={async () => {
-                    if (!business?.phone) return;
+                    if (!business?.phone || actionLoading === 'kapso') return;
                     setActionLoading('kapso');
                     try {
                       const pitch = getWhatsAppPitch(business.name, business.business_type, currentStage, business.contactCount);

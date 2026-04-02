@@ -639,8 +639,8 @@ export default function KanbanBoard() {
 
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> {t('kanban.active')}</span>
-        <span className="hidden sm:inline text-green-600"><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</span>
-        <span className="hidden sm:inline text-[#B8923F]"><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</span>
+        <button onClick={() => document.getElementById('col-cliente')?.scrollIntoView({ behavior: 'smooth', inline: 'center' })} className="hidden sm:inline text-green-600 hover:underline cursor-pointer"><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</button>
+        <button onClick={() => document.getElementById('col-interesado')?.scrollIntoView({ behavior: 'smooth', inline: 'center' })} className="hidden sm:inline text-[#B8923F] hover:underline cursor-pointer"><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</button>
 
         {/* Orca/Delfin pipeline metrics */}
         {(() => {
@@ -777,6 +777,7 @@ export default function KanbanBoard() {
           {COLUMN_ORDER.map((columnId) => (
             <KanbanColumn
               key={columnId}
+              id={`col-${columnId}`}
               columnId={columnId}
               businesses={filteredColumns[columnId]}
               onCardClick={handleCardClick}

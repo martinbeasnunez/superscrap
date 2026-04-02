@@ -132,18 +132,19 @@ export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = getColumnConf
 });
 
 interface KanbanColumnProps {
+  id?: string;
   columnId: KanbanColumnId;
   businesses: KanbanBusiness[];
   onCardClick: (business: KanbanBusiness, column: KanbanColumnId) => void;
 }
 
-export default function KanbanColumn({ columnId, businesses, onCardClick }: KanbanColumnProps) {
+export default function KanbanColumn({ id, columnId, businesses, onCardClick }: KanbanColumnProps) {
   const { t } = useI18n();
   const columnConfig = getColumnConfig(t);
   const config = columnConfig[columnId];
 
   return (
-    <div className={`
+    <div id={id} className={`
       flex flex-col rounded-xl ${config.bgColor} border-2 ${config.borderColor}
       min-w-[180px] w-[180px] sm:min-w-[220px] sm:w-[220px] lg:min-w-[240px] lg:w-[240px]
       snap-center flex-shrink-0

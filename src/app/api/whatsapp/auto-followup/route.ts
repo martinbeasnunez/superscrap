@@ -141,44 +141,26 @@ export async function GET() {
         continue;
       }
 
-      if (!nextStage) {
-        skipped++;
-        continue;
-      }
+      // AUTO-ADVANCE DISABLED until per-stage templates are approved by Meta
+      // For now: just re-send template without moving the card
+      {
+        const contactCount = contactCountMap[biz.id] || 0;
+        const businessType = (biz as any).searches?.business_type || biz.business_type;
+        const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
+        const result = await sendWithFallback(biz.phone, pitch, biz.name);
 
-      // seguimiento_3: no auto-move to perdido — vendedor decides
-      // Lead stays in seguimiento_3, no more auto messages sent
-
-      // Auto-advance + send pitch for new stage
-      const contactCount = contactCountMap[biz.id] || 0;
-      const businessType = (biz as any).searches?.business_type || biz.business_type;
-      const pitch = getWhatsAppPitchServer(biz.name, businessType, nextStage, contactCount);
-      const result = await sendWithFallback(biz.phone, pitch, biz.name);
-
-      if (result.success) {
-        // Log stage change
-        await supabase.from('contact_history').insert({
-          business_id: biz.id,
-          action_type: 'stage_change',
-          notes: `📋 Auto-avance: ${stage} → ${nextStage}`,
-        });
-        // Log message
-        await supabase.from('contact_history').insert({
-          business_id: biz.id,
-          action_type: 'auto_whatsapp',
-          notes: pitch,
-        });
-        // Update business
-        await supabase.from('businesses').update({
-          sales_stage: nextStage,
-          contacted_at: now.toISOString(),
-          auto_followup_last_sent: now.toISOString(),
-          contact_actions: [...(biz.contact_actions || []).filter((a: string) => a !== 'whatsapp'), 'whatsapp'],
-        }).eq('id', biz.id);
-
-        sent++;
-        advanced++;
-      } else {
+        if (result.success) {
+          await supabase.from('contact_history').insert({
+            business_id: biz.id,
+            action_type: 'auto_whatsapp',
+            notes: pitch,
+          });
+          await supabase.from('businesses').update({
+            contacted_at: now.toISOString(),
+            auto_followup_last_sent: now.toISOString(),
+          }).eq('id', biz.id);
+          sent++;
+        } else {
         errors.push(`${biz.name}: ${result.error}`);
         skipped++;
       }

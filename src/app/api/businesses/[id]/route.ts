@@ -150,7 +150,7 @@ export async function PATCH(
           // Try text first, fall back to template if outside 24h window
           let result = await sendWhatsAppMessage(data.phone, pitch);
           if (!result.success && (result.error?.includes('24-hour') || result.error?.includes('Re-engagement'))) {
-            result = await sendWhatsAppTemplate(data.phone, data.name);
+            result = await sendWhatsAppTemplate(data.phone, data.name, sales_stage);
           }
           if (result.success) {
             await supabase.from('contact_history').insert({

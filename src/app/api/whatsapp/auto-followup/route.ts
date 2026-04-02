@@ -4,12 +4,11 @@ import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/kapso';
 import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
 
 // Try text message first, fall back to template if outside 24h window
-async function sendWithFallback(phone: string, pitch: string, businessName: string) {
+async function sendWithFallback(phone: string, pitch: string, paramValue: string, stage: string) {
   const textResult = await sendWhatsAppMessage(phone, pitch);
   if (textResult.success) return { ...textResult, method: 'text' as const };
-  // If 24h window error, use template
   if (textResult.error?.includes('24-hour') || textResult.error?.includes('Re-engagement')) {
-    const templateResult = await sendWhatsAppTemplate(phone, businessName);
+    const templateResult = await sendWhatsAppTemplate(phone, paramValue, stage);
     return { ...templateResult, method: 'template' as const };
   }
   return { ...textResult, method: 'text' as const };
@@ -43,7 +42,7 @@ function getNextStage(stage: string): string | null {
 export async function GET() {
   // DISABLED: Waiting for Meta to approve per-stage templates (seg1, seg2, seg3)
   // Sending the same generic template repeatedly = spam. Re-enable by setting to true
-  const ENABLED = false;
+  const ENABLED = true;
   if (!ENABLED) {
     return NextResponse.json({
       sent: 0, skipped: 0, advanced: 0, lost: 0, total: 0,
@@ -124,13 +123,13 @@ export async function GET() {
 
       // Determine next stage
       const nextStage = getNextStage(stage);
+      const contactCount = contactCountMap[biz.id] || 0;
+      const businessType = (biz as any).searches?.business_type || biz.business_type;
 
-      // seguimiento_3/interesado/cotizado: don't auto-advance, just re-send with rotation
-      if (stage === 'seguimiento_3' || stage === 'interesado' || stage === 'cotizado') {
-        const contactCount = contactCountMap[biz.id] || 0;
-        const businessType = (biz as any).searches?.business_type || biz.business_type;
+      // seguimiento_3/interesado/cotizado: re-send without moving
+      if (!nextStage || stage === 'seguimiento_3' || stage === 'interesado' || stage === 'cotizado') {
         const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
-        const result = await sendWithFallback(biz.phone, pitch, biz.name);
+        const result = await sendWithFallback(biz.phone, pitch, biz.name, stage);
 
         if (result.success) {
           await supabase.from('contact_history').insert({
@@ -147,28 +146,33 @@ export async function GET() {
           errors.push(`${biz.name}: ${result.error}`);
           skipped++;
         }
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 2000));
         continue;
       }
 
-      // AUTO-ADVANCE DISABLED until per-stage templates are approved by Meta
-      // For now: just re-send template without moving the card
-      const contactCount = contactCountMap[biz.id] || 0;
-      const businessType = (biz as any).searches?.business_type || biz.business_type;
-      const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
-      const result = await sendWithFallback(biz.phone, pitch, biz.name);
+      // AUTO-ADVANCE: move to next stage + send stage-specific template
+      const pitch = getWhatsAppPitchServer(biz.name, businessType, nextStage, contactCount);
+      const result = await sendWithFallback(biz.phone, pitch, biz.name, nextStage);
 
       if (result.success) {
+        await supabase.from('contact_history').insert({
+          business_id: biz.id,
+          action_type: 'stage_change',
+          notes: `📋 Auto-avance: ${stage} → ${nextStage}`,
+        });
         await supabase.from('contact_history').insert({
           business_id: biz.id,
           action_type: 'auto_whatsapp',
           notes: pitch,
         });
         await supabase.from('businesses').update({
+          sales_stage: nextStage,
           contacted_at: now.toISOString(),
           auto_followup_last_sent: now.toISOString(),
+          contact_actions: [...(biz.contact_actions || []).filter((a: string) => a !== 'whatsapp'), 'whatsapp'],
         }).eq('id', biz.id);
         sent++;
+        advanced++;
       } else {
         errors.push(`${biz.name}: ${result.error}`);
         skipped++;

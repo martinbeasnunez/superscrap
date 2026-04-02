@@ -60,10 +60,21 @@ export async function sendWhatsAppMessage(
   }
 }
 
+// Template name by stage
+function getTemplateName(stage: string): string {
+  switch (stage) {
+    case 'seguimiento_1': return 'getlavado_seg1';
+    case 'seguimiento_2': return 'getlavado_seg2';
+    case 'seguimiento_3': return 'getlavado_seg3';
+    default: return 'getlavado_followup';
+  }
+}
+
 // Send using approved template (works outside 24h window)
 export async function sendWhatsAppTemplate(
   to: string,
-  businessName: string,
+  paramValue: string,
+  stage?: string,
 ): Promise<KapsoSendResult> {
   try {
     const client = getClient();
@@ -74,15 +85,16 @@ export async function sendWhatsAppTemplate(
     }
 
     const normalizedTo = normalizePhoneForKapso(to);
+    const templateName = getTemplateName(stage || '');
 
     const template = buildTemplatePayload({
-      name: 'getlavado_followup',
+      name: templateName,
       language: 'es',
       components: [
         {
           type: 'body',
           parameters: [
-            { type: 'text', text: businessName },
+            { type: 'text', text: paramValue },
           ],
         },
       ],

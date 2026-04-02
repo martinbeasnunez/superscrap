@@ -143,24 +143,23 @@ export async function GET() {
 
       // AUTO-ADVANCE DISABLED until per-stage templates are approved by Meta
       // For now: just re-send template without moving the card
-      {
-        const contactCount = contactCountMap[biz.id] || 0;
-        const businessType = (biz as any).searches?.business_type || biz.business_type;
-        const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
-        const result = await sendWithFallback(biz.phone, pitch, biz.name);
+      const contactCount = contactCountMap[biz.id] || 0;
+      const businessType = (biz as any).searches?.business_type || biz.business_type;
+      const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
+      const result = await sendWithFallback(biz.phone, pitch, biz.name);
 
-        if (result.success) {
-          await supabase.from('contact_history').insert({
-            business_id: biz.id,
-            action_type: 'auto_whatsapp',
-            notes: pitch,
-          });
-          await supabase.from('businesses').update({
-            contacted_at: now.toISOString(),
-            auto_followup_last_sent: now.toISOString(),
-          }).eq('id', biz.id);
-          sent++;
-        } else {
+      if (result.success) {
+        await supabase.from('contact_history').insert({
+          business_id: biz.id,
+          action_type: 'auto_whatsapp',
+          notes: pitch,
+        });
+        await supabase.from('businesses').update({
+          contacted_at: now.toISOString(),
+          auto_followup_last_sent: now.toISOString(),
+        }).eq('id', biz.id);
+        sent++;
+      } else {
         errors.push(`${biz.name}: ${result.error}`);
         skipped++;
       }

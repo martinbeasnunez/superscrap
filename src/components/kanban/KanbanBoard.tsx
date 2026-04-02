@@ -90,6 +90,7 @@ export default function KanbanBoard() {
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'sent_today' | 'no_phone'>('all');
+  const [columnFilter, setColumnFilter] = useState<'all' | 'clientes' | 'por_cerrar'>('all');
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -639,8 +640,8 @@ export default function KanbanBoard() {
 
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> {t('kanban.active')}</span>
-        <button onClick={() => document.getElementById('col-cliente')?.scrollIntoView({ behavior: 'smooth', inline: 'center' })} className="hidden sm:inline text-green-600 hover:underline cursor-pointer"><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</button>
-        <button onClick={() => document.getElementById('col-interesado')?.scrollIntoView({ behavior: 'smooth', inline: 'center' })} className="hidden sm:inline text-[#B8923F] hover:underline cursor-pointer"><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</button>
+        <button onClick={() => setColumnFilter(columnFilter === 'clientes' ? 'all' : 'clientes')} className={`hidden sm:inline cursor-pointer ${columnFilter === 'clientes' ? 'text-green-700 font-bold underline' : 'text-green-600 hover:underline'}`}><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</button>
+        <button onClick={() => setColumnFilter(columnFilter === 'por_cerrar' ? 'all' : 'por_cerrar')} className={`hidden sm:inline cursor-pointer ${columnFilter === 'por_cerrar' ? 'text-[#8B6914] font-bold underline' : 'text-[#B8923F] hover:underline'}`}><strong>{columns.interesado.length + columns.cotizado.length}</strong> {t('kanban.to_close')}</button>
 
         {/* Orca/Delfin pipeline metrics */}
         {(() => {
@@ -774,7 +775,11 @@ export default function KanbanBoard() {
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 -mx-2 px-2 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:snap-none">
-          {COLUMN_ORDER.map((columnId) => (
+          {COLUMN_ORDER.filter(columnId => {
+            if (columnFilter === 'clientes') return columnId === 'cliente';
+            if (columnFilter === 'por_cerrar') return columnId === 'interesado' || columnId === 'cotizado';
+            return true;
+          }).map((columnId) => (
             <KanbanColumn
               key={columnId}
               id={`col-${columnId}`}

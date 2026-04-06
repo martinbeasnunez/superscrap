@@ -103,7 +103,9 @@ export async function sendWhatsAppTemplate(
     const normalizedTo = normalizePhoneForKapso(to);
     const stg = stage || '';
     const templateName = getTemplateName(stg);
-    const paramValue = getTemplateParam(stg, businessName, address || null);
+    // Sanitize: Meta rejects params with certain special chars
+    const rawParam = getTemplateParam(stg, businessName, address || null);
+    const paramValue = rawParam.replace(/[""''🧪📋🏨💪✨🏥🍽️👋📞📊🤝]/g, '').trim().substring(0, 100);
 
     const template = buildTemplatePayload({
       name: templateName,

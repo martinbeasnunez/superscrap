@@ -104,6 +104,15 @@ export async function GET() {
         continue;
       }
 
+      // Skip landlines — only mobile numbers work with WhatsApp
+      const cleanPhone = biz.phone.replace(/\D/g, '');
+      const isMobile = (cleanPhone.length === 9 && cleanPhone.startsWith('9')) ||
+                        (cleanPhone.startsWith('519') && cleanPhone.length >= 11);
+      if (!isMobile) {
+        skipped++;
+        continue;
+      }
+
       // STOP if lead has replied — vendedor handles from here
       if (hasReplyMap[biz.id]) {
         skipped++;

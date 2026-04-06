@@ -107,23 +107,21 @@ export async function sendWhatsAppTemplate(
     const rawParam = getTemplateParam(stg, businessName, address || null);
     const paramValue = rawParam.replace(/[""''🧪📋🏨💪✨🏥🍽️👋📞📊🤝]/g, '').trim().substring(0, 100);
 
-    const template = buildTemplatePayload({
-      name: templateName,
-      language: 'es',
-      components: [
-        {
-          type: 'body',
-          parameters: [
-            { type: 'text', text: paramValue },
-          ],
-        },
-      ],
-    });
-
     const result = await client.messages.sendTemplate({
       phoneNumberId,
       to: normalizedTo,
-      template,
+      template: {
+        name: templateName,
+        language: { code: 'es' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: paramValue },
+            ],
+          },
+        ],
+      },
     });
 
     return {

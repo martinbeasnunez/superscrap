@@ -107,22 +107,37 @@ export async function sendWhatsAppTemplate(
     const rawParam = getTemplateParam(stg, businessName, address || null);
     const paramValue = rawParam.replace(/[""''🧪📋🏨💪✨🏥🍽️👋📞📊🤝]/g, '').trim().substring(0, 100);
 
-    const result = await client.messages.sendTemplate({
-      phoneNumberId,
-      to: normalizedTo,
-      template: {
-        name: templateName,
-        language: { code: 'es' },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: paramValue },
-            ],
-          },
-        ],
+    // Use direct API call instead of SDK (SDK formats template incorrectly)
+    const apiKey = process.env.KAPSO_API_KEY!;
+    const res = await fetch(`https://api.kapso.ai/meta/whatsapp/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': apiKey,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: normalizedTo,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: 'es' },
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: paramValue },
+              ],
+            },
+          ],
+        },
+      }),
     });
+    const result = await res.json();
+
+    if (result?.error) {
+      return { success: false, error: result.error.message || JSON.stringify(result.error) };
+    }
 
     return {
       success: true,

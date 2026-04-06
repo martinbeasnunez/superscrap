@@ -106,6 +106,13 @@ export async function GET() {
         continue;
       }
 
+      // Skip if contacted less than 1 hour ago (dedup against double triggers)
+      const lastContactTime = new Date(biz.contacted_at).getTime();
+      if (now.getTime() - lastContactTime < 60 * 60 * 1000) {
+        skipped++;
+        continue;
+      }
+
       // Skip landlines — only mobile numbers work with WhatsApp
       const cleanPhone = biz.phone.replace(/\D/g, '');
       const isMobile = (cleanPhone.length === 9 && cleanPhone.startsWith('9')) ||

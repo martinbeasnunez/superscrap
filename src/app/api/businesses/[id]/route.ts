@@ -17,6 +17,7 @@ export async function PATCH(
     const {
       contact_actions, lead_status, sales_stage, user_id, previous_stage,
       primary_dm_index, auto_followup_enabled, last_email_template_id,
+      skip_auto_send,
     } = body;
 
     // Validar contact_actions (array de acciones)
@@ -135,9 +136,9 @@ export async function PATCH(
         console.log('Stage history inserted successfully');
       }
 
-      // Auto-send WhatsApp when moving to follow-up stages
+      // Auto-send WhatsApp when moving to follow-up stages (skip if cron already sent)
       const autoSendStages = ['contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
-      if (autoSendStages.includes(sales_stage) && data.phone) {
+      if (autoSendStages.includes(sales_stage) && data.phone && !skip_auto_send) {
         try {
           const { getWhatsAppPitchServer } = await import('@/lib/whatsapp-pitch');
           const contactCount = await supabase

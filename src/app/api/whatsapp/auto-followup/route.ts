@@ -65,7 +65,7 @@ export async function GET() {
       .not('phone', 'is', null)
       .not('contacted_at', 'is', null)
       .not('sales_stage', 'in', '("nuevo","cliente","perdido")')
-      .limit(10);
+      .limit(100); // Fetch more, filter in code, send max 10
 
     if (error) {
       console.error('Error fetching auto-followup businesses:', error);
@@ -98,7 +98,9 @@ export async function GET() {
     let lost = 0;
     const errors: string[] = [];
 
+    const MAX_SENDS = 10;
     for (const biz of businesses) {
+      if (sent >= MAX_SENDS) break;
       if (!biz.phone || !biz.contacted_at) {
         skipped++;
         continue;

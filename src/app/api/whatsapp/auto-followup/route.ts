@@ -4,11 +4,11 @@ import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/kapso';
 import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
 
 // Try text message first, fall back to template if outside 24h window
-async function sendWithFallback(phone: string, pitch: string, paramValue: string, stage: string) {
+async function sendWithFallback(phone: string, pitch: string, bizName: string, stage: string, address?: string | null) {
   const textResult = await sendWhatsAppMessage(phone, pitch);
   if (textResult.success) return { ...textResult, method: 'text' as const };
   if (textResult.error?.includes('24-hour') || textResult.error?.includes('Re-engagement')) {
-    const templateResult = await sendWhatsAppTemplate(phone, paramValue, stage);
+    const templateResult = await sendWhatsAppTemplate(phone, bizName, stage, address);
     return { ...templateResult, method: 'template' as const };
   }
   return { ...textResult, method: 'text' as const };
@@ -57,7 +57,7 @@ export async function GET() {
     const { data: businesses, error } = await supabase
       .from('businesses')
       .select(`
-        id, name, phone, business_type, sales_stage, contacted_at,
+        id, name, phone, address, business_type, sales_stage, contacted_at,
         contact_actions, auto_followup_last_sent,
         searches (business_type)
       `)
@@ -129,7 +129,7 @@ export async function GET() {
       // seguimiento_3/interesado/cotizado: re-send without moving
       if (!nextStage || stage === 'seguimiento_3' || stage === 'interesado' || stage === 'cotizado') {
         const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
-        const result = await sendWithFallback(biz.phone, pitch, biz.name, stage);
+        const result = await sendWithFallback(biz.phone, pitch, biz.name, stage, biz.address);
 
         if (result.success) {
           await supabase.from('contact_history').insert({
@@ -152,7 +152,7 @@ export async function GET() {
 
       // AUTO-ADVANCE: move to next stage + send stage-specific template
       const pitch = getWhatsAppPitchServer(biz.name, businessType, nextStage, contactCount);
-      const result = await sendWithFallback(biz.phone, pitch, biz.name, nextStage);
+      const result = await sendWithFallback(biz.phone, pitch, biz.name, nextStage, biz.address);
 
       if (result.success) {
         await supabase.from('contact_history').insert({

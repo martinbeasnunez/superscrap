@@ -70,11 +70,27 @@ function getTemplateName(stage: string): string {
   }
 }
 
+// Get the right parameter value for each template
+function getTemplateParam(stage: string, businessName: string, address: string | null): string {
+  switch (stage) {
+    case 'seguimiento_1': return 'lavanderia industrial';
+    case 'seguimiento_2': {
+      // Extract district from address
+      const districts = ['Miraflores', 'San Isidro', 'Surco', 'Barranco', 'San Borja', 'La Molina', 'San Miguel', 'Jesús María', 'Lince', 'Magdalena', 'Lima'];
+      const addr = address || '';
+      const found = districts.find(d => addr.toLowerCase().includes(d.toLowerCase()));
+      return found || 'Lima';
+    }
+    default: return businessName;
+  }
+}
+
 // Send using approved template (works outside 24h window)
 export async function sendWhatsAppTemplate(
   to: string,
-  paramValue: string,
+  businessName: string,
   stage?: string,
+  address?: string | null,
 ): Promise<KapsoSendResult> {
   try {
     const client = getClient();
@@ -85,7 +101,9 @@ export async function sendWhatsAppTemplate(
     }
 
     const normalizedTo = normalizePhoneForKapso(to);
-    const templateName = getTemplateName(stage || '');
+    const stg = stage || '';
+    const templateName = getTemplateName(stg);
+    const paramValue = getTemplateParam(stg, businessName, address || null);
 
     const template = buildTemplatePayload({
       name: templateName,

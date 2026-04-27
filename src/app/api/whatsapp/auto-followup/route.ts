@@ -134,7 +134,8 @@ export async function GET() {
         continue;
       }
 
-      const stage = biz.sales_stage || 'contactado';
+      // Null/missing sales_stage = first-contact lead (treat as 'nuevo' so it advances to 'contactado')
+      const stage = biz.sales_stage || 'nuevo';
 
       // Cadence check — skipped for first-contact leads (no contacted_at yet, send ASAP)
       if (biz.contacted_at) {

@@ -60,29 +60,30 @@ export async function sendWhatsAppMessage(
   }
 }
 
-// Template name by stage
+// Template name by stage (v3 — permission-based, peruvian tone)
 function getTemplateName(stage: string): string {
   switch (stage) {
-    case 'seguimiento_1': return 'getlavado_seg1';
-    case 'seguimiento_2': return 'getlavado_seg2';
-    case 'seguimiento_3': return 'getlavado_seg3';
-    default: return 'getlavado_followup';
+    case 'seguimiento_1': return 'getlavado_v3_dato';        // pide kg/mes para calificar
+    case 'seguimiento_2': return 'getlavado_v3_cierremes';   // urgencia + distrito (2 params)
+    case 'seguimiento_3': return 'getlavado_v3_cierre';      // cierre respetuoso
+    default:              return 'getlavado_v3_apertura';    // primer contacto / contactado
   }
 }
 
-// Get the right parameter value for each template
-function getTemplateParam(stage: string, businessName: string, address: string | null): string {
-  switch (stage) {
-    case 'seguimiento_1': return 'lavanderia industrial';
-    case 'seguimiento_2': {
-      // Extract district from address
-      const districts = ['Miraflores', 'San Isidro', 'Surco', 'Barranco', 'San Borja', 'La Molina', 'San Miguel', 'Jesús María', 'Lince', 'Magdalena', 'Lima'];
-      const addr = address || '';
-      const found = districts.find(d => addr.toLowerCase().includes(d.toLowerCase()));
-      return found || 'Lima';
-    }
-    default: return businessName;
+function extractDistrict(address: string | null): string {
+  const districts = ['Miraflores', 'San Isidro', 'Surco', 'Barranco', 'San Borja', 'La Molina', 'San Miguel', 'Jesús María', 'Lince', 'Magdalena', 'Lima'];
+  const addr = address || '';
+  return districts.find(d => addr.toLowerCase().includes(d.toLowerCase())) || 'Lima';
+}
+
+// Get the parameter values for each template (some templates use 2 params)
+function getTemplateParams(stage: string, businessName: string, address: string | null): string[] {
+  if (stage === 'seguimiento_2') {
+    // v3_cierremes: {{1}} = name, {{2}} = district
+    return [businessName, extractDistrict(address)];
   }
+  // All other v3 templates use just {{1}} = business name
+  return [businessName];
 }
 
 // Send using approved template (works outside 24h window)
@@ -104,8 +105,8 @@ export async function sendWhatsAppTemplate(
     const stg = stage || '';
     const templateName = getTemplateName(stg);
     // Sanitize: Meta rejects params with certain special chars
-    const rawParam = getTemplateParam(stg, businessName, address || null);
-    const paramValue = rawParam.replace(/[""''🧪📋🏨💪✨🏥🍽️👋📞📊🤝]/g, '').trim().substring(0, 100);
+    const sanitize = (p: string) => p.replace(/[""''🧪📋🏨💪✨🏥🍽️👋📞📊🤝]/g, '').trim().substring(0, 100);
+    const params = getTemplateParams(stg, businessName, address || null).map(sanitize);
 
     // Use direct API call instead of SDK (SDK formats template incorrectly)
     const apiKey = process.env.KAPSO_API_KEY!;
@@ -125,9 +126,7 @@ export async function sendWhatsAppTemplate(
           components: [
             {
               type: 'body',
-              parameters: [
-                { type: 'text', text: paramValue },
-              ],
+              parameters: params.map(text => ({ type: 'text', text })),
             },
           ],
         },

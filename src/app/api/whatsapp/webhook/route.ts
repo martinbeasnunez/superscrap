@@ -27,35 +27,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Find the business by phone number
-    const cleanPhone = fromPhone.replace(/\D/g, '');
-    const phoneVariants = [
-      cleanPhone,
-      cleanPhone.startsWith('51') ? cleanPhone.slice(2) : cleanPhone,
-      `+${cleanPhone}`,
-      `+51 ${cleanPhone.startsWith('51') ? cleanPhone.slice(2) : cleanPhone}`,
-    ];
+    // Find the business by phone number — normalize both sides to digits-only
+    // (DB stores formats like "960 836 761"; Kapso sends "51960836761")
+    const incomingDigits = fromPhone.replace(/\D/g, '');
+    const incomingLast9 = incomingDigits.slice(-9);
 
-    let businessId: string | null = null;
+    const { data: businesses } = await supabase
+      .from('businesses')
+      .select('id, phone')
+      .not('phone', 'is', null);
 
-    for (const variant of phoneVariants) {
-      const { data } = await supabase
-        .from('businesses')
-        .select('id')
-        .ilike('phone', `%${variant.slice(-9)}%`) // Match last 9 digits
-        .limit(1)
-        .single();
+    const match = businesses?.find(b => {
+      const dbDigits = (b.phone || '').replace(/\D/g, '');
+      if (!dbDigits) return false;
+      // Match by full digits or by last 9 (Peru mobile is 9 digits, ignore country code)
+      return dbDigits === incomingDigits || dbDigits.slice(-9) === incomingLast9;
+    });
 
-      if (data) {
-        businessId = data.id;
-        break;
-      }
-    }
-
-    if (!businessId) {
+    if (!match) {
       console.log(`WhatsApp reply from unknown number: ${fromPhone}`);
       return NextResponse.json({ ok: true, matched: false });
     }
+
+    const businessId = match.id;
 
     // Log the incoming message to contact_history
     await supabase.from('contact_history').insert({

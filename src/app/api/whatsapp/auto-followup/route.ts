@@ -30,6 +30,7 @@ function getDaysToWait(stage: string): number {
 // Next stage in the pipeline
 function getNextStage(stage: string): string | null {
   const flow: Record<string, string> = {
+    'nuevo': 'contactado',
     'contactado': 'seguimiento_1',
     'seguimiento_1': 'seguimiento_2',
     'seguimiento_2': 'seguimiento_3',
@@ -54,18 +55,20 @@ export async function GET() {
     const now = new Date();
 
     // Get all businesses with auto_followup_enabled
+    // Includes 'nuevo' (first-contact) — ordered by potential_score desc so Orcas/Delfines go first
     const { data: businesses, error } = await supabase
       .from('businesses')
       .select(`
         id, name, phone, address, business_type, sales_stage, contacted_at,
         contact_actions, auto_followup_last_sent,
-        searches (business_type)
+        searches (business_type),
+        service_analyses (potential_score)
       `)
       .eq('auto_followup_enabled', true)
       .not('phone', 'is', null)
-      .not('contacted_at', 'is', null)
-      .not('sales_stage', 'in', '("nuevo","cliente","perdido")')
-      .limit(100); // Fetch more, filter in code, send max 10
+      .not('sales_stage', 'in', '("cliente","perdido")')
+      .order('potential_score', { referencedTable: 'service_analyses', ascending: false, nullsFirst: false })
+      .limit(100); // Fetch more, filter in code, send max 15
 
     if (error) {
       console.error('Error fetching auto-followup businesses:', error);
@@ -98,19 +101,22 @@ export async function GET() {
     let lost = 0;
     const errors: string[] = [];
 
-    const MAX_SENDS = 10;
+    const MAX_SENDS = 15;
     for (const biz of businesses) {
       if (sent >= MAX_SENDS) break;
-      if (!biz.phone || !biz.contacted_at) {
+      if (!biz.phone) {
         skipped++;
         continue;
       }
 
       // Skip if contacted less than 1 hour ago (dedup against double triggers)
-      const lastContactTime = new Date(biz.contacted_at).getTime();
-      if (now.getTime() - lastContactTime < 60 * 60 * 1000) {
-        skipped++;
-        continue;
+      // First-contact leads (nuevo) have null contacted_at — no dedup needed
+      if (biz.contacted_at) {
+        const lastContactTime = new Date(biz.contacted_at).getTime();
+        if (now.getTime() - lastContactTime < 60 * 60 * 1000) {
+          skipped++;
+          continue;
+        }
       }
 
       // Skip landlines — only mobile numbers work with WhatsApp
@@ -129,14 +135,16 @@ export async function GET() {
       }
 
       const stage = biz.sales_stage || 'contactado';
-      const daysToWait = getDaysToWait(stage);
-      const cutoff = new Date(now.getTime() - daysToWait * 24 * 60 * 60 * 1000);
-      const lastContact = new Date(biz.contacted_at);
 
-      // Not enough time has passed
-      if (lastContact > cutoff) {
-        skipped++;
-        continue;
+      // Cadence check — skipped for first-contact leads (no contacted_at yet, send ASAP)
+      if (biz.contacted_at) {
+        const daysToWait = getDaysToWait(stage);
+        const cutoff = new Date(now.getTime() - daysToWait * 24 * 60 * 60 * 1000);
+        const lastContact = new Date(biz.contacted_at);
+        if (lastContact > cutoff) {
+          skipped++;
+          continue;
+        }
       }
 
       // Determine next stage

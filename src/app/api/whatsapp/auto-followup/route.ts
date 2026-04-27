@@ -54,9 +54,11 @@ export async function GET() {
   try {
     const now = new Date();
 
-    // Get all businesses with auto_followup_enabled
-    // Includes 'nuevo' (first-contact) — ordered by potential_score desc so Orcas/Delfines go first
-    const { data: businesses, error } = await supabase
+    // Get all businesses with auto_followup_enabled. Includes 'nuevo' (first-contact).
+    // We fetch all eligible (typically <500), then sort by potential_score desc in JS and
+    // take top 100. PostgREST can't order across the businesses↔service_analyses
+    // relation (many-to-many from PG's view), so we sort client-side.
+    const { data: rawBusinesses, error } = await supabase
       .from('businesses')
       .select(`
         id, name, phone, address, business_type, sales_stage, contacted_at,
@@ -67,17 +69,23 @@ export async function GET() {
       .eq('auto_followup_enabled', true)
       .not('phone', 'is', null)
       .not('sales_stage', 'in', '("cliente","perdido")')
-      .order('potential_score', { referencedTable: 'service_analyses', ascending: false, nullsFirst: false })
-      .limit(100); // Fetch more, filter in code, send max 15
+      .limit(500);
 
     if (error) {
       console.error('Error fetching auto-followup businesses:', error);
       return NextResponse.json({ error: 'DB query error' }, { status: 500 });
     }
 
-    if (!businesses || businesses.length === 0) {
+    if (!rawBusinesses || rawBusinesses.length === 0) {
       return NextResponse.json({ sent: 0, skipped: 0, advanced: 0, lost: 0, message: 'No leads need follow-up' });
     }
+
+    // Sort by potential_score desc (Orcas/Delfines first, Unknown last)
+    const scoreOf = (b: any) => {
+      const sa = Array.isArray(b.service_analyses) ? b.service_analyses[0] : b.service_analyses;
+      return sa?.potential_score ?? -1;
+    };
+    const businesses = rawBusinesses.slice().sort((a, b) => scoreOf(b) - scoreOf(a)).slice(0, 100);
 
     // Get contact counts + check for unread replies per business
     const businessIds = businesses.map(b => b.id);

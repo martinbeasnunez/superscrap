@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/kapso';
 import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
+import { isLikelyBotReply } from '@/lib/reply-classifier';
 
 // Try text message first, fall back to template if outside 24h window
 async function sendWithFallback(phone: string, pitch: string, bizName: string, stage: string, address?: string | null) {
@@ -87,18 +88,20 @@ export async function GET() {
     };
     const businesses = rawBusinesses.slice().sort((a, b) => scoreOf(b) - scoreOf(a)).slice(0, 100);
 
-    // Get contact counts + check for unread replies per business
+    // Get contact counts + check for HUMAN replies per business
+    // Bot greetings ("Gracias por comunicarte con...") don't count — the human never saw the
+    // message, so we keep auto-following up. Only real human replies stop the cron.
     const businessIds = businesses.map(b => b.id);
     const { data: contactHistory } = await supabase
       .from('contact_history')
-      .select('business_id, action_type')
+      .select('business_id, action_type, notes')
       .in('business_id', businessIds);
 
     const contactCountMap: Record<string, number> = {};
     const hasReplyMap: Record<string, boolean> = {};
     contactHistory?.forEach(c => {
       contactCountMap[c.business_id] = (contactCountMap[c.business_id] || 0) + 1;
-      if (c.action_type === 'whatsapp_reply') {
+      if (c.action_type === 'whatsapp_reply' && !isLikelyBotReply(c.notes)) {
         hasReplyMap[c.business_id] = true;
       }
     });

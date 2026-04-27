@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { SalesStage, PotentialTier } from '@/types';
+import { isLikelyBotReply } from '@/lib/reply-classifier';
 
 // Columnas del pipeline comercial con seguimiento
 export type KanbanColumnId =
@@ -77,7 +78,9 @@ export interface WhatsAppStats {
   sentToday: number;
   sentManualToday: number;
   sentAutoToday: number;
-  repliesUnread: number;
+  repliesUnread: number;       // Total inbound replies (humans + bots) — kept for backwards compat
+  repliesHuman: number;        // Real human replies (signal)
+  repliesBot: number;          // Auto-greetings from prospect's WhatsApp bot (noise)
 }
 
 export interface KanbanResponse {
@@ -172,6 +175,8 @@ export async function GET() {
     const aiCallMap: Record<string, AICallResult> = {};
     // Track unread WhatsApp replies: store latest reply per business
     const replyMap: Record<string, { text: string; date: string }> = {};
+    // Track which businesses have at least one HUMAN reply (vs only bot auto-greetings)
+    const humanReplyBizIds = new Set<string>();
     // Track businesses contacted today (todayStartISO set after `now` is declared below)
     const contactedTodaySet = new Set<string>();
 
@@ -183,6 +188,9 @@ export async function GET() {
         const existing = replyMap[c.business_id];
         if (!existing || (c.created_at && c.created_at > existing.date)) {
           replyMap[c.business_id] = { text: c.notes || '', date: c.created_at || '' };
+        }
+        if (!isLikelyBotReply(c.notes)) {
+          humanReplyBizIds.add(c.business_id);
         }
       }
 
@@ -388,8 +396,13 @@ export async function GET() {
     const sentManualToday = todayHistory?.filter(c => c.action_type === 'whatsapp').length || 0;
     const sentAutoToday = todayHistory?.filter(c => c.action_type === 'auto_whatsapp').length || 0;
     const repliesUnread = Object.keys(replyMap).length;
+    const repliesHuman = humanReplyBizIds.size;
+    const repliesBot = repliesUnread - repliesHuman;
 
-    const whatsappStats: WhatsAppStats = { sentToday, sentManualToday, sentAutoToday, repliesUnread };
+    const whatsappStats: WhatsAppStats = {
+      sentToday, sentManualToday, sentAutoToday,
+      repliesUnread, repliesHuman, repliesBot,
+    };
 
     return NextResponse.json({ columns, counts, whatsappStats });
   } catch (error) {

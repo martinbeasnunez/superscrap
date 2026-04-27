@@ -104,7 +104,7 @@ export default function KanbanBoard() {
   const { t } = useI18n();
   const columnConfig = getColumnConfig(t);
 
-  const [whatsappStats, setWhatsappStats] = useState({ sentToday: 0, sentManualToday: 0, sentAutoToday: 0, repliesUnread: 0 });
+  const [whatsappStats, setWhatsappStats] = useState({ sentToday: 0, sentManualToday: 0, sentAutoToday: 0, repliesUnread: 0, repliesHuman: 0, repliesBot: 0 });
 
   const fetchKanbanData = useCallback(async () => {
     try {
@@ -679,13 +679,16 @@ export default function KanbanBoard() {
             {whatsappStats.repliesUnread > 0 && (
               <button
                 onClick={() => setPhoneFilter(phoneFilter === 'replied' ? 'all' : 'replied')}
+                title={whatsappStats.repliesBot > 0 ? `${whatsappStats.repliesHuman} humanos · ${whatsappStats.repliesBot} bots` : undefined}
                 className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                   phoneFilter === 'replied'
                     ? 'bg-green-600 text-white'
-                    : 'bg-green-100 text-green-700 animate-pulse hover:bg-green-200'
+                    : whatsappStats.repliesHuman > 0
+                      ? 'bg-green-100 text-green-700 animate-pulse hover:bg-green-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                💬 {whatsappStats.repliesUnread} {whatsappStats.repliesUnread === 1 ? 'respuesta' : 'respuestas'}
+                💬 {whatsappStats.repliesHuman}{whatsappStats.repliesBot > 0 ? <span className="opacity-60 font-normal"> · {whatsappStats.repliesBot} bot{whatsappStats.repliesBot === 1 ? '' : 's'}</span> : null}
               </button>
             )}
             {whatsappStats.sentToday > 0 && (

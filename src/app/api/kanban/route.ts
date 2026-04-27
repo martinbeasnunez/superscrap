@@ -146,13 +146,27 @@ export async function GET() {
       return NextResponse.json({ error: 'Error al obtener negocios' }, { status: 500 });
     }
 
-    // Obtener conteo de contactos y llamadas IA por negocio
-    // Fetch contact history - exclude stage_change to reduce volume
-    const { data: contactHistory } = await supabase
-      .from('contact_history')
-      .select('business_id, action_type, notes, created_at')
-      .neq('action_type', 'stage_change')
-      .limit(5000);
+    // Fetch ALL contact history (paginated past PostgREST's 1000-row response cap), excluding
+    // stage_change to reduce volume. Needed in full so contactCountMap is accurate for businesses
+    // with many historical contacts. Ordered desc so replyMap/aiCallMap pick the latest entry.
+    type ContactRow = { business_id: string; action_type: string | null; notes: string | null; created_at: string | null };
+    const contactHistory: ContactRow[] = [];
+    {
+      const chunkSize = 1000;
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('contact_history')
+          .select('business_id, action_type, notes, created_at')
+          .neq('action_type', 'stage_change')
+          .order('created_at', { ascending: false })
+          .range(from, from + chunkSize - 1);
+        if (error || !data) break;
+        contactHistory.push(...data);
+        if (data.length < chunkSize) break;
+        from += chunkSize;
+      }
+    }
 
     const contactCountMap: Record<string, number> = {};
     const aiCallMap: Record<string, AICallResult> = {};
@@ -243,12 +257,15 @@ export async function GET() {
     const peruToday = new Date(peruNow.getFullYear(), peruNow.getMonth(), peruNow.getDate());
     const todayStartISO = new Date(peruToday.getTime() - peruOffset * 60000).toISOString();
 
-    // Populate contactedTodaySet
-    contactHistory?.forEach(c => {
-      if ((c.action_type === 'whatsapp' || c.action_type === 'auto_whatsapp') && c.created_at && c.created_at >= todayStartISO) {
-        contactedTodaySet.add(c.business_id);
-      }
-    });
+    // Today's WhatsApp sends — separate query so it's not subject to the 1000-row PostgREST cap
+    // on contactHistory above. Also drives the WhatsApp stats below.
+    const { data: todayHistory } = await supabase
+      .from('contact_history')
+      .select('business_id, action_type')
+      .in('action_type', ['whatsapp', 'auto_whatsapp'])
+      .gte('created_at', todayStartISO);
+
+    todayHistory?.forEach(c => contactedTodaySet.add(c.business_id));
     const columns: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [],
       contactado: [],
@@ -366,13 +383,7 @@ export async function GET() {
       perdido: columns.perdido.length,
     };
 
-    // WhatsApp stats — separate query for accurate today counts
-    const { data: todayHistory } = await supabase
-      .from('contact_history')
-      .select('action_type')
-      .in('action_type', ['whatsapp', 'auto_whatsapp'])
-      .gte('created_at', todayStartISO);
-
+    // WhatsApp stats — reuse todayHistory fetched above
     const sentToday = todayHistory?.length || 0;
     const sentManualToday = todayHistory?.filter(c => c.action_type === 'whatsapp').length || 0;
     const sentAutoToday = todayHistory?.filter(c => c.action_type === 'auto_whatsapp').length || 0;

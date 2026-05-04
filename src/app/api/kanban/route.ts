@@ -68,7 +68,8 @@ export interface KanbanBusiness {
   auto_followup_enabled: boolean;
   last_email_template_id: string | null;
   // Reply tracking
-  has_unread_reply: boolean;
+  has_unread_reply: boolean;     // Any reply (bot or human)
+  has_human_reply: boolean;      // Real human reply (high-signal)
   last_reply_text: string | null;
   // Today tracking
   contacted_today: boolean;
@@ -325,6 +326,7 @@ export async function GET() {
         auto_followup_enabled: b.auto_followup_enabled ?? false,
         last_email_template_id: b.last_email_template_id ?? null,
         has_unread_reply: !!replyMap[b.id],
+        has_human_reply: humanReplyBizIds.has(b.id),
         last_reply_text: replyMap[b.id]?.text || null,
         contacted_today: contactedTodaySet.has(b.id),
       };

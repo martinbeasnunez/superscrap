@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/i18n';
 import { COLUMN_CONFIG, getColumnConfig } from './KanbanColumn';
 import { getRenderedEmailTemplate } from '@/lib/email-templates';
 import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
+import { isLikelyBotReply } from '@/lib/reply-classifier';
 
 interface LeadDetailModalProps {
   business: KanbanBusiness | null;
@@ -367,11 +368,11 @@ function formatTimeAgo(dateStr: string): string {
   return `hace ${Math.floor(diffDays / 30)} mes${Math.floor(diffDays / 30) > 1 ? 'es' : ''}`;
 }
 
-function getActionIcon(action: string): string {
+function getActionIcon(action: string, isBotReply = false): string {
   switch (action) {
-    case 'whatsapp': return '📱';
-    case 'auto_whatsapp': return '🤖';
-    case 'whatsapp_reply': return '💬';
+    case 'whatsapp': return '✋';                 // Manual — Alejandro
+    case 'auto_whatsapp': return '🤖';            // Automated — Sistema
+    case 'whatsapp_reply': return isBotReply ? '🤖' : '💬';
     case 'email': return '📧';
     case 'call': return '📞';
     case 'ai_call': return '🤖';
@@ -380,11 +381,11 @@ function getActionIcon(action: string): string {
   }
 }
 
-function getActionLabel(action: string): string {
+function getActionLabel(action: string, isBotReply = false): string {
   switch (action) {
-    case 'whatsapp': return 'WhatsApp enviado';
-    case 'auto_whatsapp': return 'Auto WhatsApp';
-    case 'whatsapp_reply': return 'Respuesta recibida';
+    case 'whatsapp': return 'Alejandro envió WhatsApp';
+    case 'auto_whatsapp': return 'Sistema envió WhatsApp';
+    case 'whatsapp_reply': return isBotReply ? 'Bot del cliente respondió' : 'Cliente respondió';
     case 'email': return 'Email';
     case 'call': return 'Llamada';
     case 'ai_call': return 'Llamada IA';
@@ -1125,7 +1126,11 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     const isAICall = h.notes?.startsWith('🤖');
                     const isStageChange = h.action_type === 'stage_change';
                     const isWhatsApp = h.action_type === 'whatsapp' || h.action_type === 'auto_whatsapp';
+                    const isManualSend = h.action_type === 'whatsapp';
+                    const isAutoSend = h.action_type === 'auto_whatsapp';
                     const isReply = h.action_type === 'whatsapp_reply';
+                    const isBotReply = isReply && isLikelyBotReply(h.notes);
+                    const isHumanReply = isReply && !isBotReply;
                     // Extraer conversation_id de las notas para reproducir audio
                     const convIdMatch = h.notes?.match(/conv_[a-z0-9]+/);
                     const conversationId = convIdMatch ? convIdMatch[0] : null;
@@ -1136,17 +1141,29 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                       <div key={h.id} className={`text-sm rounded-lg px-3 py-2 ${
                         isAICall
                           ? 'bg-purple-50 border border-purple-200'
-                          : isReply
+                          : isHumanReply
                             ? 'bg-green-50 border border-green-300'
-                            : isStageChange
-                              ? 'bg-blue-50 border border-blue-200'
-                              : 'bg-gray-50'
+                            : isBotReply
+                              ? 'bg-gray-50 border border-gray-200'
+                              : isStageChange
+                                ? 'bg-blue-50 border border-blue-200'
+                                : isManualSend
+                                  ? 'bg-orange-50 border border-orange-200'
+                                  : isAutoSend
+                                    ? 'bg-purple-50/40 border border-purple-200/60'
+                                    : 'bg-gray-50'
                       }`}>
                         <div className="flex items-center gap-2">
                           <span className="text-gray-400 text-xs font-medium">#{contactHistory.length - idx}</span>
-                          <span>{isAICall ? '🤖' : getActionIcon(h.action_type)}</span>
-                          <span className={`${isReply ? 'text-green-700 font-semibold' : 'text-gray-700'}`}>
-                            {isAICall ? 'Llamada IA' : getActionLabel(h.action_type)}
+                          <span>{isAICall ? '🤖' : getActionIcon(h.action_type, isBotReply)}</span>
+                          <span className={
+                            isHumanReply ? 'text-green-700 font-semibold'
+                            : isBotReply ? 'text-gray-500'
+                            : isManualSend ? 'text-orange-700 font-semibold'
+                            : isAutoSend ? 'text-purple-700'
+                            : 'text-gray-700'
+                          }>
+                            {isAICall ? 'Llamada IA' : getActionLabel(h.action_type, isBotReply)}
                           </span>
                           <span className="text-gray-400 text-xs ml-auto">{formatTimeAgo(h.created_at)}</span>
                           {/* Botón de play para llamadas IA */}
@@ -1194,8 +1211,13 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                             {h.notes}
                           </div>
                         )}
-                        {h.notes && isReply && (
+                        {h.notes && isHumanReply && (
                           <div className="mt-2 text-xs text-green-800 whitespace-pre-line border-t border-green-200 pt-2 font-medium">
+                            {h.notes}
+                          </div>
+                        )}
+                        {h.notes && isBotReply && (
+                          <div className="mt-2 text-xs text-gray-500 whitespace-pre-line border-t border-gray-200 pt-2 italic">
                             {h.notes}
                           </div>
                         )}

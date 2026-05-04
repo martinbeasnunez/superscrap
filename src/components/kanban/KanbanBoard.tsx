@@ -694,16 +694,19 @@ export default function KanbanBoard() {
             {whatsappStats.sentToday > 0 && (
               <button
                 onClick={() => setPhoneFilter(phoneFilter === 'sent_today' ? 'all' : 'sent_today')}
+                title={`${whatsappStats.sentManualToday} enviados por Alejandro · ${whatsappStats.sentAutoToday} enviados por el sistema`}
                 className={`text-xs transition-colors cursor-pointer ${
                   phoneFilter === 'sent_today'
                     ? 'text-green-700 font-bold'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                📱 {whatsappStats.sentToday} enviados hoy
-                {whatsappStats.sentAutoToday > 0 && (
-                  <span className="text-purple-500"> ({whatsappStats.sentAutoToday} auto)</span>
-                )}
+                📱 {whatsappStats.sentToday} enviados hoy{' '}
+                <span className="opacity-70">
+                  ({whatsappStats.sentManualToday > 0 && <span className="text-orange-600">✋{whatsappStats.sentManualToday}</span>}
+                  {whatsappStats.sentManualToday > 0 && whatsappStats.sentAutoToday > 0 && <span> · </span>}
+                  {whatsappStats.sentAutoToday > 0 && <span className="text-purple-500">🤖{whatsappStats.sentAutoToday}</span>})
+                </span>
               </button>
             )}
           </>

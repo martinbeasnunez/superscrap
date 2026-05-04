@@ -155,13 +155,22 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
             </div>
           )}
 
-          {/* Badge RESPONDIÓ — lead respondió por WhatsApp */}
-          {business.has_unread_reply && (
+          {/* Badge RESPONDIÓ — distingue cliente real vs bot del cliente */}
+          {business.has_unread_reply && business.has_human_reply && (
             <div className="mb-1.5 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-green-50 to-emerald-100 text-green-800 border border-green-400 animate-pulse">
               <span>💬</span>
-              Respondió
+              Cliente respondió
               {business.last_reply_text && (
                 <span className="font-normal truncate max-w-[140px]">• {business.last_reply_text}</span>
+              )}
+            </div>
+          )}
+          {business.has_unread_reply && !business.has_human_reply && (
+            <div className="mb-1.5 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 bg-gray-100 text-gray-600 border border-gray-300">
+              <span>🤖</span>
+              Bot del cliente
+              {business.last_reply_text && (
+                <span className="font-normal truncate max-w-[140px] opacity-70">• {business.last_reply_text}</span>
               )}
             </div>
           )}

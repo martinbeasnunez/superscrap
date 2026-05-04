@@ -84,8 +84,10 @@ export async function GET() {
     // Count from contact_history (accurate, event-based)
     let whatsappTodayManual = 0, whatsappTodayAuto = 0;
     let emailTodayHist = 0, callTodayHist = 0;
-    let whatsappThisWeekHist = 0, emailThisWeekHist = 0, callThisWeekHist = 0;
-    let whatsappLastWeekHist = 0, emailLastWeekHist = 0, callLastWeekHist = 0;
+    let whatsappThisWeekManual = 0, whatsappThisWeekAuto = 0;
+    let whatsappLastWeekManual = 0, whatsappLastWeekAuto = 0;
+    let emailThisWeekHist = 0, callThisWeekHist = 0;
+    let emailLastWeekHist = 0, callLastWeekHist = 0;
 
     historyEntries?.forEach(h => {
       const isToday = h.created_at && h.created_at >= todayISO;
@@ -94,12 +96,12 @@ export async function GET() {
 
       if (h.action_type === 'whatsapp') {
         if (isToday) whatsappTodayManual++;
-        if (isThisWeek) whatsappThisWeekHist++;
-        if (isLastWeek) whatsappLastWeekHist++;
+        if (isThisWeek) whatsappThisWeekManual++;
+        if (isLastWeek) whatsappLastWeekManual++;
       } else if (h.action_type === 'auto_whatsapp') {
         if (isToday) whatsappTodayAuto++;
-        if (isThisWeek) whatsappThisWeekHist++;
-        if (isLastWeek) whatsappLastWeekHist++;
+        if (isThisWeek) whatsappThisWeekAuto++;
+        if (isLastWeek) whatsappLastWeekAuto++;
       } else if (h.action_type === 'email') {
         if (isToday) emailTodayHist++;
         if (isThisWeek) emailThisWeekHist++;
@@ -122,12 +124,12 @@ export async function GET() {
     let prospectsToday = 0, discardedToday = 0;
 
     // Contadores de semana (from contact_history)
-    const whatsappThisWeek = whatsappThisWeekHist;
+    const whatsappThisWeek = whatsappThisWeekManual + whatsappThisWeekAuto;
     const emailThisWeek = emailThisWeekHist;
     const callThisWeek = callThisWeekHist;
     let prospectsThisWeek = 0;
 
-    const whatsappLastWeek = whatsappLastWeekHist;
+    const whatsappLastWeek = whatsappLastWeekManual + whatsappLastWeekAuto;
     const emailLastWeek = emailLastWeekHist;
     const callLastWeek = callLastWeekHist;
     let prospectsLastWeek = 0;
@@ -454,6 +456,8 @@ export async function GET() {
       thisWeek: {
         contacts: whatsappThisWeek + emailThisWeek + callThisWeek,
         whatsapp: whatsappThisWeek,
+        whatsappManual: whatsappThisWeekManual,
+        whatsappAuto: whatsappThisWeekAuto,
         email: emailThisWeek,
         call: callThisWeek,
         prospects: prospectsThisWeek,
@@ -461,6 +465,8 @@ export async function GET() {
       lastWeek: {
         contacts: whatsappLastWeek + emailLastWeek + callLastWeek,
         whatsapp: whatsappLastWeek,
+        whatsappManual: whatsappLastWeekManual,
+        whatsappAuto: whatsappLastWeekAuto,
         email: emailLastWeek,
         call: callLastWeek,
         prospects: prospectsLastWeek,

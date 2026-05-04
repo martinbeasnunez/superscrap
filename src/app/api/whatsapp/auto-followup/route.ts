@@ -69,7 +69,10 @@ export async function GET() {
       `)
       .eq('auto_followup_enabled', true)
       .not('phone', 'is', null)
-      .not('sales_stage', 'in', '("cliente","perdido")')
+      // Include NULL sales_stage (treated as 'nuevo' first-contact). Naive
+      // .not('sales_stage','in',...) excludes NULL rows because in SQL
+      // 'NULL NOT IN (...)' evaluates to NULL (not TRUE), so the row drops.
+      .or('sales_stage.is.null,sales_stage.not.in.(cliente,perdido)')
       .limit(500);
 
     if (error) {

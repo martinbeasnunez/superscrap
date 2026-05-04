@@ -106,12 +106,13 @@ interface Stats {
 }
 
 // Componente para mostrar comparación semanal
-function WeekComparison({ current, previous, label, icon, subtitle }: {
+function WeekComparison({ current, previous, label, icon, subtitle, previousSubtitle }: {
   current: number;
   previous: number;
   label: string;
   icon: React.ReactNode;
   subtitle?: React.ReactNode;
+  previousSubtitle?: React.ReactNode;
 }) {
   const { t } = useI18n();
   const diff = current - previous;
@@ -148,6 +149,7 @@ function WeekComparison({ current, previous, label, icon, subtitle }: {
       )}
       <p className="text-[10px] sm:text-xs text-gray-400 mt-1 sm:mt-2 hidden sm:block">
         {t('dash.last_week')} {previous}
+        {previousSubtitle && <span className="ml-1">{previousSubtitle}</span>}
       </p>
     </div>
   );
@@ -375,6 +377,13 @@ export default function HomePage() {
                     {(stats.thisWeek.whatsappManual || 0) > 0 && <span className="text-orange-600 font-medium">✋{stats.thisWeek.whatsappManual}</span>}
                     {(stats.thisWeek.whatsappManual || 0) > 0 && (stats.thisWeek.whatsappAuto || 0) > 0 && <span className="text-gray-400"> · </span>}
                     {(stats.thisWeek.whatsappAuto || 0) > 0 && <span className="text-purple-600 font-medium">🤖{stats.thisWeek.whatsappAuto}</span>}
+                  </span>
+                ) : null}
+                previousSubtitle={(stats.lastWeek.whatsappManual || 0) + (stats.lastWeek.whatsappAuto || 0) > 0 ? (
+                  <span title={`${stats.lastWeek.whatsappManual || 0} de Alejandro · ${stats.lastWeek.whatsappAuto || 0} del sistema`}>
+                    ({(stats.lastWeek.whatsappManual || 0) > 0 && <span className="text-orange-500">✋{stats.lastWeek.whatsappManual}</span>}
+                    {(stats.lastWeek.whatsappManual || 0) > 0 && (stats.lastWeek.whatsappAuto || 0) > 0 && <span> · </span>}
+                    {(stats.lastWeek.whatsappAuto || 0) > 0 && <span className="text-purple-500">🤖{stats.lastWeek.whatsappAuto}</span>})
                   </span>
                 ) : null}
                 icon={

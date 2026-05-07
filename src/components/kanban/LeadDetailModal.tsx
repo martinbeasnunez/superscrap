@@ -432,12 +432,15 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         body: JSON.stringify({ notes: notesValue }),
       });
       setNotesSavedAt(Date.now());
+      onActionRegistered(); // refresh kanban so notes persist on re-open
     } catch (err) {
       console.error('Error saving notes:', err);
     } finally {
       setNotesSaving(false);
     }
   };
+
+  const notesDirty = (notesValue ?? '') !== (business?.notes ?? '');
 
   // USAR currentColumn (la columna donde está la card) como fuente de verdad
   // Esto garantiza que el pitch siempre refleje la posición visual de la card
@@ -1117,20 +1120,30 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             {/* Boton de Llamada con IA - OCULTO TEMPORALMENTE */}
           </div>
 
-          {/* Notas del lead — comentarios libres de Alejandro */}
+          {/* Notas del lead — comentarios libres */}
           <div className="mb-4">
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-              <span>📝 Notas</span>
-              {notesSaving && <span className="text-[10px] normal-case text-gray-400">guardando…</span>}
-              {!notesSaving && notesSavedAt && (Date.now() - notesSavedAt) < 3000 && (
-                <span className="text-[10px] normal-case text-green-600">✓ guardado</span>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                <span>📝 Notas</span>
+                {notesSaving && <span className="text-[10px] normal-case text-gray-400">guardando…</span>}
+                {!notesSaving && notesSavedAt && !notesDirty && (
+                  <span className="text-[10px] normal-case text-green-600">✓ guardado</span>
+                )}
+              </label>
+              {notesDirty && (
+                <button
+                  onClick={saveNotes}
+                  disabled={notesSaving}
+                  className="text-xs px-2.5 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                >
+                  {notesSaving ? 'Guardando…' : 'Guardar'}
+                </button>
               )}
-            </label>
+            </div>
             <textarea
               value={notesValue}
               onChange={(e) => setNotesValue(e.target.value)}
-              onBlur={saveNotes}
-              placeholder="Por qué se perdió, contexto, observaciones internas…"
+              placeholder="Cualquier comentario: contexto del negocio, observaciones, próximos pasos…"
               rows={3}
               className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none resize-y bg-yellow-50/40"
             />

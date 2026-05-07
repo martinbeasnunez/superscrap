@@ -121,3 +121,7 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS auto_followup_last_sent TIMESTAM
 ALTER TABLE contact_history DROP CONSTRAINT IF EXISTS contact_history_action_type_check;
 ALTER TABLE contact_history ADD CONSTRAINT contact_history_action_type_check
   CHECK (action_type IN ('whatsapp', 'email', 'call', 'ai_call', 'stage_change', 'auto_whatsapp', 'whatsapp_reply'));
+
+-- Free-text notes per lead (why lost, additional comments, internal context)
+-- Visible in the lead detail modal, edited inline.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS notes TEXT;

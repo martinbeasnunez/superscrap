@@ -411,6 +411,34 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [audioLoading, setAudioLoading] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Notes (free-text comments per lead — why lost, additional context)
+  const [notesValue, setNotesValue] = useState<string>(business?.notes ?? '');
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSavedAt, setNotesSavedAt] = useState<number | null>(null);
+  // Re-sync when switching between leads
+  useEffect(() => {
+    setNotesValue(business?.notes ?? '');
+    setNotesSavedAt(null);
+  }, [business?.id, business?.notes]);
+
+  const saveNotes = async () => {
+    if (!business) return;
+    if ((notesValue ?? '') === (business.notes ?? '')) return; // no-op
+    setNotesSaving(true);
+    try {
+      await fetch(`/api/businesses/${business.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: notesValue }),
+      });
+      setNotesSavedAt(Date.now());
+    } catch (err) {
+      console.error('Error saving notes:', err);
+    } finally {
+      setNotesSaving(false);
+    }
+  };
+
   // USAR currentColumn (la columna donde está la card) como fuente de verdad
   // Esto garantiza que el pitch siempre refleje la posición visual de la card
   const currentStage = currentColumn;
@@ -1087,6 +1115,25 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             )}
 
             {/* Boton de Llamada con IA - OCULTO TEMPORALMENTE */}
+          </div>
+
+          {/* Notas del lead — comentarios libres de Alejandro */}
+          <div className="mb-4">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+              <span>📝 Notas</span>
+              {notesSaving && <span className="text-[10px] normal-case text-gray-400">guardando…</span>}
+              {!notesSaving && notesSavedAt && (Date.now() - notesSavedAt) < 3000 && (
+                <span className="text-[10px] normal-case text-green-600">✓ guardado</span>
+              )}
+            </label>
+            <textarea
+              value={notesValue}
+              onChange={(e) => setNotesValue(e.target.value)}
+              onBlur={saveNotes}
+              placeholder="Por qué se perdió, contexto, observaciones internas…"
+              rows={3}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none resize-y bg-yellow-50/40"
+            />
           </div>
 
           {/* Historial de contactos */}

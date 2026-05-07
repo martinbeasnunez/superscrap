@@ -17,7 +17,7 @@ export async function PATCH(
     const {
       contact_actions, lead_status, sales_stage, user_id, previous_stage,
       primary_dm_index, auto_followup_enabled, last_email_template_id,
-      skip_auto_send,
+      skip_auto_send, notes,
     } = body;
 
     // Validar contact_actions (array de acciones)
@@ -84,6 +84,10 @@ export async function PATCH(
     }
     if (last_email_template_id !== undefined) {
       updateData.last_email_template_id = last_email_template_id;
+    }
+    if (notes !== undefined) {
+      // Trim trailing whitespace, allow empty string to clear the field
+      updateData.notes = typeof notes === 'string' ? notes.trim() || null : null;
     }
 
     console.log('Updating business:', id, 'with data:', updateData);

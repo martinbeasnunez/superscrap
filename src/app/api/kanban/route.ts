@@ -73,6 +73,8 @@ export interface KanbanBusiness {
   last_reply_text: string | null;
   // Today tracking
   contacted_today: boolean;
+  // Free-text notes (why lost, additional context, etc)
+  notes: string | null;
 }
 
 export interface WhatsAppStats {
@@ -132,6 +134,7 @@ export async function GET() {
         primary_dm_index,
         auto_followup_enabled,
         last_email_template_id,
+        notes,
         searches (
           business_type,
           city
@@ -329,6 +332,7 @@ export async function GET() {
         has_human_reply: humanReplyBizIds.has(b.id),
         last_reply_text: replyMap[b.id]?.text || null,
         contacted_today: contactedTodaySet.has(b.id),
+        notes: b.notes ?? null,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

@@ -91,6 +91,8 @@ export default function KanbanBoard() {
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'sent_today' | 'no_phone'>('all');
   const [columnFilter, setColumnFilter] = useState<'all' | 'clientes' | 'por_cerrar'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Audio player for AI insights modal
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -123,6 +125,22 @@ export default function KanbanBoard() {
   useEffect(() => {
     fetchKanbanData();
   }, [fetchKanbanData]);
+
+  // Keyboard shortcut: press "/" to focus search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === 'Escape' && searchQuery) {
+        setSearchQuery('');
+        searchInputRef.current?.blur();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [searchQuery]);
 
   // Calcular métricas de seguimiento - ahora basado en las columnas
   const followUpMetrics = useMemo(() => {
@@ -194,9 +212,10 @@ export default function KanbanBoard() {
     );
   };
 
-  // Filtered columns based on industry + phone filters
+  // Filtered columns based on industry + phone + search filters
   const filteredColumns = useMemo(() => {
-    if (industryFilter === 'all' && phoneFilter === 'all') return columns;
+    const q = searchQuery.trim().toLowerCase();
+    if (industryFilter === 'all' && phoneFilter === 'all' && !q) return columns;
     const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
       seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
@@ -211,11 +230,16 @@ export default function KanbanBoard() {
         if (phoneFilter === 'replied' && !lead.has_unread_reply) return false;
         if (phoneFilter === 'sent_today' && !lead.contacted_today) return false;
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
+        if (q) {
+          const haystack = [lead.name, lead.phone, lead.address, lead.business_type, lead.city]
+            .filter(Boolean).join(' ').toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
         return true;
       });
     });
     return filtered;
-  }, [columns, industryFilter, phoneFilter]);
+  }, [columns, industryFilter, phoneFilter, searchQuery]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -715,9 +739,43 @@ export default function KanbanBoard() {
         {/* Métricas de llamadas IA — OCULTO TEMPORALMENTE */}
       </div>
 
-      {/* Filtros */}
+      {/* Buscador + Filtros */}
       <div className="flex items-center gap-2 mb-2 lg:mb-3 flex-wrap">
-        {/* Filtro WhatsApp */}
+        {/* Buscador */}
+        <div className="relative flex items-center">
+          <svg className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+          </svg>
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar lead… (/)"
+            className={`pl-7 pr-6 py-1 text-xs sm:text-sm rounded-lg border transition-colors focus:outline-none w-40 sm:w-52 ${
+              searchQuery
+                ? 'bg-blue-50 border-blue-400 text-blue-900 placeholder-blue-300'
+                : 'bg-white border-gray-200 text-gray-700 placeholder-gray-400 hover:border-gray-300 focus:border-blue-400'
+            }`}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors text-xs leading-none"
+              title="Limpiar búsqueda (Esc)"
+            >✕</button>
+          )}
+        </div>
+        {searchQuery && (() => {
+          const total = COLUMN_ORDER.reduce((s, col) => s + filteredColumns[col].length, 0);
+          return (
+            <span className="text-xs text-blue-600 font-medium">
+              {total} resultado{total !== 1 ? 's' : ''}
+            </span>
+          );
+        })()}
+
+        {/* Filtro estado WhatsApp */}
         <select
           value={phoneFilter}
           onChange={(e) => setPhoneFilter(e.target.value as 'all' | 'whatsapp' | 'no_phone')}

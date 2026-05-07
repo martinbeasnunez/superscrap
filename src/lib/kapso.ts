@@ -64,7 +64,7 @@ export async function sendWhatsAppMessage(
 function getTemplateName(stage: string): string {
   switch (stage) {
     case 'seguimiento_1': return 'getlavado_v3_dato';        // pide kg/mes para calificar
-    case 'seguimiento_2': return 'getlavado_v3_cierremes';   // urgencia + distrito (2 params)
+    case 'seguimiento_2': return 'getlavado_v3_oferta';      // S/100 crédito gratis (rompe silencio)
     case 'seguimiento_3': return 'getlavado_v3_cierre';      // cierre respetuoso
     default:              return 'getlavado_v3_apertura';    // primer contacto / contactado
   }
@@ -76,13 +76,10 @@ function extractDistrict(address: string | null): string {
   return districts.find(d => addr.toLowerCase().includes(d.toLowerCase())) || 'Lima';
 }
 
-// Get the parameter values for each template (some templates use 2 params)
+// Get the parameter values for each template
+// All v3 templates use just {{1}} = business name
 function getTemplateParams(stage: string, businessName: string, address: string | null): string[] {
-  if (stage === 'seguimiento_2') {
-    // v3_cierremes: {{1}} = name, {{2}} = district
-    return [businessName, extractDistrict(address)];
-  }
-  // All other v3 templates use just {{1}} = business name
+  void stage; void address; // reserved for future multi-param templates
   return [businessName];
 }
 

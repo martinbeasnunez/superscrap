@@ -187,7 +187,7 @@ export async function GET() {
           errors.push(`${biz.name}: ${result.error}`);
           skipped++;
         }
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 500));
         continue;
       }
 
@@ -219,8 +219,8 @@ export async function GET() {
         skipped++;
       }
 
-      // Rate limit: 2 seconds between messages (fits in 30s cron timeout)
-      await new Promise(r => setTimeout(r, 2000));
+      // Rate limit: 500ms between messages — keeps full 15-batch under 30s cron-job.org timeout
+      await new Promise(r => setTimeout(r, 500));
     }
 
     return NextResponse.json({

@@ -71,6 +71,7 @@ export interface KanbanBusiness {
   has_unread_reply: boolean;     // Any reply (bot or human)
   has_human_reply: boolean;      // Real human reply (high-signal)
   last_reply_text: string | null;
+  last_reply_date: string | null; // ISO date of latest reply — used to flag stale replies awaiting Alejandro
   // Today tracking
   contacted_today: boolean;
   // Free-text notes (why lost, additional context, etc)
@@ -331,6 +332,7 @@ export async function GET() {
         has_unread_reply: !!replyMap[b.id],
         has_human_reply: humanReplyBizIds.has(b.id),
         last_reply_text: replyMap[b.id]?.text || null,
+        last_reply_date: replyMap[b.id]?.date || null,
         contacted_today: contactedTodaySet.has(b.id),
         notes: b.notes ?? null,
       };

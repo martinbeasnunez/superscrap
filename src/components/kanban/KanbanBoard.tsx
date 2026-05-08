@@ -187,6 +187,27 @@ export default function KanbanBoard() {
     };
   }, [columns]);
 
+  // Replied leads waiting for Alejandro to respond — split by stale (>5d) vs recent
+  // Excludes cliente/perdido (already handled) and bot-only replies (noise)
+  const STALE_REPLY_DAYS = 5;
+  const repliedLeads = useMemo(() => {
+    const activeCols: KanbanColumnId[] = [
+      'nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2',
+      'seguimiento_3', 'interesado', 'cotizado',
+    ];
+    const all = activeCols.flatMap(col => columns[col]).filter(l => l.has_human_reply);
+    const now = Date.now();
+    const withAge = all.map(lead => {
+      const days = lead.last_reply_date
+        ? Math.floor((now - new Date(lead.last_reply_date).getTime()) / 86400000)
+        : 0;
+      return { lead, days };
+    });
+    const stale = withAge.filter(x => x.days >= STALE_REPLY_DAYS).sort((a, b) => b.days - a.days);
+    const recent = withAge.filter(x => x.days < STALE_REPLY_DAYS).sort((a, b) => b.days - a.days);
+    return { stale, recent, total: all.length };
+  }, [columns]);
+
   // Detect industries from all leads and build filter options
   const availableIndustries = useMemo(() => {
     const allLeads = COLUMN_ORDER.flatMap(col => columns[col]);
@@ -654,6 +675,57 @@ export default function KanbanBoard() {
         </div>
       )}
 
+      {/* ⚠️ Alerta de respuestas humanas pendientes — imposible de ignorar */}
+      {repliedLeads.total > 0 && (
+        <div className={`mb-3 p-3 lg:p-4 rounded-xl border-2 ${
+          repliedLeads.stale.length > 0
+            ? 'bg-red-50 border-red-300'
+            : 'bg-green-50 border-green-300'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className={`text-2xl sm:text-3xl ${repliedLeads.stale.length > 0 ? 'animate-pulse' : ''}`}>
+                💬
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className={`font-bold text-sm sm:text-base ${repliedLeads.stale.length > 0 ? 'text-red-800' : 'text-green-800'}`}>
+                  {repliedLeads.stale.length > 0 ? (
+                    <>⚠️ {repliedLeads.stale.length} {repliedLeads.stale.length === 1 ? 'lead respondió' : 'leads respondieron'} hace +{STALE_REPLY_DAYS} días — esperando respuesta de Alejandro</>
+                  ) : (
+                    <>✓ {repliedLeads.recent.length} {repliedLeads.recent.length === 1 ? 'lead respondió' : 'leads respondieron'} recientemente</>
+                  )}
+                </h3>
+                {/* Chips clicables (atajo a la columna virtual de respondidos) */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[...repliedLeads.stale, ...repliedLeads.recent].slice(0, 12).map(({ lead, days }) => (
+                    <button
+                      key={lead.id}
+                      onClick={() => handleCardClick(lead, lead.sales_stage as KanbanColumnId)}
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                        days >= STALE_REPLY_DAYS
+                          ? 'bg-red-200 text-red-900 hover:bg-red-300 border border-red-300'
+                          : 'bg-white text-green-800 hover:bg-green-100 border border-green-200'
+                      }`}
+                      title={`${days}d sin respuesta de Alejandro`}
+                    >
+                      {lead.name.split(' ').slice(0, 3).join(' ')} <span className="opacity-70">· {days}d</span>
+                    </button>
+                  ))}
+                  {repliedLeads.total > 12 && (
+                    <button
+                      onClick={() => setPhoneFilter('replied')}
+                      className="px-2 py-0.5 rounded-full text-xs text-gray-600 hover:text-gray-900 underline"
+                    >
+                      +{repliedLeads.total - 12} más
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Frase motivacional - Hidden on mobile */}
       <div className="hidden lg:block mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
         <p className="text-sm text-blue-800 italic">"{motivationalQuote.quote}"</p>
@@ -729,12 +801,18 @@ export default function KanbanBoard() {
                 className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                   phoneFilter === 'replied'
                     ? 'bg-green-600 text-white'
-                    : whatsappStats.repliesHuman > 0
-                      ? 'bg-green-100 text-green-700 animate-pulse hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : repliedLeads.stale.length > 0
+                      ? 'bg-red-100 text-red-700 animate-pulse hover:bg-red-200 ring-2 ring-red-400'
+                      : whatsappStats.repliesHuman > 0
+                        ? 'bg-green-100 text-green-700 animate-pulse hover:bg-green-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                💬 {whatsappStats.repliesHuman}{whatsappStats.repliesBot > 0 ? <span className="opacity-60 font-normal"> · {whatsappStats.repliesBot} bot{whatsappStats.repliesBot === 1 ? '' : 's'}</span> : null}
+                💬 {whatsappStats.repliesHuman}
+                {repliedLeads.stale.length > 0 && (
+                  <span className="ml-1 font-bold">⚠️{repliedLeads.stale.length}</span>
+                )}
+                {whatsappStats.repliesBot > 0 ? <span className="opacity-60 font-normal"> · {whatsappStats.repliesBot} bot{whatsappStats.repliesBot === 1 ? '' : 's'}</span> : null}
               </button>
             )}
             {whatsappStats.sentToday > 0 && (

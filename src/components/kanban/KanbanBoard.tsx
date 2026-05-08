@@ -91,6 +91,7 @@ export default function KanbanBoard() {
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'sent_today' | 'no_phone'>('all');
   const [columnFilter, setColumnFilter] = useState<'all' | 'clientes' | 'por_cerrar'>('all');
+  const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -215,7 +216,7 @@ export default function KanbanBoard() {
   // Filtered columns based on industry + phone + search filters
   const filteredColumns = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (industryFilter === 'all' && phoneFilter === 'all' && !q) return columns;
+    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && !q) return columns;
     const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
       seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
@@ -230,6 +231,7 @@ export default function KanbanBoard() {
         if (phoneFilter === 'replied' && !lead.has_unread_reply) return false;
         if (phoneFilter === 'sent_today' && !lead.contacted_today) return false;
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
+        if (tierFilter !== 'all' && lead.potential_tier !== tierFilter) return false;
         if (q) {
           const haystack = [lead.name, lead.phone, lead.address, lead.business_type, lead.city]
             .filter(Boolean).join(' ').toLowerCase();
@@ -239,7 +241,7 @@ export default function KanbanBoard() {
       });
     });
     return filtered;
-  }, [columns, industryFilter, phoneFilter, searchQuery]);
+  }, [columns, industryFilter, phoneFilter, tierFilter, searchQuery]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -685,8 +687,28 @@ export default function KanbanBoard() {
           return (
             <>
               <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
-              <span className="text-blue-700 font-medium">🐋 {orcaCount}</span>
-              <span className="text-emerald-600">🐬 {delfinCount}</span>
+              <button
+                onClick={() => setTierFilter(tierFilter === 'orca' ? 'all' : 'orca')}
+                title="Filtrar Orcas"
+                className={`px-1.5 py-0.5 rounded-full font-medium transition-colors cursor-pointer ${
+                  tierFilter === 'orca'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-blue-700 hover:bg-blue-50'
+                }`}
+              >
+                🐋 {orcaCount}
+              </button>
+              <button
+                onClick={() => setTierFilter(tierFilter === 'delfin' ? 'all' : 'delfin')}
+                title="Filtrar Delfines"
+                className={`px-1.5 py-0.5 rounded-full transition-colors cursor-pointer ${
+                  tierFilter === 'delfin'
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-emerald-600 hover:bg-emerald-50'
+                }`}
+              >
+                🐬 {delfinCount}
+              </button>
               {pipelineValue > 0 && (
                 <span className="hidden sm:inline text-blue-600 text-xs">
                   ~S/{(pipelineValue / 1000).toFixed(0)}k/mes

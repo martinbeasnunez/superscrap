@@ -55,6 +55,19 @@ export async function GET() {
   try {
     const now = new Date();
 
+    // Skip weekends in Lima time — B2B leads ignore WhatsApp on Sat/Sun, sending
+    // there hurts open rate without lifting replies.
+    const limaDayShort = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Lima',
+      weekday: 'short',
+    }).format(now); // 'Sun' | 'Mon' | ... | 'Sat'
+    if (limaDayShort === 'Sat' || limaDayShort === 'Sun') {
+      return NextResponse.json({
+        sent: 0, skipped: 0, advanced: 0, lost: 0, total: 0,
+        message: `Auto-followup skipped — weekend (${limaDayShort} Lima time)`,
+      });
+    }
+
     // Get all businesses with auto_followup_enabled. Includes 'nuevo' (first-contact).
     // We fetch all eligible (typically <500), then sort by potential_score desc in JS and
     // take top 100. PostgREST can't order across the businesses↔service_analyses

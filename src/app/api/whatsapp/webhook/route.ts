@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { sendWhatsAppMessage } from '@/lib/kapso';
+import { classifyReplyIntent, getAutoReplyText, shouldCloseAsLost } from '@/lib/reply-intent';
+import { isLikelyBotReply } from '@/lib/reply-classifier';
 
 // Kapso webhook for incoming WhatsApp messages
 export async function POST(request: NextRequest) {
@@ -50,17 +53,75 @@ export async function POST(request: NextRequest) {
     }
 
     const businessId = match.id;
+    const fullNote = contactName ? `${contactName}: ${messageText}` : messageText;
 
     // Log the incoming message to contact_history
     await supabase.from('contact_history').insert({
       business_id: businessId,
       action_type: 'whatsapp_reply',
-      notes: contactName
-        ? `${contactName}: ${messageText}`
-        : messageText,
+      notes: fullNote,
     });
 
-    return NextResponse.json({ ok: true, matched: true, businessId });
+    // ════════════════════════════════════════════════════════════════
+    // AUTO-REPLY (Level 1) — only for high-confidence intents.
+    // Skips if: bot reply, already auto-replied in last 24h, or unclear.
+    // ════════════════════════════════════════════════════════════════
+    let autoReplied = false;
+    let autoReplyIntent: string | null = null;
+
+    // Skip if it's the customer's own bot greeting (not a real human reply)
+    if (!isLikelyBotReply(fullNote)) {
+      const classification = classifyReplyIntent(fullNote);
+
+      if (classification.confidence === 'high' && classification.intent !== 'unclear') {
+        // Dedupe: if we already auto-replied within last 24h, don't fire again
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentAuto } = await supabase
+          .from('contact_history')
+          .select('id')
+          .eq('business_id', businessId)
+          .eq('action_type', 'auto_whatsapp_reply')
+          .gte('created_at', since)
+          .limit(1);
+
+        if (!recentAuto || recentAuto.length === 0) {
+          const replyText = getAutoReplyText(classification.intent);
+          if (replyText) {
+            const sendResult = await sendWhatsAppMessage(match.phone || '', replyText);
+            if (sendResult.success) {
+              autoReplied = true;
+              autoReplyIntent = classification.intent;
+
+              // Log the auto-reply
+              await supabase.from('contact_history').insert({
+                business_id: businessId,
+                action_type: 'auto_whatsapp_reply',
+                notes: `[intent: ${classification.intent}] ${replyText}`,
+              });
+
+              // Move to "perdido" if customer explicitly closed the door
+              if (shouldCloseAsLost(classification.intent)) {
+                await supabase
+                  .from('businesses')
+                  .update({
+                    sales_stage: 'perdido',
+                    contacted_at: new Date().toISOString(),
+                  })
+                  .eq('id', businessId);
+
+                await supabase.from('contact_history').insert({
+                  business_id: businessId,
+                  action_type: 'stage_change',
+                  notes: `📋 Auto-cierre: ${classification.intent} → perdido`,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({ ok: true, matched: true, businessId, autoReplied, autoReplyIntent });
   } catch (error) {
     console.error('WhatsApp webhook error:', error);
     return NextResponse.json({ ok: true }); // Always return 200 to avoid retries

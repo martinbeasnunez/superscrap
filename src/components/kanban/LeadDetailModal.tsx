@@ -415,6 +415,11 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [notesValue, setNotesValue] = useState<string>(business?.notes ?? '');
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSavedAt, setNotesSavedAt] = useState<number | null>(null);
+
+  // AI reply suggestion state (Level 2 of auto-reply system)
+  const [aiSuggestion, setAiSuggestion] = useState<string>('');
+  const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
+  const [aiSuggestError, setAiSuggestError] = useState<string | null>(null);
   // Re-sync when switching between leads
   useEffect(() => {
     setNotesValue(business?.notes ?? '');
@@ -1114,6 +1119,100 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 >
                   🤖 {t('lead.auto_followup')} {business.auto_followup_enabled ? 'ON' : 'OFF'}
                 </button>
+              </div>
+            )}
+
+            {/* AI-Suggested Reply (Level 2) — only show if customer has replied */}
+            {showWhatsApp && business.has_human_reply && (
+              <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-purple-700 flex items-center gap-1">
+                    ✨ Borrador IA
+                  </span>
+                  <button
+                    onClick={async () => {
+                      setAiSuggestLoading(true);
+                      setAiSuggestError(null);
+                      try {
+                        const res = await fetch('/api/whatsapp/suggest-reply', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ businessId: business.id }),
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.suggestion) {
+                          setAiSuggestion(data.suggestion);
+                        } else {
+                          setAiSuggestError(data.error || 'Error generando borrador');
+                        }
+                      } catch (err) {
+                        setAiSuggestError('Error de conexión');
+                      } finally {
+                        setAiSuggestLoading(false);
+                      }
+                    }}
+                    disabled={aiSuggestLoading}
+                    className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {aiSuggestLoading ? '⏳ Pensando…' : aiSuggestion ? '🔄 Regenerar' : '✨ Sugerir respuesta'}
+                  </button>
+                </div>
+
+                {aiSuggestError && (
+                  <p className="text-xs text-red-600 mb-2">⚠️ {aiSuggestError}</p>
+                )}
+
+                {aiSuggestion && (
+                  <>
+                    <textarea
+                      value={aiSuggestion}
+                      onChange={(e) => setAiSuggestion(e.target.value)}
+                      rows={5}
+                      className="w-full p-2 text-sm border border-purple-200 rounded resize-y bg-white focus:outline-none focus:border-purple-400"
+                      placeholder="Edita el borrador antes de enviar…"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={async () => {
+                          if (!business?.phone || !aiSuggestion.trim()) return;
+                          setActionLoading('ai-send');
+                          try {
+                            const res = await fetch('/api/whatsapp/send', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                businessId: business.id,
+                                phone: business.phone,
+                                message: aiSuggestion.trim(),
+                              }),
+                            });
+                            if (res.ok) {
+                              setAiSuggestion('');
+                              alert('✅ Respuesta enviada por Kapso');
+                              onActionRegistered();
+                              await fetchContactHistory();
+                            } else {
+                              const data = await res.json().catch(() => ({}));
+                              alert(`❌ Error: ${data.error || 'Error enviando'}`);
+                            }
+                          } finally {
+                            setActionLoading(null);
+                          }
+                        }}
+                        disabled={actionLoading === 'ai-send' || !aiSuggestion.trim()}
+                        className="flex-1 px-3 py-1.5 text-sm bg-emerald-500 text-white rounded hover:bg-emerald-600 disabled:opacity-50 font-medium"
+                      >
+                        {actionLoading === 'ai-send' ? '⏳ Enviando…' : '📤 Enviar borrador'}
+                      </button>
+                      <button
+                        onClick={() => setAiSuggestion('')}
+                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

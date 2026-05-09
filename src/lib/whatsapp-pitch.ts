@@ -1,6 +1,12 @@
 // WhatsApp Pitch Engine — Single source of truth
 // Each stage uses a different psychological framework for maximum conversion
 // Tone: natural WhatsApp, like a real human (Alejandro from GetLavado)
+//
+// Principles after May-2026 rewrite:
+//   - Plain language (no "tercerizar", "protocolos", "trazabilidad")
+//   - Open with simple question they can answer in one word
+//   - Each stage uses a DIFFERENT structure (avoid repetitive feel across pitches)
+//   - First line never starts with stat/social-proof — sounds like spam
 
 export function getWhatsAppPitchServer(businessName: string, businessType: string | null, salesStage?: string, contactCount?: number): string {
   const typeLower = (businessType || '').toLowerCase();
@@ -11,30 +17,27 @@ export function getWhatsAppPitchServer(businessName: string, businessType: strin
   // OVERRIDE: Contact count takes priority over stage
   // ═══════════════════════════════════════════════════════
 
-  // ═══════════════════════════════════════════════════════
   // SEGUIMIENTO 3 — Quincenal rotation (nunca repite)
-  // Each message uses a different psychological angle
-  // ═══════════════════════════════════════════════════════
   if (stage === 'seguimiento_3') {
     return getSeguimiento3Pitch(businessName, typeLower, contacts);
   }
 
   // 5+ contactos en otras etapas → Pattern interrupt
   if (contacts >= 5 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
-    return `Buenas! Soy Alejandro de GetLavado 👋
+    return `Hola! Alejandro de GetLavado 👋
 
-Cambiando de tema: ¿sabían que el *72% de negocios* en Lima que tercerizan textiles ahorran más de S/2,000/mes?
+Para no insistir más: ¿les sirve que les pase una cotización rápida o prefieren que no los moleste más?
 
-Solo curiosidad: ¿cuánto gastan hoy en lavado? 🤔`;
+Cualquier respuesta me ayuda 🙏`;
   }
 
   // 3-4 contactos → Ultra-directo, binary close
   if (contacts >= 3 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
-    return `Hola! Soy Alejandro de GetLavado
+    return `Hola! Alejandro de GetLavado
 
-¿Les paso cotización o prefieren que no los contacte más?
+¿Les paso cotización de lavandería o lo dejo por ahora?
 
-Cualquier respuesta va 👍`;
+Un sí o no me ayuda 👍`;
   }
 
   // ═══════════════════════════════════════════════════════
@@ -43,47 +46,49 @@ Cualquier respuesta va 👍`;
 
   // SEGUIMIENTO 2 — Loss aversion + competitor pressure
   if (stage === 'seguimiento_2') {
-    return `Hola! Soy Alejandro de GetLavado
+    return `Hola! Alejandro de nuevo 👋
 
-Varios negocios de su zona ya se sumaron este mes. Todavía puedo apartarles el mismo precio preferencial.
+Sigo con espacio para sumarlos este mes con tarifa preferencial. Después de eso vuelve al precio normal.
 
-¿Quieren que les mande los números antes de que cambie? 📊`;
+¿Les paso números antes de que cambie?`;
   }
 
-  // SEGUIMIENTO 1 — Value reframe + micro-commitment
+  // SEGUIMIENTO 1 — Pivot: ofrece llamada corta o cotización por escrito
   if (stage === 'seguimiento_1') {
     return `Hola! Soy Alejandro de GetLavado 📞
 
-¿Tienen *5 min* esta semana? Les cuento en una llamada rápida cuánto podrían ahorrar vs. lo que gastan hoy.
+¿Cómo prefieren que les pase la info?
 
-Sin compromiso, solo números. ¿Les funciona mañana o pasado?`;
+1) Llamada de 5 min
+2) Cotización por aquí mismo
+3) Mejor en otro momento
+
+Respondan con el número que les funcione 👍`;
   }
 
-  // CONTACTADO — Social proof + curiosity gap (primer follow-up por industria)
+  // CONTACTADO — Soft re-engage: pregunta abierta sobre situación actual
   if (stage === 'contactado') {
     return getContactadoPitch(businessName, typeLower);
   }
 
   // INTERESADO — Consultative selling, pedir datos para cotizar
   if (stage === 'interesado') {
-    return `Hola! Soy Alejandro de GetLavado 📋
+    return `Genial! Para armarles números necesito 3 cosas rápidas 📋
 
-Qué bueno que les interesa! Para armarles la cotización necesito 3 datos rápidos:
+1. ¿Qué textiles? (toallas, sábanas, uniformes, manteles)
+2. ¿Cuánto kg aprox por semana?
+3. ¿Cada cuánto les recogemos?
 
-1. ¿Qué textiles manejan? (toallas, sábanas, uniformes, manteles)
-2. ¿Volumen aprox semanal en kg?
-3. ¿Frecuencia de recojo ideal?
-
-Con eso les tengo los números en *24 horas*.`;
+Con eso les mando cotización en 24h.`;
   }
 
   // COTIZADO — Objection handling + urgencia suave
   if (stage === 'cotizado') {
-    return `Hola! Soy Alejandro de GetLavado
+    return `Hola! Alejandro 👋
 
-¿Pudieron revisar la cotización? Si hay algo que ajustar estoy a la orden 💬
+¿Pudieron revisar la cotización? Si hay algo a ajustar, dígame y lo vemos.
 
-Los precios que les compartí son *válidos esta semana* — después toca recalcular con la tarifa actualizada.`;
+Los precios que les pasé valen esta semana — después toca actualizar la tarifa.`;
   }
 
   // NUEVO — Pitch por industria (primer contacto)
@@ -91,107 +96,109 @@ Los precios que les compartí son *válidos esta semana* — después toca recal
 }
 
 // ═══════════════════════════════════════════════════════
-// CONTACTADO: Social proof por industria
-// ═══════════════════════════════════════════════════════
-function getContactadoPitch(name: string, type: string): string {
-  if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) {
-    return `Hola! Soy Alejandro de GetLavado 👋
-
-Un hotel boutique en Barranco redujo *35% su costo* en textiles con nosotros. Antes tenían 2 personas lavando, ahora cero.
-
-¿Cuántas habitaciones manejan en *${name}*? Les armo una comparación rápida 📊`;
-  }
-
-  if (type.includes('gym') || type.includes('gimnasio') || type.includes('fitness') || type.includes('club') || type.includes('deport')) {
-    return `Hola! Soy Alejandro de GetLavado 👋
-
-Un gym en Miraflores pasó de gastar *S/4,200 a S/2,500/mes*. Misma cantidad de toallas, mejor calidad.
-
-¿Cuántas toallas rotan por semana en *${name}*? Les paso los números 💪`;
-  }
-
-  if (type.includes('spa') || type.includes('masaje') || type.includes('wellness') || type.includes('sauna')) {
-    return `Hola! Soy Alejandro de GetLavado 👋
-
-Un spa premium en San Isidro nos dijo que sus clientes ahora comentan *lo suave de las toallas*. Ese es nuestro diferencial.
-
-¿Tienen 10 min para contarles cómo elevamos la experiencia en *${name}*? ✨`;
-  }
-
-  if (type.includes('clinic') || type.includes('hospital') || type.includes('medic') || type.includes('salud') || type.includes('odonto') || type.includes('dental')) {
-    return `Hola! Soy Alejandro de GetLavado 👋
-
-Una clínica en Surco nos eligió después de que su proveedor falló 3 entregas. Con nosotros: *cero fallas en 18 meses*.
-
-¿Les comparto nuestros protocolos de esterilización para *${name}*? 🏥`;
-  }
-
-  if (type.includes('restaurante') || type.includes('comida') || type.includes('cevich') || type.includes('cocina')) {
-    return `Hola! Soy Alejandro de GetLavado 👋
-
-Un restaurante en Miraflores liberó *15 horas semanales* de su equipo al tercerizarnos manteles y uniformes.
-
-¿Cuántos manejan en *${name}*? Les paso una propuesta rápida 🍽️`;
-  }
-
-  // Default contactado
-  return `Hola! Soy Alejandro de GetLavado 👋
-
-Negocios como *${name}* nos eligen porque eliminamos el dolor de cabeza del lavado de textiles. Recogemos, lavamos, entregamos.
-
-¿Qué tipo de textiles manejan? Les armo una propuesta en 24h 📋`;
-}
-
-// ═══════════════════════════════════════════════════════
-// NUEVO: Primer contacto frío por industria
+// NUEVO: Primer contacto — pregunta simple sobre situación actual
+// (No vende — solo abre conversación)
 // ═══════════════════════════════════════════════════════
 function getNuevoPitch(name: string, type: string): string {
   if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) {
     return `Hola! Soy Alejandro de GetLavado 🏨
 
-¿Sabían que los hoteles que tercerizan lavandería ahorran en promedio *35%* vs. hacerlo internamente?
+Lavamos sábanas y toallas para varios hoteles en Lima — recogemos y entregamos en 24h.
 
-Tenemos capacidad para alto volumen con entrega diaria. ¿Cuántas habitaciones manejan en *${name}*?`;
+En *${name}* el lavado lo hacen ustedes mismos o ya trabajan con un proveedor?`;
   }
 
   if (type.includes('gym') || type.includes('gimnasio') || type.includes('fitness') || type.includes('club') || type.includes('deport')) {
     return `Hola! Soy Alejandro de GetLavado 💪
 
-Los gimnasios que nos eligen reducen *40% su gasto* en toallas. Misma cantidad, mejor calidad, cero logística.
+Le hacemos el lavado de toallas a varios gimnasios en Lima — recojo y entrega diaria.
 
-¿Cuántas toallas rotan por semana en *${name}*? Les armo los números`;
+En *${name}* las toallas las lavan ustedes o tienen proveedor?`;
   }
 
   if (type.includes('spa') || type.includes('masaje') || type.includes('wellness') || type.includes('sauna')) {
     return `Hola! Soy Alejandro de GetLavado ✨
 
-El secreto de los spas premium: *tercerizan su lavandería*. Blancura y suavidad de hotel 5 estrellas, sin el esfuerzo.
+Lavamos toallas y batas para varios spas en Lima. Recojo a domicilio, entrega impecable.
 
-¿10 min para contarles cómo elevamos la experiencia en *${name}*?`;
+En *${name}* cómo manejan hoy el lavado — interno o externo?`;
   }
 
   if (type.includes('clinic') || type.includes('hospital') || type.includes('medic') || type.includes('salud') || type.includes('odonto') || type.includes('dental')) {
-    return `Hola! Soy Alejandro de GetLavado 🏥
+    return `Hola! Soy Alejandro de GetLavado 🧺
 
-En salud no hay margen de error. Ofrecemos protocolos de esterilización certificados + *trazabilidad de cada pieza*.
+Lavamos uniformes, batas y sábanas para varias clínicas en Lima. Recogemos diario.
 
-¿Les comparto protocolos y precios para *${name}*?`;
+En *${name}* el lavado lo hacen internamente o ya tienen proveedor?`;
   }
 
   if (type.includes('restaurante') || type.includes('comida') || type.includes('cevich') || type.includes('cocina')) {
     return `Hola! Soy Alejandro de GetLavado 🍽️
 
-¿Cuántas horas a la semana dedica su equipo a lavar manteles y uniformes? Nuestros clientes recuperan en promedio *15 horas semanales*.
+Lavamos manteles y uniformes para varios restaurantes en Lima — recojo y entrega.
 
-¿Cuántos manejan en *${name}*? Les paso propuesta`;
+En *${name}* cómo lo manejan hoy — internamente o con proveedor?`;
   }
 
   // Default nuevo
   return `Hola! Soy Alejandro de GetLavado 👋
 
-+800 negocios en Lima ya nos eligieron. Recogemos, lavamos y entregamos — ustedes solo apilan.
+Trabajamos lavado de textiles (toallas, uniformes, sábanas, manteles) para más de 800 negocios en Lima.
 
-¿Manejan toallas, uniformes, sábanas o manteles en *${name}*? Les armo cotización sin compromiso`;
+En *${name}* cómo manejan el lavado actualmente?`;
+}
+
+// ═══════════════════════════════════════════════════════
+// CONTACTADO: Re-engage después del primer mensaje sin respuesta
+// Cambia el ángulo: pregunta concreta sobre números, no repite el opener
+// ═══════════════════════════════════════════════════════
+function getContactadoPitch(name: string, type: string): string {
+  if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) {
+    return `Hola, Alejandro otra vez 🙋‍♂️
+
+Para mandarles algo concreto: cuántas habitaciones tienen en *${name}*?
+
+Con ese dato les paso un costo aproximado por mes 📊`;
+  }
+
+  if (type.includes('gym') || type.includes('gimnasio') || type.includes('fitness') || type.includes('club') || type.includes('deport')) {
+    return `Hola, Alejandro otra vez 🙋‍♂️
+
+Para mandarles costo concreto: cuántas toallas rotan a la semana en *${name}* aprox?
+
+Con eso les calculo el ahorro vs lo que gastan hoy 💪`;
+  }
+
+  if (type.includes('spa') || type.includes('masaje') || type.includes('wellness') || type.includes('sauna')) {
+    return `Hola, Alejandro otra vez 🙋‍♂️
+
+Una pregunta para mandarles propuesta: en *${name}* cuántas toallas/batas mueven por día?
+
+Les armo precio en base a eso ✨`;
+  }
+
+  if (type.includes('clinic') || type.includes('hospital') || type.includes('medic') || type.includes('salud') || type.includes('odonto') || type.includes('dental')) {
+    return `Hola, Alejandro otra vez 🙋‍♂️
+
+Para pasarles costo concreto: en *${name}* cuántos uniformes/batas y sábanas mueven a la semana?
+
+Con eso les calculo precio mensual 📊`;
+  }
+
+  if (type.includes('restaurante') || type.includes('comida') || type.includes('cevich') || type.includes('cocina')) {
+    return `Hola, Alejandro otra vez 🙋‍♂️
+
+Una pregunta corta: en *${name}* cuántos manteles y uniformes manejan a la semana?
+
+Con ese dato les armo costo mensual 🍽️`;
+  }
+
+  // Default contactado
+  return `Hola, Alejandro otra vez 🙋‍♂️
+
+Para mandarles algo concreto: qué tipo de textiles manejan en *${name}* (toallas, sábanas, uniformes, manteles)?
+
+Con eso les armo cotización en 24h 📋`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -209,70 +216,71 @@ function getSeguimiento3Pitch(name: string, type: string, contacts: number): str
   else if (type.includes('restaurante') || type.includes('comida') || type.includes('cevich') || type.includes('cocina')) sector = 'restaurante';
 
   const pitches = [
-    // Round 1: Binary close + respeto (primer intento en seg3)
-    `Hola! Soy Alejandro de GetLavado 🤝
+    // Round 1: Binary close + respeto
+    `Hola! Alejandro de GetLavado 🤝
 
-Sé que están ocupados en *${name}*. Solo quería cerrar el tema de mi lado:
+Sé que están con muchas cosas. Solo quería cerrar mi tema:
 
-¿Les interesa una cotización sin compromiso? Un "sí" o "no" me ayuda mucho.`,
+¿Les interesa una cotización de lavandería para *${name}* o lo dejamos por ahora?
 
-    // Round 2: Noticia del sector — relevancia contextual
+Un sí o no me ayuda mucho.`,
+
+    // Round 2: Pregunta del sector
     sector === 'hotel'
-      ? `Hola! Soy Alejandro de GetLavado
+      ? `Hola! Alejandro 👋
 
-Dato: este mes *3 hoteles* en Lima nos contrataron. La tendencia es tercerizar para bajar costos fijos.
+Curiosidad: en *${name}* cuánto les sale por mes el lavado de sábanas y toallas hoy?
 
-¿En *${name}* siguen manejando el lavado internamente? Solo curiosidad 🤔`
+Si quieren les comparo contra lo nuestro 🏨`
       : sector === 'gym'
-      ? `Hola! Soy Alejandro de GetLavado
+      ? `Hola! Alejandro 👋
 
-Dato: este mes *4 gimnasios* en Lima empezaron a tercerizar sus toallas con nosotros. La tendencia está clara.
+Curiosidad: en *${name}* cuánto pagan al mes por las toallas (lavado o reposición)?
 
-¿En *${name}* cómo lo manejan actualmente? 🤔`
+Si me dicen, les comparo contra lo nuestro 💪`
       : sector === 'clínica'
-      ? `Hola! Soy Alejandro de GetLavado
+      ? `Hola! Alejandro 👋
 
-Dato: las clínicas que tercerizan lavandería reducen *infecciones cruzadas* y cumplen mejor los protocolos MINSA.
+En *${name}* el lavado de uniformes y sábanas lo manejan ustedes o ya tienen proveedor?
 
-¿En *${name}* ya evaluaron esta opción? 🏥`
+Solo curiosidad — si quieren les paso comparativa 🏥`
       : sector === 'restaurante'
-      ? `Hola! Soy Alejandro de GetLavado
+      ? `Hola! Alejandro 👋
 
-Dato: varios restaurantes en Lima están tercerizando manteles para *liberar personal de cocina*. El ROI es inmediato.
+En *${name}* cuántas horas a la semana le dedican al lavado de manteles y uniformes?
 
-¿En *${name}* cuántas horas le dedican al lavado? 🍽️`
-      : `Hola! Soy Alejandro de GetLavado
+Le pregunto porque varios clientes recuperaron 10-15h al tercerizarnos 🍽️`
+      : `Hola! Alejandro 👋
 
-Dato: este mes varios negocios de su zona empezaron a tercerizar textiles con nosotros. La tendencia crece.
+En *${name}* cómo manejan el lavado de textiles hoy?
 
-¿En *${name}* cómo lo manejan actualmente? 🤔`,
+Solo para saber si tendría sentido mandarles propuesta 🤔`,
 
-    // Round 3: Caso de éxito cercano — social proof fresco
-    `Hola! Soy Alejandro de GetLavado
+    // Round 3: Caso parecido — social proof concreto
+    `Hola! Alejandro de GetLavado
 
-Le cuento: un ${sector === 'negocio' ? 'negocio' : sector} parecido a *${name}* nos eligió hace 2 semanas y ya redujo *30% su gasto* en textiles.
+Hace 2 semanas un ${sector === 'negocio' ? 'cliente' : sector} parecido a *${name}* nos contrató. Bajaron 30% el costo del lavado.
 
-Si quieren les comparto qué hicimos diferente. Solo me dicen 📊`,
+¿Quieren que les comparta cómo lo armamos? Sin compromiso 📊`,
 
-    // Round 4: Oferta temporal — urgencia real
-    `Hola! Soy Alejandro de GetLavado
+    // Round 4: Oferta temporal
+    `Hola! Alejandro 👋
 
-Tenemos *capacidad libre* este mes y puedo hacerles precio especial para *${name}*. No sé cuánto dure la disponibilidad.
+Tengo capacidad libre este mes y puedo hacerles tarifa especial para *${name}*.
 
-¿Les armo una propuesta rápida? Sin compromiso 💬`,
+¿Les armo la propuesta? Si no es momento, también me dicen 💬`,
 
     // Round 5: Cierre definitivo — respeto total
-    `Hola! Soy Alejandro de GetLavado
+    `Hola! Alejandro 🤝
 
-Último check para *${name}* 🤝
+Último intento por el tema lavandería en *${name}*.
 
-Entiendo si no es el momento. Solo necesito saber: ¿lo descartamos o lo dejamos pendiente para más adelante?
+¿Lo descartamos definitivamente o lo retomamos en unos meses?
 
-Cualquier respuesta me sirve, gracias!`,
+Cualquier respuesta me sirve, gracias por su tiempo!`,
   ];
 
   // Rotate based on contact count (subtract base contacts before seg3)
-  // First time in seg3 usually has ~4-5 contacts, so we subtract 4
   const index = Math.max(0, contacts - 4) % pitches.length;
   return pitches[index];
 }

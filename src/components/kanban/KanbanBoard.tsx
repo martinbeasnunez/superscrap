@@ -91,7 +91,7 @@ export default function KanbanBoard() {
   const [showAddManual, setShowAddManual] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
-  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'sent_today' | 'no_phone'>('all');
+  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied_human' | 'replied_bot' | 'sent_today' | 'no_phone'>('all');
   const [columnFilter, setColumnFilter] = useState<'all' | 'clientes' | 'por_cerrar'>('all');
   const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
@@ -252,7 +252,8 @@ export default function KanbanBoard() {
           if (industry !== industryFilter) return false;
         }
         if (phoneFilter === 'whatsapp' && !hasWhatsApp(lead.phone)) return false;
-        if (phoneFilter === 'replied' && !lead.has_unread_reply) return false;
+        if (phoneFilter === 'replied_human' && !lead.has_human_reply) return false;
+        if (phoneFilter === 'replied_bot' && !(lead.has_unread_reply && !lead.has_human_reply)) return false;
         if (phoneFilter === 'sent_today' && !lead.contacted_today) return false;
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
         if (tierFilter !== 'all' && lead.potential_tier !== tierFilter) return false;
@@ -717,7 +718,7 @@ export default function KanbanBoard() {
                   ))}
                   {repliedLeads.total > 12 && (
                     <button
-                      onClick={() => setPhoneFilter('replied')}
+                      onClick={() => setPhoneFilter('replied_human')}
                       className="px-2 py-0.5 rounded-full text-xs text-gray-600 hover:text-gray-900 underline"
                     >
                       +{repliedLeads.total - 12} más
@@ -827,25 +828,35 @@ export default function KanbanBoard() {
         {(whatsappStats.sentToday > 0 || whatsappStats.repliesUnread > 0) && (
           <>
             <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
-            {whatsappStats.repliesUnread > 0 && (
+            {whatsappStats.repliesHuman > 0 && (
               <button
-                onClick={() => setPhoneFilter(phoneFilter === 'replied' ? 'all' : 'replied')}
-                title={whatsappStats.repliesBot > 0 ? `${whatsappStats.repliesHuman} humanos · ${whatsappStats.repliesBot} bots` : undefined}
+                onClick={() => setPhoneFilter(phoneFilter === 'replied_human' ? 'all' : 'replied_human')}
+                title={`Filtrar ${whatsappStats.repliesHuman} leads con respuesta humana`}
                 className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-                  phoneFilter === 'replied'
+                  phoneFilter === 'replied_human'
                     ? 'bg-green-600 text-white'
                     : repliedLeads.stale.length > 0
                       ? 'bg-red-100 text-red-700 animate-pulse hover:bg-red-200 ring-2 ring-red-400'
-                      : whatsappStats.repliesHuman > 0
-                        ? 'bg-green-100 text-green-700 animate-pulse hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-green-100 text-green-700 animate-pulse hover:bg-green-200'
                 }`}
               >
                 💬 {whatsappStats.repliesHuman}
                 {repliedLeads.stale.length > 0 && (
                   <span className="ml-1 font-bold">⚠️{repliedLeads.stale.length}</span>
                 )}
-                {whatsappStats.repliesBot > 0 ? <span className="opacity-60 font-normal"> · {whatsappStats.repliesBot} bot{whatsappStats.repliesBot === 1 ? '' : 's'}</span> : null}
+              </button>
+            )}
+            {whatsappStats.repliesBot > 0 && (
+              <button
+                onClick={() => setPhoneFilter(phoneFilter === 'replied_bot' ? 'all' : 'replied_bot')}
+                title={`Filtrar ${whatsappStats.repliesBot} leads cuya respuesta fue solo un bot automático`}
+                className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                  phoneFilter === 'replied_bot'
+                    ? 'bg-gray-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                🤖 {whatsappStats.repliesBot} bot{whatsappStats.repliesBot === 1 ? '' : 's'}
               </button>
             )}
             {whatsappStats.sentToday > 0 && (
@@ -921,7 +932,8 @@ export default function KanbanBoard() {
           <option value="all">📱 Todos</option>
           <option value="whatsapp">📱 Con WhatsApp</option>
           <option value="sent_today">📤 Enviados hoy</option>
-          <option value="replied">💬 Respondieron</option>
+          <option value="replied_human">💬 Respondió humano</option>
+          <option value="replied_bot">🤖 Respondió bot</option>
           <option value="no_phone">🚫 Sin WhatsApp</option>
         </select>
         {phoneFilter !== 'all' && (

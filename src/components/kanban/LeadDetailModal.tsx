@@ -1100,25 +1100,35 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 >
                   {actionLoading === 'kapso' ? <span className="animate-spin">⏳</span> : <>{t('lead.send_kapso')}</>}
                 </button>
-                <button
-                  onClick={async () => {
-                    const newValue = !business.auto_followup_enabled;
+                {(() => {
+                  const isManual = business.source === 'manual';
+                  const toggle = async () => {
+                    const nextManual = !isManual;
                     await fetch(`/api/businesses/${business.id}`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ auto_followup_enabled: newValue }),
+                      body: JSON.stringify({
+                        source: nextManual ? 'manual' : 'auto',
+                        auto_followup_enabled: !nextManual,
+                      }),
                     });
                     onActionRegistered();
-                  }}
-                  className={`px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-1 font-medium ${
-                    business.auto_followup_enabled
-                      ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-300'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  title={t('lead.auto_followup_desc')}
-                >
-                  🤖 {t('lead.auto_followup')} {business.auto_followup_enabled ? 'ON' : 'OFF'}
-                </button>
+                  };
+                  return (
+                    <button
+                      onClick={toggle}
+                      title={isManual ? t('lead.mode_manual_desc') : t('lead.mode_auto_desc')}
+                      className={`px-3 py-2 text-sm rounded-lg transition-all flex items-center gap-1.5 font-medium border ${
+                        isManual
+                          ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'
+                          : 'bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200'
+                      }`}
+                    >
+                      <span className="text-base leading-none">{isManual ? '✋' : '🤖'}</span>
+                      <span>{isManual ? t('lead.mode_manual') : t('lead.mode_auto')}</span>
+                    </button>
+                  );
+                })()}
               </div>
             )}
 

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const { data: businesses } = await supabase
       .from('businesses')
-      .select('id, phone')
+      .select('id, phone, source')
       .not('phone', 'is', null);
 
     const match = businesses?.find(b => {
@@ -64,13 +64,16 @@ export async function POST(request: NextRequest) {
 
     // ════════════════════════════════════════════════════════════════
     // AUTO-REPLY (Level 1) — only for high-confidence intents.
-    // Skips if: bot reply, already auto-replied in last 24h, or unclear.
+    // Skips if: bot reply, already auto-replied in last 24h, unclear, or manual lead.
     // ════════════════════════════════════════════════════════════════
     let autoReplied = false;
     let autoReplyIntent: string | null = null;
 
+    // Manual leads are hand-curated whales — Alejandro owns all comms, no automation.
+    const isManualLead = match.source === 'manual';
+
     // Skip if it's the customer's own bot greeting (not a real human reply)
-    if (!isLikelyBotReply(fullNote)) {
+    if (!isManualLead && !isLikelyBotReply(fullNote)) {
       const classification = classifyReplyIntent(fullNote);
 
       if (classification.confidence === 'high' && classification.intent !== 'unclear') {

@@ -125,3 +125,13 @@ ALTER TABLE contact_history ADD CONSTRAINT contact_history_action_type_check
 -- Free-text notes per lead (why lost, additional comments, internal context)
 -- Visible in the lead detail modal, edited inline.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS notes TEXT;
+
+-- ============================================================
+-- Migration 006: Manual leads (whales added by hand)
+-- ============================================================
+-- 'auto' = discovered by SerpAPI pipeline (default for existing rows)
+-- 'manual' = added by Alejandro from the Kanban UI; no WhatsApp automation
+ALTER TABLE businesses
+  ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'auto' CHECK (source IN ('auto', 'manual'));
+
+CREATE INDEX IF NOT EXISTS idx_businesses_source ON businesses(source);

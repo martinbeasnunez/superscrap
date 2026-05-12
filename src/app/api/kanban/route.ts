@@ -76,6 +76,8 @@ export interface KanbanBusiness {
   contacted_today: boolean;
   // Free-text notes (why lost, additional context, etc)
   notes: string | null;
+  // 'auto' (SerpAPI pipeline) or 'manual' (hand-added whale; no WhatsApp automation)
+  source: 'auto' | 'manual';
 }
 
 export interface WhatsAppStats {
@@ -136,6 +138,7 @@ export async function GET() {
         auto_followup_enabled,
         last_email_template_id,
         notes,
+        source,
         searches (
           business_type,
           city
@@ -335,6 +338,7 @@ export async function GET() {
         last_reply_date: replyMap[b.id]?.date || null,
         contacted_today: contactedTodaySet.has(b.id),
         notes: b.notes ?? null,
+        source: (b.source as 'auto' | 'manual') ?? 'auto',
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

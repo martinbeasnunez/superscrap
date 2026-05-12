@@ -6,6 +6,7 @@ import { KanbanBusiness, KanbanColumnId, KanbanResponse } from '@/app/api/kanban
 import KanbanColumn from './KanbanColumn';
 import LeadDetailModal from './LeadDetailModal';
 import AICampaignModal from './AICampaignModal';
+import AddManualLeadModal from './AddManualLeadModal';
 import { COLUMN_CONFIG, getColumnConfig } from './KanbanColumn';
 import { useI18n } from '@/lib/i18n';
 import { detectIndustry, IndustryCategory } from '@/lib/scoring';
@@ -87,6 +88,7 @@ export default function KanbanBoard() {
   const [selectedBusinessColumn, setSelectedBusinessColumn] = useState<KanbanColumnId>('nuevo');
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [showAICampaign, setShowAICampaign] = useState(false);
+  const [showAddManual, setShowAddManual] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'sent_today' | 'no_phone'>('all');
@@ -736,6 +738,14 @@ export default function KanbanBoard() {
       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 lg:mb-4 text-xs sm:text-sm">
         {/* Botón de Campaña IA — OCULTO TEMPORALMENTE */}
 
+        <button
+          onClick={() => setShowAddManual(true)}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200 transition-colors"
+          title={t('manual.subtitle')}
+        >
+          {t('kanban.add_lead')}
+        </button>
+
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> {t('kanban.active')}</span>
         <button onClick={() => setColumnFilter(columnFilter === 'clientes' ? 'all' : 'clientes')} className={`hidden sm:inline cursor-pointer ${columnFilter === 'clientes' ? 'text-green-700 font-bold underline' : 'text-green-600 hover:underline'}`}><strong>{columns.cliente.length}</strong> {t('kanban.customers')}</button>
@@ -1357,6 +1367,13 @@ export default function KanbanBoard() {
           </div>
         </div>
       )}
+
+      {/* Modal de agregar lead manual */}
+      <AddManualLeadModal
+        isOpen={showAddManual}
+        onClose={() => setShowAddManual(false)}
+        onCreated={fetchKanbanData}
+      />
 
       {/* Modal de Campaña IA */}
       <AICampaignModal

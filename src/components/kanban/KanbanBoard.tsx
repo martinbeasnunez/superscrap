@@ -94,6 +94,7 @@ export default function KanbanBoard() {
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied' | 'sent_today' | 'no_phone'>('all');
   const [columnFilter, setColumnFilter] = useState<'all' | 'clientes' | 'por_cerrar'>('all');
   const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -239,7 +240,7 @@ export default function KanbanBoard() {
   // Filtered columns based on industry + phone + search filters
   const filteredColumns = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && !q) return columns;
+    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && sourceFilter === 'all' && !q) return columns;
     const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
       seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
@@ -255,6 +256,7 @@ export default function KanbanBoard() {
         if (phoneFilter === 'sent_today' && !lead.contacted_today) return false;
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
         if (tierFilter !== 'all' && lead.potential_tier !== tierFilter) return false;
+        if (sourceFilter === 'manual' && lead.source !== 'manual') return false;
         if (q) {
           const haystack = [lead.name, lead.phone, lead.address, lead.business_type, lead.city]
             .filter(Boolean).join(' ').toLowerCase();
@@ -264,7 +266,7 @@ export default function KanbanBoard() {
       });
     });
     return filtered;
-  }, [columns, industryFilter, phoneFilter, tierFilter, searchQuery]);
+  }, [columns, industryFilter, phoneFilter, tierFilter, sourceFilter, searchQuery]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -745,6 +747,27 @@ export default function KanbanBoard() {
         >
           {t('kanban.add_lead')}
         </button>
+
+        {(() => {
+          const manualCount = COLUMN_ORDER.reduce(
+            (sum, col) => sum + columns[col].filter(l => l.source === 'manual').length,
+            0
+          );
+          if (manualCount === 0) return null;
+          return (
+            <button
+              onClick={() => setSourceFilter(sourceFilter === 'manual' ? 'all' : 'manual')}
+              title={t('kanban.filter_manual_title')}
+              className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                sourceFilter === 'manual'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+              }`}
+            >
+              ✋ {manualCount}
+            </button>
+          );
+        })()}
 
         <span className="text-gray-600"><strong>{totalLeads}</strong> leads</span>
         <span className="text-blue-600"><strong>{activeLeads}</strong> {t('kanban.active')}</span>

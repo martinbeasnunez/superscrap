@@ -96,7 +96,11 @@ export async function PATCH(
       updateData.source = source;
     }
     if (lead_channel !== undefined) {
-      const validChannels = ['comercial', 'google', 'laundryheap', 'otro'] as const;
+      const validChannels = [
+        'comercial', 'google_seo', 'google_sem', 'laundryheap',
+        'getlavado_b2c', 'getlavado_b2b', 'referido',
+        'linkedin', 'eventos', 'otro',
+      ] as const;
       if (lead_channel !== null && !validChannels.includes(lead_channel)) {
         return NextResponse.json({ error: 'lead_channel inválido' }, { status: 400 });
       }

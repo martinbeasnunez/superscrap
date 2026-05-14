@@ -143,3 +143,19 @@ CREATE INDEX IF NOT EXISTS idx_businesses_source ON businesses(source);
 ALTER TABLE businesses
   ADD COLUMN IF NOT EXISTS lead_channel TEXT
   CHECK (lead_channel IN ('comercial', 'google', 'laundryheap', 'otro'));
+
+-- ============================================================
+-- Migration 008: Expand lead_channel set (split Google, add LinkedIn, eventos, etc.)
+-- ============================================================
+-- Replace the 4-value CHECK with the full 10-channel set.
+-- Any existing 'google' rows migrate to 'google_seo' (organic is the safer default).
+ALTER TABLE businesses DROP CONSTRAINT IF EXISTS businesses_lead_channel_check;
+
+UPDATE businesses SET lead_channel = 'google_seo' WHERE lead_channel = 'google';
+
+ALTER TABLE businesses ADD CONSTRAINT businesses_lead_channel_check
+  CHECK (lead_channel IN (
+    'comercial', 'google_seo', 'google_sem', 'laundryheap',
+    'getlavado_b2c', 'getlavado_b2b', 'referido',
+    'linkedin', 'eventos', 'otro'
+  ));

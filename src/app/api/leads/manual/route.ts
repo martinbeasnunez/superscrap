@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-type LeadChannel = 'comercial' | 'google' | 'laundryheap' | 'otro';
-const VALID_CHANNELS: LeadChannel[] = ['comercial', 'google', 'laundryheap', 'otro'];
+type LeadChannel =
+  | 'comercial' | 'google_seo' | 'google_sem' | 'laundryheap'
+  | 'getlavado_b2c' | 'getlavado_b2b' | 'referido'
+  | 'linkedin' | 'eventos' | 'otro';
+const VALID_CHANNELS: LeadChannel[] = [
+  'comercial', 'google_seo', 'google_sem', 'laundryheap',
+  'getlavado_b2c', 'getlavado_b2b', 'referido',
+  'linkedin', 'eventos', 'otro',
+];
 
 interface ManualLeadRequest {
   name: string;
@@ -28,7 +35,7 @@ export async function POST(request: Request) {
 
     if (!data.channel || !VALID_CHANNELS.includes(data.channel)) {
       return NextResponse.json(
-        { error: 'Canal de origen es requerido (comercial, google, laundryheap, otro)' },
+        { error: 'Canal de origen es requerido' },
         { status: 400 }
       );
     }

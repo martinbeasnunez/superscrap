@@ -93,8 +93,14 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
 function getChannelBadge(channel: string | null): { emoji: string; label: string } | null {
   switch (channel) {
     case 'comercial': return { emoji: '🤝', label: 'Comercial' };
-    case 'google': return { emoji: '🔍', label: 'Google' };
+    case 'google_seo': return { emoji: '🌱', label: 'SEO' };
+    case 'google_sem': return { emoji: '💸', label: 'SEM' };
     case 'laundryheap': return { emoji: '🧺', label: 'LH' };
+    case 'getlavado_b2c': return { emoji: '🌐', label: 'B2C' };
+    case 'getlavado_b2b': return { emoji: '🏢', label: 'B2B' };
+    case 'referido': return { emoji: '👥', label: 'Referido' };
+    case 'linkedin': return { emoji: '💼', label: 'LinkedIn' };
+    case 'eventos': return { emoji: '🎪', label: 'Evento' };
     case 'otro': return { emoji: '❓', label: 'Otro' };
     default: return null;
   }

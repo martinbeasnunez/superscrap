@@ -10,9 +10,16 @@ interface AddManualLeadModalProps {
 }
 
 type Tier = 'orca' | 'delfin' | 'unknown';
-type Channel = 'comercial' | 'google' | 'laundryheap' | 'otro';
+type Channel =
+  | 'comercial' | 'google_seo' | 'google_sem' | 'laundryheap'
+  | 'getlavado_b2c' | 'getlavado_b2b' | 'referido'
+  | 'linkedin' | 'eventos' | 'otro';
 
-const CHANNELS: Channel[] = ['comercial', 'google', 'laundryheap', 'otro'];
+const CHANNELS: Channel[] = [
+  'comercial', 'google_seo', 'google_sem', 'laundryheap',
+  'getlavado_b2c', 'getlavado_b2b', 'referido',
+  'linkedin', 'eventos', 'otro',
+];
 
 export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddManualLeadModalProps) {
   const { t } = useI18n();

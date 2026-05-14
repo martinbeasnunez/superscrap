@@ -1134,32 +1134,38 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
             {/* Channel selector — only for manual leads */}
             {business.source === 'manual' && (
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-medium text-gray-600">{t('lead.channel')}:</span>
-                {(['comercial', 'google', 'laundryheap', 'otro'] as const).map((c) => {
-                  const active = business.lead_channel === c;
-                  return (
-                    <button
-                      key={c}
-                      onClick={async () => {
-                        if (active) return;
-                        await fetch(`/api/businesses/${business.id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ lead_channel: c }),
-                        });
-                        onActionRegistered();
-                      }}
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
-                        active
-                          ? 'bg-amber-100 text-amber-800 border-amber-300 ring-1 ring-amber-300'
-                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      {t(`manual.channel_${c}`)}
-                    </button>
-                  );
-                })}
+              <div className="mt-3">
+                <div className="text-xs font-medium text-gray-600 mb-1.5">{t('lead.channel')}</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {([
+                    'comercial', 'google_seo', 'google_sem', 'laundryheap',
+                    'getlavado_b2c', 'getlavado_b2b', 'referido',
+                    'linkedin', 'eventos', 'otro',
+                  ] as const).map((c) => {
+                    const active = business.lead_channel === c;
+                    return (
+                      <button
+                        key={c}
+                        onClick={async () => {
+                          if (active) return;
+                          await fetch(`/api/businesses/${business.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lead_channel: c }),
+                          });
+                          onActionRegistered();
+                        }}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                          active
+                            ? 'bg-amber-100 text-amber-800 border-amber-300 ring-1 ring-amber-300'
+                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        {t(`manual.channel_${c}`)}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

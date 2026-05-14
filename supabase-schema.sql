@@ -135,3 +135,11 @@ ALTER TABLE businesses
   ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'auto' CHECK (source IN ('auto', 'manual'));
 
 CREATE INDEX IF NOT EXISTS idx_businesses_source ON businesses(source);
+
+-- ============================================================
+-- Migration 007: Acquisition channel for manual leads
+-- ============================================================
+-- Nullable: only set on manual leads (auto leads all come from SerpAPI)
+ALTER TABLE businesses
+  ADD COLUMN IF NOT EXISTS lead_channel TEXT
+  CHECK (lead_channel IN ('comercial', 'google', 'laundryheap', 'otro'));

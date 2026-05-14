@@ -1132,6 +1132,37 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               </div>
             )}
 
+            {/* Channel selector — only for manual leads */}
+            {business.source === 'manual' && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium text-gray-600">{t('lead.channel')}:</span>
+                {(['comercial', 'google', 'laundryheap', 'otro'] as const).map((c) => {
+                  const active = business.lead_channel === c;
+                  return (
+                    <button
+                      key={c}
+                      onClick={async () => {
+                        if (active) return;
+                        await fetch(`/api/businesses/${business.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ lead_channel: c }),
+                        });
+                        onActionRegistered();
+                      }}
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? 'bg-amber-100 text-amber-800 border-amber-300 ring-1 ring-amber-300'
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {t(`manual.channel_${c}`)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* AI-Suggested Reply (Level 2) — only show if customer has replied */}
             {showWhatsApp && business.has_human_reply && (
               <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">

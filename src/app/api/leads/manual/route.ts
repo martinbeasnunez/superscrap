@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+type LeadChannel = 'comercial' | 'google' | 'laundryheap' | 'otro';
+const VALID_CHANNELS: LeadChannel[] = ['comercial', 'google', 'laundryheap', 'otro'];
+
 interface ManualLeadRequest {
   name: string;
   phone: string;
+  channel: LeadChannel;
   address?: string;
   notes?: string;
   tier?: 'orca' | 'delfin' | 'unknown';
@@ -18,6 +22,13 @@ export async function POST(request: Request) {
     if (!data.name?.trim() || !data.phone?.trim()) {
       return NextResponse.json(
         { error: 'Nombre y teléfono son requeridos' },
+        { status: 400 }
+      );
+    }
+
+    if (!data.channel || !VALID_CHANNELS.includes(data.channel)) {
+      return NextResponse.json(
+        { error: 'Canal de origen es requerido (comercial, google, laundryheap, otro)' },
         { status: 400 }
       );
     }
@@ -38,6 +49,7 @@ export async function POST(request: Request) {
         source: 'manual',
         sales_stage: 'nuevo',
         auto_followup_enabled: false,
+        lead_channel: data.channel,
       })
       .select('id')
       .single();

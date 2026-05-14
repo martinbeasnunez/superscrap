@@ -89,6 +89,17 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   };
 }
 
+// Etiqueta corta para el canal de adquisición (solo leads manuales)
+function getChannelBadge(channel: string | null): { emoji: string; label: string } | null {
+  switch (channel) {
+    case 'comercial': return { emoji: '🤝', label: 'Comercial' };
+    case 'google': return { emoji: '🔍', label: 'Google' };
+    case 'laundryheap': return { emoji: '🧺', label: 'LH' };
+    case 'otro': return { emoji: '❓', label: 'Otro' };
+    default: return null;
+  }
+}
+
 // Obtener label corto del resultado de llamada IA
 function getAICallLabel(outcome: string | null, t?: (key: string) => string): { text: string; color: string; bg: string } {
   switch (outcome) {
@@ -212,6 +223,18 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
                 ✋ {t('card.manual_badge')}
               </span>
             )}
+            {(() => {
+              const ch = getChannelBadge(business.lead_channel);
+              if (!ch) return null;
+              return (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-stone-100 text-stone-700 border border-stone-200 flex-shrink-0"
+                  title={`Canal: ${ch.label}`}
+                >
+                  {ch.emoji} {ch.label}
+                </span>
+              );
+            })()}
             <span className="truncate">{business.name}</span>
           </h4>
 

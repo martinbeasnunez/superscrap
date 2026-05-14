@@ -17,7 +17,7 @@ export async function PATCH(
     const {
       contact_actions, lead_status, sales_stage, user_id, previous_stage,
       primary_dm_index, auto_followup_enabled, last_email_template_id,
-      skip_auto_send, notes, source,
+      skip_auto_send, notes, source, lead_channel,
     } = body;
 
     // Validar contact_actions (array de acciones)
@@ -94,6 +94,13 @@ export async function PATCH(
         return NextResponse.json({ error: 'source debe ser auto o manual' }, { status: 400 });
       }
       updateData.source = source;
+    }
+    if (lead_channel !== undefined) {
+      const validChannels = ['comercial', 'google', 'laundryheap', 'otro'] as const;
+      if (lead_channel !== null && !validChannels.includes(lead_channel)) {
+        return NextResponse.json({ error: 'lead_channel inválido' }, { status: 400 });
+      }
+      updateData.lead_channel = lead_channel;
     }
 
     console.log('Updating business:', id, 'with data:', updateData);

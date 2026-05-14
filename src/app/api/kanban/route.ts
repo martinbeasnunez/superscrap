@@ -78,6 +78,8 @@ export interface KanbanBusiness {
   notes: string | null;
   // 'auto' (SerpAPI pipeline) or 'manual' (hand-added whale; no WhatsApp automation)
   source: 'auto' | 'manual';
+  // Acquisition channel — only set on manual leads (auto leads all come from SerpAPI)
+  lead_channel: 'comercial' | 'google' | 'laundryheap' | 'otro' | null;
 }
 
 export interface WhatsAppStats {
@@ -139,6 +141,7 @@ export async function GET() {
         last_email_template_id,
         notes,
         source,
+        lead_channel,
         searches (
           business_type,
           city
@@ -339,6 +342,7 @@ export async function GET() {
         contacted_today: contactedTodaySet.has(b.id),
         notes: b.notes ?? null,
         source: (b.source as 'auto' | 'manual') ?? 'auto',
+        lead_channel: (b.lead_channel as 'comercial' | 'google' | 'laundryheap' | 'otro' | null) ?? null,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

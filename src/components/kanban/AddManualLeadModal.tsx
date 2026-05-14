@@ -10,6 +10,9 @@ interface AddManualLeadModalProps {
 }
 
 type Tier = 'orca' | 'delfin' | 'unknown';
+type Channel = 'comercial' | 'google' | 'laundryheap' | 'otro';
+
+const CHANNELS: Channel[] = ['comercial', 'google', 'laundryheap', 'otro'];
 
 export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddManualLeadModalProps) {
   const { t } = useI18n();
@@ -17,6 +20,7 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [tier, setTier] = useState<Tier>('orca');
+  const [channel, setChannel] = useState<Channel | null>(null);
   const [revenueMin, setRevenueMin] = useState('');
   const [revenueMax, setRevenueMax] = useState('');
   const [notes, setNotes] = useState('');
@@ -27,7 +31,7 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
 
   const reset = () => {
     setName(''); setPhone(''); setAddress('');
-    setTier('orca'); setRevenueMin(''); setRevenueMax('');
+    setTier('orca'); setChannel(null); setRevenueMin(''); setRevenueMax('');
     setNotes(''); setError('');
   };
 
@@ -39,7 +43,7 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) return;
+    if (!name.trim() || !phone.trim() || !channel) return;
     setSaving(true);
     setError('');
     try {
@@ -49,6 +53,7 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
+          channel,
           address: address.trim() || undefined,
           notes: notes.trim() || undefined,
           tier,
@@ -113,6 +118,28 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                {t('manual.channel')} *
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {CHANNELS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setChannel(c)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors text-left ${
+                      channel === c
+                        ? 'bg-amber-100 text-amber-900 border-amber-400 ring-1 ring-amber-300'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {t(`manual.channel_${c}`)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -213,7 +240,7 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
             </button>
             <button
               type="submit"
-              disabled={saving || !name.trim() || !phone.trim()}
+              disabled={saving || !name.trim() || !phone.trim() || !channel}
               className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? t('manual.saving') : t('manual.save')}

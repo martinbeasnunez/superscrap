@@ -265,52 +265,59 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
             </div>
           )}
 
-          {/* Nombre del negocio (pr-7 reserves room for the star button) */}
-          <h4 className="font-medium text-gray-900 text-sm truncate leading-tight flex items-center gap-1 pr-7" title={business.name}>
-            {business.source === 'manual' && (
-              <span
-                className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0"
-                title="Lead agregado a mano por Alejandro — sin automatización de WhatsApp"
-              >
-                ✋ {t('card.manual_badge')}
-              </span>
-            )}
-            {(() => {
-              const ch = getChannelBadge(business.lead_channel);
-              if (!ch) return null;
-              return (
+          {/* Nombre del negocio — fila completa para que respire (pr-7 = espacio para la estrella) */}
+          <h4 className="font-medium text-gray-900 text-sm truncate leading-tight pr-7" title={business.name}>
+            {business.name}
+          </h4>
+
+          {/* Chips de metadata — fila aparte, wrappean si hace falta */}
+          {(business.source === 'manual'
+            || getChannelBadge(business.lead_channel)
+            || business.sales_stage === 'perdido') && (
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              {business.source === 'manual' && (
                 <span
-                  className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-stone-100 text-stone-700 border border-stone-200 flex-shrink-0"
-                  title={`Canal: ${ch.label}`}
+                  className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
+                  title="Lead agregado a mano por Alejandro — sin automatización de WhatsApp"
                 >
-                  {ch.emoji} {ch.label}
+                  ✋ {t('card.manual_badge')}
                 </span>
-              );
-            })()}
-            {business.sales_stage === 'perdido' && (() => {
-              const r = getLostReasonBadge(business.lost_reason);
-              if (r) {
+              )}
+              {(() => {
+                const ch = getChannelBadge(business.lead_channel);
+                if (!ch) return null;
                 return (
                   <span
-                    className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-50 text-red-700 border border-red-200 flex-shrink-0"
-                    title={`Razón: ${r.label}`}
+                    className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-stone-100 text-stone-700 border border-stone-200"
+                    title={`Canal: ${ch.label}`}
                   >
-                    {r.emoji} {r.label}
+                    {ch.emoji} {ch.label}
                   </span>
                 );
-              }
-              // Perdido sin razón → CTA muted que invita a clickear
-              return (
-                <span
-                  className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-500 border border-gray-200 flex-shrink-0"
-                  title="Click para marcar la razón de pérdida"
-                >
-                  {t('card.lost_reason_missing')}
-                </span>
-              );
-            })()}
-            <span className="truncate">{business.name}</span>
-          </h4>
+              })()}
+              {business.sales_stage === 'perdido' && (() => {
+                const r = getLostReasonBadge(business.lost_reason);
+                if (r) {
+                  return (
+                    <span
+                      className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-50 text-red-700 border border-red-200"
+                      title={`Razón: ${r.label}`}
+                    >
+                      {r.emoji} {r.label}
+                    </span>
+                  );
+                }
+                return (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-500 border border-gray-200"
+                    title="Click para marcar la razón de pérdida"
+                  >
+                    {t('card.lost_reason_missing')}
+                  </span>
+                );
+              })()}
+            </div>
+          )}
 
           {/* Decision maker indicator */}
           {(() => {

@@ -159,3 +159,32 @@ ALTER TABLE businesses ADD CONSTRAINT businesses_lead_channel_check
     'getlavado_b2c', 'getlavado_b2b', 'referido',
     'linkedin', 'eventos', 'otro'
   ));
+
+-- ============================================================
+-- Migration 009: Notes as timestamped contact_history entries
+-- ============================================================
+-- Each save creates a new 'note' row, so Alejandro can see when each
+-- observation was written (and stack them chronologically) instead of
+-- overwriting a single field.
+ALTER TABLE contact_history DROP CONSTRAINT IF EXISTS contact_history_action_type_check;
+ALTER TABLE contact_history ADD CONSTRAINT contact_history_action_type_check
+  CHECK (action_type IN (
+    'whatsapp', 'email', 'call', 'ai_call', 'stage_change',
+    'auto_whatsapp', 'whatsapp_reply', 'auto_whatsapp_reply', 'note'
+  ));
+
+-- Backfill: convert any existing businesses.notes value into a 'note'
+-- entry so the timeline shows the legacy text instead of dropping it.
+INSERT INTO contact_history (business_id, action_type, notes, created_at)
+SELECT id, 'note', notes, COALESCE(contacted_at, created_at)
+FROM businesses
+WHERE notes IS NOT NULL AND notes <> '';
+
+-- ============================================================
+-- Migration 010: Loss reason on "perdido" leads
+-- ============================================================
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS lost_reason TEXT
+  CHECK (lost_reason IN (
+    'precio', 'lavado_interno', 'tiene_proveedor', 'mal_timing',
+    'no_interesado', 'no_contesta', 'no_decisor', 'otro'
+  ));

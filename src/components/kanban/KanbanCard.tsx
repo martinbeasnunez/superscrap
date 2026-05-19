@@ -89,6 +89,21 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   };
 }
 
+// Etiqueta corta para razón de pérdida (solo en columna "perdido")
+function getLostReasonBadge(reason: string | null): { emoji: string; label: string } | null {
+  switch (reason) {
+    case 'precio': return { emoji: '💰', label: 'Precio' };
+    case 'lavado_interno': return { emoji: '🏠', label: 'Lav. interno' };
+    case 'tiene_proveedor': return { emoji: '🤝', label: 'Tiene prov.' };
+    case 'mal_timing': return { emoji: '⏰', label: 'Timing' };
+    case 'no_interesado': return { emoji: '🚫', label: 'No interesa' };
+    case 'no_contesta': return { emoji: '📵', label: 'No contesta' };
+    case 'no_decisor': return { emoji: '🚪', label: 'No decisor' };
+    case 'otro': return { emoji: '❓', label: 'Otro' };
+    default: return null;
+  }
+}
+
 // Etiqueta corta para el canal de adquisición (solo leads manuales)
 function getChannelBadge(channel: string | null): { emoji: string; label: string } | null {
   switch (channel) {
@@ -238,6 +253,28 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
                   title={`Canal: ${ch.label}`}
                 >
                   {ch.emoji} {ch.label}
+                </span>
+              );
+            })()}
+            {business.sales_stage === 'perdido' && (() => {
+              const r = getLostReasonBadge(business.lost_reason);
+              if (r) {
+                return (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-50 text-red-700 border border-red-200 flex-shrink-0"
+                    title={`Razón: ${r.label}`}
+                  >
+                    {r.emoji} {r.label}
+                  </span>
+                );
+              }
+              // Perdido sin razón → CTA muted que invita a clickear
+              return (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-500 border border-gray-200 flex-shrink-0"
+                  title="Click para marcar la razón de pérdida"
+                >
+                  {t('card.lost_reason_missing')}
                 </span>
               );
             })()}

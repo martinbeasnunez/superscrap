@@ -83,6 +83,10 @@ export interface KanbanBusiness {
     | 'comercial' | 'google_seo' | 'google_sem' | 'laundryheap'
     | 'getlavado_b2c' | 'getlavado_b2b' | 'referido'
     | 'linkedin' | 'eventos' | 'otro' | null;
+  // Reason set when a lead lands in "perdido" — quick categorical signal
+  lost_reason:
+    | 'precio' | 'lavado_interno' | 'tiene_proveedor' | 'mal_timing'
+    | 'no_interesado' | 'no_contesta' | 'no_decisor' | 'otro' | null;
 }
 
 export interface WhatsAppStats {
@@ -145,6 +149,7 @@ export async function GET() {
         notes,
         source,
         lead_channel,
+        lost_reason,
         searches (
           business_type,
           city
@@ -346,6 +351,7 @@ export async function GET() {
         notes: b.notes ?? null,
         source: (b.source as 'auto' | 'manual') ?? 'auto',
         lead_channel: (b.lead_channel as KanbanBusiness['lead_channel']) ?? null,
+        lost_reason: (b.lost_reason as KanbanBusiness['lost_reason']) ?? null,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

@@ -17,7 +17,7 @@ export async function PATCH(
     const {
       contact_actions, lead_status, sales_stage, user_id, previous_stage,
       primary_dm_index, auto_followup_enabled, last_email_template_id,
-      skip_auto_send, notes, source, lead_channel,
+      skip_auto_send, notes, source, lead_channel, lost_reason,
     } = body;
 
     // Validar contact_actions (array de acciones)
@@ -105,6 +105,16 @@ export async function PATCH(
         return NextResponse.json({ error: 'lead_channel inválido' }, { status: 400 });
       }
       updateData.lead_channel = lead_channel;
+    }
+    if (lost_reason !== undefined) {
+      const validReasons = [
+        'precio', 'lavado_interno', 'tiene_proveedor', 'mal_timing',
+        'no_interesado', 'no_contesta', 'no_decisor', 'otro',
+      ] as const;
+      if (lost_reason !== null && !validReasons.includes(lost_reason)) {
+        return NextResponse.json({ error: 'lost_reason inválido' }, { status: 400 });
+      }
+      updateData.lost_reason = lost_reason;
     }
 
     console.log('Updating business:', id, 'with data:', updateData);

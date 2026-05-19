@@ -377,6 +377,7 @@ function getActionIcon(action: string, isBotReply = false): string {
     case 'call': return '📞';
     case 'ai_call': return '🤖';
     case 'stage_change': return '📋';
+    case 'note': return '📝';
     default: return '📝';
   }
 }
@@ -390,6 +391,7 @@ function getActionLabel(action: string, isBotReply = false): string {
     case 'call': return 'Llamada';
     case 'ai_call': return 'Llamada IA';
     case 'stage_change': return 'Cambio de etapa';
+    case 'note': return 'Nota';
     default: return action;
   }
 }
@@ -411,10 +413,9 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [audioLoading, setAudioLoading] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Notes (free-text comments per lead — why lost, additional context)
-  const [notesValue, setNotesValue] = useState<string>(business?.notes ?? '');
+  // Notes (timestamped entries — each save creates a new contact_history row)
+  const [newNoteText, setNewNoteText] = useState<string>('');
   const [notesSaving, setNotesSaving] = useState(false);
-  const [notesSavedAt, setNotesSavedAt] = useState<number | null>(null);
 
   // AI reply suggestion state (Level 2 of auto-reply system)
   const [aiSuggestion, setAiSuggestion] = useState<string>('');
@@ -422,30 +423,31 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [aiSuggestError, setAiSuggestError] = useState<string | null>(null);
   // Re-sync when switching between leads
   useEffect(() => {
-    setNotesValue(business?.notes ?? '');
-    setNotesSavedAt(null);
-  }, [business?.id, business?.notes]);
+    setNewNoteText('');
+  }, [business?.id]);
 
-  const saveNotes = async () => {
+  const addNote = async () => {
     if (!business) return;
-    if ((notesValue ?? '') === (business.notes ?? '')) return; // no-op
+    const text = newNoteText.trim();
+    if (!text) return;
     setNotesSaving(true);
     try {
-      await fetch(`/api/businesses/${business.id}`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/businesses/${business.id}/notes`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: notesValue }),
+        body: JSON.stringify({ content: text }),
       });
-      setNotesSavedAt(Date.now());
-      onActionRegistered(); // refresh kanban so notes persist on re-open
+      if (res.ok) {
+        setNewNoteText('');
+        await fetchContactHistory();
+        onActionRegistered();
+      }
     } catch (err) {
-      console.error('Error saving notes:', err);
+      console.error('Error adding note:', err);
     } finally {
       setNotesSaving(false);
     }
   };
-
-  const notesDirty = (notesValue ?? '') !== (business?.notes ?? '');
 
   // USAR currentColumn (la columna donde está la card) como fuente de verdad
   // Esto garantiza que el pitch siempre refleje la posición visual de la card
@@ -1266,34 +1268,117 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             {/* Boton de Llamada con IA - OCULTO TEMPORALMENTE */}
           </div>
 
-          {/* Notas del lead — comentarios libres */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
-                <span>📝 Notas</span>
-                {notesSaving && <span className="text-[10px] normal-case text-gray-400">guardando…</span>}
-                {!notesSaving && notesSavedAt && !notesDirty && (
-                  <span className="text-[10px] normal-case text-green-600">✓ guardado</span>
+          {/* Notas del lead — feed cronológico (cada guardado = nueva nota) */}
+          {(() => {
+            const pastNotes = contactHistory
+              .filter(h => h.action_type === 'note')
+              .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+            const formatDate = (iso: string) => {
+              try {
+                const d = new Date(iso);
+                const now = new Date();
+                const sameDay = d.toDateString() === now.toDateString();
+                const opts: Intl.DateTimeFormatOptions = sameDay
+                  ? { hour: '2-digit', minute: '2-digit' }
+                  : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+                return d.toLocaleString('es-PE', opts);
+              } catch { return ''; }
+            };
+            return (
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                    <span>📝 {t('lead.notes_title')}</span>
+                    {pastNotes.length > 0 && (
+                      <span className="text-[10px] normal-case text-gray-400">{pastNotes.length}</span>
+                    )}
+                  </label>
+                </div>
+                {/* Past notes feed */}
+                {pastNotes.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic mb-2">{t('lead.notes_empty')}</p>
+                ) : (
+                  <div className="space-y-1.5 mb-3 max-h-56 overflow-y-auto pr-1">
+                    {pastNotes.map(n => (
+                      <div
+                        key={n.id}
+                        className="rounded-lg border border-yellow-200 bg-yellow-50/60 px-3 py-2"
+                      >
+                        <div className="text-[10px] text-gray-500 mb-0.5">
+                          {formatDate(n.created_at)}
+                        </div>
+                        <div className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+                          {n.notes}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </label>
-              {notesDirty && (
-                <button
-                  onClick={saveNotes}
-                  disabled={notesSaving}
-                  className="text-xs px-2.5 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
-                >
-                  {notesSaving ? 'Guardando…' : 'Guardar'}
-                </button>
-              )}
+                {/* Add new note */}
+                <textarea
+                  value={newNoteText}
+                  onChange={(e) => setNewNoteText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                      e.preventDefault();
+                      addNote();
+                    }
+                  }}
+                  placeholder={t('lead.notes_add_placeholder')}
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none resize-y bg-white"
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[10px] text-gray-400">{t('lead.notes_save_shortcut')}</span>
+                  <button
+                    onClick={addNote}
+                    disabled={notesSaving || !newNoteText.trim()}
+                    className="text-xs px-2.5 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  >
+                    {notesSaving ? t('lead.notes_saving') : t('lead.notes_save')}
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Razón de pérdida — solo si el lead está en perdido */}
+          {currentColumn === 'perdido' && (
+            <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50/60">
+              <div className="text-xs font-medium text-red-700 uppercase tracking-wide mb-2">
+                💀 {t('lead.lost_reason_title')}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  'precio', 'lavado_interno', 'tiene_proveedor', 'mal_timing',
+                  'no_interesado', 'no_contesta', 'no_decisor', 'otro',
+                ] as const).map(r => {
+                  const active = business.lost_reason === r;
+                  return (
+                    <button
+                      key={r}
+                      onClick={async () => {
+                        if (active) return;
+                        await fetch(`/api/businesses/${business.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ lost_reason: r }),
+                        });
+                        onActionRegistered();
+                      }}
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium border transition-colors ${
+                        active
+                          ? 'bg-red-200 text-red-900 border-red-400 ring-1 ring-red-300'
+                          : 'bg-white text-gray-700 border-gray-200 hover:bg-red-100'
+                      }`}
+                    >
+                      {t(`lead.lost_reason_${r}`)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <textarea
-              value={notesValue}
-              onChange={(e) => setNotesValue(e.target.value)}
-              placeholder="Cualquier comentario: contexto del negocio, observaciones, próximos pasos…"
-              rows={3}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none resize-y bg-yellow-50/40"
-            />
-          </div>
+          )}
 
           {/* Historial de contactos */}
           <div>

@@ -7,6 +7,7 @@ import KanbanColumn from './KanbanColumn';
 import LeadDetailModal from './LeadDetailModal';
 import AICampaignModal from './AICampaignModal';
 import AddManualLeadModal from './AddManualLeadModal';
+import InsightsModal from './InsightsModal';
 import { COLUMN_CONFIG, getColumnConfig } from './KanbanColumn';
 import { useI18n } from '@/lib/i18n';
 import { detectIndustry, IndustryCategory } from '@/lib/scoring';
@@ -89,6 +90,7 @@ export default function KanbanBoard() {
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [showAICampaign, setShowAICampaign] = useState(false);
   const [showAddManual, setShowAddManual] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied_human' | 'replied_bot' | 'sent_today' | 'no_phone'>('all');
@@ -789,6 +791,14 @@ export default function KanbanBoard() {
           {t('kanban.add_lead')}
         </button>
 
+        <button
+          onClick={() => setShowInsights(true)}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 border border-indigo-200 transition-colors"
+          title={t('kanban.insights_title')}
+        >
+          📊 {t('kanban.insights_label')}
+        </button>
+
         {(() => {
           const manualCount = COLUMN_ORDER.reduce(
             (sum, col) => sum + columns[col].filter(l => l.source === 'manual').length,
@@ -1470,6 +1480,12 @@ export default function KanbanBoard() {
         isOpen={showAddManual}
         onClose={() => setShowAddManual(false)}
         onCreated={fetchKanbanData}
+      />
+
+      {/* Modal de insights */}
+      <InsightsModal
+        isOpen={showInsights}
+        onClose={() => setShowInsights(false)}
       />
 
       {/* Modal de Campaña IA */}

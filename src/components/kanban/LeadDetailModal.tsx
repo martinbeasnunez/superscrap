@@ -822,7 +822,25 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         {/* Header */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{business.name}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  await fetch(`/api/businesses/${business.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_focus: !business.is_focus }),
+                  });
+                  onActionRegistered();
+                }}
+                title={business.is_focus ? t('card.unfocus') : t('card.focus')}
+                className={`text-xl leading-none transition-transform hover:scale-110 ${
+                  business.is_focus ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'
+                }`}
+              >
+                {business.is_focus ? '⭐' : '☆'}
+              </button>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{business.name}</h2>
+            </div>
             {business.business_type && (
               <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{business.business_type}</p>
             )}

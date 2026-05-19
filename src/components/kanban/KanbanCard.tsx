@@ -8,6 +8,7 @@ interface KanbanCardProps {
   business: KanbanBusiness;
   index: number;
   onClick: () => void;
+  onFocusToggled?: () => void;
 }
 
 // Extraer distrito de la dirección
@@ -141,7 +142,7 @@ function getAICallLabel(outcome: string | null, t?: (key: string) => string): { 
   }
 }
 
-export default function KanbanCard({ business, index, onClick }: KanbanCardProps) {
+export default function KanbanCard({ business, index, onClick, onFocusToggled }: KanbanCardProps) {
   const { t } = useI18n();
   const district = extractDistrict(business.address);
   const hasWhatsapp = business.contact_actions?.includes('whatsapp');
@@ -154,13 +155,29 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
   const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount, t);
   const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null, t) : null;
 
-  // Borde especial según urgencia (Orcas sin urgencia tienen borde azul)
+  // Borde especial según urgencia (Orcas sin urgencia tienen borde azul; ⭐ pisa todo)
   const getBorderStyle = () => {
+    if (business.is_focus) return 'border-l-4 border-l-yellow-400 ring-1 ring-yellow-200';
     if (urgency.level === 'critical') return 'border-l-4 border-l-red-500';
     if (urgency.level === 'urgent') return 'border-l-4 border-l-blue-500';
     if (urgency.level === 'warning') return 'border-l-4 border-l-[#E6B85E]';
     if (business.potential_tier === 'orca') return 'border-l-4 border-l-blue-400';
     return '';
+  };
+
+  const toggleFocus = async (e: React.MouseEvent | React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await fetch(`/api/businesses/${business.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_focus: !business.is_focus }),
+      });
+      onFocusToggled?.();
+    } catch (err) {
+      console.error('Error toggling focus:', err);
+    }
   };
 
   return (
@@ -172,13 +189,27 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
           {...provided.dragHandleProps}
           onClick={onClick}
           className={`
-            bg-white rounded-lg border p-2.5 mb-2 cursor-pointer
+            relative bg-white rounded-lg border p-2.5 mb-2 cursor-pointer
             transition-all hover:shadow-md hover:border-blue-300
             ${snapshot.isDragging ? 'shadow-lg ring-2 ring-blue-400 rotate-1' : 'shadow-sm'}
             ${getBorderStyle()}
             ${urgency.level === 'critical' ? 'ring-1 ring-red-200' : ''}
           `}
         >
+          {/* ⭐ Star button — top-right corner */}
+          <button
+            onClick={toggleFocus}
+            onPointerDown={(e) => e.stopPropagation()}
+            title={business.is_focus ? t('card.unfocus') : t('card.focus')}
+            className={`absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full text-sm transition-all z-10 ${
+              business.is_focus
+                ? 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50'
+                : 'text-gray-300 hover:text-yellow-500 hover:bg-yellow-50 opacity-60 hover:opacity-100'
+            }`}
+          >
+            {business.is_focus ? '⭐' : '☆'}
+          </button>
+
           {/* Badge INBOUND - lead caliente que nos buscó */}
           {isInbound && (
             <div className="mb-2 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-300 animate-pulse">
@@ -234,8 +265,8 @@ export default function KanbanCard({ business, index, onClick }: KanbanCardProps
             </div>
           )}
 
-          {/* Nombre del negocio */}
-          <h4 className="font-medium text-gray-900 text-sm truncate leading-tight flex items-center gap-1" title={business.name}>
+          {/* Nombre del negocio (pr-7 reserves room for the star button) */}
+          <h4 className="font-medium text-gray-900 text-sm truncate leading-tight flex items-center gap-1 pr-7" title={business.name}>
             {business.source === 'manual' && (
               <span
                 className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0"

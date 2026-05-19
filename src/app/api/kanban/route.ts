@@ -87,6 +87,8 @@ export interface KanbanBusiness {
   lost_reason:
     | 'precio' | 'lavado_interno' | 'tiene_proveedor' | 'mal_timing'
     | 'no_interesado' | 'no_contesta' | 'no_decisor' | 'otro' | null;
+  // ⭐ Weekly focus flag — pinned to the top of each column
+  is_focus: boolean;
 }
 
 export interface WhatsAppStats {
@@ -150,6 +152,7 @@ export async function GET() {
         source,
         lead_channel,
         lost_reason,
+        is_focus,
         searches (
           business_type,
           city
@@ -352,6 +355,7 @@ export async function GET() {
         source: (b.source as 'auto' | 'manual') ?? 'auto',
         lead_channel: (b.lead_channel as KanbanBusiness['lead_channel']) ?? null,
         lost_reason: (b.lost_reason as KanbanBusiness['lost_reason']) ?? null,
+        is_focus: !!b.is_focus,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);
@@ -361,7 +365,13 @@ export async function GET() {
     // Helpers for sorting
     const tierPriority = (b: KanbanBusiness) =>
       b.potential_tier === 'orca' ? 2 : b.potential_tier === 'delfin' ? 1 : 0;
-    // Replies always float to top, then tier, then column-specific criteria
+    // ⭐ Focused leads always pin to the very top
+    const focusFirst = (a: KanbanBusiness, b: KanbanBusiness) => {
+      const af = a.is_focus ? 1 : 0;
+      const bf = b.is_focus ? 1 : 0;
+      return bf - af;
+    };
+    // Replies float to top (within focus group), then tier, then column-specific criteria
     const replyFirst = (a: KanbanBusiness, b: KanbanBusiness) => {
       const ar = a.has_unread_reply ? 1 : 0;
       const br = b.has_unread_reply ? 1 : 0;
@@ -370,6 +380,8 @@ export async function GET() {
 
     const sortColumn = (col: KanbanBusiness[], tiebreak: (a: KanbanBusiness, b: KanbanBusiness) => number) => {
       col.sort((a, b) => {
+        const fp = focusFirst(a, b);
+        if (fp !== 0) return fp;
         const rp = replyFirst(a, b);
         if (rp !== 0) return rp;
         const tp = tierPriority(b) - tierPriority(a);
@@ -386,8 +398,10 @@ export async function GET() {
     sortColumn(columns.seguimiento_1, (a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
     sortColumn(columns.seguimiento_2, (a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
     sortColumn(columns.seguimiento_3, (a, b) => (b.daysSinceContact || 0) - (a.daysSinceContact || 0));
-    // Interesados: replies → orcas → inbound → más recientes
+    // Interesados: focus → replies → orcas → inbound → más recientes
     columns.interesado.sort((a, b) => {
+      const fp = focusFirst(a, b);
+      if (fp !== 0) return fp;
       const rp = replyFirst(a, b);
       if (rp !== 0) return rp;
       const tp = tierPriority(b) - tierPriority(a);
@@ -401,8 +415,12 @@ export async function GET() {
     sortColumn(columns.cotizado, (a, b) => (a.daysSinceContact || 0) - (b.daysSinceContact || 0));
     // Clientes: replies → orcas → nombre
     sortColumn(columns.cliente, (a, b) => a.name.localeCompare(b.name));
-    // Perdidos: por nombre
-    columns.perdido.sort((a, b) => a.name.localeCompare(b.name));
+    // Perdidos: focus → nombre
+    columns.perdido.sort((a, b) => {
+      const fp = focusFirst(a, b);
+      if (fp !== 0) return fp;
+      return a.name.localeCompare(b.name);
+    });
 
     const counts: Record<KanbanColumnId, number> = {
       nuevo: columns.nuevo.length,

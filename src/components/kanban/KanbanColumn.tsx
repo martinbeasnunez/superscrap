@@ -136,9 +136,10 @@ interface KanbanColumnProps {
   columnId: KanbanColumnId;
   businesses: KanbanBusiness[];
   onCardClick: (business: KanbanBusiness, column: KanbanColumnId) => void;
+  onFocusToggled?: () => void;
 }
 
-export default function KanbanColumn({ id, columnId, businesses, onCardClick }: KanbanColumnProps) {
+export default function KanbanColumn({ id, columnId, businesses, onCardClick, onFocusToggled }: KanbanColumnProps) {
   const { t } = useI18n();
   const columnConfig = getColumnConfig(t);
   const config = columnConfig[columnId];
@@ -197,6 +198,7 @@ export default function KanbanColumn({ id, columnId, businesses, onCardClick }: 
                   business={business}
                   index={index}
                   onClick={() => onCardClick(business, columnId)}
+                  onFocusToggled={onFocusToggled}
                 />
               ))
             )}

@@ -188,3 +188,11 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS lost_reason TEXT
     'precio', 'lavado_interno', 'tiene_proveedor', 'mal_timing',
     'no_interesado', 'no_contesta', 'no_decisor', 'otro'
   ));
+
+-- ============================================================
+-- Migration 011: Weekly focus flag
+-- ============================================================
+-- ⭐ marker so Alejandro can pin the leads he wants to push this sprint.
+-- Focused leads float to the top of each column and surface in a banner.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_focus BOOLEAN DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS idx_businesses_is_focus ON businesses(is_focus) WHERE is_focus = TRUE;

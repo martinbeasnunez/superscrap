@@ -95,6 +95,7 @@ export default function KanbanBoard() {
   const [columnFilter, setColumnFilter] = useState<'all' | 'clientes' | 'por_cerrar'>('all');
   const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
+  const [focusFilter, setFocusFilter] = useState<'all' | 'focus'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -240,7 +241,7 @@ export default function KanbanBoard() {
   // Filtered columns based on industry + phone + search filters
   const filteredColumns = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && sourceFilter === 'all' && !q) return columns;
+    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && sourceFilter === 'all' && focusFilter === 'all' && !q) return columns;
     const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
       seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
@@ -258,6 +259,7 @@ export default function KanbanBoard() {
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
         if (tierFilter !== 'all' && lead.potential_tier !== tierFilter) return false;
         if (sourceFilter === 'manual' && lead.source !== 'manual') return false;
+        if (focusFilter === 'focus' && !lead.is_focus) return false;
         if (q) {
           const haystack = [lead.name, lead.phone, lead.address, lead.business_type, lead.city]
             .filter(Boolean).join(' ').toLowerCase();
@@ -267,7 +269,7 @@ export default function KanbanBoard() {
       });
     });
     return filtered;
-  }, [columns, industryFilter, phoneFilter, tierFilter, sourceFilter, searchQuery]);
+  }, [columns, industryFilter, phoneFilter, tierFilter, sourceFilter, focusFilter, searchQuery]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -680,6 +682,44 @@ export default function KanbanBoard() {
         </div>
       )}
 
+      {/* ⭐ Banner de leads en foco — sprint actual */}
+      {(() => {
+        const focused = COLUMN_ORDER.flatMap(col => columns[col]).filter(l => l.is_focus);
+        if (focused.length === 0) return null;
+        return (
+          <div className="mb-3 p-3 lg:p-4 rounded-xl border-2 bg-yellow-50 border-yellow-300">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl sm:text-3xl">⭐</div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-yellow-900">
+                  {t('kanban.focus_banner_title').replace('{n}', String(focused.length))}
+                </h3>
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {focused.slice(0, 8).map(lead => (
+                    <button
+                      key={lead.id}
+                      onClick={() => handleCardClick(lead, lead.sales_stage as KanbanColumnId)}
+                      className="px-2 py-0.5 rounded-full text-xs font-medium bg-white text-yellow-900 border border-yellow-300 hover:bg-yellow-100 transition-colors"
+                      title={`${lead.name} — ${lead.sales_stage || 'nuevo'}`}
+                    >
+                      {lead.name.split(' ').slice(0, 3).join(' ')}
+                    </button>
+                  ))}
+                  {focused.length > 8 && (
+                    <button
+                      onClick={() => setFocusFilter('focus')}
+                      className="px-2 py-0.5 rounded-full text-xs text-yellow-700 hover:text-yellow-900 underline"
+                    >
+                      +{focused.length - 8} más
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ⚠️ Alerta de respuestas humanas pendientes — imposible de ignorar */}
       {repliedLeads.total > 0 && (
         <div className={`mb-3 p-3 lg:p-4 rounded-xl border-2 ${
@@ -766,6 +806,27 @@ export default function KanbanBoard() {
               }`}
             >
               ✋ {manualCount}
+            </button>
+          );
+        })()}
+
+        {(() => {
+          const focusCount = COLUMN_ORDER.reduce(
+            (sum, col) => sum + columns[col].filter(l => l.is_focus).length,
+            0
+          );
+          if (focusCount === 0) return null;
+          return (
+            <button
+              onClick={() => setFocusFilter(focusFilter === 'focus' ? 'all' : 'focus')}
+              title={t('kanban.filter_focus_title')}
+              className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                focusFilter === 'focus'
+                  ? 'bg-yellow-500 text-white'
+                  : 'bg-yellow-50 text-yellow-800 hover:bg-yellow-100 border border-yellow-300'
+              }`}
+            >
+              ⭐ {focusCount}
             </button>
           );
         })()}
@@ -995,6 +1056,7 @@ export default function KanbanBoard() {
               columnId={columnId}
               businesses={filteredColumns[columnId]}
               onCardClick={handleCardClick}
+              onFocusToggled={fetchKanbanData}
             />
           ))}
         </div>

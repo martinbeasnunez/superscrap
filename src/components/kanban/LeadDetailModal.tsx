@@ -417,6 +417,16 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [newNoteText, setNewNoteText] = useState<string>('');
   const [notesSaving, setNotesSaving] = useState(false);
 
+  // AI suggestion after saving a note (analyzer detected likely rejection)
+  type LossSuggestion = {
+    reason: 'precio' | 'lavado_interno' | 'tiene_proveedor' | 'mal_timing'
+          | 'no_interesado' | 'no_contesta' | 'no_decisor' | 'otro';
+    confidence: number;
+    snippet: string;
+  } | null;
+  const [lossSuggestion, setLossSuggestion] = useState<LossSuggestion>(null);
+  const [lossSuggestionApplying, setLossSuggestionApplying] = useState(false);
+
   // AI reply suggestion state (Level 2 of auto-reply system)
   const [aiSuggestion, setAiSuggestion] = useState<string>('');
   const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
@@ -424,6 +434,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   // Re-sync when switching between leads
   useEffect(() => {
     setNewNoteText('');
+    setLossSuggestion(null);
   }, [business?.id]);
 
   const addNote = async () => {
@@ -441,11 +452,53 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         setNewNoteText('');
         await fetchContactHistory();
         onActionRegistered();
+
+        // Only analyze if lead isn't already lost (saves a roundtrip)
+        const isAlreadyLost = business.sales_stage === 'perdido' || currentColumn === 'perdido';
+        if (!isAlreadyLost) {
+          try {
+            const aRes = await fetch('/api/notes/analyze', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content: text }),
+            });
+            if (aRes.ok) {
+              const data = await aRes.json();
+              if (data.reason && data.confidence >= 0.7) {
+                setLossSuggestion({ reason: data.reason, confidence: data.confidence, snippet: data.snippet || '' });
+              }
+            }
+          } catch (err) {
+            console.error('Note analyzer error:', err); // non-blocking
+          }
+        }
       }
     } catch (err) {
       console.error('Error adding note:', err);
     } finally {
       setNotesSaving(false);
+    }
+  };
+
+  const applyLossSuggestion = async () => {
+    if (!business || !lossSuggestion) return;
+    setLossSuggestionApplying(true);
+    try {
+      await fetch(`/api/businesses/${business.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sales_stage: 'perdido',
+          previous_stage: business.sales_stage || currentColumn,
+          lost_reason: lossSuggestion.reason,
+        }),
+      });
+      setLossSuggestion(null);
+      onActionRegistered();
+    } catch (err) {
+      console.error('Error applying loss suggestion:', err);
+    } finally {
+      setLossSuggestionApplying(false);
     }
   };
 
@@ -1294,6 +1347,45 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     )}
                   </label>
                 </div>
+                {/* AI suggestion: detected likely rejection in the just-saved note */}
+                {lossSuggestion && (
+                  <div className="mb-3 p-3 rounded-lg border-2 border-amber-300 bg-amber-50 animate-pulse-once">
+                    <div className="flex items-start gap-2">
+                      <span className="text-xl leading-none mt-0.5">💡</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-amber-900">
+                          {t('lead.ai_loss_suggestion')}{' '}
+                          <span className="font-bold">{t(`lead.lost_reason_${lossSuggestion.reason}`)}</span>
+                        </div>
+                        {lossSuggestion.snippet && (
+                          <div className="text-[11px] text-amber-700 italic mt-0.5 line-clamp-2">
+                            "{lossSuggestion.snippet}"
+                          </div>
+                        )}
+                        <div className="text-[10px] text-amber-600 mt-1">
+                          {t('lead.ai_loss_confidence')}: {Math.round(lossSuggestion.confidence * 100)}%
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={applyLossSuggestion}
+                            disabled={lossSuggestionApplying}
+                            className="px-3 py-1 rounded-md text-xs font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                          >
+                            {lossSuggestionApplying ? '⏳' : `💀 ${t('lead.ai_loss_mark')}`}
+                          </button>
+                          <button
+                            onClick={() => setLossSuggestion(null)}
+                            disabled={lossSuggestionApplying}
+                            className="px-3 py-1 rounded-md text-xs font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                          >
+                            {t('lead.ai_loss_ignore')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Past notes feed */}
                 {pastNotes.length === 0 ? (
                   <p className="text-xs text-gray-400 italic mb-2">{t('lead.notes_empty')}</p>

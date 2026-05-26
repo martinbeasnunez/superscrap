@@ -686,7 +686,12 @@ export default function KanbanBoard() {
 
       {/* ⭐ Banner de leads en foco — sprint actual */}
       {(() => {
-        const focused = COLUMN_ORDER.flatMap(col => columns[col]).filter(l => l.is_focus);
+        // Solo leads activos — ganados/perdidos ya no son foco accionable
+        const activeFocusCols: KanbanColumnId[] = [
+          'nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2',
+          'seguimiento_3', 'interesado', 'cotizado',
+        ];
+        const focused = activeFocusCols.flatMap(col => columns[col]).filter(l => l.is_focus);
         if (focused.length === 0) return null;
         return (
           <div className="mb-3 p-3 lg:p-4 rounded-xl border-2 bg-yellow-50 border-yellow-300">
@@ -821,7 +826,12 @@ export default function KanbanBoard() {
         })()}
 
         {(() => {
-          const focusCount = COLUMN_ORDER.reduce(
+          // Chip cuenta solo los activos para no contradecir al banner
+          const activeFocusCols: KanbanColumnId[] = [
+            'nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2',
+            'seguimiento_3', 'interesado', 'cotizado',
+          ];
+          const focusCount = activeFocusCols.reduce(
             (sum, col) => sum + columns[col].filter(l => l.is_focus).length,
             0
           );

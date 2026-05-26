@@ -72,7 +72,7 @@ export async function GET() {
     // 1) All businesses (only the fields we need)
     const { data: businesses, error: bizErr } = await supabase
       .from('businesses')
-      .select('id, sales_stage, lost_reason, lead_channel, source, created_at');
+      .select('id, name, phone, sales_stage, lost_reason, lead_channel, source, created_at');
 
     if (bizErr || !businesses) {
       console.error('insights: error fetching businesses', bizErr);
@@ -187,11 +187,74 @@ export async function GET() {
       })
       .sort((a, b) => b.total - a.total);
 
+    // 7) ── Duplicate detection ──
+    // Group by phone (digits only) and by normalized name. Any group with 2+ leads
+    // is flagged. Phone duplicates are higher signal (same number = almost certainly
+    // the same business) than name duplicates ("Restaurante El Sol" exists 5 times).
+    type Biz = typeof businesses[number];
+    const byPhone: Record<string, Biz[]> = {};
+    const byName: Record<string, Biz[]> = {};
+    businesses.forEach(b => {
+      const phoneDigits = (b.phone || '').replace(/\D/g, '');
+      if (phoneDigits.length >= 7) {
+        // Use last 9 digits (Peru mobile) to match "+51..." vs "..." vs "9..."
+        const key = phoneDigits.slice(-9);
+        (byPhone[key] = byPhone[key] || []).push(b);
+      }
+      const nameKey = (b.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      if (nameKey.length >= 3) {
+        (byName[nameKey] = byName[nameKey] || []).push(b);
+      }
+    });
+
+    const phoneDuplicates = Object.entries(byPhone)
+      .filter(([, group]) => group.length >= 2)
+      .map(([key, group]) => ({
+        key,
+        kind: 'phone' as const,
+        count: group.length,
+        leads: group.map(b => ({
+          id: b.id,
+          name: b.name,
+          phone: b.phone,
+          sales_stage: b.sales_stage,
+          created_at: b.created_at,
+        })),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 30);
+
+    // Skip name duplicates that are already caught by phone (avoid double-listing)
+    const phoneDupIds = new Set(phoneDuplicates.flatMap(d => d.leads.map(l => l.id)));
+    const nameDuplicates = Object.entries(byName)
+      .filter(([, group]) => group.length >= 2 && !group.every(b => phoneDupIds.has(b.id)))
+      .map(([key, group]) => ({
+        key,
+        kind: 'name' as const,
+        count: group.length,
+        leads: group.map(b => ({
+          id: b.id,
+          name: b.name,
+          phone: b.phone,
+          sales_stage: b.sales_stage,
+          created_at: b.created_at,
+        })),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 30);
+
     return NextResponse.json({
       summary: { totalLeads, wonClientes, lostPerdidos, activeLeads, winRate },
       lossByPreviousStage,
       lossByReason,
       channelPerformance,
+      duplicates: {
+        phoneGroups: phoneDuplicates,
+        nameGroups: nameDuplicates,
+        totalDuplicateLeads:
+          phoneDuplicates.reduce((s, g) => s + g.count, 0) +
+          nameDuplicates.reduce((s, g) => s + g.count, 0),
+      },
     });
   } catch (err) {
     console.error('insights error:', err);

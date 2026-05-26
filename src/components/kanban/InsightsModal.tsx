@@ -32,6 +32,21 @@ interface ChannelPerf {
   winRate: number | null;
 }
 
+interface DuplicateLead {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  sales_stage: string | null;
+  created_at: string | null;
+}
+
+interface DuplicateGroup {
+  key: string;
+  kind: 'phone' | 'name';
+  count: number;
+  leads: DuplicateLead[];
+}
+
 interface Insights {
   summary: {
     totalLeads: number;
@@ -43,6 +58,39 @@ interface Insights {
   lossByPreviousStage: LossByStage[];
   lossByReason: LossByReason[];
   channelPerformance: ChannelPerf[];
+  duplicates: {
+    phoneGroups: DuplicateGroup[];
+    nameGroups: DuplicateGroup[];
+    totalDuplicateLeads: number;
+  };
+}
+
+const STAGE_LABELS: Record<string, string> = {
+  nuevo: 'Nuevos', contactado: 'Contactado',
+  seguimiento_1: 'Seg. 1', seguimiento_2: 'Seg. 2', seguimiento_3: 'Seg. 3',
+  interesado: 'Interesado', cotizado: 'Cotizado',
+  cliente: '✅ Cliente', perdido: '❌ Perdido',
+};
+
+function DuplicateGroupRow({ group }: { group: DuplicateGroup }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-2">
+      <div className="text-[10px] text-gray-500 mb-1 truncate">
+        {group.kind === 'phone' ? '📞 ' : '✏️ '}{group.key} <span className="text-gray-400">· {group.count} leads</span>
+      </div>
+      <div className="space-y-1">
+        {group.leads.map(l => (
+          <div key={l.id} className="flex items-center gap-2 text-xs">
+            <span className="font-medium text-gray-800 truncate flex-1">{l.name || '(sin nombre)'}</span>
+            <span className="text-[10px] text-gray-500 flex-shrink-0">{STAGE_LABELS[l.sales_stage || 'nuevo'] || l.sales_stage}</span>
+            {l.phone && (
+              <span className="text-[10px] text-gray-400 hidden sm:inline flex-shrink-0">{l.phone}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function HorizontalBar({ value, max, color = 'bg-red-500' }: { value: number; max: number; color?: string }) {
@@ -208,6 +256,42 @@ export default function InsightsModal({ isOpen, onClose }: InsightsModalProps) {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Duplicates */}
+              {data.duplicates && (data.duplicates.phoneGroups.length > 0 || data.duplicates.nameGroups.length > 0) && (
+                <div>
+                  <h3 className="font-bold text-sm text-gray-900 mb-1">
+                    🔁 {t('insights.dup_title')} ({data.duplicates.totalDuplicateLeads})
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-3">{t('insights.dup_subtitle')}</p>
+
+                  {data.duplicates.phoneGroups.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs font-semibold text-orange-700 mb-1.5">
+                        📞 {t('insights.dup_by_phone')} ({data.duplicates.phoneGroups.length})
+                      </div>
+                      <div className="space-y-2">
+                        {data.duplicates.phoneGroups.slice(0, 10).map(g => (
+                          <DuplicateGroupRow key={'p-' + g.key} group={g} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {data.duplicates.nameGroups.length > 0 && (
+                    <div>
+                      <div className="text-xs font-semibold text-amber-700 mb-1.5">
+                        ✏️ {t('insights.dup_by_name')} ({data.duplicates.nameGroups.length})
+                      </div>
+                      <div className="space-y-2">
+                        {data.duplicates.nameGroups.slice(0, 10).map(g => (
+                          <DuplicateGroupRow key={'n-' + g.key} group={g} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
+import WhatsAppDailyChart from '@/components/WhatsAppDailyChart';
 
 interface IndustryItem {
   industry: string;
@@ -343,6 +344,11 @@ export default function HomePage() {
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Gráfico de envíos diarios — para detectar caídas a simple vista */}
+          <div className="mb-4 sm:mb-6">
+            <WhatsAppDailyChart days={14} />
           </div>
 
           {/* Progreso Semanal - Comparación */}

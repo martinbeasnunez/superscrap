@@ -97,49 +97,62 @@ export default function WhatsAppDailyChart({ days = 14 }: { days?: number }) {
         )}
       </div>
 
-      {/* Bars */}
-      <div className="flex items-end gap-1 h-40 border-b border-gray-200">
-        {series.map((d, i) => {
-          const sentTotal = d.manual + d.auto;
-          const heightPct = (sentTotal / yMax) * 100;
-          const autoPct = sentTotal > 0 ? (d.auto / sentTotal) * heightPct : 0;
-          const manualPct = sentTotal > 0 ? (d.manual / sentTotal) * heightPct : 0;
-          const replyHeightPct = (d.reply / yMax) * 100;
-          const weekend = isWeekend(d.date);
-          return (
-            <div
-              key={d.date}
-              onMouseEnter={() => setHoverIdx(i)}
-              onMouseLeave={() => setHoverIdx(null)}
-              className={`flex-1 flex flex-col-reverse min-w-0 relative cursor-pointer group ${
-                weekend ? 'opacity-60' : ''
-              }`}
-              title={`${formatDayLabel(d.date)} — 🤖${d.auto} ✋${d.manual} 💬${d.reply}`}
-            >
-              {/* Stacked sends bar */}
-              <div className="w-full flex flex-col-reverse" style={{ height: `${heightPct}%` }}>
+      {/* Bars — fixed pixel height so child px calculations land correctly */}
+      {(() => {
+        const CHART_H = 160; // h-40
+        return (
+          <div className="flex gap-1 border-b border-gray-200" style={{ height: `${CHART_H}px` }}>
+            {series.map((d, i) => {
+              const sentTotal = d.manual + d.auto;
+              const totalPx = Math.round((sentTotal / yMax) * CHART_H);
+              const autoPx = sentTotal > 0 ? Math.round((d.auto / sentTotal) * totalPx) : 0;
+              const manualPx = Math.max(0, totalPx - autoPx);
+              const replyPx = Math.round((d.reply / yMax) * CHART_H);
+              const weekend = isWeekend(d.date);
+              return (
                 <div
-                  className="w-full bg-purple-500 group-hover:bg-purple-600 transition-colors rounded-b-sm"
-                  style={{ height: `${(autoPct / Math.max(heightPct, 0.01)) * 100}%` }}
-                />
-                <div
-                  className="w-full bg-orange-500 group-hover:bg-orange-600 transition-colors"
-                  style={{ height: `${(manualPct / Math.max(heightPct, 0.01)) * 100}%` }}
-                />
-              </div>
-              {/* Reply marker — thin emerald line on top */}
-              {d.reply > 0 && (
-                <div
-                  className="absolute left-0 right-0 h-0.5 bg-emerald-500 pointer-events-none"
-                  style={{ bottom: `${replyHeightPct}%` }}
-                />
-              )}
-              {/* Hover halo */}
-              <div className="absolute inset-0 group-hover:bg-gray-50 pointer-events-none -z-10" />
-            </div>
-          );
-        })}
-      </div>
+                  key={d.date}
+                  onMouseEnter={() => setHoverIdx(i)}
+                  onMouseLeave={() => setHoverIdx(null)}
+                  className={`flex-1 min-w-0 relative cursor-pointer group ${weekend ? 'opacity-60' : ''}`}
+                  title={`${formatDayLabel(d.date)} — 🤖${d.auto} ✋${d.manual} 💬${d.reply}`}
+                  style={{ height: `${CHART_H}px` }}
+                >
+                  {/* Hover halo */}
+                  <div className="absolute inset-0 group-hover:bg-gray-50 pointer-events-none" />
+                  {/* Stacked sends bar — anchored to bottom, absolute */}
+                  {totalPx > 0 && (
+                    <div
+                      className="absolute left-0 right-0 bottom-0 flex flex-col-reverse rounded-t-sm overflow-hidden"
+                      style={{ height: `${totalPx}px` }}
+                    >
+                      {autoPx > 0 && (
+                        <div
+                          className="bg-purple-500 group-hover:bg-purple-600 transition-colors"
+                          style={{ height: `${autoPx}px` }}
+                        />
+                      )}
+                      {manualPx > 0 && (
+                        <div
+                          className="bg-orange-500 group-hover:bg-orange-600 transition-colors"
+                          style={{ height: `${manualPx}px` }}
+                        />
+                      )}
+                    </div>
+                  )}
+                  {/* Reply marker — thin emerald line at the reply count height */}
+                  {d.reply > 0 && (
+                    <div
+                      className="absolute left-0 right-0 h-0.5 bg-emerald-500 pointer-events-none"
+                      style={{ bottom: `${replyPx}px` }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* X labels */}
       <div className="flex items-start gap-1 mt-1 text-[9px] text-gray-400">

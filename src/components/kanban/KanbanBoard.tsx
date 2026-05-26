@@ -91,6 +91,8 @@ export default function KanbanBoard() {
   const [showAICampaign, setShowAICampaign] = useState(false);
   const [showAddManual, setShowAddManual] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
+  // Bumped after deleting a lead so Insights re-fetches with a fresh duplicate list
+  const [insightsRefreshKey, setInsightsRefreshKey] = useState(0);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
   const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied_human' | 'replied_bot' | 'sent_today' | 'no_phone'>('all');
@@ -361,6 +363,8 @@ export default function KanbanBoard() {
 
   const handleActionRegistered = () => {
     setTimeout(() => fetchKanbanData(), 500);
+    // Bump insights refreshKey so the duplicate list updates after deletes/edits
+    setInsightsRefreshKey(k => k + 1);
   };
 
   // Sync selectedBusiness when columns data refreshes
@@ -1496,6 +1500,19 @@ export default function KanbanBoard() {
       <InsightsModal
         isOpen={showInsights}
         onClose={() => setShowInsights(false)}
+        refreshKey={insightsRefreshKey}
+        onOpenLead={(id) => {
+          // Look up the full KanbanBusiness in any column and open the detail modal
+          // stacked on top of Insights (Insights stays open underneath).
+          for (const col of COLUMN_ORDER) {
+            const found = columns[col].find(b => b.id === id);
+            if (found) {
+              setSelectedBusiness(found);
+              setSelectedBusinessColumn(col);
+              return;
+            }
+          }
+        }}
       />
 
       {/* Modal de Campaña IA */}

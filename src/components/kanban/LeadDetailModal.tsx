@@ -427,6 +427,31 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [lossSuggestion, setLossSuggestion] = useState<LossSuggestion>(null);
   const [lossSuggestionApplying, setLossSuggestionApplying] = useState(false);
 
+  // Delete confirmation state — two-step to prevent accidental deletion
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteLead = async () => {
+    if (!business) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/businesses/${business.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setDeleteConfirm(false);
+        onActionRegistered(); // refresh kanban
+        onClose();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(`Error: ${data.error || 'No se pudo eliminar'}`);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Error de conexión');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // AI reply suggestion state (Level 2 of auto-reply system)
   const [aiSuggestion, setAiSuggestion] = useState<string>('');
   const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
@@ -1663,6 +1688,55 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     }
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ⚠️ Danger zone — eliminar lead (CASCADE limpia notas + historial) */}
+          {!deleteConfirm ? (
+            <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setDeleteConfirm(true)}
+                className="text-xs text-gray-400 hover:text-red-600 transition-colors flex items-center gap-1"
+                title={t('lead.delete_button_hint')}
+              >
+                🗑️ {t('lead.delete_button')}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-6 p-3 rounded-lg border-2 border-red-300 bg-red-50">
+              <div className="text-sm font-bold text-red-900 mb-1">
+                ⚠️ {t('lead.delete_confirm_title').replace('{name}', business.name)}
+              </div>
+              <div className="text-xs text-red-700 mb-3">
+                {t('lead.delete_confirm_warn')}{' '}
+                <strong>
+                  {contactHistory.filter(h => h.action_type === 'note').length}
+                </strong> {t('lead.delete_notes_label')}
+                {' · '}
+                <strong>
+                  {contactHistory.filter(h => h.action_type !== 'note' && h.action_type !== 'stage_change').length}
+                </strong> {t('lead.delete_contacts_label')}
+                {' · '}
+                <strong>
+                  {contactHistory.filter(h => h.action_type === 'stage_change').length}
+                </strong> {t('lead.delete_stage_label')}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={deleteLead}
+                  disabled={deleting}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleting ? '⏳ ' + t('lead.delete_deleting') : '🗑️ ' + t('lead.delete_confirm_yes')}
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm(false)}
+                  disabled={deleting}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {t('lead.delete_cancel')}
+                </button>
               </div>
             </div>
           )}

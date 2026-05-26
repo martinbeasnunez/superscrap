@@ -219,3 +219,24 @@ export async function PATCH(
     );
   }
 }
+
+// Hard-delete a lead. CASCADE clears contact_history (notes, replies, AI calls,
+// stage changes) and service_analyses (potential_tier, revenue). Used from the
+// LeadDetailModal "danger zone" to clean up scraper duplicates.
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { error } = await supabase.from('businesses').delete().eq('id', id);
+    if (error) {
+      console.error('business delete error:', error);
+      return NextResponse.json({ error: 'No se pudo eliminar' }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true, id });
+  } catch (err) {
+    console.error('business delete handler error:', err);
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+  }
+}

@@ -6,6 +6,10 @@ import { useI18n } from '@/lib/i18n';
 interface InsightsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Called when user clicks a duplicate row. Parent opens LeadDetailModal stacked on top. */
+  onOpenLead?: (id: string) => void;
+  /** Bump to force a re-fetch (e.g. after a lead was deleted from the stacked modal). */
+  refreshKey?: number;
 }
 
 interface LossByStage {
@@ -72,7 +76,7 @@ const STAGE_LABELS: Record<string, string> = {
   cliente: '✅ Cliente', perdido: '❌ Perdido',
 };
 
-function DuplicateGroupRow({ group }: { group: DuplicateGroup }) {
+function DuplicateGroupRow({ group, onOpenLead }: { group: DuplicateGroup; onOpenLead?: (id: string) => void }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-2">
       <div className="text-[10px] text-gray-500 mb-1 truncate">
@@ -80,13 +84,22 @@ function DuplicateGroupRow({ group }: { group: DuplicateGroup }) {
       </div>
       <div className="space-y-1">
         {group.leads.map(l => (
-          <div key={l.id} className="flex items-center gap-2 text-xs">
+          <button
+            key={l.id}
+            onClick={() => onOpenLead?.(l.id)}
+            disabled={!onOpenLead}
+            className={`w-full flex items-center gap-2 text-xs text-left px-1.5 py-1 rounded transition-colors ${
+              onOpenLead ? 'hover:bg-white cursor-pointer' : 'cursor-default'
+            }`}
+            title={onOpenLead ? 'Abrir lead' : undefined}
+          >
             <span className="font-medium text-gray-800 truncate flex-1">{l.name || '(sin nombre)'}</span>
             <span className="text-[10px] text-gray-500 flex-shrink-0">{STAGE_LABELS[l.sales_stage || 'nuevo'] || l.sales_stage}</span>
             {l.phone && (
               <span className="text-[10px] text-gray-400 hidden sm:inline flex-shrink-0">{l.phone}</span>
             )}
-          </div>
+            {onOpenLead && <span className="text-gray-300 flex-shrink-0">→</span>}
+          </button>
         ))}
       </div>
     </div>
@@ -102,7 +115,7 @@ function HorizontalBar({ value, max, color = 'bg-red-500' }: { value: number; ma
   );
 }
 
-export default function InsightsModal({ isOpen, onClose }: InsightsModalProps) {
+export default function InsightsModal({ isOpen, onClose, onOpenLead, refreshKey = 0 }: InsightsModalProps) {
   const { t } = useI18n();
   const [data, setData] = useState<Insights | null>(null);
   const [loading, setLoading] = useState(true);
@@ -117,7 +130,7 @@ export default function InsightsModal({ isOpen, onClose }: InsightsModalProps) {
       .then((d: Insights) => setData(d))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [isOpen]);
+  }, [isOpen, refreshKey]);
 
   if (!isOpen) return null;
 
@@ -274,7 +287,7 @@ export default function InsightsModal({ isOpen, onClose }: InsightsModalProps) {
                       </div>
                       <div className="space-y-2">
                         {data.duplicates.phoneGroups.slice(0, 10).map(g => (
-                          <DuplicateGroupRow key={'p-' + g.key} group={g} />
+                          <DuplicateGroupRow key={'p-' + g.key} group={g} onOpenLead={onOpenLead} />
                         ))}
                       </div>
                     </div>
@@ -287,7 +300,7 @@ export default function InsightsModal({ isOpen, onClose }: InsightsModalProps) {
                       </div>
                       <div className="space-y-2">
                         {data.duplicates.nameGroups.slice(0, 10).map(g => (
-                          <DuplicateGroupRow key={'n-' + g.key} group={g} />
+                          <DuplicateGroupRow key={'n-' + g.key} group={g} onOpenLead={onOpenLead} />
                         ))}
                       </div>
                     </div>

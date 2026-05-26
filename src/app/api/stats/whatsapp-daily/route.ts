@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const days = Math.min(60, Math.max(1, parseInt(url.searchParams.get('days') || '14', 10)));
+    const days = Math.min(120, Math.max(1, parseInt(url.searchParams.get('days') || '30', 10)));
 
     // Window: today (Lima) inclusive going back `days` days
     const now = new Date();

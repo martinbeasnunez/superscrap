@@ -27,12 +27,21 @@ function isWeekend(iso: string): boolean {
   return day === 0 || day === 6;
 }
 
-export default function WhatsAppDailyChart({ days = 14 }: { days?: number }) {
+const RANGE_OPTIONS: { label: string; days: number }[] = [
+  { label: '14d', days: 14 },
+  { label: '30d', days: 30 },
+  { label: '60d', days: 60 },
+  { label: '90d', days: 90 },
+];
+
+export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: number }) {
+  const [days, setDays] = useState<number>(defaultDays);
   const [data, setData] = useState<DailyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   useEffect(() => {
+    setLoading(true);
     fetch(`/api/stats/whatsapp-daily?days=${days}`)
       .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
       .then((d: DailyResponse) => setData(d))
@@ -84,6 +93,23 @@ export default function WhatsAppDailyChart({ days = 14 }: { days?: number }) {
         </div>
       </div>
 
+      {/* Rango selector */}
+      <div className="flex gap-1 mb-2">
+        {RANGE_OPTIONS.map(opt => (
+          <button
+            key={opt.days}
+            onClick={() => setDays(opt.days)}
+            className={`px-2 py-0.5 rounded-md text-xs font-medium transition-colors ${
+              days === opt.days
+                ? 'bg-gray-900 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Tooltip */}
       <div className="h-5 text-xs text-gray-600 mb-1">
         {hover && (
@@ -100,8 +126,10 @@ export default function WhatsAppDailyChart({ days = 14 }: { days?: number }) {
       {/* Bars — fixed pixel height so child px calculations land correctly */}
       {(() => {
         const CHART_H = 160; // h-40
+        // With many days, tighten the gap so bars don't get hair-thin
+        const gapClass = series.length > 40 ? 'gap-px' : series.length > 20 ? 'gap-0.5' : 'gap-1';
         return (
-          <div className="flex gap-1 border-b border-gray-200" style={{ height: `${CHART_H}px` }}>
+          <div className={`flex ${gapClass} border-b border-gray-200`} style={{ height: `${CHART_H}px` }}>
             {series.map((d, i) => {
               const sentTotal = d.manual + d.auto;
               const totalPx = Math.round((sentTotal / yMax) * CHART_H);
@@ -154,14 +182,20 @@ export default function WhatsAppDailyChart({ days = 14 }: { days?: number }) {
         );
       })()}
 
-      {/* X labels */}
-      <div className="flex items-start gap-1 mt-1 text-[9px] text-gray-400">
-        {series.map((d) => (
-          <div key={d.date} className="flex-1 text-center min-w-0 truncate">
-            {formatDayLabel(d.date)}
+      {/* X labels — show every Nth label to avoid overlap when range is wide */}
+      {(() => {
+        const labelStep = series.length > 60 ? 10 : series.length > 30 ? 5 : series.length > 16 ? 3 : 1;
+        const gapClass = series.length > 40 ? 'gap-px' : series.length > 20 ? 'gap-0.5' : 'gap-1';
+        return (
+          <div className={`flex items-start ${gapClass} mt-1 text-[9px] text-gray-400`}>
+            {series.map((d, i) => (
+              <div key={d.date} className="flex-1 text-center min-w-0 truncate">
+                {i % labelStep === 0 || i === series.length - 1 ? formatDayLabel(d.date) : ''}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {/* Footer note */}
       <p className="text-[10px] text-gray-400 mt-2">

@@ -102,7 +102,7 @@ export async function GET() {
       const sa = Array.isArray(b.service_analyses) ? b.service_analyses[0] : b.service_analyses;
       return sa?.potential_score ?? -1;
     };
-    const businesses = rawBusinesses.slice().sort((a, b) => scoreOf(b) - scoreOf(a)).slice(0, 100);
+    const businesses = rawBusinesses.slice().sort((a, b) => scoreOf(b) - scoreOf(a)).slice(0, 300);
 
     // Get contact counts + check for HUMAN replies per business
     // Bot greetings ("Gracias por comunicarte con...") don't count — the human never saw the
@@ -128,7 +128,7 @@ export async function GET() {
     let lost = 0;
     const errors: string[] = [];
 
-    const MAX_SENDS = 15;
+    const MAX_SENDS = 30;
     for (const biz of businesses) {
       if (sent >= MAX_SENDS) break;
       if (!biz.phone) {

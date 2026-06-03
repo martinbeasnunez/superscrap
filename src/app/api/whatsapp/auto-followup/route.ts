@@ -21,7 +21,7 @@ function getDaysToWait(stage: string): number {
     case 'contactado': return 2;
     case 'seguimiento_1': return 3;
     case 'seguimiento_2': return 4;
-    case 'seguimiento_3': return 14; // quincenal — rotación de ángulos
+    case 'seguimiento_3': return 7;  // semanal — más presión antes de cerrar
     case 'interesado': return 2;
     case 'cotizado': return 3;
     default: return 3;

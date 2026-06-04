@@ -731,29 +731,32 @@ export default function KanbanBoard() {
         );
       })()}
 
-      {/* ⚠️ Alerta de respuestas humanas pendientes — imposible de ignorar */}
+      {/* ⚠️ Alerta de respuestas humanas pendientes — máxima prioridad */}
       {repliedLeads.total > 0 && (
         <div className={`mb-3 p-3 lg:p-4 rounded-xl border-2 ${
           repliedLeads.stale.length > 0
-            ? 'bg-red-50 border-red-300'
-            : 'bg-green-50 border-green-300'
+            ? 'bg-red-50 border-red-400'
+            : 'bg-green-50 border-green-400'
         }`}>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
             <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
-              <div className={`text-2xl sm:text-3xl ${repliedLeads.stale.length > 0 ? 'animate-pulse' : ''}`}>
+              <div className={`text-2xl sm:text-3xl flex-shrink-0 ${repliedLeads.stale.length > 0 ? 'animate-bounce' : ''}`}>
                 💬
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className={`font-bold text-sm sm:text-base ${repliedLeads.stale.length > 0 ? 'text-red-800' : 'text-green-800'}`}>
                   {repliedLeads.stale.length > 0 ? (
-                    <>⚠️ {repliedLeads.stale.length} {repliedLeads.stale.length === 1 ? 'lead respondió' : 'leads respondieron'} hace +{STALE_REPLY_DAYS} días — esperando respuesta de Alejandro</>
+                    <>{repliedLeads.stale.length} {repliedLeads.stale.length === 1 ? 'cliente respondió' : 'clientes respondieron'} hace +{STALE_REPLY_DAYS} días — avanzar o descartar</>
                   ) : (
-                    <>✓ {repliedLeads.recent.length} {repliedLeads.recent.length === 1 ? 'lead respondió' : 'leads respondieron'} recientemente</>
+                    <>{repliedLeads.recent.length} {repliedLeads.recent.length === 1 ? 'cliente respondió' : 'clientes respondieron'} — avanzar o descartar</>
                   )}
                 </h3>
-                {/* Chips clicables (atajo a la columna virtual de respondidos) */}
+                <p className={`text-xs mt-0.5 hidden sm:block ${repliedLeads.stale.length > 0 ? 'text-red-600' : 'text-green-700'}`}>
+                  Estos leads están calientes. Ábrelos, cotiza o descártalos antes de que se enfríen.
+                </p>
+                {/* Chips clicables */}
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {[...repliedLeads.stale, ...repliedLeads.recent].slice(0, 12).map(({ lead, days }) => (
+                  {[...repliedLeads.stale, ...repliedLeads.recent].slice(0, 8).map(({ lead, days }) => (
                     <button
                       key={lead.id}
                       onClick={() => handleCardClick(lead, lead.sales_stage as KanbanColumnId)}
@@ -762,22 +765,25 @@ export default function KanbanBoard() {
                           ? 'bg-red-200 text-red-900 hover:bg-red-300 border border-red-300'
                           : 'bg-white text-green-800 hover:bg-green-100 border border-green-200'
                       }`}
-                      title={`${days}d sin respuesta de Alejandro`}
+                      title={`${days}d sin respuesta`}
                     >
-                      {lead.name.split(' ').slice(0, 3).join(' ')} <span className="opacity-70">· {days}d</span>
+                      {lead.name.split(' ').slice(0, 3).join(' ')} <span className="opacity-60">· {days}d</span>
                     </button>
                   ))}
-                  {repliedLeads.total > 12 && (
-                    <button
-                      onClick={() => setPhoneFilter('replied_human')}
-                      className="px-2 py-0.5 rounded-full text-xs text-gray-600 hover:text-gray-900 underline"
-                    >
-                      +{repliedLeads.total - 12} más
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
+            {/* Botón Ver todos */}
+            <button
+              onClick={() => setPhoneFilter(phoneFilter === 'replied_human' ? 'all' : 'replied_human')}
+              className={`flex-shrink-0 self-center px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm ${
+                repliedLeads.stale.length > 0
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+            >
+              Ver todos →
+            </button>
           </div>
         </div>
       )}

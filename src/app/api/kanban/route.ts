@@ -74,6 +74,7 @@ export interface KanbanBusiness {
   last_reply_date: string | null; // ISO date of latest reply — used to flag stale replies awaiting Alejandro
   // Today tracking
   contacted_today: boolean;
+  replied_today: boolean;       // Human reply received today (Lima time)
   // Free-text notes (why lost, additional context, etc)
   notes: string | null;
   // 'auto' (SerpAPI pipeline) or 'manual' (hand-added whale; no WhatsApp automation)
@@ -296,6 +297,18 @@ export async function GET() {
       .gte('created_at', todayStartISO);
 
     todayHistory?.forEach(c => contactedTodaySet.add(c.business_id));
+
+    // Today's human WhatsApp replies (Lima time)
+    const repliedTodaySet = new Set<string>();
+    const { data: todayReplies } = await supabase
+      .from('contact_history')
+      .select('business_id, notes')
+      .eq('action_type', 'whatsapp_reply')
+      .gte('created_at', todayStartISO);
+    todayReplies?.forEach(c => {
+      if (!isLikelyBotReply(c.notes)) repliedTodaySet.add(c.business_id);
+    });
+
     const columns: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [],
       contactado: [],
@@ -351,6 +364,7 @@ export async function GET() {
         last_reply_text: replyMap[b.id]?.text || null,
         last_reply_date: replyMap[b.id]?.date || null,
         contacted_today: contactedTodaySet.has(b.id),
+        replied_today: repliedTodaySet.has(b.id),
         notes: b.notes ?? null,
         source: (b.source as 'auto' | 'manual') ?? 'auto',
         lead_channel: (b.lead_channel as KanbanBusiness['lead_channel']) ?? null,

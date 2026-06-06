@@ -95,7 +95,7 @@ export default function KanbanBoard() {
   const [insightsRefreshKey, setInsightsRefreshKey] = useState(0);
   const [insightsTimeFilter, setInsightsTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [industryFilter, setIndustryFilter] = useState<IndustryCategory | 'all'>('all');
-  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied_human' | 'replied_bot' | 'sent_today' | 'no_phone'>('all');
+  const [phoneFilter, setPhoneFilter] = useState<'all' | 'whatsapp' | 'replied_human' | 'replied_bot' | 'replied_today' | 'sent_today' | 'no_phone'>('all');
   const [columnFilter, setColumnFilter] = useState<'all' | 'clientes' | 'por_cerrar'>('all');
   const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
@@ -259,6 +259,7 @@ export default function KanbanBoard() {
         if (phoneFilter === 'whatsapp' && !hasWhatsApp(lead.phone)) return false;
         if (phoneFilter === 'replied_human' && !lead.has_human_reply) return false;
         if (phoneFilter === 'replied_bot' && !(lead.has_unread_reply && !lead.has_human_reply)) return false;
+        if (phoneFilter === 'replied_today' && !lead.replied_today) return false;
         if (phoneFilter === 'sent_today' && !lead.contacted_today) return false;
         if (phoneFilter === 'no_phone' && hasWhatsApp(lead.phone)) return false;
         if (tierFilter !== 'all' && lead.potential_tier !== tierFilter) return false;
@@ -1023,7 +1024,8 @@ export default function KanbanBoard() {
           <option value="all">📱 Todos</option>
           <option value="whatsapp">📱 Con WhatsApp</option>
           <option value="sent_today">📤 Enviados hoy</option>
-          <option value="replied_human">💬 Respondió humano</option>
+          <option value="replied_today">💬 Respondieron hoy</option>
+          <option value="replied_human">💬 Respondió (todos)</option>
           <option value="replied_bot">🤖 Respondió bot</option>
           <option value="no_phone">🚫 Sin WhatsApp</option>
         </select>

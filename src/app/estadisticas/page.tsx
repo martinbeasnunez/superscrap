@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
 import WhatsAppDailyChart from '@/components/WhatsAppDailyChart';
+import SourceMix from '@/components/SourceMix';
 
 interface IndustryItem {
   industry: string;
@@ -345,6 +346,9 @@ export default function HomePage() {
               )}
             </div>
           </div>
+
+          {/* Inbound vs Outbound — de dónde vienen los leads */}
+          <SourceMix />
 
           {/* Gráfico de envíos diarios — para detectar caídas a simple vista */}
           <div className="mb-4 sm:mb-6">

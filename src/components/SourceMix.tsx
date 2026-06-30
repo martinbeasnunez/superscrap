@@ -42,10 +42,15 @@ function convLabel(clientes: number, total: number): string {
 }
 
 function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: number; color: string; track: string }) {
-  const width = max > 0 ? Math.round((item.total / max) * 100) : 0;
+  // Barra de leads: relativa al canal más grande del lado (volumen)
+  const volWidth = max > 0 ? Math.round((item.total / max) * 100) : 0;
+  // Barra de cierre: % de conversión real, sobre 100% (calidad)
+  const convRaw = item.total > 0 ? (item.clientes / item.total) * 100 : 0;
+  // mínimo visible cuando hay al menos 1 cierre, para que no desaparezca
+  const convWidth = item.clientes > 0 ? Math.max(3, Math.round(convRaw)) : 0;
   return (
     <div>
-      <div className="flex justify-between items-baseline mb-1 text-xs sm:text-sm gap-2">
+      <div className="flex justify-between items-baseline mb-1.5 text-xs sm:text-sm gap-2">
         <span className="text-gray-700 truncate">{item.label}</span>
         <span className="text-gray-400 tabular-nums whitespace-nowrap">
           {item.total} <span className="text-gray-300">·</span>{' '}
@@ -53,8 +58,19 @@ function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: numbe
           <span className="text-gray-400">{convLabel(item.clientes, item.total)}</span>
         </span>
       </div>
-      <div className="h-1.5 rounded-full" style={{ background: track }}>
-        <div className="h-1.5 rounded-full" style={{ width: `${width}%`, background: color }} />
+      {/* Barra LEADS (volumen) — tono claro */}
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="text-[9px] text-gray-400 w-9 shrink-0">leads</span>
+        <div className="flex-1 h-1.5 rounded-full" style={{ background: track }}>
+          <div className="h-1.5 rounded-full" style={{ width: `${volWidth}%`, background: color, opacity: 0.45 }} />
+        </div>
+      </div>
+      {/* Barra CIERRE (conversión %) — tono fuerte, escala 0-100% */}
+      <div className="flex items-center gap-1.5">
+        <span className="text-[9px] text-gray-400 w-9 shrink-0">cierre</span>
+        <div className="flex-1 h-1.5 rounded-full" style={{ background: track }}>
+          <div className="h-1.5 rounded-full" style={{ width: `${convWidth}%`, background: color }} />
+        </div>
       </div>
     </div>
   );

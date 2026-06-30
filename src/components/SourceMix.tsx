@@ -17,10 +17,20 @@ interface SideData {
 }
 
 interface SourceMixData {
+  month: string;
+  availableMonths: string[];
   grandTotal: number;
   inbound: SideData;
   outbound: SideData;
   unknown: { total: number; clientes: number };
+}
+
+// 'YYYY-MM' -> 'Junio 2026'
+function monthLabel(key: string): string {
+  const [y, m] = key.split('-').map(Number);
+  const d = new Date(y, m - 1, 1);
+  const s = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: number; color: string; track: string }) {
@@ -87,35 +97,62 @@ function Side({
 
 export default function SourceMix() {
   const [data, setData] = useState<SourceMixData | null>(null);
+  const [month, setMonth] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/source-mix')
+    setLoading(true);
+    fetch(`/api/source-mix?month=${encodeURIComponent(month)}`)
       .then((r) => r.json())
       .then((d) => {
         if (!d.error) setData(d);
       })
       .catch((e) => console.error('Error fetching source-mix:', e))
       .finally(() => setLoading(false));
-  }, []);
+  }, [month]);
 
-  if (loading) {
+  // En la primera carga aún no hay data
+  if (!data && loading) {
     return (
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm mb-4 sm:mb-6 h-40 animate-pulse" />
     );
   }
-  if (!data || data.grandTotal === 0) return null;
+  if (!data) return null;
+  // Si el histórico completo está vacío, no mostrar nada
+  if (month === 'all' && data.grandTotal === 0) return null;
 
   const inPct = data.inbound.pct;
   const outPct = data.outbound.pct;
 
+  const periodLabel = month === 'all' ? `${data.grandTotal} leads en total` : `${data.grandTotal} leads en el mes`;
+
   return (
     <div className="mb-4 sm:mb-6">
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
+      <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
         <h2 className="text-sm sm:text-lg font-semibold text-gray-900">¿De dónde vienen tus leads?</h2>
-        <span className="text-[10px] sm:text-xs text-gray-400">{data.grandTotal} leads en total</span>
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline text-[10px] sm:text-xs text-gray-400">{periodLabel}</span>
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="all">Todo el tiempo</option>
+            {data.availableMonths.map((m) => (
+              <option key={m} value={m}>
+                {monthLabel(m)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
+      {month !== 'all' && data.grandTotal === 0 ? (
+        <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-gray-100 shadow-sm text-center text-sm text-gray-400">
+          No entraron leads en {monthLabel(month)}
+        </div>
+      ) : (
+      <>
       {/* Barra resumen inbound vs outbound */}
       <div className="flex h-3 sm:h-3.5 rounded-full overflow-hidden mb-1.5">
         {inPct > 0 && <div style={{ width: `${inPct}%`, background: '#10b981' }} />}
@@ -144,6 +181,8 @@ export default function SourceMix() {
           subtitle="fuimos a buscarlos"
         />
       </div>
+      </>
+      )}
     </div>
   );
 }

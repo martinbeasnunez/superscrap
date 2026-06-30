@@ -41,6 +41,7 @@ interface LeadRow {
   lead_channel: string | null;
   lead_status: string | null;
   sales_stage: string | null;
+  created_at: string | null;
 }
 
 function hasBotFingerprint(b: LeadRow): boolean {
@@ -64,23 +65,42 @@ function classify(b: LeadRow): { type: 'inbound' | 'outbound' | 'unknown'; chann
   return { type: 'unknown', channel: 'unknown' };
 }
 
-export async function GET() {
+// 'YYYY-MM' del created_at (en hora Perú, UTC-5)
+function monthKey(createdAt: string | null): string | null {
+  if (!createdAt) return null;
+  const d = new Date(createdAt);
+  if (isNaN(d.getTime())) return null;
+  const peru = new Date(d.getTime() - 5 * 60 * 60 * 1000);
+  return `${peru.getUTCFullYear()}-${String(peru.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+export async function GET(request: Request) {
   try {
+    const month = new URL(request.url).searchParams.get('month') || 'all';
+
     // Traer TODOS los leads (paginado, el límite por defecto es 1000)
-    const all: LeadRow[] = [];
+    const allLeads: LeadRow[] = [];
     let from = 0;
     const PAGE = 1000;
     while (true) {
       const { data, error } = await supabase
         .from('businesses')
-        .select('external_id, rating, lead_channel, lead_status, sales_stage')
+        .select('external_id, rating, lead_channel, lead_status, sales_stage, created_at')
         .range(from, from + PAGE - 1);
       if (error) throw error;
       if (!data || data.length === 0) break;
-      all.push(...(data as LeadRow[]));
+      allLeads.push(...(data as LeadRow[]));
       if (data.length < PAGE) break;
       from += PAGE;
     }
+
+    // Lista de meses disponibles (desc) para el selector
+    const availableMonths = Array.from(
+      new Set(allLeads.map((b) => monthKey(b.created_at)).filter((m): m is string => !!m))
+    ).sort((a, b) => b.localeCompare(a));
+
+    // Filtrar al mes seleccionado ('all' = todo el histórico)
+    const all = month === 'all' ? allLeads : allLeads.filter((b) => monthKey(b.created_at) === month);
 
     type Bucket = { total: number; clientes: number };
     const channelAgg: Record<string, { type: string; channel: string } & Bucket> = {};
@@ -115,6 +135,8 @@ export async function GET() {
     const grandTotal = all.length;
 
     return NextResponse.json({
+      month,
+      availableMonths,
       grandTotal,
       inbound: {
         ...totals.inbound,

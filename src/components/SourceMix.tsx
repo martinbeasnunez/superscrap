@@ -33,9 +33,16 @@ function monthLabel(key: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// % de cierre legible: muestra 1 decimal cuando es <1% pero no cero,
+// para no mostrar "0%" cuando en realidad sí hubo cierres (ej. 3/1004 = 0.3%)
+function convLabel(clientes: number, total: number): string {
+  if (!total || clientes === 0) return '0%';
+  const raw = (clientes / total) * 100;
+  return raw < 1 ? `${raw.toFixed(1)}%` : `${Math.round(raw)}%`;
+}
+
 function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: number; color: string; track: string }) {
   const width = max > 0 ? Math.round((item.total / max) * 100) : 0;
-  const conv = item.total > 0 ? Math.round((item.clientes / item.total) * 100) : 0;
   return (
     <div>
       <div className="flex justify-between items-baseline mb-1 text-xs sm:text-sm gap-2">
@@ -43,7 +50,7 @@ function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: numbe
         <span className="text-gray-400 tabular-nums whitespace-nowrap">
           {item.total} <span className="text-gray-300">·</span>{' '}
           <span style={{ color }} className="font-semibold">{item.clientes} ✓</span>{' '}
-          <span className="text-gray-400">{conv}%</span>
+          <span className="text-gray-400">{convLabel(item.clientes, item.total)}</span>
         </span>
       </div>
       <div className="h-1.5 rounded-full" style={{ background: track }}>
@@ -69,7 +76,6 @@ function Side({
   subtitle: string;
 }) {
   const max = Math.max(1, ...data.channels.map((c) => c.total));
-  const conv = data.total > 0 ? Math.round((data.clientes / data.total) * 100) : 0;
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm">
       <div className="flex items-baseline justify-between mb-0.5">
@@ -84,7 +90,7 @@ function Side({
           className="text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 rounded-full"
           style={{ color, background: track }}
         >
-          {data.clientes} clientes · {conv}% cierre
+          {data.clientes} clientes · {convLabel(data.clientes, data.total)} cierre
         </span>
       </div>
       <div className="flex flex-col gap-2.5 sm:gap-3">

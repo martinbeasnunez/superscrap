@@ -35,11 +35,16 @@ function monthLabel(key: string): string {
 
 function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: number; color: string; track: string }) {
   const width = max > 0 ? Math.round((item.total / max) * 100) : 0;
+  const conv = item.total > 0 ? Math.round((item.clientes / item.total) * 100) : 0;
   return (
     <div>
-      <div className="flex justify-between items-baseline mb-1 text-xs sm:text-sm">
-        <span className="text-gray-700">{item.label}</span>
-        <span className="text-gray-400 tabular-nums">{item.total}</span>
+      <div className="flex justify-between items-baseline mb-1 text-xs sm:text-sm gap-2">
+        <span className="text-gray-700 truncate">{item.label}</span>
+        <span className="text-gray-400 tabular-nums whitespace-nowrap">
+          {item.total} <span className="text-gray-300">·</span>{' '}
+          <span style={{ color }} className="font-semibold">{item.clientes} ✓</span>{' '}
+          <span className="text-gray-400">{conv}%</span>
+        </span>
       </div>
       <div className="h-1.5 rounded-full" style={{ background: track }}>
         <div className="h-1.5 rounded-full" style={{ width: `${width}%`, background: color }} />

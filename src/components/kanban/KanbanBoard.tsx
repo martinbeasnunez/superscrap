@@ -50,7 +50,10 @@ const INDUSTRY_LABELS: Record<string, { emoji: string; label: string }> = {
   cleaning: { emoji: '🧹', label: 'Limpieza' },
   industrial: { emoji: '🏭', label: 'Industrial' },
   events: { emoji: '🎪', label: 'Eventos' },
-  residence: { emoji: '🏠', label: 'Residencias' },
+  residence: { emoji: '🏠', label: 'Geriátricos' },
+  university: { emoji: '🎓', label: 'Universidades' },
+  cooperative: { emoji: '🤝', label: 'Cooperativas' },
+  real_estate: { emoji: '🏢', label: 'Inmobiliarias' },
   other: { emoji: '🏢', label: 'Otros' },
 };
 

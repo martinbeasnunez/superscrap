@@ -20,6 +20,9 @@ export type IndustryCategory =
   | 'industrial'       // fabrica, planta, laboratorio
   | 'events'           // salon de eventos, catering
   | 'residence'        // casa de reposo, geriatrica
+  | 'university'       // universidad, instituto
+  | 'cooperative'      // cooperativa
+  | 'real_estate'      // inmobiliaria
   | 'other';
 
 export function detectIndustry(businessType: string | null, name: string): IndustryCategory {
@@ -89,6 +92,18 @@ export function detectIndustry(businessType: string | null, name: string): Indus
   if (combined.includes('reposo') || combined.includes('geriatric') || combined.includes('geriátric') || combined.includes('anciano') || combined.includes('residencia'))
     return 'residence';
 
+  // Universities
+  if (combined.includes('universidad') || combined.includes('university') || combined.includes('instituto') || combined.includes('educativ'))
+    return 'university';
+
+  // Cooperatives
+  if (combined.includes('cooperativa') || combined.includes('cooperative') || combined.includes('coopac'))
+    return 'cooperative';
+
+  // Real estate
+  if (combined.includes('inmobiliaria') || combined.includes('inmobiliario') || combined.includes('real estate') || combined.includes('bienes raices') || combined.includes('bienes raíces'))
+    return 'real_estate';
+
   return 'other';
 }
 
@@ -154,6 +169,9 @@ const INDUSTRY_SCORES: Record<IndustryCategory, { base: number; label: string }>
   industrial:          { base: 35, label: 'Industrial / Fábrica' },
   events:              { base: 20, label: 'Eventos / Catering' },
   residence:           { base: 20, label: 'Residencia / Casa de reposo' },
+  university:          { base: 30, label: 'Universidad / Instituto' },
+  cooperative:         { base: 20, label: 'Cooperativa' },
+  real_estate:         { base: 20, label: 'Inmobiliaria' },
   other:               { base: 10, label: 'Otro tipo de negocio' },
 };
 

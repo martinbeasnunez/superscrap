@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
 import WhatsAppDailyChart from '@/components/WhatsAppDailyChart';
 import SourceMix from '@/components/SourceMix';
+import LossInsights from '@/components/LossInsights';
 
 interface IndustryItem {
   industry: string;
@@ -349,6 +350,9 @@ export default function HomePage() {
 
           {/* Inbound vs Outbound — de dónde vienen los leads */}
           <SourceMix />
+
+          {/* Por qué perdemos leads — motivos de rechazo + recomendaciones */}
+          <LossInsights />
 
           {/* Gráfico de envíos diarios — para detectar caídas a simple vista */}
           <div className="mb-4 sm:mb-6">

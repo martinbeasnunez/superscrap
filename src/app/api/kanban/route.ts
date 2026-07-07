@@ -51,6 +51,7 @@ export interface KanbanBusiness {
   lead_status: string | null;
   sales_stage: SalesStage | null;
   contacted_at: string | null;
+  created_at: string | null; // Fecha en que el lead entró al pipeline — usado por el filtro por mes
   search_id: string;
   business_type: string | null;
   city: string | null;
@@ -145,6 +146,7 @@ export async function GET() {
         lead_status,
         sales_stage,
         contacted_at,
+        created_at,
         search_id,
         primary_dm_index,
         auto_followup_enabled,
@@ -346,6 +348,7 @@ export async function GET() {
         lead_status: b.lead_status,
         sales_stage: b.sales_stage,
         contacted_at: b.contacted_at,
+        created_at: b.created_at ?? null,
         search_id: b.search_id,
         business_type: b.searches?.business_type || null,
         city: b.searches?.city || null,

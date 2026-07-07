@@ -24,6 +24,14 @@ const COLUMN_ORDER: KanbanColumnId[] = [
   'perdido',
 ];
 
+// 'YYYY-MM' -> 'Junio 2026'
+function monthLabel(key: string): string {
+  const [y, m] = key.split('-').map(Number);
+  const d = new Date(y, m - 1, 1);
+  const s = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 // Frases motivacionales sobre follow-up
 const FOLLOW_UP_QUOTES = [
   { quote: "El 80% de las ventas requieren 5 follow-ups. El 44% de vendedores se rinden después de 1.", author: "Estadística de ventas B2B" },
@@ -103,6 +111,8 @@ export default function KanbanBoard() {
   const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
   const [focusFilter, setFocusFilter] = useState<'all' | 'focus'>('all');
+  // Filtro por mes de creación del lead ('all' | 'YYYY-MM')
+  const [monthFilter, setMonthFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -245,10 +255,21 @@ export default function KanbanBoard() {
     );
   };
 
-  // Filtered columns based on industry + phone + search filters
+  // Meses disponibles (por fecha de creación del lead), de más reciente a más antiguo
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>();
+    COLUMN_ORDER.forEach(col => {
+      columns[col].forEach(lead => {
+        if (lead.created_at) set.add(lead.created_at.slice(0, 7)); // 'YYYY-MM'
+      });
+    });
+    return Array.from(set).sort().reverse();
+  }, [columns]);
+
+  // Filtered columns based on industry + phone + search + month filters
   const filteredColumns = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && sourceFilter === 'all' && focusFilter === 'all' && !q) return columns;
+    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && sourceFilter === 'all' && focusFilter === 'all' && monthFilter === 'all' && !q) return columns;
     const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
       seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
@@ -268,6 +289,7 @@ export default function KanbanBoard() {
         if (tierFilter !== 'all' && lead.potential_tier !== tierFilter) return false;
         if (sourceFilter === 'manual' && lead.source !== 'manual') return false;
         if (focusFilter === 'focus' && !lead.is_focus) return false;
+        if (monthFilter !== 'all' && (lead.created_at?.slice(0, 7) ?? '') !== monthFilter) return false;
         if (q) {
           const haystack = [lead.name, lead.phone, lead.address, lead.business_type, lead.city]
             .filter(Boolean).join(' ').toLowerCase();
@@ -277,7 +299,7 @@ export default function KanbanBoard() {
       });
     });
     return filtered;
-  }, [columns, industryFilter, phoneFilter, tierFilter, sourceFilter, focusFilter, searchQuery]);
+  }, [columns, industryFilter, phoneFilter, tierFilter, sourceFilter, focusFilter, monthFilter, searchQuery]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -1040,6 +1062,37 @@ export default function KanbanBoard() {
           >
             ✕
           </button>
+        )}
+
+        {/* Filtro por mes de creación del lead */}
+        {availableMonths.length > 0 && (
+          <>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className={`text-xs sm:text-sm px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                monthFilter !== 'all'
+                  ? 'bg-[#0890F1] text-white border-[#0890F1]'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <option value="all">📅 Todos los meses</option>
+              {availableMonths.map((m) => (
+                <option key={m} value={m}>
+                  {monthLabel(m)}
+                </option>
+              ))}
+            </select>
+            {monthFilter !== 'all' && (
+              <button
+                onClick={() => setMonthFilter('all')}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                title="Limpiar filtro"
+              >
+                ✕
+              </button>
+            )}
+          </>
         )}
       </div>
 

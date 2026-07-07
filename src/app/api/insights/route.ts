@@ -54,6 +54,15 @@ const CHANNEL_LABELS: Record<string, string> = {
   otro: '❓ Otro',
 };
 
+// 'YYYY-MM' en hora Perú (UTC-5) — para el selector de mes.
+function monthKey(dateStr: string | null): string | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  const peru = new Date(d.getTime() - 5 * 60 * 60 * 1000);
+  return `${peru.getUTCFullYear()}-${String(peru.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 function parseStageTransition(noteText: string | null): { from: string; to: string } | null {
   if (!noteText) return null;
   // Match "Cambio de etapa: X → Y" — note that → might come from the literal symbol
@@ -67,8 +76,10 @@ function parseStageTransition(noteText: string | null): { from: string; to: stri
   return { from, to };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const month = new URL(request.url).searchParams.get('month') || 'all';
+
     // 1) All businesses (only the fields we need)
     const { data: businesses, error: bizErr } = await supabase
       .from('businesses')
@@ -99,11 +110,37 @@ export async function GET() {
       }
     }
 
+    // ── Fecha de decisión ──
+    // Cuándo cada lead entró a su etapa terminal (perdido/cliente). Es la base del
+    // filtro por mes: un lead "cuenta" en el mes en que se ganó o se perdió, no en el
+    // que se creó. Fallback a created_at si no hay historial de cambio de etapa.
+    const lostAtByBiz: Record<string, string> = {};
+    const wonAtByBiz: Record<string, string> = {};
+    for (const ch of stageChanges) {
+      const t = parseStageTransition(ch.notes);
+      if (!t) continue;
+      if (t.to === 'perdido') lostAtByBiz[ch.business_id] = ch.created_at;
+      else if (t.to === 'cliente') wonAtByBiz[ch.business_id] = ch.created_at;
+    }
+    const decisionMonth = (b: typeof businesses[number]): string | null => {
+      if (b.sales_stage === 'perdido') return monthKey(lostAtByBiz[b.id] ?? b.created_at);
+      if (b.sales_stage === 'cliente') return monthKey(wonAtByBiz[b.id] ?? b.created_at);
+      return null;
+    };
+    const inSelMonth = (b: typeof businesses[number]) => month === 'all' || decisionMonth(b) === month;
+
+    // Meses con al menos un lead decidido (ganado o perdido), desc, para el selector.
+    const availableMonths = Array.from(
+      new Set(businesses.map(decisionMonth).filter((m): m is string => !!m))
+    ).sort((a, b) => b.localeCompare(a));
+
     // 3) ── Summary ──
     const totalLeads = businesses.length;
-    const wonClientes = businesses.filter(b => b.sales_stage === 'cliente').length;
-    const lostPerdidos = businesses.filter(b => b.sales_stage === 'perdido').length;
-    const activeLeads = totalLeads - wonClientes - lostPerdidos;
+    const wonClientes = businesses.filter(b => b.sales_stage === 'cliente' && inSelMonth(b)).length;
+    const lostPerdidos = businesses.filter(b => b.sales_stage === 'perdido' && inSelMonth(b)).length;
+    const activeLeads = totalLeads
+      - businesses.filter(b => b.sales_stage === 'cliente').length
+      - businesses.filter(b => b.sales_stage === 'perdido').length;
     const decided = wonClientes + lostPerdidos;
     const winRate = decided > 0 ? wonClientes / decided : 0;
 
@@ -111,7 +148,7 @@ export async function GET() {
     // For each business currently in 'perdido', find the stage_change entry that landed it there
     // and bucket by the from-stage.
     const lostBusinessIds = new Set(
-      businesses.filter(b => b.sales_stage === 'perdido').map(b => b.id)
+      businesses.filter(b => b.sales_stage === 'perdido' && inSelMonth(b)).map(b => b.id)
     );
     const reasonByBusinessId: Record<string, string | null> = {};
     businesses.forEach(b => { if (lostBusinessIds.has(b.id)) reasonByBusinessId[b.id] = b.lost_reason ?? null; });
@@ -152,7 +189,7 @@ export async function GET() {
     // 5) ── Top loss reasons ──
     const reasonAgg: Record<string, number> = {};
     businesses.forEach(b => {
-      if (b.sales_stage !== 'perdido') return;
+      if (b.sales_stage !== 'perdido' || !inSelMonth(b)) return;
       const r = b.lost_reason ?? 'unset';
       reasonAgg[r] = (reasonAgg[r] ?? 0) + 1;
     });
@@ -244,6 +281,8 @@ export async function GET() {
       .slice(0, 30);
 
     return NextResponse.json({
+      month,
+      availableMonths,
       summary: { totalLeads, wonClientes, lostPerdidos, activeLeads, winRate },
       lossByPreviousStage,
       lossByReason,

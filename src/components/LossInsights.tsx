@@ -17,6 +17,8 @@ interface LossByReason {
 }
 
 interface Insights {
+  month: string;
+  availableMonths: string[];
   summary: {
     totalLeads: number;
     wonClientes: number;
@@ -26,6 +28,14 @@ interface Insights {
   };
   lossByPreviousStage: LossByStage[];
   lossByReason: LossByReason[];
+}
+
+// 'YYYY-MM' -> 'Junio 2026'
+function monthLabel(key: string): string {
+  const [y, m] = key.split('-').map(Number);
+  const d = new Date(y, m - 1, 1);
+  const s = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // Recomendación accionable por cada motivo de pérdida.
@@ -58,24 +68,29 @@ function Bar({ value, max, color, track }: { value: number; max: number; color: 
 
 export default function LossInsights() {
   const [data, setData] = useState<Insights | null>(null);
+  const [month, setMonth] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/insights')
+    setLoading(true);
+    fetch(`/api/insights?month=${encodeURIComponent(month)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
       .then((d: Insights) => {
         if (!('error' in d)) setData(d);
       })
       .catch((e) => console.error('Error fetching insights:', e))
       .finally(() => setLoading(false));
-  }, []);
+  }, [month]);
 
   if (!data && loading) {
     return (
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm mb-4 sm:mb-6 h-40 animate-pulse" />
     );
   }
-  if (!data || data.summary.lostPerdidos === 0) return null;
+  if (!data) return null;
+  // En "todo el tiempo" sin perdidos, ocultamos el bloque entero.
+  // Con un mes elegido mostramos el header + un vacío (para poder cambiar de mes).
+  if (month === 'all' && data.summary.lostPerdidos === 0) return null;
 
   const { summary, lossByReason, lossByPreviousStage } = data;
 
@@ -107,11 +122,30 @@ export default function LossInsights() {
     <div className="mb-4 sm:mb-6">
       <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
         <h2 className="text-sm sm:text-lg font-semibold text-gray-900">¿Por qué perdemos leads?</h2>
-        <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">
-          {summary.lostPerdidos} perdidos · {lostShare}% de los decididos
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">
+            {summary.lostPerdidos} perdidos · {lostShare}% de los decididos
+          </span>
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="all">Todo el tiempo</option>
+            {data.availableMonths.map((m) => (
+              <option key={m} value={m}>
+                {monthLabel(m)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
+      {summary.lostPerdidos === 0 ? (
+        <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-gray-100 shadow-sm text-center text-sm text-gray-400">
+          No se perdió ningún lead en {monthLabel(month)}
+        </div>
+      ) : (
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {/* Motivos de rechazo */}
@@ -198,6 +232,7 @@ export default function LossInsights() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

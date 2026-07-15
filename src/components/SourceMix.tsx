@@ -33,6 +33,13 @@ function monthLabel(key: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// Mes en curso ('YYYY-MM') — es el default del selector: por defecto muestras
+// el mes actual, no todo el histórico.
+function currentMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
 // % de cierre legible: muestra 1 decimal cuando es <1% pero no cero,
 // para no mostrar "0%" cuando en realidad sí hubo cierres (ej. 3/1004 = 0.3%)
 function convLabel(clientes: number, total: number): string {
@@ -124,7 +131,7 @@ function Side({
 
 export default function SourceMix() {
   const [data, setData] = useState<SourceMixData | null>(null);
-  const [month, setMonth] = useState('all');
+  const [month, setMonth] = useState(currentMonthKey);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -153,6 +160,13 @@ export default function SourceMix() {
 
   const periodLabel = month === 'all' ? `${data.grandTotal} leads en total` : `${data.grandTotal} leads en el mes`;
 
+  // Garantiza que el mes seleccionado (por defecto, el mes en curso) siempre
+  // sea una opción, aunque el API aún no lo devuelva por no tener leads.
+  const monthOptions =
+    month === 'all' || data.availableMonths.includes(month)
+      ? data.availableMonths
+      : [month, ...data.availableMonths];
+
   return (
     <div className="mb-4 sm:mb-6">
       <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
@@ -165,7 +179,7 @@ export default function SourceMix() {
             className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
             <option value="all">Todo el tiempo</option>
-            {data.availableMonths.map((m) => (
+            {monthOptions.map((m) => (
               <option key={m} value={m}>
                 {monthLabel(m)}
               </option>

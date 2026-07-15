@@ -38,6 +38,13 @@ function monthLabel(key: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+// Mes en curso ('YYYY-MM') — default del selector: arranca en el mes actual,
+// no en todo el histórico.
+function currentMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
 // Recomendación accionable por cada motivo de pérdida.
 // La gracia del bloque no es el gráfico, es el "¿y ahora qué hago?".
 const REASON_TIPS: Record<string, string> = {
@@ -68,7 +75,7 @@ function Bar({ value, max, color, track }: { value: number; max: number; color: 
 
 export default function LossInsights() {
   const [data, setData] = useState<Insights | null>(null);
-  const [month, setMonth] = useState('all');
+  const [month, setMonth] = useState(currentMonthKey);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -138,6 +145,13 @@ export default function LossInsights() {
   const decided = summary.wonClientes + summary.lostPerdidos;
   const lostShare = decided > 0 ? Math.round((summary.lostPerdidos / decided) * 100) : 0;
 
+  // Garantiza que el mes seleccionado (por defecto el mes en curso) siempre sea
+  // una opción, aunque el API aún no lo devuelva por no tener leads decididos.
+  const monthOptions =
+    month === 'all' || data.availableMonths.includes(month)
+      ? data.availableMonths
+      : [month, ...data.availableMonths];
+
   return (
     <div className="mb-4 sm:mb-6">
       <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
@@ -152,7 +166,7 @@ export default function LossInsights() {
             className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
             <option value="all">Todo el tiempo</option>
-            {data.availableMonths.map((m) => (
+            {monthOptions.map((m) => (
               <option key={m} value={m}>
                 {monthLabel(m)}
               </option>

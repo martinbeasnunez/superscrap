@@ -171,8 +171,11 @@ export async function PATCH(
       }
 
       // Auto-send WhatsApp when moving to follow-up stages (skip if cron already sent)
+      // NUNCA para leads manuales: son whales curados a mano, Alejandro maneja toda
+      // la comunicación (cero automatización). También respeta el flag apagado.
       const autoSendStages = ['contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
-      if (autoSendStages.includes(sales_stage) && data.phone && !skip_auto_send) {
+      const autoSendAllowed = data.source !== 'manual' && data.auto_followup_enabled !== false;
+      if (autoSendStages.includes(sales_stage) && data.phone && !skip_auto_send && autoSendAllowed) {
         try {
           const { getWhatsAppPitchServer } = await import('@/lib/whatsapp-pitch');
           const contactCount = await supabase

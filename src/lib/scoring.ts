@@ -12,7 +12,8 @@ export type IndustryCategory =
   | 'spa_premium'      // hotel spa, premium
   | 'spa_basic'        // spa, masajes, sauna
   | 'gym_premium'      // cadena, premium, crossfit grande
-  | 'gym_basic'        // gym pequeno, pilates
+  | 'gym_basic'        // gym pequeno
+  | 'pilates'          // estudio de pilates, reformer
   | 'restaurant_gourmet' // gourmet, autor, steakhouse
   | 'restaurant_mid'   // cevicheria, standard
   | 'security'         // empresa de seguridad
@@ -58,12 +59,16 @@ export function detectIndustry(businessType: string | null, name: string): Indus
   if (combined.includes('spa') || combined.includes('masaje') || combined.includes('massage') || combined.includes('sauna') || combined.includes('day spa'))
     return 'spa_basic';
 
+  // Pilates - check before gyms so estudios de pilates no caen en gym_basic
+  if (combined.includes('pilates') || combined.includes('reformer'))
+    return 'pilates';
+
   // Gyms
   if ((combined.includes('gym') || combined.includes('gimnasio')) && (combined.includes('premium') || combined.includes('cadena')))
     return 'gym_premium';
   if (combined.includes('crossfit') || combined.includes('fitness'))
     return 'gym_premium';
-  if (combined.includes('gym') || combined.includes('gimnasio') || combined.includes('pilates'))
+  if (combined.includes('gym') || combined.includes('gimnasio'))
     return 'gym_basic';
 
   // Restaurants
@@ -162,6 +167,7 @@ const INDUSTRY_SCORES: Record<IndustryCategory, { base: number; label: string }>
   spa_basic:           { base: 12, label: 'Spa / Masajes' },
   gym_premium:         { base: 25, label: 'Gimnasio premium / Cadena' },
   gym_basic:           { base: 10, label: 'Gimnasio pequeño' },
+  pilates:             { base: 12, label: 'Estudio de Pilates' },
   restaurant_gourmet:  { base: 25, label: 'Restaurante gourmet' },
   restaurant_mid:      { base: 12, label: 'Restaurante' },
   security:            { base: 30, label: 'Empresa de seguridad' },

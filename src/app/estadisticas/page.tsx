@@ -27,6 +27,7 @@ const INDUSTRY_LABELS: Record<string, { emoji: string; label: string }> = {
   spa_basic: { emoji: '💆', label: 'Spas' },
   gym_premium: { emoji: '🏋️', label: 'Gyms Premium' },
   gym_basic: { emoji: '🏋️', label: 'Gyms' },
+  pilates: { emoji: '🧘', label: 'Pilates' },
   restaurant_gourmet: { emoji: '🍽️', label: 'Restaurantes Gourmet' },
   restaurant_mid: { emoji: '🍽️', label: 'Restaurantes' },
   security: { emoji: '🛡️', label: 'Seguridad' },

@@ -108,28 +108,29 @@ export default function LossInsights() {
     .slice(0, 3);
 
   // Insight de embudo: ¿dónde se caen realmente los leads perdidos?
-  // Tres momentos, no dos: prospección (aún sin contacto real), seguimiento
-  // (ya contactados pero no responden / pierden interés) y cierre (interesados
-  // o cotizados que se caen en la recta final). Meter los seguimientos en
-  // "temprano" distorsiona el diagnóstico — un lead en Último Intento ya fue
-  // contactado y perseguido varias veces.
-  const STAGE_BUCKET: Record<string, 'prospeccion' | 'seguimiento' | 'cierre'> = {
+  // Cuatro momentos, no dos. El detalle clave: el seguimiento no es un solo
+  // saco — caer en Seguimiento 1-2 (abandonaste antes de tiempo) pide MÁS
+  // insistencia, pero caer en Último Intento (ya agotaste la secuencia) pide
+  // lo contrario: el problema ya no es insistir, es a quién prospectas y si el
+  // mensaje engancha. Meterlos juntos daría el consejo al revés.
+  const STAGE_BUCKET: Record<string, 'prospeccion' | 'seguimiento' | 'agotado' | 'cierre'> = {
     nuevo: 'prospeccion',
     contactado: 'prospeccion',
     seguimiento_1: 'seguimiento',
     seguimiento_2: 'seguimiento',
-    seguimiento_3: 'seguimiento',
+    seguimiento_3: 'agotado', // "Último Intento" — perseguido hasta el final
     interesado: 'cierre',
     cotizado: 'cierre',
     cliente: 'cierre',
   };
-  const bucketTotals = { prospeccion: 0, seguimiento: 0, cierre: 0 };
+  const bucketTotals = { prospeccion: 0, seguimiento: 0, agotado: 0, cierre: 0 };
   for (const s of lossByPreviousStage) {
     const b = STAGE_BUCKET[s.stage];
     if (b) bucketTotals[b] += s.count;
   }
-  const stagedTotal = bucketTotals.prospeccion + bucketTotals.seguimiento + bucketTotals.cierre;
-  const dominantBucket = (['prospeccion', 'seguimiento', 'cierre'] as const).reduce((a, b) =>
+  const stagedTotal =
+    bucketTotals.prospeccion + bucketTotals.seguimiento + bucketTotals.agotado + bucketTotals.cierre;
+  const dominantBucket = (['prospeccion', 'seguimiento', 'agotado', 'cierre'] as const).reduce((a, b) =>
     bucketTotals[b] > bucketTotals[a] ? b : a
   );
   const dominantShare = stagedTotal > 0 ? Math.round((bucketTotals[dominantBucket] / stagedTotal) * 100) : 0;
@@ -216,12 +217,18 @@ export default function LossInsights() {
                 problema está en el <strong>cierre</strong>, no en la prospección — cuida precio, seguimiento y
                 objeciones en la recta final.
               </span>
+            ) : dominantBucket === 'agotado' ? (
+              <span>
+                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren en el <strong>Último Intento</strong> —
+                leads que perseguiste hasta agotar el seguimiento y aun así no cerraron. Insistir más no es la
+                solución: el problema está <strong>arriba, en la calificación</strong> — apunta a mejores leads y a
+                una apertura que enganche, para no gastar toda la secuencia en quien no iba a comprar.
+              </span>
             ) : dominantBucket === 'seguimiento' ? (
               <span>
-                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren durante el <strong>seguimiento</strong> —
-                leads que ya contactaste pero no responden o pierden interés antes de cotizar. El cuello de botella
-                está en la <strong>persistencia y el re-enganche</strong>: varía canal y horario, y dales una razón
-                para responder.
+                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren a mitad del <strong>seguimiento</strong> —
+                leads que dejaste de perseguir antes de tiempo. Aún hay margen: suma toques, varía canal y horario, y
+                combina WhatsApp con llamada antes de darlos por perdidos.
               </span>
             ) : (
               <span>

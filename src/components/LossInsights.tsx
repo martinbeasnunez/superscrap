@@ -107,13 +107,32 @@ export default function LossInsights() {
     .filter((r) => REASON_TIPS[r.reason])
     .slice(0, 3);
 
-  // Insight de embudo: ¿se caen temprano (prospección/calificación) o tarde (cierre)?
-  const LATE_STAGES = new Set(['interesado', 'cotizado']);
-  const lateLosses = lossByPreviousStage
-    .filter((s) => LATE_STAGES.has(s.stage))
-    .reduce((sum, s) => sum + s.count, 0);
-  const stagedTotal = lossByPreviousStage.reduce((sum, s) => sum + s.count, 0);
-  const lateShare = stagedTotal > 0 ? lateLosses / stagedTotal : 0;
+  // Insight de embudo: ¿dónde se caen realmente los leads perdidos?
+  // Tres momentos, no dos: prospección (aún sin contacto real), seguimiento
+  // (ya contactados pero no responden / pierden interés) y cierre (interesados
+  // o cotizados que se caen en la recta final). Meter los seguimientos en
+  // "temprano" distorsiona el diagnóstico — un lead en Último Intento ya fue
+  // contactado y perseguido varias veces.
+  const STAGE_BUCKET: Record<string, 'prospeccion' | 'seguimiento' | 'cierre'> = {
+    nuevo: 'prospeccion',
+    contactado: 'prospeccion',
+    seguimiento_1: 'seguimiento',
+    seguimiento_2: 'seguimiento',
+    seguimiento_3: 'seguimiento',
+    interesado: 'cierre',
+    cotizado: 'cierre',
+    cliente: 'cierre',
+  };
+  const bucketTotals = { prospeccion: 0, seguimiento: 0, cierre: 0 };
+  for (const s of lossByPreviousStage) {
+    const b = STAGE_BUCKET[s.stage];
+    if (b) bucketTotals[b] += s.count;
+  }
+  const stagedTotal = bucketTotals.prospeccion + bucketTotals.seguimiento + bucketTotals.cierre;
+  const dominantBucket = (['prospeccion', 'seguimiento', 'cierre'] as const).reduce((a, b) =>
+    bucketTotals[b] > bucketTotals[a] ? b : a
+  );
+  const dominantShare = stagedTotal > 0 ? Math.round((bucketTotals[dominantBucket] / stagedTotal) * 100) : 0;
 
   const decided = summary.wonClientes + summary.lostPerdidos;
   const lostShare = decided > 0 ? Math.round((summary.lostPerdidos / decided) * 100) : 0;
@@ -191,17 +210,24 @@ export default function LossInsights() {
         {/* Insight de embudo */}
         {stagedTotal > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600">
-            {lateShare >= 0.5 ? (
+            {dominantBucket === 'cierre' ? (
               <span>
-                📉 <strong>{Math.round(lateShare * 100)}%</strong> de las pérdidas ocurren tarde (interesados o
-                cotizados). El problema está en el <strong>cierre</strong>, no en la prospección — cuida precio,
-                seguimiento y objeciones en la recta final.
+                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren tarde (interesados o cotizados). El
+                problema está en el <strong>cierre</strong>, no en la prospección — cuida precio, seguimiento y
+                objeciones en la recta final.
+              </span>
+            ) : dominantBucket === 'seguimiento' ? (
+              <span>
+                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren durante el <strong>seguimiento</strong> —
+                leads que ya contactaste pero no responden o pierden interés antes de cotizar. El cuello de botella
+                está en la <strong>persistencia y el re-enganche</strong>: varía canal y horario, y dales una razón
+                para responder.
               </span>
             ) : (
               <span>
-                📉 La mayoría de las pérdidas son <strong>tempranas</strong> (antes de generar interés). El cuello de
-                botella está en <strong>calificación y primer contacto</strong> — mejora a quién prospectas y el
-                mensaje de apertura.
+                📉 La mayoría de las pérdidas son <strong>tempranas</strong> (antes de establecer contacto real). El
+                cuello de botella está en <strong>prospección y primer contacto</strong> — mejora a quién prospectas y
+                el mensaje de apertura.
               </span>
             )}
           </div>

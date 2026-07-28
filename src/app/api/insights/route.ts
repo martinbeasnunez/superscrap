@@ -80,14 +80,25 @@ export async function GET(request: Request) {
   try {
     const month = new URL(request.url).searchParams.get('month') || 'all';
 
-    // 1) All businesses (only the fields we need)
+    // 1) All businesses (only the fields we need). Traemos potential_tier del
+    // análisis para poder partir las pérdidas en 🐋 orcas vs 🐬 delfines.
     const { data: businesses, error: bizErr } = await supabase
       .from('businesses')
-      .select('id, name, phone, sales_stage, lost_reason, lead_channel, source, created_at');
+      .select('id, name, phone, sales_stage, lost_reason, lead_channel, source, created_at, service_analyses (potential_tier)');
 
     if (bizErr || !businesses) {
       console.error('insights: error fetching businesses', bizErr);
       return NextResponse.json({ error: 'Error al obtener insights' }, { status: 500 });
+    }
+
+    // Tier por negocio: 'orca' | 'delfin' | 'unknown'. service_analyses es 1:many
+    // pero solo tomamos el primero (como en el kanban). Sin análisis → 'unknown'.
+    const tierByBiz: Record<string, 'orca' | 'delfin' | 'unknown'> = {};
+    for (const b of businesses) {
+      const sa = b as unknown as { id: string; service_analyses?: { potential_tier?: string | null }[] | { potential_tier?: string | null } | null };
+      const analysis = Array.isArray(sa.service_analyses) ? sa.service_analyses[0] : sa.service_analyses;
+      const t = analysis?.potential_tier;
+      tierByBiz[b.id] = t === 'orca' || t === 'delfin' ? t : 'unknown';
     }
 
     // 2) Stage change history — paginated
@@ -173,33 +184,64 @@ export async function GET(request: Request) {
       }
     });
 
-    const lossByPreviousStage = Object.entries(lossPrevAgg)
-      .map(([stage, v]) => {
-        const topReasonEntry = Object.entries(v.reasons).sort((a, b) => b[1] - a[1])[0];
-        return {
-          stage,
-          label: STAGE_LABELS[stage] ?? stage,
-          count: v.count,
-          topReason: topReasonEntry ? topReasonEntry[0] : null,
-          topReasonLabel: topReasonEntry ? REASON_LABELS[topReasonEntry[0]] : null,
-        };
-      })
-      .sort((a, b) => b.count - a.count);
+    // Construye el desglose de pérdidas (motivos + etapa previa) para un
+    // subconjunto de leads perdidos. Se reutiliza para el total y para cada
+    // tier (orca / delfín / unknown), así el reporte se puede partir por valor.
+    const buildLossBreakdown = (ids: Set<string>) => {
+      const reasonAgg: Record<string, number> = {};
+      businesses.forEach(b => {
+        if (!ids.has(b.id)) return;
+        const r = b.lost_reason ?? 'unset';
+        reasonAgg[r] = (reasonAgg[r] ?? 0) + 1;
+      });
+      const lossByReason = Object.entries(reasonAgg)
+        .map(([reason, count]) => ({
+          reason,
+          label: reason === 'unset' ? '❌ Sin razón' : (REASON_LABELS[reason] ?? reason),
+          count,
+        }))
+        .sort((a, b) => b.count - a.count);
 
-    // 5) ── Top loss reasons ──
-    const reasonAgg: Record<string, number> = {};
-    businesses.forEach(b => {
-      if (b.sales_stage !== 'perdido' || !inSelMonth(b)) return;
-      const r = b.lost_reason ?? 'unset';
-      reasonAgg[r] = (reasonAgg[r] ?? 0) + 1;
-    });
-    const lossByReason = Object.entries(reasonAgg)
-      .map(([reason, count]) => ({
-        reason,
-        label: reason === 'unset' ? '❌ Sin razón' : (REASON_LABELS[reason] ?? reason),
-        count,
-      }))
-      .sort((a, b) => b.count - a.count);
+      const prevAgg: Record<string, { count: number; reasons: Record<string, number> }> = {};
+      Object.entries(lossPrevStageByBiz).forEach(([bizId, prevStage]) => {
+        if (!ids.has(bizId)) return;
+        if (!prevAgg[prevStage]) prevAgg[prevStage] = { count: 0, reasons: {} };
+        prevAgg[prevStage].count += 1;
+        const reason = reasonByBusinessId[bizId];
+        if (reason) prevAgg[prevStage].reasons[reason] = (prevAgg[prevStage].reasons[reason] ?? 0) + 1;
+      });
+      const lossByPreviousStage = Object.entries(prevAgg)
+        .map(([stage, v]) => {
+          const topReasonEntry = Object.entries(v.reasons).sort((a, b) => b[1] - a[1])[0];
+          return {
+            stage,
+            label: STAGE_LABELS[stage] ?? stage,
+            count: v.count,
+            topReason: topReasonEntry ? topReasonEntry[0] : null,
+            topReasonLabel: topReasonEntry ? REASON_LABELS[topReasonEntry[0]] : null,
+          };
+        })
+        .sort((a, b) => b.count - a.count);
+
+      return { lost: ids.size, lossByReason, lossByPreviousStage };
+    };
+
+    // 4+5) ── Pérdidas: total y partido por tier (orca / delfín / unknown) ──
+    const idsByTier = {
+      orca: new Set<string>(),
+      delfin: new Set<string>(),
+      unknown: new Set<string>(),
+    };
+    lostBusinessIds.forEach(id => idsByTier[tierByBiz[id] ?? 'unknown'].add(id));
+
+    const overall = buildLossBreakdown(lostBusinessIds);
+    const lossByReason = overall.lossByReason;
+    const lossByPreviousStage = overall.lossByPreviousStage;
+    const lossByTier = {
+      orca: buildLossBreakdown(idsByTier.orca),
+      delfin: buildLossBreakdown(idsByTier.delfin),
+      unknown: buildLossBreakdown(idsByTier.unknown),
+    };
 
     // 6) ── Channel performance (manual leads only) ──
     const channelAgg: Record<string, { total: number; won: number; lost: number; active: number }> = {};
@@ -286,6 +328,7 @@ export async function GET(request: Request) {
       summary: { totalLeads, wonClientes, lostPerdidos, activeLeads, winRate },
       lossByPreviousStage,
       lossByReason,
+      lossByTier,
       channelPerformance,
       duplicates: {
         phoneGroups: phoneDuplicates,

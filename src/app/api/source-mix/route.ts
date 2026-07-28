@@ -42,6 +42,17 @@ interface LeadRow {
   lead_status: string | null;
   sales_stage: string | null;
   created_at: string | null;
+  service_analyses?: { potential_tier?: string | null }[] | { potential_tier?: string | null } | null;
+}
+
+type Tier = 'orca' | 'delfin' | 'unknown';
+
+// Tier del lead a partir del análisis (1:many, tomamos el primero). Sin análisis
+// o tier distinto de orca/delfín -> 'unknown'.
+function leadTier(b: LeadRow): Tier {
+  const analysis = Array.isArray(b.service_analyses) ? b.service_analyses[0] : b.service_analyses;
+  const t = analysis?.potential_tier;
+  return t === 'orca' || t === 'delfin' ? t : 'unknown';
 }
 
 function hasBotFingerprint(b: LeadRow): boolean {
@@ -85,7 +96,7 @@ export async function GET(request: Request) {
     while (true) {
       const { data, error } = await supabase
         .from('businesses')
-        .select('external_id, rating, lead_channel, lead_status, sales_stage, created_at')
+        .select('external_id, rating, lead_channel, lead_status, sales_stage, created_at, service_analyses (potential_tier)')
         .range(from, from + PAGE - 1);
       if (error) throw error;
       if (!data || data.length === 0) break;
@@ -102,53 +113,67 @@ export async function GET(request: Request) {
     // Filtrar al mes seleccionado ('all' = todo el histórico)
     const all = month === 'all' ? allLeads : allLeads.filter((b) => monthKey(b.created_at) === month);
 
-    type Bucket = { total: number; clientes: number };
-    const channelAgg: Record<string, { type: string; channel: string } & Bucket> = {};
-    const totals = {
-      inbound: { total: 0, clientes: 0 },
-      outbound: { total: 0, clientes: 0 },
-      unknown: { total: 0, clientes: 0 },
+    // Construye el mix inbound/outbound (con canales) para un subconjunto de leads.
+    // Se reutiliza para el total y para cada tier, así el reporte se parte por valor.
+    const buildMix = (leads: LeadRow[]) => {
+      type Bucket = { total: number; clientes: number };
+      const channelAgg: Record<string, { type: string; channel: string } & Bucket> = {};
+      const totals = {
+        inbound: { total: 0, clientes: 0 },
+        outbound: { total: 0, clientes: 0 },
+        unknown: { total: 0, clientes: 0 },
+      };
+
+      for (const b of leads) {
+        const { type, channel } = classify(b);
+        const won = b.sales_stage === 'cliente' ? 1 : 0;
+        totals[type].total += 1;
+        totals[type].clientes += won;
+        if (type === 'unknown') continue;
+        const key = `${type}:${channel}`;
+        if (!channelAgg[key]) channelAgg[key] = { type, channel, total: 0, clientes: 0 };
+        channelAgg[key].total += 1;
+        channelAgg[key].clientes += won;
+      }
+
+      const channels = Object.values(channelAgg)
+        .map((c) => ({
+          type: c.type,
+          channel: c.channel,
+          label: CHANNEL_LABELS[c.channel] ?? c.channel,
+          total: c.total,
+          clientes: c.clientes,
+        }))
+        .sort((a, b) => b.total - a.total);
+
+      const grandTotal = leads.length;
+      return {
+        grandTotal,
+        inbound: {
+          ...totals.inbound,
+          pct: grandTotal ? Math.round((totals.inbound.total / grandTotal) * 100) : 0,
+          channels: channels.filter((c) => c.type === 'inbound'),
+        },
+        outbound: {
+          ...totals.outbound,
+          pct: grandTotal ? Math.round((totals.outbound.total / grandTotal) * 100) : 0,
+          channels: channels.filter((c) => c.type === 'outbound'),
+        },
+        unknown: totals.unknown,
+      };
     };
 
-    for (const b of all) {
-      const { type, channel } = classify(b);
-      const won = b.sales_stage === 'cliente' ? 1 : 0;
-      totals[type].total += 1;
-      totals[type].clientes += won;
-      if (type === 'unknown') continue;
-      const key = `${type}:${channel}`;
-      if (!channelAgg[key]) channelAgg[key] = { type, channel, total: 0, clientes: 0 };
-      channelAgg[key].total += 1;
-      channelAgg[key].clientes += won;
-    }
-
-    const channels = Object.values(channelAgg)
-      .map((c) => ({
-        type: c.type,
-        channel: c.channel,
-        label: CHANNEL_LABELS[c.channel] ?? c.channel,
-        total: c.total,
-        clientes: c.clientes,
-      }))
-      .sort((a, b) => b.total - a.total);
-
-    const grandTotal = all.length;
+    const mixAll = buildMix(all);
+    const byTier = {
+      orca: buildMix(all.filter((b) => leadTier(b) === 'orca')),
+      delfin: buildMix(all.filter((b) => leadTier(b) === 'delfin')),
+    };
 
     return NextResponse.json({
       month,
       availableMonths,
-      grandTotal,
-      inbound: {
-        ...totals.inbound,
-        pct: grandTotal ? Math.round((totals.inbound.total / grandTotal) * 100) : 0,
-        channels: channels.filter((c) => c.type === 'inbound'),
-      },
-      outbound: {
-        ...totals.outbound,
-        pct: grandTotal ? Math.round((totals.outbound.total / grandTotal) * 100) : 0,
-        channels: channels.filter((c) => c.type === 'outbound'),
-      },
-      unknown: totals.unknown,
+      ...mixAll,
+      byTier,
     });
   } catch (error) {
     console.error('Error in source-mix:', error);

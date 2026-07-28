@@ -16,13 +16,22 @@ interface SideData {
   channels: ChannelItem[];
 }
 
-interface SourceMixData {
-  month: string;
-  availableMonths: string[];
+interface Mix {
   grandTotal: number;
   inbound: SideData;
   outbound: SideData;
   unknown: { total: number; clientes: number };
+}
+
+type Tier = 'all' | 'orca' | 'delfin';
+
+interface SourceMixData extends Mix {
+  month: string;
+  availableMonths: string[];
+  byTier: {
+    orca: Mix;
+    delfin: Mix;
+  };
 }
 
 // 'YYYY-MM' -> 'Junio 2026'
@@ -132,6 +141,7 @@ function Side({
 export default function SourceMix() {
   const [data, setData] = useState<SourceMixData | null>(null);
   const [month, setMonth] = useState(currentMonthKey);
+  const [tier, setTier] = useState<Tier>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -155,10 +165,23 @@ export default function SourceMix() {
   // Si el histórico completo está vacío, no mostrar nada
   if (month === 'all' && data.grandTotal === 0) return null;
 
-  const inPct = data.inbound.pct;
-  const outPct = data.outbound.pct;
+  // Mix del tier activo: 'all' usa el total; orca/delfín usan su subconjunto.
+  // Así el mismo reporte de origen se parte por valor del lead.
+  const activeMix: Mix = tier === 'all' ? data : data.byTier[tier];
+  const inPct = activeMix.inbound.pct;
+  const outPct = activeMix.outbound.pct;
 
-  const periodLabel = month === 'all' ? `${data.grandTotal} leads en total` : `${data.grandTotal} leads en el mes`;
+  const orcaTotal = data.byTier.orca.grandTotal;
+  const delfinTotal = data.byTier.delfin.grandTotal;
+
+  const periodLabel =
+    month === 'all' ? `${activeMix.grandTotal} leads en total` : `${activeMix.grandTotal} leads en el mes`;
+
+  const TIER_PILLS: { key: Tier; label: string }[] = [
+    { key: 'all', label: `Todos ${data.grandTotal}` },
+    { key: 'orca', label: `🐋 Orcas ${orcaTotal}` },
+    { key: 'delfin', label: `🐬 Delfines ${delfinTotal}` },
+  ];
 
   // Garantiza que el mes seleccionado (por defecto, el mes en curso) siempre
   // sea una opción, aunque el API aún no lo devuelva por no tener leads.
@@ -188,9 +211,30 @@ export default function SourceMix() {
         </div>
       </div>
 
-      {month !== 'all' && data.grandTotal === 0 ? (
+      {/* Selector de tier: parte el origen en 🐋 orcas (alto valor) vs 🐬 delfines */}
+      <div className="flex items-center gap-1.5 mb-3">
+        {TIER_PILLS.map((p) => (
+          <button
+            key={p.key}
+            onClick={() => setTier(p.key)}
+            className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              tier === p.key
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {activeMix.grandTotal === 0 ? (
         <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-gray-100 shadow-sm text-center text-sm text-gray-400">
-          No entraron leads en {monthLabel(month)}
+          {(tier === 'orca'
+            ? 'No entraron orcas'
+            : tier === 'delfin'
+              ? 'No entraron delfines'
+              : 'No entraron leads') + (month === 'all' ? ' en todo el tiempo' : ` en ${monthLabel(month)}`)}
         </div>
       ) : (
       <>
@@ -210,7 +254,7 @@ export default function SourceMix() {
           emoji="🟢"
           color="#059669"
           track="#ecfdf5"
-          data={data.inbound}
+          data={activeMix.inbound}
           subtitle="vinieron solos"
         />
         <Side
@@ -218,7 +262,7 @@ export default function SourceMix() {
           emoji="🔵"
           color="#2563eb"
           track="#eff6ff"
-          data={data.outbound}
+          data={activeMix.outbound}
           subtitle="fuimos a buscarlos"
         />
       </div>

@@ -82,13 +82,32 @@ export async function GET(request: Request) {
 
     // 1) All businesses (only the fields we need). Traemos potential_tier del
     // análisis para poder partir las pérdidas en 🐋 orcas vs 🐬 delfines.
-    const { data: businesses, error: bizErr } = await supabase
-      .from('businesses')
-      .select('id, name, phone, sales_stage, lost_reason, lead_channel, source, created_at, service_analyses (potential_tier)');
-
-    if (bizErr || !businesses) {
-      console.error('insights: error fetching businesses', bizErr);
-      return NextResponse.json({ error: 'Error al obtener insights' }, { status: 500 });
+    // OJO: hay que paginar. Supabase corta en 1000 filas por defecto; sin el
+    // loop, todo lead más allá de la fila 1000 desaparecía del reporte y los
+    // conteos salían mal (bug real: pérdidas sub-contadas).
+    type BizRow = {
+      id: string; name: string | null; phone: string | null; sales_stage: string | null;
+      lost_reason: string | null; lead_channel: string | null; source: string | null;
+      created_at: string | null; service_analyses: { potential_tier?: string | null }[] | { potential_tier?: string | null } | null;
+    };
+    const businesses: BizRow[] = [];
+    {
+      const pageSize = 1000;
+      let page = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('businesses')
+          .select('id, name, phone, sales_stage, lost_reason, lead_channel, source, created_at, service_analyses (potential_tier)')
+          .range(page * pageSize, page * pageSize + pageSize - 1);
+        if (error) {
+          console.error('insights: error fetching businesses', error);
+          return NextResponse.json({ error: 'Error al obtener insights' }, { status: 500 });
+        }
+        if (!data || data.length === 0) break;
+        businesses.push(...(data as BizRow[]));
+        if (data.length < pageSize) break;
+        page += 1;
+      }
     }
 
     // Tier por negocio: 'orca' | 'delfin' | 'unknown'. service_analyses es 1:many

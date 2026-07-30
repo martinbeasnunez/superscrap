@@ -42,6 +42,7 @@ interface LeadRow {
   lead_status: string | null;
   sales_stage: string | null;
   created_at: string | null;
+  source: string | null;
   service_analyses?: { potential_tier?: string | null }[] | { potential_tier?: string | null } | null;
 }
 
@@ -53,6 +54,11 @@ function leadTier(b: LeadRow): Tier {
   const analysis = Array.isArray(b.service_analyses) ? b.service_analyses[0] : b.service_analyses;
   const t = analysis?.potential_tier;
   return t === 'orca' || t === 'delfin' ? t : 'unknown';
+}
+
+// 'manual' = lo tomó una persona; 'auto' = lo trabaja el bot solo (default en DB).
+function leadSource(b: LeadRow): 'auto' | 'manual' {
+  return b.source === 'manual' ? 'manual' : 'auto';
 }
 
 function hasBotFingerprint(b: LeadRow): boolean {
@@ -96,7 +102,7 @@ export async function GET(request: Request) {
     while (true) {
       const { data, error } = await supabase
         .from('businesses')
-        .select('external_id, rating, lead_channel, lead_status, sales_stage, created_at, service_analyses (potential_tier)')
+        .select('external_id, rating, lead_channel, lead_status, sales_stage, created_at, source, service_analyses (potential_tier)')
         .range(from, from + PAGE - 1);
       if (error) throw error;
       if (!data || data.length === 0) break;
@@ -163,17 +169,33 @@ export async function GET(request: Request) {
       };
     };
 
-    const mixAll = buildMix(all);
-    const byTier = {
-      orca: buildMix(all.filter((b) => leadTier(b) === 'orca')),
-      delfin: buildMix(all.filter((b) => leadTier(b) === 'delfin')),
+    // Matriz tier × source: se cruzan dos filtros (valor del lead y quién lo
+    // trabaja). Precomputamos las 9 celdas para que el front cruce ambos y use
+    // contadores contextuales que siempre cuadran.
+    const cell = (tierKey: 'all' | 'orca' | 'delfin', sourceKey: 'all' | 'auto' | 'manual') =>
+      buildMix(
+        all.filter(
+          (b) =>
+            (tierKey === 'all' || leadTier(b) === tierKey) &&
+            (sourceKey === 'all' || leadSource(b) === sourceKey)
+        )
+      );
+    const bySource = (tierKey: 'all' | 'orca' | 'delfin') => ({
+      all: cell(tierKey, 'all'),
+      auto: cell(tierKey, 'auto'),
+      manual: cell(tierKey, 'manual'),
+    });
+    const byTierSource = {
+      all: bySource('all'),
+      orca: bySource('orca'),
+      delfin: bySource('delfin'),
     };
 
     return NextResponse.json({
       month,
       availableMonths,
-      ...mixAll,
-      byTier,
+      ...byTierSource.all.all,
+      byTierSource,
     });
   } catch (error) {
     console.error('Error in source-mix:', error);

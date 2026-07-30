@@ -94,11 +94,15 @@ export async function GET(request: Request) {
     // Tier por negocio: 'orca' | 'delfin' | 'unknown'. service_analyses es 1:many
     // pero solo tomamos el primero (como en el kanban). Sin análisis → 'unknown'.
     const tierByBiz: Record<string, 'orca' | 'delfin' | 'unknown'> = {};
+    // Source por negocio: 'auto' (lo trabaja el bot solo) | 'manual' (lo tomó una
+    // persona / se cargó a mano). Default 'auto', igual que en la DB.
+    const sourceByBiz: Record<string, 'auto' | 'manual'> = {};
     for (const b of businesses) {
       const sa = b as unknown as { id: string; service_analyses?: { potential_tier?: string | null }[] | { potential_tier?: string | null } | null };
       const analysis = Array.isArray(sa.service_analyses) ? sa.service_analyses[0] : sa.service_analyses;
       const t = analysis?.potential_tier;
       tierByBiz[b.id] = t === 'orca' || t === 'delfin' ? t : 'unknown';
+      sourceByBiz[b.id] = b.source === 'manual' ? 'manual' : 'auto';
     }
 
     // 2) Stage change history — paginated
@@ -226,22 +230,33 @@ export async function GET(request: Request) {
       return { lost: ids.size, lossByReason, lossByPreviousStage };
     };
 
-    // 4+5) ── Pérdidas: total y partido por tier (orca / delfín / unknown) ──
-    const idsByTier = {
-      orca: new Set<string>(),
-      delfin: new Set<string>(),
-      unknown: new Set<string>(),
+    // 4+5) ── Pérdidas partidas por 2 dimensiones que se cruzan ──
+    //   tier:   all / orca / delfín  (valor del lead)
+    //   source: all / auto / manual  (lo trabaja el bot o una persona)
+    // Precomputamos las 9 combinaciones para que el front pueda cruzar ambos
+    // filtros y mostrar contadores contextuales que siempre cuadran.
+    const subset = (tierKey: 'all' | 'orca' | 'delfin', sourceKey: 'all' | 'auto' | 'manual') => {
+      const ids = new Set<string>();
+      lostBusinessIds.forEach(id => {
+        if (tierKey !== 'all' && tierByBiz[id] !== tierKey) return;
+        if (sourceKey !== 'all' && sourceByBiz[id] !== sourceKey) return;
+        ids.add(id);
+      });
+      return buildLossBreakdown(ids);
     };
-    lostBusinessIds.forEach(id => idsByTier[tierByBiz[id] ?? 'unknown'].add(id));
-
-    const overall = buildLossBreakdown(lostBusinessIds);
-    const lossByReason = overall.lossByReason;
-    const lossByPreviousStage = overall.lossByPreviousStage;
-    const lossByTier = {
-      orca: buildLossBreakdown(idsByTier.orca),
-      delfin: buildLossBreakdown(idsByTier.delfin),
-      unknown: buildLossBreakdown(idsByTier.unknown),
+    const bySource = (tierKey: 'all' | 'orca' | 'delfin') => ({
+      all: subset(tierKey, 'all'),
+      auto: subset(tierKey, 'auto'),
+      manual: subset(tierKey, 'manual'),
+    });
+    const lossByTierSource = {
+      all: bySource('all'),
+      orca: bySource('orca'),
+      delfin: bySource('delfin'),
     };
+    // Compat: total sin partir (por si algo lo usa).
+    const lossByReason = lossByTierSource.all.all.lossByReason;
+    const lossByPreviousStage = lossByTierSource.all.all.lossByPreviousStage;
 
     // 6) ── Channel performance (manual leads only) ──
     const channelAgg: Record<string, { total: number; won: number; lost: number; active: number }> = {};
@@ -328,7 +343,7 @@ export async function GET(request: Request) {
       summary: { totalLeads, wonClientes, lostPerdidos, activeLeads, winRate },
       lossByPreviousStage,
       lossByReason,
-      lossByTier,
+      lossByTierSource,
       channelPerformance,
       duplicates: {
         phoneGroups: phoneDuplicates,

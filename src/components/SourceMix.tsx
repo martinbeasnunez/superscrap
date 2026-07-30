@@ -24,14 +24,15 @@ interface Mix {
 }
 
 type Tier = 'all' | 'orca' | 'delfin';
+type Source = 'all' | 'auto' | 'manual';
+
+// Matriz tier × source: cada celda es un mix inbound/outbound completo.
+type BySource = Record<Source, Mix>;
 
 interface SourceMixData extends Mix {
   month: string;
   availableMonths: string[];
-  byTier: {
-    orca: Mix;
-    delfin: Mix;
-  };
+  byTierSource: Record<Tier, BySource>;
 }
 
 // 'YYYY-MM' -> 'Junio 2026'
@@ -142,6 +143,7 @@ export default function SourceMix() {
   const [data, setData] = useState<SourceMixData | null>(null);
   const [month, setMonth] = useState(currentMonthKey);
   const [tier, setTier] = useState<Tier>('all');
+  const [source, setSource] = useState<Source>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -165,22 +167,29 @@ export default function SourceMix() {
   // Si el histórico completo está vacío, no mostrar nada
   if (month === 'all' && data.grandTotal === 0) return null;
 
-  // Mix del tier activo: 'all' usa el total; orca/delfín usan su subconjunto.
-  // Así el mismo reporte de origen se parte por valor del lead.
-  const activeMix: Mix = tier === 'all' ? data : data.byTier[tier];
+  // Celda activa de la matriz tier × source. Los dos filtros se cruzan: p.ej.
+  // 🐋 orcas + 🤖 automáticas. Todo el mix de origen sale de aquí.
+  const activeMix: Mix = data.byTierSource[tier][source];
   const inPct = activeMix.inbound.pct;
   const outPct = activeMix.outbound.pct;
 
-  const orcaTotal = data.byTier.orca.grandTotal;
-  const delfinTotal = data.byTier.delfin.grandTotal;
+  // Contadores contextuales: cada pill se cuenta dentro del OTRO filtro activo,
+  // así los números de las dos filas siempre cuadran con lo que se ve.
+  const tierCount = (t: Tier) => data.byTierSource[t][source].grandTotal;
+  const sourceCount = (s: Source) => data.byTierSource[tier][s].grandTotal;
 
   const periodLabel =
     month === 'all' ? `${activeMix.grandTotal} leads en total` : `${activeMix.grandTotal} leads en el mes`;
 
   const TIER_PILLS: { key: Tier; label: string }[] = [
-    { key: 'all', label: `Todos ${data.grandTotal}` },
-    { key: 'orca', label: `🐋 Orcas ${orcaTotal}` },
-    { key: 'delfin', label: `🐬 Delfines ${delfinTotal}` },
+    { key: 'all', label: `Todos ${tierCount('all')}` },
+    { key: 'orca', label: `🐋 Orcas ${tierCount('orca')}` },
+    { key: 'delfin', label: `🐬 Delfines ${tierCount('delfin')}` },
+  ];
+  const SOURCE_PILLS: { key: Source; label: string }[] = [
+    { key: 'all', label: `Todos ${sourceCount('all')}` },
+    { key: 'auto', label: `🤖 Auto ${sourceCount('auto')}` },
+    { key: 'manual', label: `✋ Manual ${sourceCount('manual')}` },
   ];
 
   // Garantiza que el mes seleccionado (por defecto, el mes en curso) siempre
@@ -211,30 +220,43 @@ export default function SourceMix() {
         </div>
       </div>
 
-      {/* Selector de tier: parte el origen en 🐋 orcas (alto valor) vs 🐬 delfines */}
-      <div className="flex items-center gap-1.5 mb-3">
-        {TIER_PILLS.map((p) => (
-          <button
-            key={p.key}
-            onClick={() => setTier(p.key)}
-            className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-colors ${
-              tier === p.key
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* Dos filtros que se cruzan: valor del lead (🐋/🐬) y quién lo trabaja (🤖/✋) */}
+      <div className="flex flex-col gap-1.5 mb-3">
+        <div className="flex items-center gap-1.5">
+          {TIER_PILLS.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setTier(p.key)}
+              className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                tier === p.key
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {SOURCE_PILLS.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setSource(p.key)}
+              className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                source === p.key
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeMix.grandTotal === 0 ? (
         <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-gray-100 shadow-sm text-center text-sm text-gray-400">
-          {(tier === 'orca'
-            ? 'No entraron orcas'
-            : tier === 'delfin'
-              ? 'No entraron delfines'
-              : 'No entraron leads') + (month === 'all' ? ' en todo el tiempo' : ` en ${monthLabel(month)}`)}
+          No entraron leads con ese filtro{month === 'all' ? ' en todo el tiempo' : ` en ${monthLabel(month)}`}
         </div>
       ) : (
       <>

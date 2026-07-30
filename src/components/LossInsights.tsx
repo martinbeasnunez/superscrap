@@ -23,6 +23,10 @@ interface TierBreakdown {
 }
 
 type Tier = 'all' | 'orca' | 'delfin';
+type Source = 'all' | 'auto' | 'manual';
+
+// Matriz tier × source: cada celda es un desglose completo de pérdidas.
+type BySource = Record<Source, TierBreakdown>;
 
 interface Insights {
   month: string;
@@ -36,11 +40,7 @@ interface Insights {
   };
   lossByPreviousStage: LossByStage[];
   lossByReason: LossByReason[];
-  lossByTier: {
-    orca: TierBreakdown;
-    delfin: TierBreakdown;
-    unknown: TierBreakdown;
-  };
+  lossByTierSource: Record<Tier, BySource>;
 }
 
 // 'YYYY-MM' -> 'Junio 2026'
@@ -90,6 +90,7 @@ export default function LossInsights() {
   const [data, setData] = useState<Insights | null>(null);
   const [month, setMonth] = useState(currentMonthKey);
   const [tier, setTier] = useState<Tier>('all');
+  const [source, setSource] = useState<Source>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -113,17 +114,19 @@ export default function LossInsights() {
   // Con un mes elegido mostramos el header + un vacío (para poder cambiar de mes).
   if (month === 'all' && data.summary.lostPerdidos === 0) return null;
 
-  const { summary, lossByTier } = data;
+  const { summary, lossByTierSource } = data;
 
-  // Conteos por tier para el selector 🐋/🐬 y para el subconjunto activo.
-  const orcaLost = lossByTier.orca.lost;
-  const delfinLost = lossByTier.delfin.lost;
+  // Celda activa de la matriz tier × source. Los dos filtros se cruzan: p.ej.
+  // 🐋 orcas + ✋ manuales. El reporte (motivos, etapa, insight) sale de aquí.
+  const active = lossByTierSource[tier][source];
+  const activeLost = active.lost;
+  const lossByReason = active.lossByReason;
+  const lossByPreviousStage = active.lossByPreviousStage;
 
-  // Datos del tier activo: 'all' usa el total; orca/delfín usan su subconjunto.
-  // Así el mismo reporte (motivos, etapa, insight) se parte por valor del lead.
-  const activeLost = tier === 'all' ? summary.lostPerdidos : lossByTier[tier].lost;
-  const lossByReason = tier === 'all' ? data.lossByReason : lossByTier[tier].lossByReason;
-  const lossByPreviousStage = tier === 'all' ? data.lossByPreviousStage : lossByTier[tier].lossByPreviousStage;
+  // Contadores contextuales: cada pill se cuenta dentro del OTRO filtro activo,
+  // así los números de las dos filas siempre cuadran con lo que se ve.
+  const tierCount = (t: Tier) => lossByTierSource[t][source].lost;
+  const sourceCount = (s: Source) => lossByTierSource[tier][s].lost;
 
   // Motivos con razón registrada (excluye "Sin razón") para las recomendaciones.
   const reasonsWithLabel = lossByReason.filter((r) => r.reason !== 'unset');
@@ -169,18 +172,21 @@ export default function LossInsights() {
   const decided = summary.wonClientes + summary.lostPerdidos;
   const lostShare = decided > 0 ? Math.round((summary.lostPerdidos / decided) * 100) : 0;
 
-  // Texto del contador según el tier activo (el % de decididos solo aplica al total).
+  // El % de decididos solo tiene sentido en el total sin filtrar.
   const headerCount =
-    tier === 'all'
+    tier === 'all' && source === 'all'
       ? `${summary.lostPerdidos} perdidos · ${lostShare}% de los decididos`
-      : tier === 'orca'
-        ? `${activeLost} orcas perdidas`
-        : `${activeLost} delfines perdidos`;
+      : `${activeLost} ${activeLost === 1 ? 'perdido' : 'perdidos'}`;
 
   const TIER_PILLS: { key: Tier; label: string }[] = [
-    { key: 'all', label: `Todos ${summary.lostPerdidos}` },
-    { key: 'orca', label: `🐋 Orcas ${orcaLost}` },
-    { key: 'delfin', label: `🐬 Delfines ${delfinLost}` },
+    { key: 'all', label: `Todos ${tierCount('all')}` },
+    { key: 'orca', label: `🐋 Orcas ${tierCount('orca')}` },
+    { key: 'delfin', label: `🐬 Delfines ${tierCount('delfin')}` },
+  ];
+  const SOURCE_PILLS: { key: Source; label: string }[] = [
+    { key: 'all', label: `Todos ${sourceCount('all')}` },
+    { key: 'auto', label: `🤖 Auto ${sourceCount('auto')}` },
+    { key: 'manual', label: `✋ Manual ${sourceCount('manual')}` },
   ];
 
   // Garantiza que el mes seleccionado (por defecto el mes en curso) siempre sea
@@ -213,30 +219,43 @@ export default function LossInsights() {
         </div>
       </div>
 
-      {/* Selector de tier: parte las pérdidas en 🐋 orcas (alto valor) vs 🐬 delfines */}
-      <div className="flex items-center gap-1.5 mb-3">
-        {TIER_PILLS.map((p) => (
-          <button
-            key={p.key}
-            onClick={() => setTier(p.key)}
-            className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-colors ${
-              tier === p.key
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-            }`}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* Dos filtros que se cruzan: valor del lead (🐋/🐬) y quién lo trabaja (🤖/✋) */}
+      <div className="flex flex-col gap-1.5 mb-3">
+        <div className="flex items-center gap-1.5">
+          {TIER_PILLS.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setTier(p.key)}
+              className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                tier === p.key
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {SOURCE_PILLS.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setSource(p.key)}
+              className={`text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                source === p.key
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeLost === 0 ? (
         <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-gray-100 shadow-sm text-center text-sm text-gray-400">
-          {(tier === 'orca'
-            ? 'No se perdió ninguna orca'
-            : tier === 'delfin'
-              ? 'No se perdió ningún delfín'
-              : 'No se perdió ningún lead') + (month === 'all' ? ' en todo el tiempo' : ` en ${monthLabel(month)}`)}
+          No se perdió ningún lead con ese filtro{month === 'all' ? ' en todo el tiempo' : ` en ${monthLabel(month)}`}
         </div>
       ) : (
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm">

@@ -50,6 +50,26 @@ export async function GET() {
     const lastWeekEndUTC = new Date(lastWeekEnd.getTime() - peruOffset * 60000);
     const lastWeekEndISO = lastWeekEndUTC.toISOString();
 
+    // Supabase corta en 1000 filas por defecto. Este helper pagina cualquier
+    // query de FILAS para no sub-contar (mismo bug que arreglamos en insights).
+    // Las queries de solo `count` (head: true) no lo necesitan.
+    const fetchAll = async (
+      makeQuery: (fromRow: number, toRow: number) => PromiseLike<{ data: any[] | null; error: any }>
+    ): Promise<any[]> => {
+      const pageSize = 1000;
+      const rows: any[] = [];
+      let page = 0;
+      while (true) {
+        const { data, error } = await makeQuery(page * pageSize, page * pageSize + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        rows.push(...data);
+        if (data.length < pageSize) break;
+        page += 1;
+      }
+      return rows;
+    };
+
     // Total búsquedas
     const { count: totalSearches } = await supabase
       .from('searches')
@@ -61,9 +81,11 @@ export async function GET() {
       .select('*', { count: 'exact', head: true });
 
     // Stats de contactos - usando sales_stage como fuente de verdad
-    const { data: contactStats } = await supabase
-      .from('businesses')
-      .select('contact_actions, lead_status, sales_stage, contact_status, contacted_at, contacted_by');
+    const contactStats = await fetchAll((from, to) =>
+      supabase
+        .from('businesses')
+        .select('contact_actions, lead_status, sales_stage, contact_status, contacted_at, contacted_by')
+        .range(from, to));
 
     // Obtener usuarios para mapear IDs a nombres
     const { data: users } = await supabase
@@ -231,20 +253,36 @@ export async function GET() {
     const businessIds = contactStats?.map((b: any) => b.id) || [];
 
     // Obtener negocios con sus IDs
-    const { data: businessesWithIds } = await supabase
-      .from('businesses')
-      .select('id, contact_actions, lead_status, contacted_at')
-      .not('contact_actions', 'is', null)
-      .neq('lead_status', 'discarded')
-      .neq('lead_status', 'prospect');
+    const businessesWithIds = await fetchAll((from, to) =>
+      supabase
+        .from('businesses')
+        .select('id, contact_actions, lead_status, contacted_at')
+        .not('contact_actions', 'is', null)
+        .neq('lead_status', 'discarded')
+        .neq('lead_status', 'prospect')
+        .range(from, to));
 
     const validBusinessIds = businessesWithIds?.map((b: any) => b.id) || [];
 
-    const { data: history } = await supabase
-      .from('contact_history')
-      .select('business_id, created_at')
-      .in('business_id', validBusinessIds)
-      .order('created_at', { ascending: false });
+    // El historial se filtra por una lista grande de IDs: la partimos en lotes
+    // para no reventar el largo de la URL, y paginamos cada lote. Cada lote son
+    // negocios distintos, así que el "último contacto" (primer registro desc)
+    // sigue siendo correcto.
+    const history: any[] = [];
+    {
+      const CHUNK = 200;
+      for (let i = 0; i < validBusinessIds.length; i += CHUNK) {
+        const chunk = validBusinessIds.slice(i, i + CHUNK);
+        const part = await fetchAll((from, to) =>
+          supabase
+            .from('contact_history')
+            .select('business_id, created_at')
+            .in('business_id', chunk)
+            .order('created_at', { ascending: false })
+            .range(from, to));
+        history.push(...part);
+      }
+    }
 
     // Agrupar ultimo contacto por negocio
     const lastContactByBusiness: Record<string, string> = {};
@@ -268,9 +306,10 @@ export async function GET() {
 
     // Insights: obtener datos de prospectos con su tipo de negocio y distrito
     // Prospectos = interesado + cotizado (pipeline activo)
-    const { data: prospectsData } = await supabase
-      .from('businesses')
-      .select(`
+    const prospectsData = await fetchAll((from, to) =>
+      supabase
+        .from('businesses')
+        .select(`
         id,
         address,
         search_id,
@@ -281,7 +320,8 @@ export async function GET() {
           city
         )
       `)
-      .or('sales_stage.eq.interesado,sales_stage.eq.cotizado,and(sales_stage.is.null,lead_status.eq.prospect)');
+        .or('sales_stage.eq.interesado,sales_stage.eq.cotizado,and(sales_stage.is.null,lead_status.eq.prospect)')
+        .range(from, to));
 
     // Analizar qué tipos de negocio convierten mejor
     const typeStats: Record<string, { prospects: number; total: number }> = {};
@@ -310,19 +350,25 @@ export async function GET() {
       }
     });
 
-    // Contar totales por tipo de negocio (contactados)
-    const { data: businessesByType } = await supabase
-      .from('businesses')
-      .select(`
+    // Contar totales por tipo de negocio (contactados).
+    // El filtro `.not('contact_actions','eq','[]')` reventaba en Postgres
+    // ("malformed array literal") y el error se tragaba en silencio, así que
+    // este total nunca se poblaba. Ahora traemos todo y filtramos en JS.
+    const businessesByType = await fetchAll((from, to) =>
+      supabase
+        .from('businesses')
+        .select(`
         search_id,
         contact_actions,
         searches (
           business_type
         )
       `)
-      .not('contact_actions', 'eq', '[]');
+        .range(from, to));
 
     businessesByType?.forEach((b: any) => {
+      const actions = b.contact_actions;
+      if (!Array.isArray(actions) || actions.length === 0) return; // solo contactados
       const businessType = b.searches?.business_type || 'Desconocido';
       if (!typeStats[businessType]) {
         typeStats[businessType] = { prospects: 0, total: 0 };
@@ -330,10 +376,14 @@ export async function GET() {
       typeStats[businessType].total++;
     });
 
-    // Encontrar el mejor tipo de negocio (con al menos 3 contactados)
+    // Encontrar el mejor tipo de negocio (con al menos 3 contactados).
+    // Excluye 'Desconocido' (sin business_type) — no sirve como insight.
     let bestType: { name: string; rate: number; prospects: number } | null = null;
     for (const [type, stats] of Object.entries(typeStats)) {
-      if (stats.total >= 3) {
+      if (type === 'Desconocido') continue;
+      // Solo tipos con al menos 3 contactados Y al menos 1 prospecto, si no el
+      // "mejor tipo" saldría con 0% de conversión (insight vacío).
+      if (stats.total >= 3 && stats.prospects > 0) {
         const rate = (stats.prospects / stats.total) * 100;
         if (!bestType || rate > bestType.rate) {
           bestType = { name: type, rate, prospects: stats.prospects };
@@ -348,10 +398,12 @@ export async function GET() {
       .map(([name, stats]) => ({ name, prospects: stats.prospects }));
 
     // Orca/Delfin scoring stats
-    const { data: scoringData } = await supabase
-      .from('service_analyses')
-      .select('potential_tier, potential_score, estimated_revenue_min, estimated_revenue_max')
-      .not('potential_tier', 'is', null);
+    const scoringData = await fetchAll((from, to) =>
+      supabase
+        .from('service_analyses')
+        .select('potential_tier, potential_score, estimated_revenue_min, estimated_revenue_max')
+        .not('potential_tier', 'is', null)
+        .range(from, to));
 
     let orcaCount = 0, delfinCount = 0, unknownCount = 0;
     let orcaRevenueMin = 0, orcaRevenueMax = 0;
@@ -372,10 +424,12 @@ export async function GET() {
     });
 
     // Coaching: join businesses with service_analyses for tier-aware pipeline data
-    const { data: coachingData } = await supabase
-      .from('businesses')
-      .select('id, name, sales_stage, contact_actions, lead_status, search_id, service_analyses (potential_tier), searches (business_type)')
-      .not('service_analyses', 'is', null);
+    const coachingData = await fetchAll((from, to) =>
+      supabase
+        .from('businesses')
+        .select('id, name, sales_stage, contact_actions, lead_status, search_id, service_analyses (potential_tier), searches (business_type)')
+        .not('service_analyses', 'is', null)
+        .range(from, to));
 
     let orcaProspects = 0, delfinProspects = 0, unknownProspects = 0;
     let orcaContacted = 0, delfinContacted = 0;

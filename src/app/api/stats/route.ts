@@ -95,13 +95,16 @@ export async function GET() {
     const userMap = new Map<string, string>();
     users?.forEach((u) => userMap.set(u.id, u.name));
 
-    // Get actual contact_history for accurate today/week counts
-    const { data: historyEntries } = await supabase
-      .from('contact_history')
-      .select('action_type, created_at')
-      .gte('created_at', lastWeekStartISO)
-      .in('action_type', ['whatsapp', 'auto_whatsapp', 'email', 'call'])
-      .limit(5000);
+    // Get actual contact_history for accurate today/week counts.
+    // Paginado (no un tope fijo) para que no se quede corto si sube el volumen
+    // de envíos — a prueba de futuro.
+    const historyEntries = await fetchAll((from, to) =>
+      supabase
+        .from('contact_history')
+        .select('action_type, created_at')
+        .gte('created_at', lastWeekStartISO)
+        .in('action_type', ['whatsapp', 'auto_whatsapp', 'email', 'call'])
+        .range(from, to));
 
     // Count from contact_history (accurate, event-based)
     let whatsappTodayManual = 0, whatsappTodayAuto = 0;
@@ -223,12 +226,14 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .gte('created_at', todayISO);
 
-    // Obtener follow-ups de hoy desde contact_history
+    // Obtener follow-ups de hoy desde contact_history (paginado, a prueba de futuro)
     // Incluimos is_follow_up si existe la columna
-    const { data: todayHistory } = await supabase
-      .from('contact_history')
-      .select('business_id, user_id, created_at, is_follow_up')
-      .gte('created_at', todayISO);
+    const todayHistory = await fetchAll((from, to) =>
+      supabase
+        .from('contact_history')
+        .select('business_id, user_id, created_at, is_follow_up')
+        .gte('created_at', todayISO)
+        .range(from, to));
 
     // Contar follow-ups por usuario hoy usando el flag is_follow_up
     todayHistory?.forEach((h: any) => {

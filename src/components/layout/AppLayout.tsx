@@ -29,10 +29,11 @@ const isPublicLandingPage = (path: string) => {
 const getPageTitle = (pathname: string, t: (key: string) => string) => {
   if (pathname === '/estadisticas' || pathname === '/') return t('nav.home');
   if (pathname === '/seguimiento') return t('nav.pipeline');
-  if (pathname === '/cerrar-orcas') return t('nav.orcas');
   if (pathname === '/buscar') return t('nav.search');
   if (pathname === '/historial') return t('nav.history');
   if (pathname === '/landings') return t('nav.landings');
+  if (pathname === '/partnerships') return t('nav.partnerships');
+  if (pathname === '/crossup') return 'Crossup';
   return 'ORBIT';
 };
 

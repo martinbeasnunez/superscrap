@@ -45,6 +45,17 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
       badge: null,
     },
     {
+      name: t('nav.orcas'),
+      href: '/cerrar-orcas',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15a3 3 0 100-6 3 3 0 000 6zM12 3v3M12 18v3M3 12h3M18 12h3" />
+        </svg>
+      ),
+      badge: null,
+    },
+    {
       name: t('nav.search'),
       href: '/buscar',
       icon: (

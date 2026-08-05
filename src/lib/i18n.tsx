@@ -85,6 +85,7 @@ const translations: Record<Locale, Record<string, string>> = {
     // ==================== CRM NAVIGATION ====================
     'nav.home': 'Home',
     'nav.pipeline': 'Pipeline',
+    'nav.orcas': 'Cerrar Orcas',
     'nav.search': 'Buscar',
     'nav.history': 'Historial',
     'nav.landings': 'Landings',
@@ -718,6 +719,7 @@ const translations: Record<Locale, Record<string, string>> = {
     // ==================== CRM NAVIGATION ====================
     'nav.home': 'Home',
     'nav.pipeline': 'Pipeline',
+    'nav.orcas': 'Close Orcas',
     'nav.search': 'Search',
     'nav.history': 'History',
     'nav.landings': 'Landings',

@@ -4,7 +4,7 @@
 // Corre local con launchd en localhost:3000 (siempre vivo).
 // Se puede sobreescribir con NEXT_PUBLIC_PARTNERSHIPS_URL si cambia el dominio.
 const PARTNERSHIPS_URL =
-  process.env.NEXT_PUBLIC_PARTNERSHIPS_URL || 'http://localhost:3000';
+  process.env.NEXT_PUBLIC_PARTNERSHIPS_URL || 'http://localhost:3000/pipeline';
 
 export default function PartnershipsPage() {
   return (

@@ -18,6 +18,7 @@ export async function PATCH(
       contact_actions, lead_status, sales_stage, user_id, previous_stage,
       primary_dm_index, auto_followup_enabled, last_email_template_id,
       skip_auto_send, notes, source, lead_channel, lost_reason, is_focus,
+      contacted_by,
     } = body;
 
     // Validar contact_actions (array de acciones)
@@ -65,6 +66,12 @@ export async function PATCH(
       updateData.contact_actions = contact_actions;
       updateData.contacted_at = contact_actions.length > 0 ? new Date().toISOString() : null;
       updateData.contacted_by = contact_actions.length > 0 && user_id ? user_id : null;
+    }
+
+    // Asignar/quitar dueño explícitamente (reclamar orca desde "Cerrar Orcas").
+    // Se aplica después de contact_actions para que gane si vienen ambos.
+    if (contacted_by !== undefined) {
+      updateData.contacted_by = contacted_by; // null = soltar la orca
     }
 
     if (lead_status !== undefined) {

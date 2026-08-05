@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
-// War-room de cierre de orcas. Vive como pestaña dentro del Pipeline (/seguimiento).
+// Panel de caza de orcas — brújula informativa dentro del Pipeline (/seguimiento).
+// Solo lectura: a quién pegarle, en qué estado, dónde está la plata, cuáles nadie
+// trabaja. El cierre (mensajes, llamadas, registro) se hace fuera (chat + Chrome).
 
 interface OrcaLead {
   id: string;
@@ -98,7 +100,6 @@ export default function OrcaWarRoom() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<CurrentUser | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
 
   const [focus, setFocus] = useState<FocusChip>('todas');
   const [stageFilter, setStageFilter] = useState<string>('all');
@@ -126,48 +127,6 @@ export default function OrcaWarRoom() {
   }, []);
 
   useEffect(() => { fetchOrcas(); }, [fetchOrcas]);
-
-  const patchBusiness = async (id: string, body: Record<string, unknown>) => {
-    const res = await fetch(`/api/businesses/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error('patch failed');
-  };
-
-  const claim = async (o: OrcaLead) => {
-    if (!user) { alert('Inicia sesión para reclamar orcas.'); return; }
-    setBusyId(o.id);
-    const prev = orcas;
-    setOrcas((cur) => cur.map((x) => x.id === o.id ? { ...x, ownerId: user.id, ownerName: user.name } : x));
-    try {
-      await patchBusiness(o.id, { contacted_by: user.id });
-    } catch {
-      setOrcas(prev);
-      alert('No se pudo reclamar. Reintenta.');
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const changeStage = async (o: OrcaLead, newStage: string) => {
-    if (newStage === o.stage) return;
-    setBusyId(o.id);
-    const prev = orcas;
-    setOrcas((cur) => cur.map((x) => x.id === o.id ? { ...x, stage: newStage } : x));
-    try {
-      // skip_auto_send: en el war-room avanzar stage NO dispara WhatsApp automático;
-      // el outreach lo hace la persona por los botones de contacto.
-      await patchBusiness(o.id, { sales_stage: newStage, previous_stage: o.stage, skip_auto_send: true });
-      fetchOrcas();
-    } catch {
-      setOrcas(prev);
-      alert('No se pudo cambiar la etapa. Reintenta.');
-    } finally {
-      setBusyId(null);
-    }
-  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -199,7 +158,7 @@ export default function OrcaWarRoom() {
       {/* Intro + refresh */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <p className="text-sm text-gray-500">
-          War-room de cierre. Ataca por score, reclama las sin dueño, avanza el pipeline.
+          Brújula de caza: a quién pegarle primero, dónde está la plata, cuáles nadie trabaja.
         </p>
         <button
           onClick={fetchOrcas}
@@ -273,14 +232,7 @@ export default function OrcaWarRoom() {
           <p className="text-xs text-gray-400 mb-2">{filtered.length} orca{filtered.length === 1 ? '' : 's'}</p>
           <div className="space-y-2">
             {filtered.map((o) => (
-              <OrcaRow
-                key={o.id}
-                o={o}
-                busy={busyId === o.id}
-                isMine={!!user && o.ownerId === user.id}
-                onClaim={() => claim(o)}
-                onStage={(s) => changeStage(o, s)}
-              />
+              <OrcaRow key={o.id} o={o} isMine={!!user && o.ownerId === user.id} />
             ))}
           </div>
         </>
@@ -299,13 +251,9 @@ function Kpi({ label, value, sub, accent, small }: { label: string; value: strin
   );
 }
 
-function OrcaRow({ o, busy, isMine, onClaim, onStage }: {
-  o: OrcaLead; busy: boolean; isMine: boolean;
-  onClaim: () => void; onStage: (s: string) => void;
-}) {
-  const closed = o.stage === 'cliente' || o.stage === 'perdido';
+function OrcaRow({ o, isMine }: { o: OrcaLead; isMine: boolean }) {
   return (
-    <div className={`bg-white rounded-xl border border-l-4 ${o.score !== null && o.score >= 62 ? 'border-l-emerald-400' : 'border-l-blue-300'} border-gray-100 shadow-sm px-3 sm:px-4 py-3 ${busy ? 'opacity-60' : ''}`}>
+    <div className={`bg-white rounded-xl border border-l-4 ${o.score !== null && o.score >= 62 ? 'border-l-emerald-400' : 'border-l-blue-300'} border-gray-100 shadow-sm px-3 sm:px-4 py-3`}>
       <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
         {/* Score */}
         <div className={`flex-shrink-0 w-11 h-11 rounded-lg border flex flex-col items-center justify-center ${scoreClasses(o.score)}`}>
@@ -328,56 +276,38 @@ function OrcaRow({ o, busy, isMine, onClaim, onStage }: {
           </div>
         </div>
 
-        {/* Dueño */}
+        {/* Dueño (solo lectura) */}
         <div className="flex-shrink-0">
           {o.ownerId ? (
             <span className={`text-xs px-2 py-1 rounded-full ${isMine ? 'bg-[#0890F1]/10 text-[#0890F1] font-semibold' : 'bg-gray-100 text-gray-600'}`}>
               {isMine ? '⭐ Mía' : o.ownerName}
             </span>
           ) : (
-            <button
-              onClick={onClaim}
-              disabled={busy}
-              className="text-xs px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 font-medium disabled:opacity-50"
-            >
-              Reclamar
-            </button>
+            <span className="text-xs px-2 py-1 rounded-full bg-rose-50 text-rose-500 border border-rose-100">sin dueño</span>
           )}
         </div>
 
-        {/* Acciones de contacto */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {o.phone && (
-            <>
-              <a
-                href={`https://wa.me/${waNumber(o.phone)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="WhatsApp"
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-              </a>
-              <a
-                href={`tel:${o.phone}`}
-                title="Llamar"
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-              </a>
-            </>
-          )}
-          {/* Avanzar etapa */}
-          <select
-            value={o.stage}
-            onChange={(e) => onStage(e.target.value)}
-            disabled={busy}
-            title="Cambiar etapa"
-            className={`text-xs border rounded-lg pl-2 pr-1 py-1.5 text-gray-700 bg-white disabled:opacity-50 ${closed ? 'border-gray-200' : 'border-gray-300'}`}
-          >
-            {STAGES.map((s) => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
-          </select>
-        </div>
+        {/* Acceso rápido de contacto (no muta datos) */}
+        {o.phone && (
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <a
+              href={`https://wa.me/${waNumber(o.phone)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Abrir WhatsApp"
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+            </a>
+            <a
+              href={`tel:${o.phone}`}
+              title="Llamar"
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

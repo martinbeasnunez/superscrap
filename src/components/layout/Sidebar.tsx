@@ -45,17 +45,6 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
       badge: null,
     },
     {
-      name: t('nav.orcas'),
-      href: '/cerrar-orcas',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15a3 3 0 100-6 3 3 0 000 6zM12 3v3M12 18v3M3 12h3M18 12h3" />
-        </svg>
-      ),
-      badge: null,
-    },
-    {
       name: t('nav.search'),
       href: '/buscar',
       icon: (
@@ -81,6 +70,26 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+        </svg>
+      ),
+      badge: null,
+    },
+    {
+      name: t('nav.partnerships'),
+      href: '/partnerships',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h.01M8 7a4 4 0 108 0 4 4 0 00-8 0zM16 7h.01M3 20a5 5 0 0110 0M14 20a5 5 0 0110 0" />
+        </svg>
+      ),
+      badge: null,
+    },
+    {
+      name: 'Crossup',
+      href: '/crossup',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
         </svg>
       ),
       badge: null,

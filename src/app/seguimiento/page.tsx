@@ -17,6 +17,18 @@ const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
   ),
 });
 
+// War-room de orcas — pestaña dentro del pipeline (client-only, hace su propio fetch)
+const OrcaWarRoom = dynamic(() => import('@/components/OrcaWarRoom'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin h-10 w-10 border-3 border-[#0890F1] border-t-transparent rounded-full" />
+    </div>
+  ),
+});
+
+type PipelineView = 'kanban' | 'orcas';
+
 interface QuickStats {
   newLeads: number;
   followUpNeeded: number;
@@ -27,6 +39,7 @@ interface QuickStats {
 export default function PipelinePage() {
   const [stats, setStats] = useState<QuickStats | null>(null);
   const [showTips, setShowTips] = useState(false);
+  const [view, setView] = useState<PipelineView>('kanban');
   const { t } = useI18n();
 
   useEffect(() => {
@@ -64,7 +77,7 @@ export default function PipelinePage() {
         </div>
 
         {/* Quick Stats - Desktop */}
-        {stats && (
+        {view === 'kanban' && stats && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-6 bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-100">
               <div className="text-center">
@@ -91,8 +104,28 @@ export default function PipelinePage() {
         )}
       </div>
 
-      {/* Tips collapsible - Desktop only */}
-      <div className="hidden lg:block mb-4">
+      {/* Tabs: Kanban | Orcas */}
+      <div className="flex items-center gap-1 mb-4 bg-white border border-gray-200 rounded-xl p-1 w-fit shadow-sm">
+        <button
+          onClick={() => setView('kanban')}
+          className={`text-sm font-medium px-4 py-1.5 rounded-lg transition-colors ${
+            view === 'kanban' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          {t('pipe.tab_kanban')}
+        </button>
+        <button
+          onClick={() => setView('orcas')}
+          className={`text-sm font-medium px-4 py-1.5 rounded-lg transition-colors ${
+            view === 'orcas' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          🐋 {t('pipe.tab_orcas')}
+        </button>
+      </div>
+
+      {/* Tips collapsible - Desktop only (solo en vista Kanban) */}
+      <div className={`${view === 'kanban' ? 'hidden lg:block' : 'hidden'} mb-4`}>
         <button
           onClick={() => setShowTips(!showTips)}
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
@@ -151,10 +184,14 @@ export default function PipelinePage() {
         )}
       </div>
 
-      {/* Kanban Board */}
-      <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-2 sm:p-3 lg:p-4 overflow-hidden">
-        <KanbanBoard />
-      </div>
+      {/* Contenido según pestaña */}
+      {view === 'kanban' ? (
+        <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-2 sm:p-3 lg:p-4 overflow-hidden">
+          <KanbanBoard />
+        </div>
+      ) : (
+        <OrcaWarRoom />
+      )}
     </div>
   );
 }

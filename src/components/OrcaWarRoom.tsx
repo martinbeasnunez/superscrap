@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
-// ---- tipos (espejo del endpoint /api/orcas) ----
+// War-room de cierre de orcas. Vive como pestaña dentro del Pipeline (/seguimiento).
+
 interface OrcaLead {
   id: string;
   name: string;
@@ -91,7 +92,7 @@ function daysLabel(days: number | null, contacted: boolean): string {
   return `hace ${days}d`;
 }
 
-export default function CerrarOrcasPage() {
+export default function OrcaWarRoom() {
   const [orcas, setOrcas] = useState<OrcaLead[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,7 +127,6 @@ export default function CerrarOrcasPage() {
 
   useEffect(() => { fetchOrcas(); }, [fetchOrcas]);
 
-  // ---- acciones ----
   const patchBusiness = async (id: string, body: Record<string, unknown>) => {
     const res = await fetch(`/api/businesses/${id}`, {
       method: 'PATCH',
@@ -160,7 +160,6 @@ export default function CerrarOrcasPage() {
       // skip_auto_send: en el war-room avanzar stage NO dispara WhatsApp automático;
       // el outreach lo hace la persona por los botones de contacto.
       await patchBusiness(o.id, { sales_stage: newStage, previous_stage: o.stage, skip_auto_send: true });
-      // refrescar summary para que los KPIs cuadren
       fetchOrcas();
     } catch {
       setOrcas(prev);
@@ -170,7 +169,6 @@ export default function CerrarOrcasPage() {
     }
   };
 
-  // ---- filtrado ----
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return orcas.filter((o) => {
@@ -197,20 +195,15 @@ export default function CerrarOrcasPage() {
   ];
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 pb-24 lg:pb-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-5">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            Cerrar Orcas <span>🐋</span>
-          </h1>
-          <p className="text-gray-500 mt-0.5 text-sm">
-            Tu war-room de cierre. Ataca por score, reclama las sin dueño, avanza el pipeline.
-          </p>
-        </div>
+    <div>
+      {/* Intro + refresh */}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <p className="text-sm text-gray-500">
+          War-room de cierre. Ataca por score, reclama las sin dueño, avanza el pipeline.
+        </p>
         <button
           onClick={fetchOrcas}
-          className="hidden sm:inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm flex-shrink-0"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
           Actualizar

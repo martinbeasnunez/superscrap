@@ -57,7 +57,8 @@ const STAGE_PILL: Record<string, string> = {
   perdido: 'bg-rose-100 text-rose-700',
 };
 
-type FocusChip = 'todas' | 'calientes' | 'sin_tocar' | 'sin_dueno' | 'mias';
+type FocusChip = 'todas' | 'calientes' | 'sin_tocar' | 'sin_dueno';
+type OwnerFilter = 'all' | 'martin' | 'alejandro' | 'bot';
 
 function waNumber(phone: string): string {
   // Quita no-dígitos y el "0" troncal nacional (ej. "(01) 4375151" → "14375151")
@@ -94,10 +95,8 @@ function daysLabel(days: number | null, contacted: boolean): string {
   return `hace ${days}d`;
 }
 
-export default function OrcaWarRoom() {
+export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: OwnerFilter } = {}) {
   const [orcas, setOrcas] = useState<OrcaLead[]>([]);
-  const [mine, setMine] = useState<OrcaLead[]>([]); // mis leads que NO son orca (delfines/otros)
-  const [myStats, setMyStats] = useState<{ total: number; orcas: number; contactedToday: number; prospects: number } | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,9 +123,7 @@ export default function OrcaWarRoom() {
       if (!res.ok) throw new Error('fetch failed');
       const data = await res.json();
       setOrcas(data.orcas || []);
-      setMine(data.mine || []);
       setSummary(data.summary || null);
-      setMyStats(data.myStats || null);
     } catch {
       setError('No se pudieron cargar las orcas. Reintenta.');
     } finally {
@@ -138,29 +135,29 @@ export default function OrcaWarRoom() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    // En "Mías" sumamos mis delfines/otros a la lista de orcas; en el resto, solo orcas.
-    const source = focus === 'mias' ? [...orcas, ...mine] : orcas;
-    return source.filter((o) => {
+    return orcas.filter((o) => {
       if (hideClosed && (o.stage === 'cliente' || o.stage === 'perdido')) return false;
       if (stageFilter !== 'all' && o.stage !== stageFilter) return false;
       if (focus === 'calientes' && !(o.stage === 'interesado' || o.stage === 'cotizado')) return false;
       if (focus === 'sin_tocar' && o.contacted) return false;
       if (focus === 'sin_dueno' && o.ownerId) return false;
-      if (focus === 'mias' && (!user || o.ownerId !== user.id)) return false;
+      // Filtro por vendedor compartido (barra del Pipeline)
+      if (ownerFilter === 'martin' && !(o.ownerName === 'Martin' || o.ownerName === 'Martín')) return false;
+      if (ownerFilter === 'alejandro' && o.ownerName !== 'Alejandro') return false;
+      if (ownerFilter === 'bot' && !(!o.ownerId && o.contacted)) return false;
       if (q) {
         const hay = [o.name, o.phone, o.businessType, o.city, o.address].filter(Boolean).join(' ').toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [orcas, mine, search, stageFilter, focus, hideClosed, user]);
+  }, [orcas, search, stageFilter, focus, hideClosed, ownerFilter]);
 
   const chips: { id: FocusChip; label: string; count?: number }[] = [
     { id: 'todas', label: 'Todas' },
     { id: 'calientes', label: '🔥 Calientes', count: summary?.hot },
     { id: 'sin_tocar', label: '🆕 Sin tocar', count: summary?.untouched },
     { id: 'sin_dueno', label: '👤 Sin dueño', count: summary?.sinDueno },
-    { id: 'mias', label: '⭐ Mías', count: myStats?.total },
   ];
 
   return (
@@ -178,28 +175,6 @@ export default function OrcaWarRoom() {
           Actualizar
         </button>
       </div>
-
-      {/* 👑 Tu día — resumen del trabajo del usuario, con acceso a "Mías" */}
-      {myStats && myStats.total > 0 && (
-        <button
-          onClick={() => setFocus('mias')}
-          className={`w-full text-left rounded-xl px-4 py-3 mb-4 border transition-colors ${
-            focus === 'mias' ? 'bg-[#0890F1] border-[#0890F1] text-white' : 'bg-[#0890F1]/5 border-[#0890F1]/20 hover:bg-[#0890F1]/10'
-          }`}
-        >
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-baseline gap-4 flex-wrap">
-              <span className={`font-bold ${focus === 'mias' ? 'text-white' : 'text-[#0890F1]'}`}>👑 Tu día</span>
-              <span className={`text-sm ${focus === 'mias' ? 'text-white/90' : 'text-gray-600'}`}>
-                Contactaste hoy <b>{myStats.contactedToday}</b> · <b>{myStats.prospects}</b> prospectos · <b>{myStats.orcas}</b> orcas · <b>{myStats.total}</b> leads tuyos
-              </span>
-            </div>
-            <span className={`text-xs font-semibold ${focus === 'mias' ? 'text-white' : 'text-[#0890F1]'}`}>
-              {focus === 'mias' ? '✓ viendo los tuyos' : 'Ver los míos →'}
-            </span>
-          </div>
-        </button>
-      )}
 
       {/* KPIs */}
       {summary && (
@@ -261,7 +236,7 @@ export default function OrcaWarRoom() {
         </div>
       ) : (
         <>
-          <p className="text-xs text-gray-400 mb-2">{filtered.length} {focus === 'mias' ? 'lead' : 'orca'}{filtered.length === 1 ? '' : 's'}</p>
+          <p className="text-xs text-gray-400 mb-2">{filtered.length} orca{filtered.length === 1 ? '' : 's'}</p>
           <div className="space-y-2">
             {filtered.map((o) => (
               <OrcaRow key={o.id} o={o} isMine={!!user && o.ownerId === user.id} />

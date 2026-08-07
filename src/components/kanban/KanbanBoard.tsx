@@ -83,7 +83,15 @@ function getFollowUpTip(urgentCount: number, criticalCount: number, contactedWit
   return `✅ ¡Buen trabajo! Mantén el ritmo de seguimiento constante.`;
 }
 
-export default function KanbanBoard() {
+type OwnerFilter = 'all' | 'martin' | 'alejandro' | 'bot';
+
+export default function KanbanBoard({
+  ownerFilter: ownerFilterProp,
+  onOwnerFilterChange,
+}: {
+  ownerFilter?: OwnerFilter;
+  onOwnerFilterChange?: (o: OwnerFilter) => void;
+} = {}) {
   const [columns, setColumns] = useState<Record<KanbanColumnId, KanbanBusiness[]>>({
     nuevo: [],
     contactado: [],
@@ -113,7 +121,10 @@ export default function KanbanBoard() {
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
   const [focusFilter, setFocusFilter] = useState<'all' | 'focus'>('all');
   // Filtro por vendedor/dueño: ver en qué va cada uno (Martín, Alejandro, Bot).
-  const [ownerFilter, setOwnerFilter] = useState<'all' | 'martin' | 'alejandro' | 'bot'>('all');
+  // Controlado desde el Pipeline (barra compartida) cuando llega por prop; si no, local.
+  const [ownerFilterInternal, setOwnerFilterInternal] = useState<OwnerFilter>('all');
+  const ownerFilter = ownerFilterProp ?? ownerFilterInternal;
+  const setOwnerFilter = onOwnerFilterChange ?? setOwnerFilterInternal;
   // Filtro por mes de creación del lead ('all' | 'YYYY-MM')
   const [monthFilter, setMonthFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -897,8 +908,9 @@ export default function KanbanBoard() {
           );
         })()}
 
-        {/* Filtro por vendedor: ver en qué va cada uno */}
-        {(() => {
+        {/* Filtro por vendedor: ver en qué va cada uno.
+            Se oculta cuando el Pipeline controla el filtro (barra compartida). */}
+        {!onOwnerFilterChange && (() => {
           const flat = Object.values(columns).flat();
           const mCount = flat.filter(l => l.owner_name === 'Martin' || l.owner_name === 'Martín').length;
           const aCount = flat.filter(l => l.owner_name === 'Alejandro').length;

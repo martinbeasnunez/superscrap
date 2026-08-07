@@ -4,15 +4,36 @@ import { useEffect, useState } from 'react';
 
 interface DayPoint {
   date: string;       // YYYY-MM-DD (Lima local)
-  manual: number;     // sent by Alejandro
+  manual: number;     // total manual sends (all sellers)
   auto: number;       // sent by the cron
   reply: number;      // inbound replies
+  manualBy: Record<string, number>; // manual sends split by seller name
 }
+
+interface Sender { name: string; count: number; }
 
 interface DailyResponse {
   days: number;
   series: DayPoint[];
   totals: { manual: number; auto: number; reply: number };
+  senders: Sender[];  // sellers with manual sends, sorted by volume
+}
+
+// Color por vendedor (clases literales para que Tailwind las incluya).
+const SENDER_COLORS: Record<string, string> = {
+  'Alejandro': 'bg-orange-500',
+  'Martin': 'bg-blue-500',
+  'Martín': 'bg-blue-500',
+};
+const FALLBACK_COLORS = ['bg-teal-500', 'bg-pink-500', 'bg-amber-500', 'bg-indigo-500', 'bg-rose-500'];
+function colorFor(name: string, idx: number): string {
+  return SENDER_COLORS[name] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+}
+// Emoji por vendedor para la leyenda/tooltip.
+function iconFor(name: string): string {
+  if (name === 'Alejandro') return '✋';
+  if (name === 'Martin' || name === 'Martín') return '👑';
+  return '🧑';
 }
 
 function formatDayLabel(iso: string): string {
@@ -82,10 +103,12 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
             <span className="inline-block w-3 h-3 rounded-sm bg-purple-500"></span>
             <span className="text-gray-700">🤖 Auto <strong>{data.totals.auto}</strong></span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-3 rounded-sm bg-orange-500"></span>
-            <span className="text-gray-700">✋ Alejandro <strong>{data.totals.manual}</strong></span>
-          </span>
+          {(data.senders || []).map((sd, i) => (
+            <span key={sd.name} className="flex items-center gap-1.5">
+              <span className={`inline-block w-3 h-3 rounded-sm ${colorFor(sd.name, i)}`}></span>
+              <span className="text-gray-700">{iconFor(sd.name)} {sd.name} <strong>{sd.count}</strong></span>
+            </span>
+          ))}
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-3 rounded-sm bg-emerald-500"></span>
             <span className="text-gray-700">💬 Respuestas <strong>{data.totals.reply}</strong></span>
@@ -116,7 +139,9 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
           <span>
             <strong>{formatDayLabel(hover.date)}</strong>
             <span className="text-purple-700 ml-2">🤖 {hover.auto}</span>
-            <span className="text-orange-700 ml-2">✋ {hover.manual}</span>
+            {Object.entries(hover.manualBy || {}).map(([name, n]) => (
+              <span key={name} className="text-gray-700 ml-2">{iconFor(name)} {name} {n}</span>
+            ))}
             <span className="text-emerald-700 ml-2">💬 {hover.reply}</span>
             <span className="text-gray-500 ml-2">· Total enviado: {hover.auto + hover.manual}</span>
           </span>
@@ -134,7 +159,13 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
               const sentTotal = d.manual + d.auto;
               const totalPx = Math.round((sentTotal / yMax) * CHART_H);
               const autoPx = sentTotal > 0 ? Math.round((d.auto / sentTotal) * totalPx) : 0;
-              const manualPx = Math.max(0, totalPx - autoPx);
+              // Un segmento por vendedor (mismo orden que la leyenda).
+              const senderSegs = (data.senders || [])
+                .map((sd, si) => {
+                  const c = d.manualBy?.[sd.name] || 0;
+                  return { px: sentTotal > 0 ? Math.round((c / sentTotal) * totalPx) : 0, cls: colorFor(sd.name, si) };
+                })
+                .filter((s) => s.px > 0);
               const replyPx = Math.round((d.reply / yMax) * CHART_H);
               const weekend = isWeekend(d.date);
               return (
@@ -156,16 +187,17 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
                     >
                       {autoPx > 0 && (
                         <div
-                          className="bg-purple-500 group-hover:bg-purple-600 transition-colors"
+                          className="bg-purple-500 transition-colors"
                           style={{ height: `${autoPx}px` }}
                         />
                       )}
-                      {manualPx > 0 && (
+                      {senderSegs.map((seg, si) => (
                         <div
-                          className="bg-orange-500 group-hover:bg-orange-600 transition-colors"
-                          style={{ height: `${manualPx}px` }}
+                          key={si}
+                          className={`${seg.cls} transition-colors`}
+                          style={{ height: `${seg.px}px` }}
                         />
-                      )}
+                      ))}
                     </div>
                   )}
                   {/* Reply marker — thin emerald line at the reply count height */}

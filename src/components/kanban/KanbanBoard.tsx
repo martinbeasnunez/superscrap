@@ -112,6 +112,8 @@ export default function KanbanBoard() {
   const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
   const [focusFilter, setFocusFilter] = useState<'all' | 'focus'>('all');
+  // Filtro por vendedor/dueño: ver en qué va cada uno (Martín, Alejandro, Bot).
+  const [ownerFilter, setOwnerFilter] = useState<'all' | 'martin' | 'alejandro' | 'bot'>('all');
   // Filtro por mes de creación del lead ('all' | 'YYYY-MM')
   const [monthFilter, setMonthFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -238,10 +240,14 @@ export default function KanbanBoard() {
       const industry = detectIndustry(lead.business_type, lead.name);
       industryCounts[industry] = (industryCounts[industry] || 0) + 1;
     });
-    // Sort by count descending, filter out industries with 0
+    // Filter out industries with 0, sort alphabetically by label
     return Object.entries(industryCounts)
       .filter(([, count]) => count > 0)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => {
+        const labelA = INDUSTRY_LABELS[a[0]]?.label || a[0];
+        const labelB = INDUSTRY_LABELS[b[0]]?.label || b[0];
+        return labelA.localeCompare(labelB, 'es');
+      })
       .map(([industry, count]) => ({ industry: industry as IndustryCategory, count }));
   }, [columns]);
 
@@ -270,7 +276,7 @@ export default function KanbanBoard() {
   // Filtered columns based on industry + phone + search + month filters
   const filteredColumns = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && sourceFilter === 'all' && focusFilter === 'all' && monthFilter === 'all' && !q) return columns;
+    if (industryFilter === 'all' && phoneFilter === 'all' && tierFilter === 'all' && sourceFilter === 'all' && focusFilter === 'all' && ownerFilter === 'all' && monthFilter === 'all' && !q) return columns;
     const filtered: Record<KanbanColumnId, KanbanBusiness[]> = {
       nuevo: [], contactado: [], seguimiento_1: [], seguimiento_2: [],
       seguimiento_3: [], interesado: [], cotizado: [], cliente: [], perdido: [],
@@ -290,6 +296,9 @@ export default function KanbanBoard() {
         if (tierFilter !== 'all' && lead.potential_tier !== tierFilter) return false;
         if (sourceFilter === 'manual' && lead.source !== 'manual') return false;
         if (focusFilter === 'focus' && !lead.is_focus) return false;
+        if (ownerFilter === 'martin' && !(lead.owner_name === 'Martin' || lead.owner_name === 'Martín')) return false;
+        if (ownerFilter === 'alejandro' && lead.owner_name !== 'Alejandro') return false;
+        if (ownerFilter === 'bot' && !(!lead.contacted_by && lead.contacted_at)) return false;
         if (monthFilter !== 'all' && (lead.created_at?.slice(0, 7) ?? '') !== monthFilter) return false;
         if (q) {
           const haystack = [lead.name, lead.phone, lead.address, lead.business_type, lead.city]
@@ -300,7 +309,7 @@ export default function KanbanBoard() {
       });
     });
     return filtered;
-  }, [columns, industryFilter, phoneFilter, tierFilter, sourceFilter, focusFilter, monthFilter, searchQuery]);
+  }, [columns, industryFilter, phoneFilter, tierFilter, sourceFilter, focusFilter, ownerFilter, monthFilter, searchQuery]);
 
   const updateBusinessStage = async (businessId: string, newStage: KanbanColumnId, oldStage?: KanbanColumnId) => {
     try {
@@ -885,6 +894,32 @@ export default function KanbanBoard() {
             >
               ⭐ {focusCount}
             </button>
+          );
+        })()}
+
+        {/* Filtro por vendedor: ver en qué va cada uno */}
+        {(() => {
+          const flat = Object.values(columns).flat();
+          const mCount = flat.filter(l => l.owner_name === 'Martin' || l.owner_name === 'Martín').length;
+          const aCount = flat.filter(l => l.owner_name === 'Alejandro').length;
+          const bCount = flat.filter(l => !l.contacted_by && l.contacted_at).length;
+          const chip = (key: 'martin' | 'alejandro' | 'bot', label: string, count: number, on: string, off: string) => (
+            count === 0 ? null : (
+              <button
+                key={key}
+                onClick={() => setOwnerFilter(ownerFilter === key ? 'all' : key)}
+                className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${ownerFilter === key ? on : off}`}
+              >
+                {label} {count}
+              </button>
+            )
+          );
+          return (
+            <>
+              {chip('martin', '👑 Martín', mCount, 'bg-[#0890F1] text-white', 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200')}
+              {chip('alejandro', '🧑 Alejandro', aCount, 'bg-teal-600 text-white', 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200')}
+              {chip('bot', '🤖 Bot', bCount, 'bg-purple-600 text-white', 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200')}
+            </>
           );
         })()}
 

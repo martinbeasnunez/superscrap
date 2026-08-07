@@ -241,18 +241,21 @@ export function calculatePotentialScore(input: ScoringInput): PotentialScore {
   // ---- CLAMP SCORE ----
   score = Math.max(0, Math.min(100, score));
 
+  // ---- REVENUE ESTIMATION (facturación mensual según tamaño/score) ----
+  const revenue = estimateRevenue(score);
+
   // ---- DETERMINE TIER ----
+  // Regla de negocio (Martín, GM): orca = potencial de S/2,500/mes o más.
+  // Se decide por la facturación estimada (su punto medio), no por un score abstracto.
+  const revenueMid = (revenue.min + revenue.max) / 2;
   let tier: PotentialTier;
-  if (score >= 55) {
+  if (revenueMid >= 2500) {
     tier = 'orca';
   } else if (score >= 20) {
     tier = 'delfin';
   } else {
     tier = 'unknown';
   }
-
-  // ---- REVENUE ESTIMATION ----
-  const revenue = estimateRevenue(tier, score);
 
   return {
     score,
@@ -263,21 +266,18 @@ export function calculatePotentialScore(input: ScoringInput): PotentialScore {
   };
 }
 
+// Facturación mensual estimada de lavandería según el tamaño/calidad del negocio
+// (score). Independiente del tier — el tier se deriva DESPUÉS con el umbral de
+// S/2,500. El piso de orca cae alrededor de score 38.
 function estimateRevenue(
-  tier: PotentialTier,
   score: number,
 ): { min: number; max: number; label: string } {
-  if (tier === 'orca') {
-    if (score >= 80) return { min: 8000, max: 15000, label: 'S/8,000 - S/15,000' };
-    if (score >= 65) return { min: 5000, max: 10000, label: 'S/5,000 - S/10,000' };
-    return { min: 4000, max: 7000, label: 'S/4,000 - S/7,000' };
-  }
-
-  if (tier === 'delfin') {
-    if (score >= 40) return { min: 2000, max: 4000, label: 'S/2,000 - S/4,000' };
-    if (score >= 30) return { min: 1000, max: 2500, label: 'S/1,000 - S/2,500' };
-    return { min: 500, max: 1500, label: 'S/500 - S/1,500' };
-  }
-
-  return { min: 0, max: 500, label: 'S/0 - S/500' };
+  if (score >= 78) return { min: 8000, max: 15000, label: 'S/8,000 - S/15,000' };
+  if (score >= 65) return { min: 5000, max: 10000, label: 'S/5,000 - S/10,000' };
+  if (score >= 55) return { min: 4000, max: 7000,  label: 'S/4,000 - S/7,000' };
+  if (score >= 45) return { min: 2800, max: 5000,  label: 'S/2,800 - S/5,000' };
+  if (score >= 38) return { min: 2500, max: 4000,  label: 'S/2,500 - S/4,000' };
+  if (score >= 30) return { min: 1500, max: 2600,  label: 'S/1,500 - S/2,600' };
+  if (score >= 20) return { min: 800,  max: 1800,  label: 'S/800 - S/1,800' };
+  return { min: 0, max: 600, label: 'S/0 - S/600' };
 }

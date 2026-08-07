@@ -51,6 +51,8 @@ export interface KanbanBusiness {
   lead_status: string | null;
   sales_stage: SalesStage | null;
   contacted_at: string | null;
+  contacted_by: string | null;      // id del vendedor dueño (null = sin dueño / bot)
+  owner_name: string | null;        // nombre del vendedor dueño
   created_at: string | null; // Fecha en que el lead entró al pipeline — usado por el filtro por mes
   search_id: string;
   business_type: string | null;
@@ -146,6 +148,7 @@ export async function GET() {
         lead_status,
         sales_stage,
         contacted_at,
+        contacted_by,
         created_at,
         search_id,
         primary_dm_index,
@@ -323,6 +326,10 @@ export async function GET() {
       perdido: [],
     };
 
+    // Mapa de usuarios para mostrar el dueño (vendedor) de cada lead.
+    const { data: kUsers } = await supabase.from('users').select('id, name');
+    const kUserMap = new Map<string, string>((kUsers || []).map((u) => [u.id, u.name]));
+
     businesses?.forEach((b: any) => {
       let daysSinceContact: number | null = null;
       if (b.contacted_at) {
@@ -348,6 +355,8 @@ export async function GET() {
         lead_status: b.lead_status,
         sales_stage: b.sales_stage,
         contacted_at: b.contacted_at,
+        contacted_by: b.contacted_by ?? null,
+        owner_name: b.contacted_by ? (kUserMap.get(b.contacted_by) || 'Otro') : null,
         created_at: b.created_at ?? null,
         search_id: b.search_id,
         business_type: b.searches?.business_type || null,

@@ -30,8 +30,12 @@ const STAGES = [
   'seguimiento_3', 'interesado', 'cotizado', 'cliente', 'perdido',
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // ?owner=<userId> → además de las orcas, traemos TODOS los leads de ese
+    // usuario (incluye delfines) + su resumen del día, para la vista "Tu día".
+    const owner = new URL(request.url).searchParams.get('owner');
+
     // Supabase corta en 1000 filas — paginamos aunque hoy sean ~481 orcas,
     // a prueba de crecimiento.
     const fetchAll = async (
@@ -51,25 +55,13 @@ export async function GET() {
       return rows;
     };
 
-    // !inner filtra el padre (businesses) por el tier del hijo (service_analyses).
-    const rows = await fetchAll((from, to) =>
-      supabase
-        .from('businesses')
-        .select(`
-          id, name, phone, address, contact_actions, sales_stage, contacted_at, contacted_by, source,
-          searches ( business_type, city ),
-          service_analyses!inner ( potential_tier, potential_score, estimated_revenue_min, estimated_revenue_max )
-        `)
-        .eq('service_analyses.potential_tier', 'orca')
-        .range(from, to));
-
     const { data: users } = await supabase.from('users').select('id, name');
     const userMap = new Map<string, string>((users || []).map((u) => [u.id, u.name]));
 
     const now = Date.now();
     const one = (v: any) => (Array.isArray(v) ? v[0] : v) || {};
 
-    const orcas: OrcaLead[] = rows.map((b) => {
+    const toLead = (b: any): OrcaLead => {
       const a = one(b.service_analyses);
       const s = one(b.searches);
       const stage = STAGES.includes(b.sales_stage) ? b.sales_stage : 'nuevo';
@@ -96,7 +88,22 @@ export async function GET() {
         daysSinceContact: days,
         source: b.source || null,
       };
-    });
+    };
+
+    const SELECT = `
+      id, name, phone, address, contact_actions, sales_stage, contacted_at, contacted_by, source,
+      searches ( business_type, city ),
+      service_analyses ( potential_tier, potential_score, estimated_revenue_min, estimated_revenue_max )`;
+
+    // !inner filtra el padre (businesses) por el tier del hijo (service_analyses).
+    const rows = await fetchAll((from, to) =>
+      supabase
+        .from('businesses')
+        .select(SELECT.replace('service_analyses (', 'service_analyses!inner ('))
+        .eq('service_analyses.potential_tier', 'orca')
+        .range(from, to));
+
+    const orcas: OrcaLead[] = rows.map(toLead);
 
     // Orden por defecto: score desc (nulls al final), luego más frío arriba.
     orcas.sort((a, b) => {
@@ -119,7 +126,35 @@ export async function GET() {
       byStage: Object.fromEntries(STAGES.map((s) => [s, orcas.filter((o) => o.stage === s).length])),
     };
 
-    return NextResponse.json({ orcas, summary });
+    // ---- Vista "Tu día": leads del usuario que NO son orca (delfines/otros) + su resumen ----
+    let mine: OrcaLead[] = [];
+    let myStats: {
+      total: number; orcas: number; contactedToday: number; prospects: number;
+    } | null = null;
+    if (owner) {
+      const ownerRows = await fetchAll((from, to) =>
+        supabase.from('businesses').select(SELECT).eq('contacted_by', owner).range(from, to));
+      const orcaIds = new Set(orcas.map((o) => o.id));
+      mine = ownerRows
+        .filter((b) => one(b.service_analyses).potential_tier !== 'orca' && !orcaIds.has(b.id))
+        .map(toLead);
+
+      // todayISO en hora Perú (UTC-5), como el resto del app
+      const peruOffset = -5 * 60;
+      const peru = new Date(now + (peruOffset - new Date().getTimezoneOffset()) * 60000);
+      const startPeru = new Date(peru.getFullYear(), peru.getMonth(), peru.getDate());
+      const todayISO = new Date(startPeru.getTime() - peruOffset * 60000).toISOString();
+
+      const myLeads = [...orcas.filter((o) => o.ownerId === owner), ...mine];
+      myStats = {
+        total: myLeads.length,
+        orcas: orcas.filter((o) => o.ownerId === owner).length,
+        contactedToday: myLeads.filter((o) => o.contactedAt && o.contactedAt >= todayISO).length,
+        prospects: myLeads.filter((o) => o.stage === 'interesado' || o.stage === 'cotizado').length,
+      };
+    }
+
+    return NextResponse.json({ orcas, mine, summary, myStats });
   } catch (error) {
     console.error('Orcas endpoint error:', error);
     return NextResponse.json({ error: 'Error al obtener orcas' }, { status: 500 });

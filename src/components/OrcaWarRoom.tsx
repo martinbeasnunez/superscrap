@@ -96,6 +96,8 @@ function daysLabel(days: number | null, contacted: boolean): string {
 
 export default function OrcaWarRoom() {
   const [orcas, setOrcas] = useState<OrcaLead[]>([]);
+  const [mine, setMine] = useState<OrcaLead[]>([]); // mis leads que NO son orca (delfines/otros)
+  const [myStats, setMyStats] = useState<{ total: number; orcas: number; contactedToday: number; prospects: number } | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,11 +116,17 @@ export default function OrcaWarRoom() {
   const fetchOrcas = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch('/api/orcas');
+      // Leemos el usuario de localStorage acá (no del estado) para evitar carreras
+      // en el primer render: así el owner viaja siempre en la primera carga.
+      let ownerId = '';
+      try { ownerId = JSON.parse(localStorage.getItem('orbit_user') || 'null')?.id || ''; } catch { /* ignore */ }
+      const res = await fetch(`/api/orcas${ownerId ? `?owner=${ownerId}` : ''}`);
       if (!res.ok) throw new Error('fetch failed');
       const data = await res.json();
       setOrcas(data.orcas || []);
+      setMine(data.mine || []);
       setSummary(data.summary || null);
+      setMyStats(data.myStats || null);
     } catch {
       setError('No se pudieron cargar las orcas. Reintenta.');
     } finally {
@@ -130,7 +138,9 @@ export default function OrcaWarRoom() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return orcas.filter((o) => {
+    // En "Mías" sumamos mis delfines/otros a la lista de orcas; en el resto, solo orcas.
+    const source = focus === 'mias' ? [...orcas, ...mine] : orcas;
+    return source.filter((o) => {
       if (hideClosed && (o.stage === 'cliente' || o.stage === 'perdido')) return false;
       if (stageFilter !== 'all' && o.stage !== stageFilter) return false;
       if (focus === 'calientes' && !(o.stage === 'interesado' || o.stage === 'cotizado')) return false;
@@ -143,14 +153,14 @@ export default function OrcaWarRoom() {
       }
       return true;
     });
-  }, [orcas, search, stageFilter, focus, hideClosed, user]);
+  }, [orcas, mine, search, stageFilter, focus, hideClosed, user]);
 
   const chips: { id: FocusChip; label: string; count?: number }[] = [
     { id: 'todas', label: 'Todas' },
     { id: 'calientes', label: '🔥 Calientes', count: summary?.hot },
     { id: 'sin_tocar', label: '🆕 Sin tocar', count: summary?.untouched },
     { id: 'sin_dueno', label: '👤 Sin dueño', count: summary?.sinDueno },
-    { id: 'mias', label: '⭐ Mías' },
+    { id: 'mias', label: '⭐ Mías', count: myStats?.total },
   ];
 
   return (
@@ -168,6 +178,28 @@ export default function OrcaWarRoom() {
           Actualizar
         </button>
       </div>
+
+      {/* 👑 Tu día — resumen del trabajo del usuario, con acceso a "Mías" */}
+      {myStats && myStats.total > 0 && (
+        <button
+          onClick={() => setFocus('mias')}
+          className={`w-full text-left rounded-xl px-4 py-3 mb-4 border transition-colors ${
+            focus === 'mias' ? 'bg-[#0890F1] border-[#0890F1] text-white' : 'bg-[#0890F1]/5 border-[#0890F1]/20 hover:bg-[#0890F1]/10'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-baseline gap-4 flex-wrap">
+              <span className={`font-bold ${focus === 'mias' ? 'text-white' : 'text-[#0890F1]'}`}>👑 Tu día</span>
+              <span className={`text-sm ${focus === 'mias' ? 'text-white/90' : 'text-gray-600'}`}>
+                Contactaste hoy <b>{myStats.contactedToday}</b> · <b>{myStats.prospects}</b> prospectos · <b>{myStats.orcas}</b> orcas · <b>{myStats.total}</b> leads tuyos
+              </span>
+            </div>
+            <span className={`text-xs font-semibold ${focus === 'mias' ? 'text-white' : 'text-[#0890F1]'}`}>
+              {focus === 'mias' ? '✓ viendo los tuyos' : 'Ver los míos →'}
+            </span>
+          </div>
+        </button>
+      )}
 
       {/* KPIs */}
       {summary && (
@@ -229,7 +261,7 @@ export default function OrcaWarRoom() {
         </div>
       ) : (
         <>
-          <p className="text-xs text-gray-400 mb-2">{filtered.length} orca{filtered.length === 1 ? '' : 's'}</p>
+          <p className="text-xs text-gray-400 mb-2">{filtered.length} {focus === 'mias' ? 'lead' : 'orca'}{filtered.length === 1 ? '' : 's'}</p>
           <div className="space-y-2">
             {filtered.map((o) => (
               <OrcaRow key={o.id} o={o} isMine={!!user && o.ownerId === user.id} />

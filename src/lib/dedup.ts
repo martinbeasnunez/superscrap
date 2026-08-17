@@ -40,16 +40,25 @@ export async function findExistingBusiness(
   // 2. Check by normalized phone
   const normalizedPhone = normalizePhone(phone);
   if (normalizedPhone && normalizedPhone.length >= 7) {
-    const { data } = await supabase
-      .from('businesses')
-      .select('id, phone')
-      .not('phone', 'is', null);
+    // Paginamos: Supabase corta en 1000 filas por defecto y ya pasamos ese número,
+    // así que sin paginar comparábamos contra un pedazo del pipeline y se colaban
+    // duplicados (mismo bug que arreglamos en /api/stats).
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data } = await supabase
+        .from('businesses')
+        .select('id, phone')
+        .not('phone', 'is', null)
+        .range(from, from + PAGE - 1);
 
-    if (data) {
+      if (!data || data.length === 0) break;
+
       const match = data.find(b => normalizePhone(b.phone) === normalizedPhone);
       if (match) {
         return { isDuplicate: true, existingId: match.id, matchType: 'phone' };
       }
+
+      if (data.length < PAGE) break;
     }
   }
 

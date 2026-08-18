@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { findExistingBusiness } from '@/lib/dedup';
 
 interface InboundLeadRequest {
   businessName: string;
@@ -78,31 +79,41 @@ export async function POST(request: Request) {
       searchId = newSearch.id;
     }
 
-    // PASO 2: Crear el business - campos mínimos primero
-    const { data: newBusiness, error: businessError } = await supabase
-      .from('businesses')
-      .insert({
-        name: data.businessName,
-        phone: formattedPhone,
-        description: description,
-        search_id: searchId,
-        lead_status: 'inbound',
-        sales_stage: 'interesado',
-      })
-      .select('id')
-      .single();
+    // Anti-duplicado: ¿ya existe este lead? Si sí, reusamos su tarjeta (registramos
+    // el contacto inbound sobre ella) en vez de crear una repetida en el pipeline.
+    const dedup = await findExistingBusiness(null, formattedPhone, data.businessName, null);
 
-    if (businessError) {
-      return NextResponse.json({
-        error: 'Error creando lead',
-        step: 'create_business',
-        details: businessError.message,
-        code: businessError.code,
-        hint: businessError.hint,
-      }, { status: 500 });
+    let businessId: string;
+
+    if (dedup.isDuplicate && dedup.existingId) {
+      businessId = dedup.existingId;
+    } else {
+      // PASO 2: Crear el business - campos mínimos primero
+      const { data: newBusiness, error: businessError } = await supabase
+        .from('businesses')
+        .insert({
+          name: data.businessName,
+          phone: formattedPhone,
+          description: description,
+          search_id: searchId,
+          lead_status: 'inbound',
+          sales_stage: 'interesado',
+        })
+        .select('id')
+        .single();
+
+      if (businessError) {
+        return NextResponse.json({
+          error: 'Error creando lead',
+          step: 'create_business',
+          details: businessError.message,
+          code: businessError.code,
+          hint: businessError.hint,
+        }, { status: 500 });
+      }
+
+      businessId = newBusiness.id;
     }
-
-    const businessId = newBusiness.id;
 
     // PASO 3: Actualizar con campos adicionales (opcional, no falla si hay error)
     await supabase

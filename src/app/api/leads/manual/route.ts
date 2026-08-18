@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { findExistingBusiness } from '@/lib/dedup';
 
 type LeadChannel =
   | 'comercial' | 'google_seo' | 'google_sem' | 'laundryheap'
@@ -44,6 +45,18 @@ export async function POST(request: Request) {
     let phone = data.phone.replace(/\D/g, '');
     if (!phone.startsWith('51') && phone.length === 9) {
       phone = '51' + phone;
+    }
+
+    // Anti-duplicado: si ya existe ese lead (por teléfono o nombre+dirección),
+    // no crear otra tarjeta — devolver el existente. Evita repetidos en el pipeline.
+    const dedup = await findExistingBusiness(null, phone, data.name.trim(), data.address?.trim());
+    if (dedup.isDuplicate && dedup.existingId) {
+      return NextResponse.json({
+        ok: true,
+        id: dedup.existingId,
+        duplicate: true,
+        message: 'Este lead ya existía en el pipeline — no se creó una tarjeta nueva.',
+      });
     }
 
     const { data: business, error } = await supabase

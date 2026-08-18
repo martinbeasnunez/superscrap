@@ -34,7 +34,19 @@ const OrcaWarRoom = dynamic(() => import('@/components/OrcaWarRoom'), {
 type PipelineView = 'lista' | 'tablero';
 interface CurrentUser { id: string; name: string; email: string }
 interface QuickStats { newLeads: number; followUpNeeded: number; interested: number; quoted: number }
-interface MyStats { total: number; orcas: number; prospects: number; contactedToday: number }
+interface MyStats { total: number; orcas: number; prospects: number }
+/**
+ * Actividad real separada por origen. Antes "Tu día" contaba `contacted_at`, que
+ * el cron de auto-followup también escribe: al vendedor le aparecían como propios
+ * los envíos automáticos del bot. Ahora se cuenta el historial y se separa.
+ */
+interface MiActividad {
+  trabajoNuestroHoy: number;
+  trabajoNuestroRango: number;
+  negociosTrabajados: number;
+  porOrigen: { humano: number; agente: number; cron: number; cliente: number };
+  porOrigenHoy: { humano: number; agente: number; cron: number; cliente: number };
+}
 
 // ¿Este lead es de Martín? (tolera "Martin"/"Martín")
 function isMartin(name: string | null | undefined): boolean {
@@ -101,19 +113,22 @@ export default function PipelinePage() {
     if (!user || flat.length === 0) return null;
     const mine = flat.filter((l) => ownsLead(l.owner_name, user.name));
     if (mine.length === 0) return null;
-    const todayPeru = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
-    const isTodayPeru = (iso: string | null) => {
-      if (!iso) return false;
-      try { return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Lima' }) === todayPeru; }
-      catch { return false; }
-    };
     return {
       total: mine.length,
       orcas: mine.filter((l) => l.potential_tier === 'orca').length,
       prospects: mine.filter((l) => l.sales_stage === 'interesado' || l.sales_stage === 'cotizado').length,
-      contactedToday: mine.filter((l) => isTodayPeru(l.contacted_at)).length,
     };
   }, [flat, user]);
+
+  // Actividad real de la semana, separada por origen (a mano / dirigido / automático).
+  const [actividad, setActividad] = useState<MiActividad | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    fetch(`/api/mi-actividad?userId=${user.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setActividad(d))
+      .catch(() => {});
+  }, [user]);
 
   // Clave de dueño del usuario actual (para el botón "Ver los míos")
   const myOwnerKey: OwnerFilter | null = user
@@ -188,7 +203,19 @@ export default function PipelinePage() {
             <div className="flex items-baseline gap-4 flex-wrap">
               <span className={`font-bold ${myOwnerKey && ownerFilter === myOwnerKey ? 'text-white' : 'text-[#0890F1]'}`}>👑 Tu día</span>
               <span className={`text-sm ${myOwnerKey && ownerFilter === myOwnerKey ? 'text-white/90' : 'text-gray-600'}`}>
-                Contactaste hoy <b>{myStats.contactedToday}</b> · <b>{myStats.prospects}</b> prospectos · <b>{myStats.orcas}</b> orcas · <b>{myStats.total}</b> leads tuyos
+                {actividad ? (
+                  <>
+                    Hoy trabajaste <b>{actividad.trabajoNuestroHoy}</b> · esta semana <b>{actividad.trabajoNuestroRango}</b> en <b>{actividad.negociosTrabajados}</b> cuentas
+                    {actividad.porOrigen.cron > 0 && (
+                      <span className={myOwnerKey && ownerFilter === myOwnerKey ? 'text-white/60' : 'text-gray-400'}>
+                        {' '}· el bot mandó <b>{actividad.porOrigen.cron}</b> aparte
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>Cargando tu actividad…</>
+                )}
+                {' '}· <b>{myStats.prospects}</b> prospectos · <b>{myStats.orcas}</b> orcas · <b>{myStats.total}</b> leads tuyos
               </span>
             </div>
             {myOwnerKey && (

@@ -18,7 +18,7 @@ export async function PATCH(
       contact_actions, lead_status, sales_stage, user_id, previous_stage,
       primary_dm_index, auto_followup_enabled, last_email_template_id,
       skip_auto_send, notes, source, lead_channel, lost_reason, is_focus,
-      contacted_by,
+      contacted_by, next_action,
     } = body;
 
     // Validar contact_actions (array de acciones)
@@ -126,15 +126,32 @@ export async function PATCH(
     if (is_focus !== undefined) {
       updateData.is_focus = !!is_focus;
     }
+    // Próxima acción — texto libre curado por el humano. Permite vaciarlo (string vacío → null).
+    if (next_action !== undefined) {
+      updateData.next_action = typeof next_action === 'string' ? next_action.trim() || null : null;
+    }
 
     console.log('Updating business:', id, 'with data:', updateData);
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('businesses')
       .update(updateData)
       .eq('id', id)
       .select()
       .single();
+
+    // Defensa por si la migración de next_action aún no corrió en esta DB: reintenta
+    // sin ese campo para no tumbar el update entero (los demás cambios deben persistir).
+    if (error && next_action !== undefined && /next_action/.test(error.message || '')) {
+      console.warn('next_action column missing — reintentando update sin ese campo');
+      delete updateData.next_action;
+      ({ data, error } = await supabase
+        .from('businesses')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single());
+    }
 
     if (error) {
       console.error('Supabase error:', error);

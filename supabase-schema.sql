@@ -196,3 +196,11 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS lost_reason TEXT
 -- Focused leads float to the top of each column and surface in a banner.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_focus BOOLEAN DEFAULT FALSE;
 CREATE INDEX IF NOT EXISTS idx_businesses_is_focus ON businesses(is_focus) WHERE is_focus = TRUE;
+
+-- ============================================================
+-- Migration 012: Próxima acción (next_action) — CORRER A MANO
+-- ============================================================
+-- Texto libre curado por el humano (estilo Partnerships): la siguiente
+-- jugada de cada lead del Pipeline ("→ mandar propuesta", "→ llamar jueves").
+-- El bot NUNCA la toca; es 100% del vendedor.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_action TEXT;

@@ -93,6 +93,8 @@ export interface KanbanBusiness {
     | 'no_interesado' | 'no_contesta' | 'no_decisor' | 'otro' | null;
   // ⭐ Weekly focus flag — pinned to the top of each column
   is_focus: boolean;
+  // Próxima acción — texto libre curado por el humano (el bot nunca la toca)
+  next_action: string | null;
 }
 
 export interface WhatsAppStats {
@@ -159,6 +161,7 @@ export async function GET() {
         lead_channel,
         lost_reason,
         is_focus,
+        next_action,
         searches (
           business_type,
           city
@@ -382,6 +385,7 @@ export async function GET() {
         lead_channel: (b.lead_channel as KanbanBusiness['lead_channel']) ?? null,
         lost_reason: (b.lost_reason as KanbanBusiness['lost_reason']) ?? null,
         is_focus: !!b.is_focus,
+        next_action: b.next_action ?? null,
       };
 
       const columnId = classifyBusiness(kanbanBusiness);

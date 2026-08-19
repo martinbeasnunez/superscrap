@@ -417,6 +417,27 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [newNoteText, setNewNoteText] = useState<string>('');
   const [notesSaving, setNotesSaving] = useState(false);
 
+  // Próxima acción — texto libre curado por el humano (estilo Partnerships)
+  const [nextAction, setNextAction] = useState<string>('');
+  const [nextActionSaving, setNextActionSaving] = useState(false);
+
+  const saveNextAction = async () => {
+    if (!business) return;
+    setNextActionSaving(true);
+    try {
+      await fetch(`/api/businesses/${business.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ next_action: nextAction.trim() }),
+      });
+      onActionRegistered();
+    } catch (err) {
+      console.error('Error saving next_action:', err);
+    } finally {
+      setNextActionSaving(false);
+    }
+  };
+
   // AI suggestion after saving a note (analyzer detected likely rejection)
   type LossSuggestion = {
     reason: 'precio' | 'lavado_interno' | 'tiene_proveedor' | 'mal_timing'
@@ -460,6 +481,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   useEffect(() => {
     setNewNoteText('');
     setLossSuggestion(null);
+    setNextAction(business?.next_action ?? '');
   }, [business?.id]);
 
   const addNote = async () => {
@@ -923,6 +945,31 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Próxima acción — texto libre curado por el humano (el bot no la toca) */}
+          <div className="mb-4">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block">
+              → Próxima acción
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                value={nextAction}
+                onChange={(e) => setNextAction(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); saveNextAction(); }
+                }}
+                placeholder="ej. mandar propuesta, llamar jueves…"
+                className="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none bg-white"
+              />
+              <button
+                onClick={saveNextAction}
+                disabled={nextActionSaving || nextAction.trim() === (business.next_action ?? '')}
+                className="text-xs px-2.5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex-shrink-0"
+              >
+                {nextActionSaving ? '⏳' : 'Guardar'}
+              </button>
             </div>
           </div>
 

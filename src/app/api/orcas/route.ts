@@ -27,6 +27,7 @@ export interface OrcaLead {
   awaitingReply: boolean;           // lo último fue un whatsapp_reply real del prospecto
   temp: 'caliente' | 'tibio' | 'frio' | 'encurso'; // clasificación honesta por actividad
   source: string | null;
+  nextAction: string | null; // "Próxima acción" curada por el humano (texto libre)
 }
 
 const STAGES = [
@@ -138,11 +139,12 @@ export async function GET(request: Request) {
         awaitingReply: awaiting,
         temp,
         source: b.source || null,
+        nextAction: b.next_action || null,
       };
     };
 
     const SELECT = `
-      id, name, phone, address, contact_actions, sales_stage, contacted_at, contacted_by, source,
+      id, name, phone, address, contact_actions, sales_stage, contacted_at, contacted_by, source, next_action,
       searches ( business_type, city ),
       service_analyses ( potential_tier, potential_score, estimated_revenue_min, estimated_revenue_max )`;
 

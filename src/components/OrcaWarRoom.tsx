@@ -26,6 +26,7 @@ interface OrcaLead {
   awaitingReply: boolean;
   temp: 'caliente' | 'tibio' | 'frio' | 'encurso';
   source: string | null;
+  nextAction: string | null;
 }
 
 interface Summary {
@@ -325,6 +326,90 @@ function OrcaRow({ o, isMine }: { o: OrcaLead; isMine: boolean }) {
           </div>
         )}
       </div>
+
+      {/* Próxima acción — texto libre que cura el humano (el bot no la toca) */}
+      <NextActionEditor id={o.id} initial={o.nextAction} />
+    </div>
+  );
+}
+
+// Editor inline y compacto de "Próxima acción". Guarda vía PATCH /api/businesses/[id].
+// Optimista: refleja el valor guardado sin recargar toda la lista.
+function NextActionEditor({ id, initial }: { id: string; initial: string | null }) {
+  const [value, setValue] = useState(initial ?? '');
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(initial ?? '');
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    const next = draft.trim();
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/businesses/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ next_action: next }),
+      });
+      if (res.ok) {
+        setValue(next);
+        setEditing(false);
+      }
+    } catch { /* deja el editor abierto para reintentar */ } finally {
+      setSaving(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="mt-2 flex items-center gap-1.5">
+        <span className="text-gray-400 flex-shrink-0">→</span>
+        <input
+          value={draft}
+          autoFocus
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); save(); }
+            if (e.key === 'Escape') { setDraft(value); setEditing(false); }
+          }}
+          placeholder="Próxima acción… (ej. mandar propuesta)"
+          className="flex-1 min-w-0 text-xs sm:text-sm bg-white border border-gray-200 rounded px-2 py-1 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0890F1]/30"
+        />
+        <button
+          onClick={save}
+          disabled={saving}
+          className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium bg-[#0890F1] text-white disabled:opacity-50 flex-shrink-0"
+        >
+          {saving ? '⏳' : 'Guardar'}
+        </button>
+        <button
+          onClick={() => { setDraft(value); setEditing(false); }}
+          className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs text-gray-500 hover:text-gray-700 flex-shrink-0"
+        >
+          Cancelar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2">
+      {value ? (
+        <button
+          onClick={() => { setDraft(value); setEditing(true); }}
+          title="Editar próxima acción"
+          className="inline-flex items-center gap-1 max-w-full px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100"
+        >
+          <span className="flex-shrink-0">→</span>
+          <span className="truncate">{value}</span>
+        </button>
+      ) : (
+        <button
+          onClick={() => { setDraft(''); setEditing(true); }}
+          className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-200"
+        >
+          ✏️ próxima acción
+        </button>
+      )}
     </div>
   );
 }

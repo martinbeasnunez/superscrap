@@ -63,14 +63,36 @@ export default function DailyActivity() {
   const max = Math.max(1, ...serie.map(s => s.nuevos + s.follows));
   const totalNuevos = serie.reduce((a, s) => a + s.nuevos, 0);
   const totalFollows = serie.reduce((a, s) => a + s.follows, 0);
+  const hoyIso = limaToday();
+  const hoy = porDia[hoyIso] ?? { nuevos: 0, follows: 0 };
+  const semana = serie.slice(-7);
+  const semNuevos = semana.reduce((a, s) => a + s.nuevos, 0);
+  const semFollows = semana.reduce((a, s) => a + s.follows, 0);
   const CHART_H = 120;
 
   return (
     <div>
       <h3 className="font-bold text-sm text-gray-900 mb-1">📅 {t('insights.activity_title')}</h3>
-      <p className="text-xs text-gray-500 mb-3">{t('insights.activity_subtitle')}</p>
+      <p className="text-xs text-gray-500 mb-2">{t('insights.activity_subtitle')}</p>
 
-      {/* Selector de vendedor + leyenda */}
+      {/* Titular claro: HOY (grande) + esta semana */}
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-3">
+        <span className="text-base font-bold text-gray-900">
+          {t('insights.activity_today')}:{' '}
+          <span className="text-emerald-600">{hoy.nuevos}</span>
+          <span className="text-xs font-medium text-gray-500"> {t('insights.activity_new').toLowerCase()}</span>
+          <span className="text-gray-300"> · </span>
+          <span className="text-blue-500">{hoy.follows}</span>
+          <span className="text-xs font-medium text-gray-500"> {t('insights.activity_follow').toLowerCase()}</span>
+        </span>
+        <span className="text-[11px] sm:text-xs text-gray-500">
+          {t('insights.activity_week')}: <strong className="text-emerald-600">{semNuevos}</strong>
+          <span className="text-gray-300"> / </span>
+          <strong className="text-blue-500">{semFollows}</strong>
+        </span>
+      </div>
+
+      {/* Selector de vendedor + leyenda (total 14 días) */}
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
         <div className="flex flex-wrap gap-1">
           <button
@@ -93,7 +115,8 @@ export default function DailyActivity() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 text-[10px] sm:text-xs">
+        <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
+          <span className="text-gray-400">{t('insights.activity_range14')}:</span>
           <span className="flex items-center gap-1">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-500" />
             {t('insights.activity_new')} <strong>{totalNuevos}</strong>
@@ -122,7 +145,7 @@ export default function DailyActivity() {
               return (
                 <div
                   key={s.iso}
-                  className={`flex-1 min-w-0 relative group ${weekend ? 'opacity-60' : ''}`}
+                  className={`flex-1 min-w-0 relative group ${weekend ? 'opacity-60' : ''} ${s.iso === hoyIso ? 'bg-amber-50 ring-1 ring-amber-300 rounded-t' : ''}`}
                   title={`${dayLabel(s.iso)} — ${t('insights.activity_new')} ${s.nuevos} · ${t('insights.activity_follow')} ${s.follows}`}
                   style={{ height: `${CHART_H}px` }}
                 >

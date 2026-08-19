@@ -15,21 +15,36 @@ async function sendWithFallback(phone: string, pitch: string, bizName: string, s
   return { ...textResult, method: 'text' as const };
 }
 
-// Días a esperar por peldaño de la escalera del bot (NO por sales_stage humano).
-function getDaysToWait(cadenceStage: string): number {
-  switch (cadenceStage) {
+// Días a esperar antes del siguiente toque. Sirve tanto para el stage humano
+// (leads SIN dueño) como para el peldaño del bot (leads CON dueño).
+function getDaysToWait(stage: string): number {
+  switch (stage) {
     case 'contactado': return 2;
     case 'seguimiento_1': return 3;
     case 'seguimiento_2': return 4;
     case 'seguimiento_3': return 7;  // semanal — más presión antes de cerrar
+    case 'interesado': return 2;
+    case 'cotizado': return 3;
     default: return 3;
   }
 }
 
-// Escalera FIJA de cadencia del bot. El "paso" lo determina el nº de contactos
-// previos (contactCount), NO el sales_stage. Así el cron nunca toca el pipeline:
-// sales_stage pasa a ser 100% humano (como en Partnerships). El peldaño solo
-// sirve para elegir el template y la espera — jamás se escribe en la DB.
+// Siguiente stage en el pipeline. SOLO se usa para leads SIN dueño: el bot los
+// avanza automáticamente por la escalera. Los leads CON dueño nunca se avanzan.
+function getNextStage(stage: string): string | null {
+  const flow: Record<string, string> = {
+    'nuevo': 'contactado',
+    'contactado': 'seguimiento_1',
+    'seguimiento_1': 'seguimiento_2',
+    'seguimiento_2': 'seguimiento_3',
+    // seguimiento_3: no auto-advance — se re-envía sin mover
+  };
+  return flow[stage] || null;
+}
+
+// Escalera FIJA de cadencia del bot para leads CON dueño. El "paso" lo determina
+// el nº de contactos previos (contactCount), NO el sales_stage: así el bot elige
+// template + espera SIN tocar el pipeline (sales_stage sigue siendo 100% humano).
 const LADDER = ['contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3'] as const;
 
 // GET /api/whatsapp/auto-followup
@@ -68,7 +83,7 @@ export async function GET() {
       .from('businesses')
       .select(`
         id, name, phone, address, business_type, sales_stage, contacted_at,
-        contact_actions, auto_followup_last_sent,
+        contacted_by, contact_actions, auto_followup_last_sent,
         searches (business_type),
         service_analyses (potential_score)
       `)
@@ -153,14 +168,84 @@ export async function GET() {
         continue;
       }
 
-      // --- Cadencia DESACOPLADA del pipeline ---
-      // El bot ya NO usa sales_stage para decidir qué mandar ni cuándo parar: eso
-      // lo maneja el humano. Su "paso" sale del nº de contactos previos (contactCount).
       const contactCount = contactCountMap[biz.id] || 0;
+      const businessType = (biz as any).searches?.business_type || biz.business_type;
+      // Dueño humano = null → lead "frío" de Martín que el bot puede empujar por el
+      // pipeline. Con dueño → un vendedor lo trabaja; el bot NUNCA toca su sales_stage.
+      const hasOwner = !!biz.contacted_by;
 
+      if (!hasOwner) {
+        // ===== Lead SIN dueño: el bot avanza el pipeline (como antes) =====
+        const stage = biz.sales_stage || 'nuevo';
+
+        // Cadencia basada en el stage — skip para primer contacto (sin contacted_at).
+        if (biz.contacted_at) {
+          const daysToWait = getDaysToWait(stage);
+          const cutoff = new Date(now.getTime() - daysToWait * 24 * 60 * 60 * 1000);
+          const lastContact = new Date(biz.contacted_at);
+          if (lastContact > cutoff) {
+            skipped++;
+            continue;
+          }
+        }
+
+        const nextStage = getNextStage(stage);
+
+        // seguimiento_3/interesado/cotizado (o sin siguiente): re-enviar sin mover el stage.
+        if (!nextStage || stage === 'seguimiento_3' || stage === 'interesado' || stage === 'cotizado') {
+          const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
+          const result = await sendWithFallback(biz.phone, pitch, biz.name, stage, biz.address);
+          if (result.success) {
+            await supabase.from('contact_history').insert({
+              business_id: biz.id,
+              action_type: 'auto_whatsapp',
+              notes: pitch,
+            });
+            await supabase.from('businesses').update({
+              contacted_at: now.toISOString(),
+              auto_followup_last_sent: now.toISOString(),
+            }).eq('id', biz.id);
+            sent++;
+          } else {
+            errors.push(`${biz.name}: ${result.error}`);
+            skipped++;
+          }
+          await new Promise(r => setTimeout(r, 500));
+          continue;
+        }
+
+        // AUTO-AVANCE: solo para leads sin dueño — mueve el stage + template del nuevo stage.
+        const pitch = getWhatsAppPitchServer(biz.name, businessType, nextStage, contactCount);
+        const result = await sendWithFallback(biz.phone, pitch, biz.name, nextStage, biz.address);
+        if (result.success) {
+          await supabase.from('contact_history').insert({
+            business_id: biz.id,
+            action_type: 'stage_change',
+            notes: `📋 Auto-avance: ${stage} → ${nextStage}`,
+          });
+          await supabase.from('contact_history').insert({
+            business_id: biz.id,
+            action_type: 'auto_whatsapp',
+            notes: pitch,
+          });
+          await supabase.from('businesses').update({
+            sales_stage: nextStage,
+            contacted_at: now.toISOString(),
+            auto_followup_last_sent: now.toISOString(),
+            contact_actions: [...(biz.contact_actions || []).filter((a: string) => a !== 'whatsapp'), 'whatsapp'],
+          }).eq('id', biz.id);
+          sent++;
+          advanced++;
+        } else {
+          errors.push(`${biz.name}: ${result.error}`);
+          skipped++;
+        }
+        await new Promise(r => setTimeout(r, 500));
+        continue;
+      }
+
+      // ===== Lead CON dueño: cadencia por contactCount, NUNCA toca sales_stage =====
       // STOP: ya se envió el último peldaño (seguimiento_3) en una corrida previa.
-      // Cuando contactCount supera el último escalón, el bot ya cumplió su cadencia
-      // y se calla — el vendedor decide desde acá.
       if (contactCount > LADDER.length - 1) {
         skipped++;
         continue;
@@ -182,10 +267,8 @@ export async function GET() {
         }
       }
 
-      const businessType = (biz as any).searches?.business_type || biz.business_type;
-
-      // Enviar el peldaño correspondiente. El cron NUNCA toca sales_stage ni inserta
-      // 'stage_change'/"Auto-avance": solo registra el envío como auto_whatsapp.
+      // Enviar el peldaño correspondiente. Para leads CON dueño el cron NUNCA toca
+      // sales_stage ni inserta 'stage_change': solo registra el envío como auto_whatsapp.
       const pitch = getWhatsAppPitchServer(biz.name, businessType, cadenceStage, contactCount);
       const result = await sendWithFallback(biz.phone, pitch, biz.name, cadenceStage, biz.address);
 

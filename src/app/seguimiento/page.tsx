@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n';
+import DailyActivity from '@/components/DailyActivity';
 import type { KanbanBusiness, KanbanColumnId } from '@/app/api/kanban/route';
 
 // Filtro por vendedor/dueño compartido entre las dos vistas (Lista y Tablero).
@@ -63,6 +64,7 @@ function ownsLead(ownerName: string | null | undefined, userName: string): boole
 export default function PipelinePage() {
   const [columns, setColumns] = useState<Record<KanbanColumnId, KanbanBusiness[]> | null>(null);
   const [showTips, setShowTips] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
   const [view, setView] = useState<PipelineView>('tablero');
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
   const [user, setUser] = useState<CurrentUser | null>(null);
@@ -226,6 +228,28 @@ export default function PipelinePage() {
           </div>
         </button>
       )}
+
+      {/* 📅 Actividad por día — colapsable, visible en Lista y Tablero (chips de vendedor propios) */}
+      <div className="rounded-xl border border-gray-200 bg-white shadow-sm mb-4">
+        <button
+          onClick={() => setShowActivity((s) => !s)}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
+        >
+          <span className="font-semibold text-sm text-gray-900">📅 Actividad por día</span>
+          <svg
+            className={`w-4 h-4 text-gray-400 transition-transform ${showActivity ? 'rotate-90' : ''}`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+          </svg>
+        </button>
+        {showActivity && (
+          <div className="px-4 pb-4 pt-1 border-t border-gray-100">
+            <DailyActivity />
+          </div>
+        )}
+      </div>
 
       {/* Barra compartida: toggle de vista + filtros por vendedor (aplican a Lista y Tablero) */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">

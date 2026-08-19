@@ -106,14 +106,19 @@ export async function GET(request: Request) {
       const daysActivity = daysAgo(activityAt);
       // Bola en tu cancha: lo último fue que ELLOS respondieron (no una autorespuesta de bot).
       const awaiting = !!lastComm && lastComm.action_type === INBOUND && isRealReply(lastComm.notes);
+      // ¿Alguna vez respondieron de verdad (no autorespuesta de bot)? = engagement real.
+      const hasEngaged = comms.some((e) => e.action_type === INBOUND && isRealReply(e.notes));
 
-      // Clasificación honesta por actividad real (ver definición en summary, abajo).
+      // Temperatura por INTENCIÓN de ellos, no por días (los días son urgencia, no ocultan).
+      // El bot ya no mueve stages → interesado/cotizado = interés humano real y confiable.
       const isOpen = !CLOSED.includes(stage);
       const isHot = HOT_STAGES.includes(stage);
       let temp: OrcaLead['temp'] = 'encurso';
-      if (isOpen && (awaiting || (isHot && daysActivity !== null && daysActivity <= 7))) {
+      if (isOpen && (awaiting || isHot)) {
+        // 🔥 respuesta pendiente de ellos, o un humano marcó interesado/cotizado. Sin filtro de días.
         temp = 'caliente';
-      } else if (isOpen && isHot && daysActivity !== null && daysActivity >= 8 && daysActivity <= 20) {
+      } else if (isOpen && hasEngaged) {
+        // 🌡️ respondieron algo real alguna vez, pero aún sin interés marcado.
         temp = 'tibio';
       } else if (isOpen && daysActivity !== null && daysActivity >= 21) {
         temp = 'frio';
@@ -182,9 +187,9 @@ export async function GET(request: Request) {
     });
 
     const open = orcas.filter((o) => !CLOSED.includes(o.stage));
-    // Clasificación honesta (por actividad real, no por stage congelado):
-    //  🔥 caliente = respuesta humana pendiente  Ó  (interesado/cotizado Y actividad ≤ 7d)
-    //  🌡️ tibio    = interesado/cotizado Y actividad 8..20d
+    // Clasificación por INTENCIÓN de ellos (no por días; los días son urgencia):
+    //  🔥 caliente = respuesta humana pendiente  Ó  interesado/cotizado (interés humano real)
+    //  🌡️ tibio    = alguna vez respondieron de verdad, pero aún sin interés marcado
     //  🧊 frío      = abierto Y actividad ≥ 21d
     const summary = {
       total: orcas.length,

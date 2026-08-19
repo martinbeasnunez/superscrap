@@ -22,12 +22,16 @@ interface OrcaLead {
   ownerName: string | null;
   contactedAt: string | null;
   daysSinceContact: number | null;
+  daysSinceActivity: number | null;
+  awaitingReply: boolean;
+  temp: 'caliente' | 'tibio' | 'frio' | 'encurso';
   source: string | null;
 }
 
 interface Summary {
   total: number; open: number; won: number; lost: number;
-  hot: number; untouched: number; sinDueno: number;
+  hot: number; tibio: number; frio: number; awaiting: number;
+  untouched: number; sinDueno: number;
   revenueMin: number; revenueMax: number;
   byStage: Record<string, number>;
 }
@@ -57,7 +61,7 @@ const STAGE_PILL: Record<string, string> = {
   perdido: 'bg-rose-100 text-rose-700',
 };
 
-type FocusChip = 'todas' | 'calientes' | 'sin_tocar' | 'sin_dueno';
+type FocusChip = 'todas' | 'calientes' | 'tibios' | 'sin_tocar' | 'sin_dueno';
 type OwnerFilter = 'all' | 'martin' | 'alejandro' | 'bot';
 
 function waNumber(phone: string): string {
@@ -138,7 +142,8 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
     return orcas.filter((o) => {
       if (hideClosed && (o.stage === 'cliente' || o.stage === 'perdido')) return false;
       if (stageFilter !== 'all' && o.stage !== stageFilter) return false;
-      if (focus === 'calientes' && !(o.stage === 'interesado' || o.stage === 'cotizado')) return false;
+      if (focus === 'calientes' && o.temp !== 'caliente') return false;
+      if (focus === 'tibios' && o.temp !== 'tibio') return false;
       if (focus === 'sin_tocar' && o.contacted) return false;
       if (focus === 'sin_dueno' && o.ownerId) return false;
       // Filtro por vendedor compartido (barra del Pipeline)
@@ -156,6 +161,7 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
   const chips: { id: FocusChip; label: string; count?: number }[] = [
     { id: 'todas', label: 'Todas' },
     { id: 'calientes', label: '🔥 Calientes', count: summary?.hot },
+    { id: 'tibios', label: '🌡️ Tibios', count: summary?.tibio },
     { id: 'sin_tocar', label: '🆕 Sin tocar', count: summary?.untouched },
     { id: 'sin_dueno', label: '👤 Sin dueño', count: summary?.sinDueno },
   ];
@@ -180,7 +186,7 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
           <Kpi label="Orcas abiertas" value={String(summary.open)} sub={`${summary.total} en total`} accent="text-gray-900" />
-          <Kpi label="🔥 Calientes" value={String(summary.hot)} sub="cotizadas / interesadas" accent="text-orange-600" />
+          <Kpi label="🔥 Calientes" value={String(summary.hot)} sub={summary.awaiting ? `${summary.awaiting} te respondieron` : 'con actividad real'} accent="text-orange-600" />
           <Kpi label="Sin dueño" value={String(summary.sinDueno)} sub="nadie las trabaja" accent="text-rose-600" />
           <Kpi label="En juego / mes" value={`${money(summary.revenueMin)}–${money(summary.revenueMax)}`} sub="revenue potencial" accent="text-[#0890F1]" small />
         </div>
@@ -273,13 +279,16 @@ function OrcaRow({ o, isMine }: { o: OrcaLead; isMine: boolean }) {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-gray-900 truncate max-w-[16rem] sm:max-w-none">{o.name}</span>
             <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${STAGE_PILL[o.stage]}`}>{STAGE_LABEL[o.stage]}</span>
+            {o.awaitingReply && (
+              <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-700">💬 te respondió</span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5 flex-wrap">
             {o.businessType && <span className="truncate max-w-[14rem]">{o.businessType}</span>}
             {(o.revenueMin || o.revenueMax) ? (
               <span className="text-gray-400">· {money(o.revenueMin || 0)}–{money(o.revenueMax || 0)}/mes</span>
             ) : null}
-            <span className={staleClasses(o.contacted ? o.daysSinceContact : null)}>· {daysLabel(o.daysSinceContact, o.contacted)}</span>
+            <span className={staleClasses(o.contacted ? o.daysSinceActivity : null)}>· {daysLabel(o.daysSinceActivity, o.contacted)}</span>
           </div>
         </div>
 

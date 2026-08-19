@@ -22,6 +22,10 @@ export interface OrcaLead {
   ownerName: string | null;
   contactedAt: string | null;
   daysSinceContact: number | null;
+  // --- Actividad REAL (contact_history), no el congelado contacted_at ---
+  daysSinceActivity: number | null; // días desde la última comunicación real
+  awaitingReply: boolean;           // lo último fue un whatsapp_reply real del prospecto
+  temp: 'caliente' | 'tibio' | 'frio' | 'encurso'; // clasificación honesta por actividad
   source: string | null;
 }
 
@@ -29,6 +33,23 @@ const STAGES = [
   'nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2',
   'seguimiento_3', 'interesado', 'cotizado', 'cliente', 'perdido',
 ];
+const CLOSED = ['cliente', 'perdido'];
+const HOT_STAGES = ['interesado', 'cotizado'];
+
+// Tipos de contact_history que son comunicación real (excluye note/stage_change).
+const COMM = new Set(['whatsapp_reply', 'whatsapp', 'email', 'auto_whatsapp', 'call', 'ai_call']);
+// Único tipo INBOUND (lo dijo el prospecto). Si es lo último → la bola está en tu cancha.
+const INBOUND = 'whatsapp_reply';
+// Filtro rápido de autorespuestas de negocio (bienvenida/horario/agradecimiento) para no
+// contarlas como "te respondieron". Espejo de scripts/orcas-parte.mjs (referencia canónica).
+const BOT_REPLY = /bienvenid|te saluda|gracias por (tu|su)|horario de atenci|canal de reservas|para reservar|no estamos respond|estamos cerrando|placer atender|indicarme tu nombre|en qu[eé] podemos ayudar|somos .* atenci[oó]n/i;
+const isRealReply = (txt: string | null): boolean => {
+  const t = (txt || '').trim();
+  if (!/[a-záéíóúñ]/i.test(t)) return false;                 // solo emojis/símbolos
+  if (/^(gracias|muchas gracias|ok|oki|listo|perfecto|de nada)[\s.!¡]*$/i.test(t)) return false;
+  if (BOT_REPLY.test(t)) return false;
+  return true;
+};
 
 export async function GET(request: Request) {
   try {
@@ -60,6 +81,12 @@ export async function GET(request: Request) {
 
     const now = Date.now();
     const one = (v: any) => (Array.isArray(v) ? v[0] : v) || {};
+    const daysAgo = (iso: string | null): number | null =>
+      iso ? Math.floor((now - new Date(iso).getTime()) / 86400000) : null;
+
+    // histByBiz se llena tras traer las orcas (abajo). toLead lo consulta; para filas
+    // sin historial (ej. delfines de "Tu día") cae a contacted_at.
+    const histByBiz = new Map<string, any[]>();
 
     const toLead = (b: any): OrcaLead => {
       const a = one(b.service_analyses);
@@ -67,9 +94,30 @@ export async function GET(request: Request) {
       const stage = STAGES.includes(b.sales_stage) ? b.sales_stage : 'nuevo';
       const actions: string[] = Array.isArray(b.contact_actions) ? b.contact_actions : [];
       const contacted = actions.length > 0 || (b.sales_stage && b.sales_stage !== 'nuevo');
-      const days = b.contacted_at
-        ? Math.floor((now - new Date(b.contacted_at).getTime()) / 86400000)
-        : null;
+      const daysContact = daysAgo(b.contacted_at || null);
+
+      // --- Actividad real desde contact_history (desc por fecha) ---
+      const hist = histByBiz.get(b.id) || [];
+      const comms = hist.filter((e) => COMM.has(e.action_type));
+      const lastComm = comms[0] || null; // comunicación más reciente (in/out)
+      // Actividad = última comunicación real; si no hay evidencia, cae a contacted_at.
+      const activityAt = lastComm?.created_at || b.contacted_at || null;
+      const daysActivity = daysAgo(activityAt);
+      // Bola en tu cancha: lo último fue que ELLOS respondieron (no una autorespuesta de bot).
+      const awaiting = !!lastComm && lastComm.action_type === INBOUND && isRealReply(lastComm.notes);
+
+      // Clasificación honesta por actividad real (ver definición en summary, abajo).
+      const isOpen = !CLOSED.includes(stage);
+      const isHot = HOT_STAGES.includes(stage);
+      let temp: OrcaLead['temp'] = 'encurso';
+      if (isOpen && (awaiting || (isHot && daysActivity !== null && daysActivity <= 7))) {
+        temp = 'caliente';
+      } else if (isOpen && isHot && daysActivity !== null && daysActivity >= 8 && daysActivity <= 20) {
+        temp = 'tibio';
+      } else if (isOpen && daysActivity !== null && daysActivity >= 21) {
+        temp = 'frio';
+      }
+
       return {
         id: b.id,
         name: b.name,
@@ -85,7 +133,10 @@ export async function GET(request: Request) {
         ownerId: b.contacted_by || null,
         ownerName: b.contacted_by ? (userMap.get(b.contacted_by) || 'Desconocido') : null,
         contactedAt: b.contacted_at || null,
-        daysSinceContact: days,
+        daysSinceContact: daysContact,
+        daysSinceActivity: daysActivity,
+        awaitingReply: awaiting,
+        temp,
         source: b.source || null,
       };
     };
@@ -103,22 +154,45 @@ export async function GET(request: Request) {
         .eq('service_analyses.potential_tier', 'orca')
         .range(from, to));
 
+    // Actividad real: traemos contact_history en lotes de 150 ids (Supabase corta en 1000).
+    const ids: string[] = rows.map((b) => b.id);
+    for (let i = 0; i < ids.length; i += 150) {
+      const chunk = ids.slice(i, i + 150);
+      const { data, error } = await supabase
+        .from('contact_history')
+        .select('business_id, action_type, notes, created_at, user_id')
+        .in('business_id', chunk)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      for (const e of (data || [])) {
+        if (!histByBiz.has(e.business_id)) histByBiz.set(e.business_id, []);
+        histByBiz.get(e.business_id)!.push(e);
+      }
+    }
+
     const orcas: OrcaLead[] = rows.map(toLead);
 
-    // Orden por defecto: score desc (nulls al final), luego más frío arriba.
+    // Orden por defecto: score desc (nulls al final), luego más frío arriba (por actividad real).
     orcas.sort((a, b) => {
       const sa = a.score ?? -1, sb = b.score ?? -1;
       if (sb !== sa) return sb - sa;
-      return (b.daysSinceContact ?? -1) - (a.daysSinceContact ?? -1);
+      return (b.daysSinceActivity ?? -1) - (a.daysSinceActivity ?? -1);
     });
 
-    const open = orcas.filter((o) => !['cliente', 'perdido'].includes(o.stage));
+    const open = orcas.filter((o) => !CLOSED.includes(o.stage));
+    // Clasificación honesta (por actividad real, no por stage congelado):
+    //  🔥 caliente = respuesta humana pendiente  Ó  (interesado/cotizado Y actividad ≤ 7d)
+    //  🌡️ tibio    = interesado/cotizado Y actividad 8..20d
+    //  🧊 frío      = abierto Y actividad ≥ 21d
     const summary = {
       total: orcas.length,
       open: open.length,
       won: orcas.filter((o) => o.stage === 'cliente').length,
       lost: orcas.filter((o) => o.stage === 'perdido').length,
-      hot: orcas.filter((o) => o.stage === 'interesado' || o.stage === 'cotizado').length,
+      hot: orcas.filter((o) => o.temp === 'caliente').length,
+      tibio: orcas.filter((o) => o.temp === 'tibio').length,
+      frio: orcas.filter((o) => o.temp === 'frio').length,
+      awaiting: orcas.filter((o) => o.awaitingReply && !CLOSED.includes(o.stage)).length,
       untouched: orcas.filter((o) => !o.contacted).length,
       sinDueno: open.filter((o) => !o.ownerId).length,
       revenueMin: open.reduce((s, o) => s + (o.revenueMin || 0), 0),

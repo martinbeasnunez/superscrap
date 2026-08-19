@@ -6,6 +6,15 @@ export const dynamic = 'force-dynamic';
 
 interface Fila { business_id: string; action_type: string | null; user_id: string | null; notes: string | null; created_at: string }
 
+/** Acciones de comunicación saliente que cuentan como "toque" (whatsapp/email/call). */
+const ACCIONES_SALIENTES = new Set(['whatsapp', 'email', 'call', 'ai_call']);
+/**
+ * Cualquier contacto saliente que ya "tocó" al negocio, incluido el bot. Sirve
+ * para saber si un negocio era virgen (nuevo) o ya venía trabajado (follow):
+ * si el auto-followup ya le escribió, el mensaje de la persona es un follow.
+ */
+const ACCIONES_SALIENTES_HIST = new Set(['whatsapp', 'email', 'call', 'ai_call', 'auto_whatsapp']);
+
 /** Día en Lima (YYYY-MM-DD) de un timestamp ISO. */
 function diaLima(iso: string): string {
   return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
@@ -80,6 +89,65 @@ export async function GET(request: Request) {
     }
   }
 
+  // ── Nuevos vs Follows por día ──────────────────────────────────────────────
+  // Solo trabajo real (a mano / dirigido) y solo comunicación saliente.
+  // Un evento es "nuevo" si es el PRIMER contacto saliente del negocio en toda
+  // su historia; si ya había un toque anterior (aunque fuera del bot), es "follow".
+  const eventosSalientes = mios.filter(e => {
+    const o = origenDeContacto(e);
+    return (o === 'humano' || o === 'agente') && ACCIONES_SALIENTES.has(e.action_type || '');
+  });
+
+  // Primer contacto saliente de cada negocio, mirando TODA la historia (no solo
+  // el rango): una consulta por lotes de business_id, el primero que aparece
+  // (orden ascendente) es el más antiguo.
+  const idsSalientes = [...new Set(eventosSalientes.map(e => e.business_id))];
+  const primerToque = new Map<string, string>();
+  const SALIENTES_ARR = [...ACCIONES_SALIENTES_HIST];
+  for (let i = 0; i < idsSalientes.length; i += 200) {
+    const lote = idsSalientes.slice(i, i + 200);
+    for (let from = 0; ; from += PAGE) {
+      const { data } = await supabase
+        .from('contact_history')
+        .select('business_id, created_at')
+        .in('business_id', lote)
+        .in('action_type', SALIENTES_ARR)
+        .order('created_at', { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (!data || data.length === 0) break;
+      for (const r of data as { business_id: string; created_at: string }[]) {
+        if (!primerToque.has(r.business_id)) primerToque.set(r.business_id, r.created_at);
+      }
+      if (data.length < PAGE) break;
+    }
+  }
+
+  const porDiaNuevoFollow: Record<string, { nuevos: number; follows: number }> = {};
+  for (const e of eventosSalientes) {
+    const dia = diaLima(e.created_at);
+    const primero = primerToque.get(e.business_id);
+    // Nuevo si este evento ES el primer toque de la historia (sin toque anterior).
+    const esNuevo = !primero || e.created_at <= primero;
+    const bucket = (porDiaNuevoFollow[dia] ||= { nuevos: 0, follows: 0 });
+    if (esNuevo) bucket.nuevos++;
+    else bucket.follows++;
+  }
+
+  // Lista de vendedores con trabajo real en el rango, para poblar el selector.
+  const idsDueno = [...new Set(
+    eventos.filter(e => { const o = origenDeContacto(e); return o === 'humano' || o === 'agente'; })
+      .map(e => duenos.get(e.business_id))
+      .filter((v): v is string => !!v)
+  )];
+  const nombresUsuario = new Map<string, string>();
+  if (idsDueno.length > 0) {
+    const { data } = await supabase.from('users').select('id, name').in('id', idsDueno);
+    data?.forEach(u => nombresUsuario.set(u.id, u.name));
+  }
+  const vendedores = idsDueno
+    .map(id => ({ id, name: nombresUsuario.get(id) || 'Otro' }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   return NextResponse.json({
     desde,
     hoy,
@@ -90,6 +158,10 @@ export async function GET(request: Request) {
     porOrigen: totales,
     porOrigenHoy: deHoy,
     porDia,
+    // Nuevos vs follows por día (solo trabajo real y comunicación saliente).
+    porDiaNuevoFollow,
+    // Vendedores con trabajo real en el rango (para el selector del tracker).
+    vendedores,
     respuestasRecibidas: respuestas.slice(-25).reverse(),
   });
 }

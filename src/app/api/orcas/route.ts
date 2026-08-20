@@ -25,7 +25,7 @@ export interface OrcaLead {
   // --- Actividad REAL (contact_history), no el congelado contacted_at ---
   daysSinceActivity: number | null; // días desde la última comunicación real
   awaitingReply: boolean;           // lo último fue un whatsapp_reply real del prospecto
-  temp: 'caliente' | 'tibio' | 'frio' | 'encurso'; // clasificación honesta por actividad
+  temp: 'caliente' | 'negociacion' | 'tibio' | 'frio' | 'encurso'; // clasificación honesta por actividad
   source: string | null;
   nextAction: string | null; // "Próxima acción" curada por el humano (texto libre)
 }
@@ -35,7 +35,6 @@ const STAGES = [
   'seguimiento_3', 'interesado', 'cotizado', 'cliente', 'perdido',
 ];
 const CLOSED = ['cliente', 'perdido'];
-const HOT_STAGES = ['interesado', 'cotizado'];
 
 // Tipos de contact_history que son comunicación real (excluye note/stage_change).
 const COMM = new Set(['whatsapp_reply', 'whatsapp', 'email', 'auto_whatsapp', 'call', 'ai_call']);
@@ -111,12 +110,15 @@ export async function GET(request: Request) {
 
       // Temperatura por INTENCIÓN de ellos, no por días (los días son urgencia, no ocultan).
       // El bot ya no mueve stages → interesado/cotizado = interés humano real y confiable.
+      // Funnel: caliente (interesado) → negociación (cotizado, ya con propuesta en la mesa).
       const isOpen = !CLOSED.includes(stage);
-      const isHot = HOT_STAGES.includes(stage);
       let temp: OrcaLead['temp'] = 'encurso';
-      if (isOpen && (awaiting || isHot)) {
-        // 🔥 respuesta pendiente de ellos, o un humano marcó interesado/cotizado. Sin filtro de días.
+      if (isOpen && stage === 'interesado') {
+        // 🔥 mostró interés, aún sin propuesta.
         temp = 'caliente';
+      } else if (isOpen && stage === 'cotizado') {
+        // 💬 ya le mandaron propuesta/cotización; deal en la mesa.
+        temp = 'negociacion';
       } else if (isOpen && hasEngaged) {
         // 🌡️ respondieron algo real alguna vez, pero aún sin interés marcado.
         temp = 'tibio';
@@ -188,15 +190,17 @@ export async function GET(request: Request) {
 
     const open = orcas.filter((o) => !CLOSED.includes(o.stage));
     // Clasificación por INTENCIÓN de ellos (no por días; los días son urgencia):
-    //  🔥 caliente = respuesta humana pendiente  Ó  interesado/cotizado (interés humano real)
-    //  🌡️ tibio    = alguna vez respondieron de verdad, pero aún sin interés marcado
-    //  🧊 frío      = abierto Y actividad ≥ 21d
+    //  🔥 caliente    = interesado (mostró interés, aún sin propuesta)
+    //  💬 negociación = cotizado (ya le mandaron propuesta; deal en la mesa)
+    //  🌡️ tibio       = alguna vez respondieron de verdad, pero aún sin interés marcado
+    //  🧊 frío         = abierto Y actividad ≥ 21d
     const summary = {
       total: orcas.length,
       open: open.length,
       won: orcas.filter((o) => o.stage === 'cliente').length,
       lost: orcas.filter((o) => o.stage === 'perdido').length,
       hot: orcas.filter((o) => o.temp === 'caliente').length,
+      negociacion: orcas.filter((o) => o.temp === 'negociacion').length,
       tibio: orcas.filter((o) => o.temp === 'tibio').length,
       frio: orcas.filter((o) => o.temp === 'frio').length,
       awaiting: orcas.filter((o) => o.awaitingReply && !CLOSED.includes(o.stage)).length,

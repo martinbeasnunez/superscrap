@@ -181,13 +181,17 @@ const huerfanos = open.filter((o) => nf(o) && dropped(o) && !o.awaiting && (o.da
 const nuevas = open.filter((o) => nf(o) && isOrca(o) && !o.touched).sort(byScore);
 const estancadas = open.filter((o) => nf(o) && !dropped(o) && !o.awaiting && (o.days ?? 0) >= 14 && !HOT.includes(o.stage) && (isOrca(o) || o.ownerId)).sort(byColdest);
 
-// Temperatura por INTENCIÓN (igual que la app): caliente = interesado/cotizado — interés
-// que marcó un HUMANO (el bot ya no toca stages, así que es confiable). Sin filtro de días.
+// Temperatura por INTENCIÓN (igual que la app): funnel caliente → negociación.
+// Interés que marcó un HUMANO (el bot ya no toca stages, así que es confiable). Sin filtro de días.
 // "Te respondieron" (awaiting) va aparte como su propia sección accionable.
-// tibio = alguna vez respondieron de verdad, pero aún sin interés marcado.
-const esCaliente = (o) => HOT.includes(o.stage) && !CLOSED.includes(o.stage);
-const esTibio = (o) => !CLOSED.includes(o.stage) && !esCaliente(o) && o.hasEngaged;
+// caliente     = interesado (mostró interés, aún sin propuesta).
+// negociación  = cotizado (ya le mandaron propuesta/cotización; deal en la mesa).
+// tibio        = alguna vez respondieron de verdad, pero aún sin interés marcado.
+const esCaliente = (o) => o.stage === 'interesado' && !CLOSED.includes(o.stage);
+const esNegociacion = (o) => o.stage === 'cotizado' && !CLOSED.includes(o.stage);
+const esTibio = (o) => !CLOSED.includes(o.stage) && !esCaliente(o) && !esNegociacion(o) && o.hasEngaged;
 const calientesReales = open.filter(esCaliente);
+const negociacionReales = open.filter(esNegociacion);
 const tibiosReales = open.filter(esTibio);
 
 // Tu día (Martín)
@@ -239,12 +243,13 @@ const revOpenMax = orcasOpen.reduce((s, o) => s + (o.revMax || 0), 0);
 
 const parte = `# 🐋 Parte de Orcas — ${peru.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}
 
-**Resumen:** ⭐ ${focos.length} focos · ${orcasOpen.length} orcas abiertas · ${respondieron.length} te respondieron · ${calientesReales.length} calientes · ${tibiosReales.length} tibios · ${follows.length} follows · ${huerfanos.length} sin primer contacto · ${nuevas.length} orcas sin registro · potencial (orcas) ${soles(revOpenMin)}–${soles(revOpenMax)}/mes
+**Resumen:** ⭐ ${focos.length} focos · ${orcasOpen.length} orcas abiertas · ${respondieron.length} te respondieron · ${calientesReales.length} calientes · ${negociacionReales.length} en negociación · ${tibiosReales.length} tibios · ${follows.length} follows · ${huerfanos.length} sin primer contacto · ${nuevas.length} orcas sin registro · potencial (orcas) ${soles(revOpenMin)}–${soles(revOpenMax)}/mes
 _Días = desde la última actividad real en ORBIT (contact_history). Incluye orcas + delfines EN JUEGO (foco/calientes/con dueño/que respondieron). Marca leads con ⭐ en ORBIT para que aparezcan siempre acá. Tu trabajo por WhatsApp/LinkedIn fuera de ORBIT no se ve._
 
 ${block('⭐ TUS FOCOS — pase lo que pase, revísalos', focos, { note: true }, 20)}
 ${block('💬 TE RESPONDIERON — bola en tu cancha', respondieron, { reply: true })}
-${block('🔥 CALIENTES — cerrar ya (interesado/cotizado)', calientesReales.filter((o) => nf(o) && !o.awaiting), { note: true }, 12)}
+${block('🔥 CALIENTES — mostró interés, mandar propuesta (interesado)', calientesReales.filter((o) => nf(o) && !o.awaiting), { note: true }, 12)}
+${block('💬 EN NEGOCIACIÓN — propuesta enviada, cerrar', negociacionReales.filter((o) => nf(o) && !o.awaiting), { note: true }, 12)}
 ${block('🌡️ TIBIOS — empujar (respondieron, sin interés marcado aún)', tibiosReales.filter((o) => nf(o) && !o.awaiting), { note: true }, 10)}
 ${block('⏰ FOLLOWS vencidos (3d+)', follows, { note: true }, 12)}
 ${block('🆘 MARCADOS SIN PRIMER CONTACTO (sin dueño — asígnalos o mensájalos)', huerfanos, { note: true }, 15)}
@@ -253,7 +258,8 @@ ${block('🧊 ESTANCADAS (14d+)', estancadas, { note: true })}
 ### 📌 Tu día (Martín)
 - Tus orcas abiertas: **${misAbiertas.length}**
 - Te respondieron y esperan: **${misAbiertas.filter((o) => o.awaiting).length}**
-- Tuyas calientes (interesado/cotizado): **${misAbiertas.filter((o) => HOT.includes(o.stage)).length}**
+- Tuyas calientes (interesado): **${misAbiertas.filter((o) => o.stage === 'interesado').length}**
+- En negociación (tuyas): **${misAbiertas.filter((o) => o.stage === 'cotizado').length}**
 - Tuyas con actividad hoy: **${misAbiertas.filter((o) => o.days === 0).length}**
 - Tuyas vencidas (3d+, sin respuesta pendiente): **${misAbiertas.filter((o) => o.touched && !o.awaiting && !HOT.includes(o.stage) && (o.days ?? 0) >= 3).length}**
 `;

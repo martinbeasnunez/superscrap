@@ -24,14 +24,14 @@ interface OrcaLead {
   daysSinceContact: number | null;
   daysSinceActivity: number | null;
   awaitingReply: boolean;
-  temp: 'caliente' | 'tibio' | 'frio' | 'encurso';
+  temp: 'caliente' | 'negociacion' | 'tibio' | 'frio' | 'encurso';
   source: string | null;
   nextAction: string | null;
 }
 
 interface Summary {
   total: number; open: number; won: number; lost: number;
-  hot: number; tibio: number; frio: number; awaiting: number;
+  hot: number; negociacion: number; tibio: number; frio: number; awaiting: number;
   untouched: number; sinDueno: number;
   revenueMin: number; revenueMax: number;
   byStage: Record<string, number>;
@@ -62,7 +62,7 @@ const STAGE_PILL: Record<string, string> = {
   perdido: 'bg-rose-100 text-rose-700',
 };
 
-type FocusChip = 'todas' | 'calientes' | 'tibios' | 'sin_tocar' | 'sin_dueno';
+type FocusChip = 'todas' | 'calientes' | 'negociacion' | 'tibios' | 'sin_tocar' | 'sin_dueno';
 type OwnerFilter = 'all' | 'martin' | 'alejandro' | 'bot';
 
 function waNumber(phone: string): string {
@@ -144,6 +144,7 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
       if (hideClosed && (o.stage === 'cliente' || o.stage === 'perdido')) return false;
       if (stageFilter !== 'all' && o.stage !== stageFilter) return false;
       if (focus === 'calientes' && o.temp !== 'caliente') return false;
+      if (focus === 'negociacion' && o.temp !== 'negociacion') return false;
       if (focus === 'tibios' && o.temp !== 'tibio') return false;
       if (focus === 'sin_tocar' && o.contacted) return false;
       if (focus === 'sin_dueno' && o.ownerId) return false;
@@ -162,6 +163,7 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
   const chips: { id: FocusChip; label: string; count?: number }[] = [
     { id: 'todas', label: 'Todas' },
     { id: 'calientes', label: '🔥 Calientes', count: summary?.hot },
+    { id: 'negociacion', label: '💬 En negociación', count: summary?.negociacion },
     { id: 'tibios', label: '🌡️ Tibios', count: summary?.tibio },
     { id: 'sin_tocar', label: '🆕 Sin tocar', count: summary?.untouched },
     { id: 'sin_dueno', label: '👤 Sin dueño', count: summary?.sinDueno },
@@ -187,7 +189,7 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
           <Kpi label="Orcas abiertas" value={String(summary.open)} sub={`${summary.total} en total`} accent="text-gray-900" />
-          <Kpi label="🔥 Calientes" value={String(summary.hot)} sub={summary.awaiting ? `${summary.awaiting} te respondieron` : 'con actividad real'} accent="text-orange-600" />
+          <Kpi label="🔥 Calientes" value={String(summary.hot)} sub={`💬 ${summary.negociacion} en negociación${summary.awaiting ? ` · ${summary.awaiting} te respondieron` : ''}`} accent="text-orange-600" />
           <Kpi label="Sin dueño" value={String(summary.sinDueno)} sub="nadie las trabaja" accent="text-rose-600" />
           <Kpi label="En juego / mes" value={`${money(summary.revenueMin)}–${money(summary.revenueMax)}`} sub="revenue potencial" accent="text-[#0890F1]" small />
         </div>

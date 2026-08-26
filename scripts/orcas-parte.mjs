@@ -151,6 +151,12 @@ const toLead = (b) => {
     lastType: lastComm?.action_type || null,
     lastNote: (lastComm?.notes || '').replace(/\s+/g, ' ').trim() || null,
     replyNote: (lastReply?.notes || '').replace(/\s+/g, ' ').trim() || null,
+    // Conversación cruda (últimas 6 comunicaciones, in/out) para que la IA de la rutina la LEA y clasifique.
+    convo: comms.slice(0, 6).map((e) => ({
+      dir: e.action_type === INBOUND ? 'ELLOS' : 'nosotros',
+      t: e.action_type,
+      n: (e.notes || '').replace(/\s+/g, ' ').trim().slice(0, 180),
+    })),
   };
 };
 
@@ -251,6 +257,19 @@ const orcaTibio = orcasOpen.filter((o) => o.hasEngaged && !HOT.includes(o.stage)
 const orcaAwaiting = orcasOpen.filter((o) => o.awaiting);                          // te respondieron
 const orcaSinTocar = orcas.filter((o) => isOrca(o) && !o.contacted);              // 🆕 sin tocar (todas, no solo abiertas)
 
+// --- Material para la PASADA DE IA: leads con actividad para que la rutina LEA la conversación
+// y decida la temperatura REAL por evidencia (no por el stage que ensucia el bot). ---
+const reclasificar = open
+  .filter((o) => o.hasEngaged || HOT.includes(o.stage) || o.awaiting)
+  .sort(byScore)
+  .slice(0, 35);
+const reclasBlock = reclasificar.map((o) => {
+  const convo = o.convo.length
+    ? o.convo.map((c) => `    [${c.dir}/${c.t}] ${c.n || '(sin texto)'}`).join('\n')
+    : '    (sin comunicación registrada)';
+  return `- ${o.name} — id:${o.id} · stage_bot:${o.stage} · tier:${o.tier} · score ${o.score ?? '?'} · ${o.days ?? '?'}d\n${convo}`;
+}).join('\n');
+
 const parte = `# 🐋 Parte de Orcas — ${peru.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}
 
 **Pipeline de orcas (idéntico a la app /seguimiento):** 🔥 ${orcaHot.length} calientes · 💬 ${orcaNeg.length} en negociación · 🌡️ ${orcaTibio.length} tibios · 🆕 ${orcaSinTocar.length} sin tocar · 💬 ${orcaAwaiting.length} te respondieron · ${orcasOpen.length} orcas abiertas · potencial ${soles(revOpenMin)}–${soles(revOpenMax)}/mes
@@ -274,6 +293,17 @@ ${block('🧊 ESTANCADAS (14d+)', estancadas, { note: true })}
 - En negociación (tuyas): **${misAbiertas.filter((o) => o.stage === 'cotizado').length}**
 - Tuyas con actividad hoy: **${misAbiertas.filter((o) => o.days === 0).length}**
 - Tuyas vencidas (3d+, sin respuesta pendiente): **${misAbiertas.filter((o) => o.touched && !o.awaiting && !HOT.includes(o.stage) && (o.days ?? 0) >= 3).length}**
+
+---
+### 🔎 RECLASIFICACIÓN POR EVIDENCIA — uso interno de la rutina (NO pegar crudo al usuario)
+_Instrucción para la IA de la rutina: LEE cada conversación de abajo y decide la temperatura REAL, ignorando \`stage_bot\` (el bot lo ensucia). Reglas:_
+_• 💬 negociación = le enviamos una propuesta/cotización real (PDF, precio, correo con propuesta, licitación en curso)._
+_• 🔥 caliente = ELLOS mostraron intención real de compra (piden precio/coordinar, "me interesa", respuesta humana positiva) y aún sin propuesta enviada._
+_• 🌡️ tibio = respondió algo humano real pero sin interés claro todavía (pregunta suelta, "gracias", neutro)._
+_• 🧊 frío = solo autorespuestas de bot ("gracias por comunicarte", "canal de reservas", "soy tu asesora"), o nunca respondió un humano._
+_• ❌ descartar/perdido = rechazo explícito ("lo hacemos interno", "tenemos lavandería propia", "quiero comprar máquinas") o no encaja._
+_Corrige el stage en ORBIT cuando \`stage_bot\` no cuadre con tu lectura (caliente→interesado, negociación→cotizado, tibio/frío→seguimiento_2, descartar→perdido), con un update por id + una nota que explique por qué. Luego presenta la temperatura HONESTA, no el stage crudo._
+${reclasBlock}
 `;
 
 console.log(parte);

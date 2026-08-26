@@ -25,6 +25,7 @@ interface OrcaLead {
   daysSinceActivity: number | null;
   awaitingReply: boolean;
   temp: 'caliente' | 'negociacion' | 'tibio' | 'frio' | 'encurso';
+  tier: string | null; // 'orca' | 'delfin'
   source: string | null;
   nextAction: string | null;
 }
@@ -102,7 +103,9 @@ function daysLabel(days: number | null, contacted: boolean): string {
 
 export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: OwnerFilter } = {}) {
   const [orcas, setOrcas] = useState<OrcaLead[]>([]);
+  const [delfines, setDelfines] = useState<OrcaLead[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [summaryPlus, setSummaryPlus] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<CurrentUser | null>(null);
@@ -111,6 +114,8 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
   const [stageFilter, setStageFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [hideClosed, setHideClosed] = useState(true);
+  // Incluir delfines EN JUEGO (encendido por defecto): el trabajo real también vive en delfines.
+  const [includeDelfines, setIncludeDelfines] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem('orbit_user');
@@ -128,7 +133,9 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
       if (!res.ok) throw new Error('fetch failed');
       const data = await res.json();
       setOrcas(data.orcas || []);
+      setDelfines(data.delfinesEnJuego || []);
       setSummary(data.summary || null);
+      setSummaryPlus(data.summaryInPlay || data.summary || null);
     } catch {
       setError('No se pudieron cargar las orcas. Reintenta.');
     } finally {
@@ -138,9 +145,16 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
 
   useEffect(() => { fetchOrcas(); }, [fetchOrcas]);
 
+  // Pipeline mostrado: orcas + (opcional) delfines EN JUEGO.
+  const leads = useMemo(
+    () => (includeDelfines ? [...orcas, ...delfines] : orcas),
+    [orcas, delfines, includeDelfines],
+  );
+  const activeSummary = includeDelfines ? summaryPlus : summary;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return orcas.filter((o) => {
+    return leads.filter((o) => {
       if (hideClosed && (o.stage === 'cliente' || o.stage === 'perdido')) return false;
       if (stageFilter !== 'all' && o.stage !== stageFilter) return false;
       if (focus === 'calientes' && o.temp !== 'caliente') return false;
@@ -158,15 +172,15 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
       }
       return true;
     });
-  }, [orcas, search, stageFilter, focus, hideClosed, ownerFilter]);
+  }, [leads, search, stageFilter, focus, hideClosed, ownerFilter]);
 
   const chips: { id: FocusChip; label: string; count?: number }[] = [
     { id: 'todas', label: 'Todas' },
-    { id: 'calientes', label: '🔥 Calientes', count: summary?.hot },
-    { id: 'negociacion', label: '💬 En negociación', count: summary?.negociacion },
-    { id: 'tibios', label: '🌡️ Tibios', count: summary?.tibio },
+    { id: 'calientes', label: '🔥 Calientes', count: activeSummary?.hot },
+    { id: 'negociacion', label: '💬 En negociación', count: activeSummary?.negociacion },
+    { id: 'tibios', label: '🌡️ Tibios', count: activeSummary?.tibio },
     { id: 'sin_tocar', label: '🆕 Sin tocar', count: summary?.untouched },
-    { id: 'sin_dueno', label: '👤 Sin dueño', count: summary?.sinDueno },
+    { id: 'sin_dueno', label: '👤 Sin dueño', count: activeSummary?.sinDueno },
   ];
 
   return (
@@ -186,12 +200,12 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
       </div>
 
       {/* KPIs */}
-      {summary && (
+      {activeSummary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-          <Kpi label="Orcas abiertas" value={String(summary.open)} sub={`${summary.total} en total`} accent="text-gray-900" />
-          <Kpi label="🔥 Calientes" value={String(summary.hot)} sub={`💬 ${summary.negociacion} en negociación${summary.awaiting ? ` · ${summary.awaiting} te respondieron` : ''}`} accent="text-orange-600" />
-          <Kpi label="Sin dueño" value={String(summary.sinDueno)} sub="nadie las trabaja" accent="text-rose-600" />
-          <Kpi label="En juego / mes" value={`${money(summary.revenueMin)}–${money(summary.revenueMax)}`} sub="revenue potencial" accent="text-[#0890F1]" small />
+          <Kpi label={includeDelfines ? 'En juego abiertas' : 'Orcas abiertas'} value={String(activeSummary.open)} sub={includeDelfines ? 'orcas + delfines' : `${activeSummary.total} en total`} accent="text-gray-900" />
+          <Kpi label="🔥 Calientes" value={String(activeSummary.hot)} sub={`💬 ${activeSummary.negociacion} en negociación${activeSummary.awaiting ? ` · ${activeSummary.awaiting} te respondieron` : ''}`} accent="text-orange-600" />
+          <Kpi label="Sin dueño" value={String(activeSummary.sinDueno)} sub="nadie las trabaja" accent="text-rose-600" />
+          <Kpi label="En juego / mes" value={`${money(activeSummary.revenueMin)}–${money(activeSummary.revenueMax)}`} sub="revenue potencial" accent="text-[#0890F1]" small />
         </div>
       )}
 
@@ -229,6 +243,10 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
           <input type="checkbox" checked={hideClosed} onChange={(e) => setHideClosed(e.target.checked)} className="rounded" />
           Ocultar cerradas
         </label>
+        <label className="flex items-center gap-1.5 text-sm text-gray-500 select-none cursor-pointer">
+          <input type="checkbox" checked={includeDelfines} onChange={(e) => setIncludeDelfines(e.target.checked)} className="rounded" />
+          🐬 Incluir delfines en juego
+        </label>
       </div>
 
       {/* Lista */}
@@ -245,7 +263,7 @@ export default function OrcaWarRoom({ ownerFilter = 'all' }: { ownerFilter?: Own
         </div>
       ) : (
         <>
-          <p className="text-xs text-gray-400 mb-2">{filtered.length} orca{filtered.length === 1 ? '' : 's'}</p>
+          <p className="text-xs text-gray-400 mb-2">{filtered.length} {includeDelfines ? 'en juego (orcas + delfines)' : `orca${filtered.length === 1 ? '' : 's'}`}</p>
           <div className="space-y-2">
             {filtered.map((o) => (
               <OrcaRow key={o.id} o={o} isMine={!!user && o.ownerId === user.id} />
@@ -281,6 +299,7 @@ function OrcaRow({ o, isMine }: { o: OrcaLead; isMine: boolean }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-gray-900 truncate max-w-[16rem] sm:max-w-none">{o.name}</span>
+            <span className="text-[11px] flex-shrink-0" title={o.tier === 'delfin' ? 'Delfín (en juego)' : 'Orca'}>{o.tier === 'delfin' ? '🐬' : '🐋'}</span>
             <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${STAGE_PILL[o.stage]}`}>{STAGE_LABEL[o.stage]}</span>
             {o.awaitingReply && (
               <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-700">💬 te respondió</span>

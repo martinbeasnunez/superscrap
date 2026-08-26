@@ -17,6 +17,7 @@ export interface OrcaLead {
   revenueMin: number | null;
   revenueMax: number | null;
   stage: string;
+  tier: string | null; // 'orca' | 'delfin' — para distinguir en el Pipeline
   contacted: boolean;
   ownerId: string | null;
   ownerName: string | null;
@@ -137,6 +138,7 @@ export async function GET(request: Request) {
         revenueMin: a.estimated_revenue_min ?? null,
         revenueMax: a.estimated_revenue_max ?? null,
         stage,
+        tier: a.potential_tier || null,
         contacted: !!contacted,
         ownerId: b.contacted_by || null,
         ownerName: b.contacted_by ? (userMap.get(b.contacted_by) || 'Desconocido') : null,
@@ -163,8 +165,19 @@ export async function GET(request: Request) {
         .eq('service_analyses.potential_tier', 'orca')
         .range(from, to));
 
+    // Delfines EN JUEGO: solo los con stage activo (no el mar de delfines nuevos/fríos del bot),
+    // para que el Pipeline pueda mostrar el trabajo real que también vive en delfines.
+    const ACTIVE_STAGES = ['contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3', 'interesado', 'cotizado'];
+    const delfinRows = await fetchAll((from, to) =>
+      supabase
+        .from('businesses')
+        .select(SELECT.replace('service_analyses (', 'service_analyses!inner ('))
+        .eq('service_analyses.potential_tier', 'delfin')
+        .in('sales_stage', ACTIVE_STAGES)
+        .range(from, to));
+
     // Actividad real: traemos contact_history en lotes de 150 ids (Supabase corta en 1000).
-    const ids: string[] = rows.map((b) => b.id);
+    const ids: string[] = [...rows, ...delfinRows].map((b) => b.id);
     for (let i = 0; i < ids.length; i += 150) {
       const chunk = ids.slice(i, i + 150);
       const { data, error } = await supabase
@@ -179,14 +192,22 @@ export async function GET(request: Request) {
       }
     }
 
-    const orcas: OrcaLead[] = rows.map(toLead);
-
-    // Orden por defecto: score desc (nulls al final), luego más frío arriba (por actividad real).
-    orcas.sort((a, b) => {
+    const bySalience = (a: OrcaLead, b: OrcaLead) => {
       const sa = a.score ?? -1, sb = b.score ?? -1;
       if (sb !== sa) return sb - sa;
       return (b.daysSinceActivity ?? -1) - (a.daysSinceActivity ?? -1);
-    });
+    };
+    const orcas: OrcaLead[] = rows.map(toLead);
+    // "En juego" de verdad: el bot auto-avanza muchos delfines a 'seguimiento' sin trabajarlos.
+    // Nos quedamos solo con los que un HUMANO trabaja (con dueño), que respondieron, o que están
+    // caliente/negociación/tibio. Así el Pipeline muestra trabajo real, no el spam del bot.
+    const delfines: OrcaLead[] = delfinRows
+      .map(toLead)
+      .filter((o) => o.ownerId || o.awaitingReply || ['caliente', 'negociacion', 'tibio'].includes(o.temp));
+    // Orden por defecto: score desc (nulls al final), luego más frío arriba (por actividad real).
+    orcas.sort(bySalience);
+    delfines.sort(bySalience);
+    const inPlay = [...orcas, ...delfines].sort(bySalience);
 
     const open = orcas.filter((o) => !CLOSED.includes(o.stage));
     // Clasificación por INTENCIÓN de ellos (no por días; los días son urgencia):
@@ -209,6 +230,24 @@ export async function GET(request: Request) {
       revenueMin: open.reduce((s, o) => s + (o.revenueMin || 0), 0),
       revenueMax: open.reduce((s, o) => s + (o.revenueMax || 0), 0),
       byStage: Object.fromEntries(STAGES.map((s) => [s, orcas.filter((o) => o.stage === s).length])),
+    };
+
+    // Resumen "en juego" = orcas + delfines-en-juego. Es el pipeline REAL de trabajo (el de
+    // orcas solo, arriba, cuenta el universo de caza). El toggle del Pipeline elige cuál mostrar.
+    // 'untouched' se hereda del de orcas: los delfines-en-juego ya están tocados y el universo
+    // de delfines "sin tocar" no es pipeline en juego.
+    const openInPlay = inPlay.filter((o) => !CLOSED.includes(o.stage));
+    const summaryInPlay = {
+      ...summary,
+      open: openInPlay.length,
+      hot: inPlay.filter((o) => o.temp === 'caliente').length,
+      negociacion: inPlay.filter((o) => o.temp === 'negociacion').length,
+      tibio: inPlay.filter((o) => o.temp === 'tibio').length,
+      frio: inPlay.filter((o) => o.temp === 'frio').length,
+      awaiting: inPlay.filter((o) => o.awaitingReply && !CLOSED.includes(o.stage)).length,
+      sinDueno: openInPlay.filter((o) => !o.ownerId).length,
+      revenueMin: openInPlay.reduce((s, o) => s + (o.revenueMin || 0), 0),
+      revenueMax: openInPlay.reduce((s, o) => s + (o.revenueMax || 0), 0),
     };
 
     // ---- Vista "Tu día": leads del usuario que NO son orca (delfines/otros) + su resumen ----
@@ -239,7 +278,7 @@ export async function GET(request: Request) {
       };
     }
 
-    return NextResponse.json({ orcas, mine, summary, myStats });
+    return NextResponse.json({ orcas, delfinesEnJuego: delfines, mine, summary, summaryInPlay, myStats });
   } catch (error) {
     console.error('Orcas endpoint error:', error);
     return NextResponse.json({ error: 'Error al obtener orcas' }, { status: 500 });

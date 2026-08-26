@@ -47,7 +47,7 @@ const daysAgo = (iso) => (iso ? Math.floor((now - new Date(iso).getTime()) / 864
 const hasSubsec = (iso) => /\.\d/.test(((iso || '').split('T')[1]) || '');
 // Filtro rápido de autorespuestas de negocio (bienvenida/horario/agradecimiento) para no contarlas
 // como "te respondieron". Heurística; el clasificador fino vive en src/lib/reply-classifier.ts.
-const BOT_REPLY = /bienvenid|te saluda|gracias por (tu|su)|horario de atenci|canal de reservas|para reservar|no estamos respond|estamos cerrando|placer atender|indicarme tu nombre|en qu[eé] podemos ayudar|somos .* atenci[oó]n/i;
+const BOT_REPLY = /bienvenid|te saluda|gracias por (tu|su)|gracias por comunicarte|horario de atenci|canal de reservas|[aá]rea de reservas|para reservar|no estamos respond|estamos cerrando|placer atender|indicarme tu nombre|en qu[eé] (podemos|puedo) ayudar|somos .* atenci[oó]n|tu asesora|conversaci[oó]n se borr|comp[aá]rte?nos tu consulta|no hemos podido|please let us know|thank you for contacting/i;
 const isRealReply = (txt) => {
   const t = (txt || '').trim();
   if (!/[a-záéíóúñ]/i.test(t)) return false;                 // solo emojis/símbolos
@@ -143,6 +143,8 @@ const toLead = (b) => {
     id: b.id, name: b.name, phone: b.phone, city: s.city || null, type,
     tier: a.potential_tier || null,
     score: a.potential_score ?? null, revMin, revMax, stage, touched, awaiting,
+    // "contactado" a la manera de la app (/api/orcas): tiene alguna acción o ya salió de 'nuevo'.
+    contacted: (Array.isArray(b.contact_actions) && b.contact_actions.length > 0) || stage !== 'nuevo',
     ownerId: b.contacted_by || null,
     ownerName: b.contacted_by ? (userMap.get(b.contacted_by) || 'Desconocido') : null,
     days, activityAt, esGrande, channel, isFocus: !!b.is_focus, noComms: !lastComm, hasEngaged,
@@ -241,15 +243,25 @@ const orcasOpen = open.filter(isOrca);
 const revOpenMin = orcasOpen.reduce((s, o) => s + (o.revMin || 0), 0);
 const revOpenMax = orcasOpen.reduce((s, o) => s + (o.revMax || 0), 0);
 
+// --- Paridad EXACTA con el Pipeline de la app (/api/orcas): SOLO orcas, misma regla ---
+// Estos números deben cuadrar 1:1 con los chips que ve Martín en /seguimiento.
+const orcaHot = orcasOpen.filter((o) => o.stage === 'interesado');                 // 🔥 caliente
+const orcaNeg = orcasOpen.filter((o) => o.stage === 'cotizado');                   // 💬 en negociación
+const orcaTibio = orcasOpen.filter((o) => o.hasEngaged && !HOT.includes(o.stage)); // 🌡️ tibio
+const orcaAwaiting = orcasOpen.filter((o) => o.awaiting);                          // te respondieron
+const orcaSinTocar = orcas.filter((o) => isOrca(o) && !o.contacted);              // 🆕 sin tocar (todas, no solo abiertas)
+
 const parte = `# 🐋 Parte de Orcas — ${peru.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}
 
-**Resumen:** ⭐ ${focos.length} focos · ${orcasOpen.length} orcas abiertas · ${respondieron.length} te respondieron · ${calientesReales.length} calientes · ${negociacionReales.length} en negociación · ${tibiosReales.length} tibios · ${follows.length} follows · ${huerfanos.length} sin primer contacto · ${nuevas.length} orcas sin registro · potencial (orcas) ${soles(revOpenMin)}–${soles(revOpenMax)}/mes
-_Días = desde la última actividad real en ORBIT (contact_history). Incluye orcas + delfines EN JUEGO (foco/calientes/con dueño/que respondieron). Marca leads con ⭐ en ORBIT para que aparezcan siempre acá. Tu trabajo por WhatsApp/LinkedIn fuera de ORBIT no se ve._
+**Pipeline de orcas (idéntico a la app /seguimiento):** 🔥 ${orcaHot.length} calientes · 💬 ${orcaNeg.length} en negociación · 🌡️ ${orcaTibio.length} tibios · 🆕 ${orcaSinTocar.length} sin tocar · 💬 ${orcaAwaiting.length} te respondieron · ${orcasOpen.length} orcas abiertas · potencial ${soles(revOpenMin)}–${soles(revOpenMax)}/mes
+
+**Para trabajar hoy (lista de acción — incluye delfines EN JUEGO):** ⭐ ${focos.length} focos · ${respondieron.length} te respondieron · ${follows.length} follows vencidos · ${huerfanos.length} sin primer contacto · ${nuevas.length} orcas sin registro
+_El bloque de arriba cuenta SOLO orcas y cuadra 1:1 con los chips de la app (🔥 caliente=interesado · 💬 negociación=cotizado · 🌡️ tibio=respondió sin interés marcado · 🆕 sin tocar). Las secciones de abajo son tu lista de acción y suman delfines en juego (Illari/Novoa/etc.). Días = última actividad real en ORBIT. Marca ⭐ para fijar un lead. Tu trabajo por WhatsApp/LinkedIn fuera de ORBIT no se ve._
 
 ${block('⭐ TUS FOCOS — pase lo que pase, revísalos', focos, { note: true }, 20)}
 ${block('💬 TE RESPONDIERON — bola en tu cancha', respondieron, { reply: true })}
-${block('🔥 CALIENTES — mostró interés, mandar propuesta (interesado)', calientesReales.filter((o) => nf(o) && !o.awaiting), { note: true }, 12)}
-${block('💬 EN NEGOCIACIÓN — propuesta enviada, cerrar', negociacionReales.filter((o) => nf(o) && !o.awaiting), { note: true }, 12)}
+${block('🔥 CALIENTES — mostró interés, mandar propuesta (interesado)', calientesReales.filter((o) => !o.awaiting), { note: true }, 12)}
+${block('💬 EN NEGOCIACIÓN — propuesta enviada, CERRAR (cotizado)', negociacionReales.filter((o) => !o.awaiting), { note: true }, 12)}
 ${block('🌡️ TIBIOS — empujar (respondieron, sin interés marcado aún)', tibiosReales.filter((o) => nf(o) && !o.awaiting), { note: true }, 10)}
 ${block('⏰ FOLLOWS vencidos (3d+)', follows, { note: true }, 12)}
 ${block('🆘 MARCADOS SIN PRIMER CONTACTO (sin dueño — asígnalos o mensájalos)', huerfanos, { note: true }, 15)}

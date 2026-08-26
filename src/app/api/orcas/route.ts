@@ -42,7 +42,7 @@ const COMM = new Set(['whatsapp_reply', 'whatsapp', 'email', 'auto_whatsapp', 'c
 const INBOUND = 'whatsapp_reply';
 // Filtro rápido de autorespuestas de negocio (bienvenida/horario/agradecimiento) para no
 // contarlas como "te respondieron". Espejo de scripts/orcas-parte.mjs (referencia canónica).
-const BOT_REPLY = /bienvenid|te saluda|gracias por (tu|su)|horario de atenci|canal de reservas|para reservar|no estamos respond|estamos cerrando|placer atender|indicarme tu nombre|en qu[eé] podemos ayudar|somos .* atenci[oó]n/i;
+const BOT_REPLY = /bienvenid|te saluda|gracias por (tu|su)|gracias por comunicarte|horario de atenci|canal de reservas|[aá]rea de reservas|para reservar|no estamos respond|estamos cerrando|placer atender|indicarme tu nombre|en qu[eé] (podemos|puedo) ayudar|somos .* atenci[oó]n|tu asesora|conversaci[oó]n se borr|comp[aá]rte?nos tu consulta|no hemos podido|please let us know|thank you for contacting/i;
 const isRealReply = (txt: string | null): boolean => {
   const t = (txt || '').trim();
   if (!/[a-záéíóúñ]/i.test(t)) return false;                 // solo emojis/símbolos

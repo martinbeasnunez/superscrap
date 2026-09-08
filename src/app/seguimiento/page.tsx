@@ -32,6 +32,17 @@ const OrcaWarRoom = dynamic(() => import('@/components/OrcaWarRoom'), {
   ),
 });
 
+// Reactivación B2B (Misión 2) — módulo propio colgado del Pipeline
+const Reactivacion = dynamic(() => import('@/components/reactivation/Reactivacion'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin h-10 w-10 border-3 border-[#0890F1] border-t-transparent rounded-full" />
+    </div>
+  ),
+});
+
+type PipelineSection = 'pipeline' | 'reactivacion';
 type PipelineView = 'lista' | 'tablero';
 interface CurrentUser { id: string; name: string; email: string }
 interface QuickStats { newLeads: number; followUpNeeded: number; interested: number; quoted: number }
@@ -66,6 +77,7 @@ export default function PipelinePage() {
   const [showTips, setShowTips] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
   const [view, setView] = useState<PipelineView>('tablero');
+  const [section, setSection] = useState<PipelineSection>('pipeline');
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
   const [user, setUser] = useState<CurrentUser | null>(null);
   const { t } = useI18n();
@@ -76,6 +88,8 @@ export default function PipelinePage() {
     const v = localStorage.getItem('orbit_pipeline_view');
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (v === 'lista' || v === 'tablero') setView(v);
+    const sec = localStorage.getItem('orbit_pipeline_section');
+    if (sec === 'pipeline' || sec === 'reactivacion') setSection(sec);
     const saved = localStorage.getItem('orbit_user');
     if (saved) { try { setUser(JSON.parse(saved)); } catch { /* ignore */ } }
   }, []);
@@ -83,6 +97,11 @@ export default function PipelinePage() {
   const changeView = useCallback((v: PipelineView) => {
     setView(v);
     localStorage.setItem('orbit_pipeline_view', v);
+  }, []);
+
+  const changeSection = useCallback((s: PipelineSection) => {
+    setSection(s);
+    localStorage.setItem('orbit_pipeline_section', s);
   }, []);
 
   useEffect(() => {
@@ -165,7 +184,7 @@ export default function PipelinePage() {
           <h1 className="text-2xl font-bold text-gray-900">{t('pipe.title')}</h1>
           <p className="text-gray-500 mt-0.5">Una sola sección · tus leads en dos lentes</p>
         </div>
-        {view === 'tablero' && stats && (
+        {section === 'pipeline' && view === 'tablero' && stats && (
           <div className="flex items-center gap-6 bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-100">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900">{stats.newLeads}</p>
@@ -190,6 +209,30 @@ export default function PipelinePage() {
         )}
       </div>
 
+      {/* Secciones del Pipeline: Orcas (pipeline comercial) vs Reactivación B2B */}
+      <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm mb-4 w-fit">
+        <button
+          onClick={() => changeSection('pipeline')}
+          className={`text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors ${
+            section === 'pipeline' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          🎯 Pipeline
+        </button>
+        <button
+          onClick={() => changeSection('reactivacion')}
+          className={`text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors ${
+            section === 'reactivacion' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          ♻️ Reactivación
+        </button>
+      </div>
+
+      {section === 'reactivacion' ? (
+        <Reactivacion />
+      ) : (
+      <>
       {/* 👑 Tu día — franja persistente, arriba de ambas vistas */}
       {myStats && (
         <button
@@ -246,7 +289,7 @@ export default function PipelinePage() {
         </button>
         {showActivity && (
           <div className="px-4 pb-4 pt-1 border-t border-gray-100">
-            <DailyActivity />
+            <DailyActivity showTitle={false} />
           </div>
         )}
       </div>
@@ -345,6 +388,8 @@ export default function PipelinePage() {
         </div>
       ) : (
         <OrcaWarRoom ownerFilter={ownerFilter} />
+      )}
+      </>
       )}
     </div>
   );

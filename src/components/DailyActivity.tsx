@@ -32,7 +32,7 @@ function isWeekend(iso: string): boolean {
   return wd === 0 || wd === 6;
 }
 
-export default function DailyActivity() {
+export default function DailyActivity({ showTitle = true }: { showTitle?: boolean } = {}) {
   const { t } = useI18n();
   const [sel, setSel] = useState<string>('all'); // 'all' = equipo, o userId
   const [data, setData] = useState<ActividadResp | null>(null);
@@ -72,7 +72,7 @@ export default function DailyActivity() {
 
   return (
     <div>
-      <h3 className="font-bold text-sm text-gray-900 mb-1">📅 {t('insights.activity_title')}</h3>
+      {showTitle && <h3 className="font-bold text-sm text-gray-900 mb-1">📅 {t('insights.activity_title')}</h3>}
       <p className="text-xs text-gray-500 mb-2">{t('insights.activity_subtitle')}</p>
 
       {/* Titular claro: HOY (grande) + esta semana */}

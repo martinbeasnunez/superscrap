@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/i18n';
 import WhatsAppDailyChart from '@/components/WhatsAppDailyChart';
 import SourceMix from '@/components/SourceMix';
 import LossInsights from '@/components/LossInsights';
+import ReactivationStats from '@/components/ReactivationStats';
 
 interface IndustryItem {
   industry: string;
@@ -347,6 +348,11 @@ export default function HomePage() {
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Reactivación B2B — KPI Contactado vs Control */}
+          <div className="mb-4 sm:mb-6">
+            <ReactivationStats />
           </div>
 
           {/* Inbound vs Outbound — de dónde vienen los leads */}

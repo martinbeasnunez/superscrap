@@ -257,3 +257,9 @@ CREATE INDEX IF NOT EXISTS idx_reactivation_owner     ON reactivation_clients(ow
 ALTER TABLE reactivation_clients ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all for reactivation_clients" ON reactivation_clients
   FOR ALL USING (true) WITH CHECK (true);
+
+-- ============================================================
+-- Migration 014: Reactivación B2B — contacto + marca por ficha (Fase 2)
+-- ============================================================
+ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS contact_name TEXT;
+ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS brand TEXT;

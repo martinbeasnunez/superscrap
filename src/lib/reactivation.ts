@@ -37,6 +37,8 @@ export interface ReactClient extends ParsedRow {
   discount_pct: number | null;
   status: ReactStatus;
   notes: string | null;
+  contact_name: string | null; // nombre de la persona ({contacto} en plantillas)
+  brand: string | null;        // marca en los textos (default "Lavado")
   updated_at?: string;
 }
 

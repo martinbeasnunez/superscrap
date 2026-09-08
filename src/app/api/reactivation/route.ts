@@ -61,6 +61,8 @@ export async function PATCH(request: Request) {
     if ('responded' in body) patch.responded = body.responded;
     if ('reserved' in body) patch.reserved = body.reserved;
     if ('notes' in body) patch.notes = body.notes ?? null;
+    if ('contact_name' in body) patch.contact_name = body.contact_name?.trim() || null;
+    if ('brand' in body) patch.brand = body.brand?.trim() || null;
     if ('discount_pct' in body) {
       const d = Number(body.discount_pct);
       patch.discount_pct = Number.isFinite(d) ? Math.min(15, Math.max(0, Math.round(d))) : 10;

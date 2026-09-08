@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { REACT_STATUS_LABEL, type ReactClient, type ReactChannel } from '@/lib/reactivation';
+import { BRAND_DEFAULT } from '@/lib/reactivation-messages';
+import MessagesPanel from './MessagesPanel';
 
 // Drawer de detalle: registra el progreso de campaña con las reglas duras.
 //  - Control → bloqueado, no se registra nada.
@@ -25,6 +27,8 @@ export default function DetailDrawer({
   const [reserved, setReserved] = useState<boolean | null>(client.reserved);
   const [discount, setDiscount] = useState<number>(client.discount_pct ?? 10);
   const [notes, setNotes] = useState(client.notes ?? '');
+  const [contacto, setContacto] = useState(client.contact_name ?? '');
+  const [brand, setBrand] = useState(client.brand ?? BRAND_DEFAULT);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verifyAck, setVerifyAck] = useState(false);
@@ -60,6 +64,8 @@ export default function DetailDrawer({
           reserved,
           discount_pct: discount,
           notes,
+          contact_name: contacto,
+          brand,
         }),
       });
       const data = await res.json();
@@ -113,6 +119,27 @@ export default function DetailDrawer({
                 </button>
               )}
             </div>
+          )}
+
+          {/* Contacto + marca (alimentan las plantillas) */}
+          {!isControl && (
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-xs text-gray-500">
+                Contacto (persona)
+                <input value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder={client.company}
+                  className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+              </label>
+              <label className="text-xs text-gray-500">
+                Marca en el texto
+                <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder={BRAND_DEFAULT}
+                  className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+              </label>
+            </div>
+          )}
+
+          {/* Mensajes listos para copiar/pegar según Tier */}
+          {!isControl && (
+            <MessagesPanel client={client} contacto={contacto} brand={brand} descuento={discount} locked={locked} />
           )}
 
           {/* 1er toque */}

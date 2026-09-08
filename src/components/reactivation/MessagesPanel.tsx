@@ -7,6 +7,7 @@ import {
   TIER_A,
   TIER_B,
   TIER_C,
+  PRIMERA_RECOMPRA,
   SECOND_TOUCH,
   type FillVars,
 } from '@/lib/reactivation-messages';
@@ -32,6 +33,9 @@ export default function MessagesPanel({
   const vars: FillVars = { empresa: client.company, contacto, marca: brand, descuento };
   const fill = (t: string) => fillTemplate(t, vars);
   const tier = client.tier;
+  const isPrimeraRecompra = !tier && client.list_type === 'primera_recompra';
+  // 2do toque (llamada) aplica al flujo WhatsApp: Tier B/C y primera recompra
+  const waFlow = tier === 'B' || tier === 'C' || isPrimeraRecompra;
   const showSecondTouch = client.status === 'toque1'; // 1er toque enviado / no respondió
 
   // Link directo de WhatsApp con el texto ya cargado (abre el chat del cliente).
@@ -61,12 +65,19 @@ export default function MessagesPanel({
         </div>
       ) : tier === 'A' ? (
         <TierAGuide fill={fill} />
+      ) : isPrimeraRecompra ? (
+        <div className="space-y-2">
+          <CopyBlock label="1er toque · primera recompra" text={fill(PRIMERA_RECOMPRA.firstTouch)} waHref={wa(fill(PRIMERA_RECOMPRA.firstTouch))} />
+          <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(PRIMERA_RECOMPRA.soft)} waHref={wa(fill(PRIMERA_RECOMPRA.soft))} />
+        </div>
+      ) : client.list_type === 'excluir' ? (
+        <p className="text-sm text-gray-500">Segmento excluido — revisar antes de contactar (reclamo / pidió hace poco).</p>
       ) : (
         <p className="text-sm text-gray-400">Sin plantilla para este segmento.</p>
       )}
 
-      {/* 2do toque (Tier B y C) — guion de llamada de los 7 días */}
-      {!locked && (tier === 'B' || tier === 'C') && showSecondTouch && (
+      {/* 2do toque (WhatsApp: Tier B/C y primera recompra) — guion de llamada de los 7 días */}
+      {!locked && waFlow && showSecondTouch && (
         <div className="mt-3 pt-3 border-t border-gray-200">
           <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 mb-2">
             📞 {SECOND_TOUCH.hint}

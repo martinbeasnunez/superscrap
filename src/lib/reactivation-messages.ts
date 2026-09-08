@@ -48,6 +48,14 @@ export const TIER_C = {
     'Hola {empresa}, soy Joaquín de {marca}. Recogemos, lavamos y te devolvemos todo limpio en la puerta — recojo y entrega gratis, tú no mueves nada. ¿Reactivamos tu servicio esta semana? Te coordino el recojo cuando te quede.',
 };
 
+// --- Primera recompra (one-timers: 1 pedido) · WhatsApp, flujo Joaquín ---
+export const PRIMERA_RECOMPRA = {
+  firstTouch:
+    'Hola {empresa}, soy Joaquín de {marca}. Hiciste tu primer pedido con nosotros y quiero que la segunda sea aún mejor: esta semana te dejo {descuento}% en tu próximo servicio. Recogemos, lavamos y te devolvemos todo limpio en la puerta, gratis. ¿Te agendo el recojo?',
+  soft:
+    'Hola {empresa}, soy Joaquín de {marca}. ¿Cómo te fue con tu primer lavado? Me encantaría que nos vuelvas a probar — recojo y entrega gratis, tú no mueves nada. ¿Reactivamos tu servicio esta semana?',
+};
+
 // --- 2do toque (Tier B y C) · a los 7 días → LLAMADA (solo a los que no respondieron) ---
 export const SECOND_TOUCH = {
   hint: 'No mandes otro WhatsApp — llámalos. Convierte más y no quema el número.',

@@ -8,7 +8,7 @@
 //  - {descuento}     → descuento de la ficha (empieza 10, tope 15)
 //  - {descuentoMax}  → descuento de urgencia (15)
 
-export const BRAND_DEFAULT = 'Lavado';
+export const BRAND_DEFAULT = 'GetLavado';
 export const DISCOUNT_START = 10;
 export const DISCOUNT_MAX = 15;
 export const SEND_WINDOW = 'mar–jue · 8–10am / 12–2pm';

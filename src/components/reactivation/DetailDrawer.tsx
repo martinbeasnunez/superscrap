@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { REACT_STATUS_LABEL, type ReactClient, type ReactChannel } from '@/lib/reactivation';
 import { BRAND_DEFAULT } from '@/lib/reactivation-messages';
+import { waveFor, targetTouch1, targetTouch2, overdue, fmtShort, todayISO } from '@/lib/reactivation-campaign';
 import MessagesPanel from './MessagesPanel';
 
 // Drawer de detalle: registra el progreso de campaña con las reglas duras.
@@ -117,6 +118,25 @@ export default function DetailDrawer({
             <span>·</span>
             <span>{client.owner || 'sin dueño'}</span>
           </div>
+          {/* Ola + fecha objetivo (deadline en la propia ficha) */}
+          {(() => {
+            const wave = waveFor(client);
+            if (!wave) return null;
+            const t1 = targetTouch1(client);
+            const t2 = targetTouch2(client);
+            const isOverdue = overdue(client, todayISO()) !== null;
+            return (
+              <div className="flex items-center gap-2 mt-2 flex-wrap text-xs">
+                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">Ola {wave}</span>
+                <span className="text-gray-500">
+                  {client.touch1_date
+                    ? <>2do toque objetivo: <b>{fmtShort(t2)}</b></>
+                    : <>1er toque objetivo: <b>{fmtShort(t1)}</b></>}
+                </span>
+                {isOverdue && <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-300 font-bold">⚠ Vencido</span>}
+              </div>
+            );
+          })()}
         </div>
 
         <div className="p-5 space-y-5">

@@ -10,6 +10,15 @@ import {
 } from '@/lib/reactivation';
 import DetailDrawer from './DetailDrawer';
 import ImportModal from './ImportModal';
+import CampaignTimeline from './CampaignTimeline';
+import {
+  waveFor,
+  targetTouch1,
+  overdue,
+  currentWave,
+  todayISO,
+  fmtShort,
+} from '@/lib/reactivation-campaign';
 
 type ViewMode = 'tabla' | 'tablero';
 type SortDir = 'asc' | 'desc';
@@ -173,6 +182,12 @@ export default function Reactivacion() {
         </div>
       </div>
 
+      {/* Timeline de la campaña (olas, deadline, progreso) */}
+      <CampaignTimeline />
+
+      {/* Mi semana — filtrado por dueño (no hay login; se usa el selector de Dueño) */}
+      {fOwner !== 'all' && <MiSemana owner={fOwner} clients={clients} />}
+
       {/* KPI real: Contactado vs Control (solo lista de reactivación) */}
       {listType === 'reactivacion' && kpi && (
         <div className={`rounded-xl border p-4 mb-4 ${kpi.uplift >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
@@ -287,13 +302,44 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 }
 
 function Badges({ c }: { c: ReactClient }) {
+  const wave = waveFor(c);
+  const isOverdue = overdue(c, todayISO()) !== null;
+  const t1 = targetTouch1(c);
   return (
     <div className="flex items-center gap-1 flex-wrap">
       {c.tier && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${TIER_STYLE[c.tier]}`}>Tier {c.tier}</span>}
       {c.priority && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${PRIORITY_STYLE[c.priority]}`}>{PRIORITY_LABEL[c.priority]}</span>}
+      {wave && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200" title={`1er toque objetivo: ${fmtShort(t1)}`}>Ola {wave} · {fmtShort(t1)}</span>}
       {c.is_control && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-600 text-white">CONTROL</span>}
       {!c.is_control && c.needs_verify && c.tier === 'A' && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-yellow-100 text-yellow-800">⚠️ Verificar</span>}
+      {isOverdue && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-100 text-rose-700 border border-rose-300">⚠ Vencido</span>}
       {needsSecondTouch(c) && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-orange-100 text-orange-700">📞 Toca 2do</span>}
+    </div>
+  );
+}
+
+// "Mi semana": resumen de la ola actual para el dueño seleccionado (no hay login).
+function MiSemana({ owner, clients }: { owner: string; clients: ReactClient[] }) {
+  const today = todayISO();
+  const cur = currentWave(today);
+  const mine = clients.filter((c) => c.owner === owner && !c.is_control && c.list_type !== 'excluir');
+  const enOla = mine.filter((c) => waveFor(c) === cur.n);
+  const pendientes = enOla.filter((c) => !c.touch1_date);
+  const vencidos = mine.filter((c) => overdue(c, today) !== null);
+  return (
+    <div className="rounded-xl border border-[#0890F1]/30 bg-[#0890F1]/5 p-3 mb-4">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <span className="font-semibold text-[#0890F1]">🗓️ Mi semana · {owner}</span>
+          <span className="text-sm text-gray-600 ml-2">
+            {cur.name}: <b>{pendientes.length}</b> por tocar de <b>{enOla.length}</b> en tu ola
+            {vencidos.length > 0 && <span className="text-rose-600 font-semibold"> · {vencidos.length} vencidos</span>}
+          </span>
+        </div>
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#0890F1]/30 text-[#0890F1]">
+          Próximo hito: 1er toque · {fmtShort(cur.end)}
+        </span>
+      </div>
     </div>
   );
 }

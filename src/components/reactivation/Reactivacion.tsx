@@ -13,6 +13,11 @@ import ImportModal from './ImportModal';
 
 type ViewMode = 'tabla' | 'tablero';
 type SortDir = 'asc' | 'desc';
+type SortKey = 'priority' | 'days';
+
+// Rango de prioridad: Alta primero. (unknown al final)
+const PRIORITY_RANK: Record<string, number> = { alta: 0, media: 1, fria: 2 };
+const prioRank = (p: string | null) => (p && p in PRIORITY_RANK ? PRIORITY_RANK[p] : 9);
 
 const PRIORITY_LABEL: Record<string, string> = { alta: 'Alta', media: 'Media', fria: 'Fría' };
 const PRIORITY_STYLE: Record<string, string> = {
@@ -57,6 +62,8 @@ export default function Reactivacion() {
   const [fPriority, setFPriority] = useState<string>('all');
   const [fOwner, setFOwner] = useState<string>('all');
   const [fStatus, setFStatus] = useState<string>('all');
+  // Por defecto: Prioridad Alta primero (y dentro, los más muertos arriba).
+  const [sortKey, setSortKey] = useState<SortKey>('priority');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const [selected, setSelected] = useState<ReactClient | null>(null);
@@ -91,17 +98,37 @@ export default function Reactivacion() {
       return true;
     });
     arr = [...arr].sort((a, b) => {
-      const av = a.days_inactive ?? -1;
-      const bv = b.days_inactive ?? -1;
-      return sortDir === 'desc' ? bv - av : av - bv;
+      if (sortKey === 'days') {
+        const av = a.days_inactive ?? -1;
+        const bv = b.days_inactive ?? -1;
+        return sortDir === 'desc' ? bv - av : av - bv;
+      }
+      // Prioridad: Alta → Media → Fría; empate = más días sin pedir primero.
+      const pr = prioRank(a.priority) - prioRank(b.priority);
+      if (pr !== 0) return pr;
+      return (b.days_inactive ?? -1) - (a.days_inactive ?? -1);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, sortDir]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
     setSelected(updated);
   };
+
+  // KPI real: tasa de reactivación Contactado vs Control (el número que justifica todo)
+  const [kpi, setKpi] = useState<{
+    contacted: { count: number; reactivated: number; rate: number };
+    control: { count: number; reactivated: number; rate: number };
+    uplift: number;
+  } | null>(null);
+  useEffect(() => {
+    if (listType !== 'reactivacion') { setKpi(null); return; }
+    fetch('/api/reactivation/stats')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setKpi(d))
+      .catch(() => {});
+  }, [listType, clients]);
 
   // resumen rápido de la lista actual
   const summary = useMemo(() => {
@@ -146,6 +173,27 @@ export default function Reactivacion() {
         </div>
       </div>
 
+      {/* KPI real: Contactado vs Control (solo lista de reactivación) */}
+      {listType === 'reactivacion' && kpi && (
+        <div className={`rounded-xl border p-4 mb-4 ${kpi.uplift >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-xs font-medium text-gray-500">🎯 Tasa de reactivación · Contactado vs Control</p>
+              <p className="text-sm text-gray-600 mt-0.5">
+                Contactado <b>{(kpi.contacted.rate * 100).toFixed(0)}%</b> ({kpi.contacted.reactivated}/{kpi.contacted.count})
+                {'  '}vs Control <b>{(kpi.control.rate * 100).toFixed(0)}%</b> ({kpi.control.reactivated}/{kpi.control.count})
+              </p>
+            </div>
+            <div className="text-right">
+              <p className={`text-3xl font-bold ${kpi.uplift >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                {kpi.uplift >= 0 ? '+' : ''}{(kpi.uplift * 100).toFixed(0)}%
+              </p>
+              <p className="text-xs text-gray-500">diferencial (KPI real)</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Resumen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <SummaryCard label="En lista" value={summary.total} />
@@ -175,8 +223,15 @@ export default function Reactivacion() {
       ) : view === 'tabla' ? (
         <TableView
           rows={filtered}
+          sortKey={sortKey}
           sortDir={sortDir}
-          onToggleSort={() => setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))}
+          onCycleDays={() => {
+            // prioridad → días↓ → días↑ → prioridad
+            if (sortKey !== 'days') { setSortKey('days'); setSortDir('desc'); }
+            else if (sortDir === 'desc') setSortDir('asc');
+            else { setSortKey('priority'); setSortDir('desc'); }
+          }}
+          onSortPriority={() => { setSortKey('priority'); setSortDir('desc'); }}
           onSelect={setSelected}
         />
       ) : (
@@ -184,7 +239,12 @@ export default function Reactivacion() {
       )}
 
       {selected && (
-        <DetailDrawer client={selected} onClose={() => setSelected(null)} onUpdated={onUpdated} />
+        <DetailDrawer
+          client={selected}
+          onClose={() => setSelected(null)}
+          onUpdated={onUpdated}
+          onDeleted={(id) => setClients((cur) => cur.filter((c) => c.id !== id))}
+        />
       )}
       {importOpen && (
         <ImportModal onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); load(); }} />
@@ -232,18 +292,28 @@ function Badges({ c }: { c: ReactClient }) {
   );
 }
 
-function TableView({ rows, sortDir, onToggleSort, onSelect }: {
-  rows: ReactClient[]; sortDir: SortDir; onToggleSort: () => void; onSelect: (c: ReactClient) => void;
+function TableView({ rows, sortKey, sortDir, onCycleDays, onSortPriority, onSelect }: {
+  rows: ReactClient[]; sortKey: SortKey; sortDir: SortDir;
+  onCycleDays: () => void; onSortPriority: () => void; onSelect: (c: ReactClient) => void;
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
       <table className="w-full text-sm min-w-[720px]">
         <thead>
           <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-            <th className="px-4 py-3 font-medium">Empresa</th>
+            <th className="px-4 py-3 font-medium">
+              Empresa
+              <button
+                onClick={onSortPriority}
+                className={`ml-2 font-normal ${sortKey === 'priority' ? 'text-[#0890F1]' : 'text-gray-400 hover:text-gray-600'}`}
+                title="Ordenar por prioridad (Alta primero)"
+              >
+                · prioridad{sortKey === 'priority' ? ' ↓' : ''}
+              </button>
+            </th>
             <th className="px-3 py-3 font-medium">Dueño</th>
-            <th className="px-3 py-3 font-medium cursor-pointer select-none hover:text-gray-700" onClick={onToggleSort}>
-              Días sin pedir {sortDir === 'desc' ? '↓' : '↑'}
+            <th className="px-3 py-3 font-medium cursor-pointer select-none hover:text-gray-700" onClick={onCycleDays}>
+              Días sin pedir {sortKey === 'days' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
             </th>
             <th className="px-3 py-3 font-medium">Pedidos</th>
             <th className="px-3 py-3 font-medium">Segmento</th>

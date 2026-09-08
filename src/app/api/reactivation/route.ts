@@ -23,6 +23,19 @@ export async function GET(request: Request) {
   return NextResponse.json({ clients: data ?? [] });
 }
 
+// DELETE /api/reactivation?id=...  — borra una ficha (p.ej. filas de prueba)
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 });
+  const { error } = await supabase.from('reactivation_clients').delete().eq('id', id);
+  if (error) {
+    console.error('reactivation DELETE error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ ok: true });
+}
+
 const CHANNELS: ReactChannel[] = ['whatsapp', 'call'];
 
 // PATCH /api/reactivation  { id, ...campos }

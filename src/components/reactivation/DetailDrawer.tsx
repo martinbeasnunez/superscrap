@@ -14,10 +14,12 @@ export default function DetailDrawer({
   client,
   onClose,
   onUpdated,
+  onDeleted,
 }: {
   client: ReactClient;
   onClose: () => void;
   onUpdated: (c: ReactClient) => void;
+  onDeleted: (id: string) => void;
 }) {
   const [t1Date, setT1Date] = useState(client.touch1_date ?? '');
   const [t1Chan, setT1Chan] = useState<ReactChannel | ''>(client.touch1_channel ?? '');
@@ -30,8 +32,24 @@ export default function DetailDrawer({
   const [contacto, setContacto] = useState(client.contact_name ?? '');
   const [brand, setBrand] = useState(client.brand ?? BRAND_DEFAULT);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verifyAck, setVerifyAck] = useState(false);
+
+  const remove = async () => {
+    if (!confirm(`¿Borrar "${client.company}" de la lista? Esto no se puede deshacer.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/reactivation?id=${client.id}`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); setError(d.error || 'No se pudo borrar.'); return; }
+      onDeleted(client.id);
+      onClose();
+    } catch {
+      setError('Error de red.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const isControl = client.is_control;
   const mustVerify = !isControl && client.needs_verify && client.tier === 'A';
@@ -194,7 +212,10 @@ export default function DetailDrawer({
           {error && <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</p>}
 
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-xs text-gray-400 flex-1">Estado: <b>{REACT_STATUS_LABEL[client.status]}</b></span>
+            <button onClick={remove} disabled={deleting} className="text-xs text-rose-500 hover:text-rose-700 disabled:opacity-50" title="Borrar esta ficha">
+              {deleting ? 'Borrando…' : '🗑 Borrar'}
+            </button>
+            <span className="text-xs text-gray-400 flex-1 text-right">Estado: <b>{REACT_STATUS_LABEL[client.status]}</b></span>
             <button onClick={onClose} className="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 text-sm">Cancelar</button>
             <button onClick={save} disabled={saving || isControl}
               className="px-4 py-2 rounded-lg bg-[#0890F1] hover:bg-[#0770C5] text-white text-sm font-medium disabled:opacity-50">

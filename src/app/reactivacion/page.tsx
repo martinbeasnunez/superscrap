@@ -1,9 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import SectionTabs from '@/components/reactivation/SectionTabs';
 
-// Reactivación B2B (Misión 2) — ruta propia en el menú, mismo tab strip que Pipeline.
+// Reactivación B2B (Misión 2) — sección propia en el menú general.
 const Reactivacion = dynamic(() => import('@/components/reactivation/Reactivacion'), {
   ssr: false,
   loading: () => (
@@ -20,7 +19,6 @@ export default function ReactivacionPage() {
         <h1 className="text-2xl font-bold text-gray-900">Pipeline de Ventas</h1>
         <p className="text-gray-500 mt-0.5">Reactivación B2B · recuperar clientes que dejaron de pedir</p>
       </div>
-      <SectionTabs active="reactivacion" />
       <Reactivacion />
     </div>
   );

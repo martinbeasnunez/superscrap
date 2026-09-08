@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n';
 import DailyActivity from '@/components/DailyActivity';
-import SectionTabs from '@/components/reactivation/SectionTabs';
 import type { KanbanBusiness, KanbanColumnId } from '@/app/api/kanban/route';
 
 // Filtro por vendedor/dueño compartido entre las dos vistas (Lista y Tablero).
@@ -190,9 +189,6 @@ export default function PipelinePage() {
           </div>
         )}
       </div>
-
-      {/* Secciones del Pipeline: Orcas (pipeline comercial) vs Reactivación B2B */}
-      <SectionTabs active="pipeline" />
 
       {/* 👑 Tu día — franja persistente, arriba de ambas vistas */}
       {myStats && (

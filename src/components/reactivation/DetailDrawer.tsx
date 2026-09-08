@@ -122,8 +122,12 @@ export default function DetailDrawer({
         <div className="p-5 space-y-5">
           {isControl && (
             <div className="rounded-xl bg-rose-50 border border-rose-200 p-4">
-              <p className="font-semibold text-rose-700 text-sm">🔒 Grupo de CONTROL</p>
-              <p className="text-sm text-rose-600 mt-1">Este cliente NO se contacta. Es el grupo de control para medir el efecto real de la campaña.</p>
+              <p className="font-semibold text-rose-700 text-sm">🔒 Grupo de CONTROL — NO contactar</p>
+              <p className="text-sm text-rose-600 mt-1">
+                Este cliente lo dejamos <b>sin contactar a propósito</b>. Sirve de comparación: si los que sí
+                contactamos vuelven más que los del control, sabemos que la campaña funcionó. Si lo contactas,
+                arruinas la medición.
+              </p>
             </div>
           )}
 

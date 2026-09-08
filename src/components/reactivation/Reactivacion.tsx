@@ -191,6 +191,9 @@ export default function Reactivacion() {
               <p className="text-xs text-gray-500">diferencial (KPI real)</p>
             </div>
           </div>
+          <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-black/5">
+            <b>¿Qué es el Control?</b> Un grupo de clientes que dejamos <b>sin contactar a propósito</b>. Si los que sí contactamos vuelven más que estos, sabemos que la campaña —y no la suerte— hizo el trabajo. Por eso el Control <b>no se toca</b>.
+          </p>
         </div>
       )}
 
@@ -199,7 +202,7 @@ export default function Reactivacion() {
         <SummaryCard label="En lista" value={summary.total} />
         <SummaryCard label="Pendientes" value={summary.pending} tone="blue" />
         <SummaryCard label="Reactivados" value={summary.reactivated} tone="emerald" />
-        <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" />
+        <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." />
       </div>
 
       {/* Filtros */}
@@ -255,12 +258,15 @@ export default function Reactivacion() {
 
 /* ---------- piezas ---------- */
 
-function SummaryCard({ label, value, tone = 'gray' }: { label: string; value: number; tone?: string }) {
+function SummaryCard({ label, value, tone = 'gray', hint }: { label: string; value: number; tone?: string; hint?: string }) {
   const color = tone === 'blue' ? 'text-[#0890F1]' : tone === 'emerald' ? 'text-emerald-600' : tone === 'rose' ? 'text-rose-600' : 'text-gray-900';
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3">
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3" title={hint}>
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-gray-500">
+        {label}
+        {hint && <span className="ml-1 text-gray-300" title={hint}>ⓘ</span>}
+      </p>
     </div>
   );
 }

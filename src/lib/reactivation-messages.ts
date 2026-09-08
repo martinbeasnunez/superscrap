@@ -45,7 +45,7 @@ export const TIER_C = {
   firstTouch:
     'Hola {empresa}, soy Joaquín de {marca}. Somos tu lavandería con recojo y entrega gratis a domicilio, y esta semana tienes {descuento}% de descuento. Recogemos, lavamos y te lo devolvemos limpio en la puerta. ¿Te paso a recoger hoy?',
   soft:
-    'Hola {empresa}, soy Joaquín de {marca}. Lavamos tus toallas, sábanas y uniformes y te los devolvemos limpios en la puerta — recojo y entrega gratis, tú no mueves nada. ¿Reactivamos tu servicio esta semana? Te coordino el recojo cuando te quede.',
+    'Hola {empresa}, soy Joaquín de {marca}. Recogemos, lavamos y te devolvemos todo limpio en la puerta — recojo y entrega gratis, tú no mueves nada. ¿Reactivamos tu servicio esta semana? Te coordino el recojo cuando te quede.',
 };
 
 // --- 2do toque (Tier B y C) · a los 7 días → LLAMADA (solo a los que no respondieron) ---

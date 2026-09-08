@@ -37,15 +37,15 @@ export function fillTemplate(text: string, v: FillVars): string {
 // --- WhatsApp: Tier B (medianos) ---
 export const TIER_B = {
   firstTouch:
-    'Hola {empresa} 👋 Soy Joaquín de {marca}. Vi que hace un tiempo no coordinamos tu lavado y quería reactivarte esta semana con un {descuento}% de descuento. Recojo y entrega gratis, tú no te mueves. ¿Te agendo un recojo?',
+    'Hola {empresa}, soy Joaquín de {marca}. Vi que hace un tiempo no coordinamos tu lavado y quería reactivarte esta semana con un {descuento}% de descuento. Recojo y entrega gratis, tú no te mueves. ¿Te agendo un recojo?',
 };
 
 // --- WhatsApp: Tier C (chicas) — dos variantes ---
 export const TIER_C = {
   firstTouch:
-    'Hola {empresa} 🧺 Tenemos rutas activas en tu zona esta semana y un {descuento}% para ti. Recojo y entrega gratis. ¿Agendamos hoy?',
+    'Hola {empresa}, tenemos rutas activas en tu zona esta semana y un {descuento}% para ti. Recojo y entrega gratis. ¿Agendamos hoy?',
   soft:
-    'Hola {empresa} 👋 ¿Coordinamos tu lavado de esta semana? Recogemos y entregamos gratis. ¿Te agendo un recojo?',
+    'Hola {empresa}, ¿coordinamos tu lavado de esta semana? Recogemos y entregamos gratis. ¿Te agendo un recojo?',
 };
 
 // --- 2do toque (Tier B y C) · a los 7 días → LLAMADA (solo a los que no respondieron) ---

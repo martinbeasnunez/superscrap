@@ -37,15 +37,15 @@ export function fillTemplate(text: string, v: FillVars): string {
 // --- WhatsApp: Tier B (medianos) ---
 export const TIER_B = {
   firstTouch:
-    'Hola {empresa}, soy Joaquín de {marca}. Vi que hace un tiempo no coordinamos tu lavado y quería reactivarte esta semana con un {descuento}% de descuento. Recojo y entrega gratis, tú no te mueves. ¿Te agendo un recojo?',
+    'Hola {empresa}, soy Joaquín de {marca}, tu lavandería con recojo y entrega gratis a domicilio. Hace un tiempo no lavamos contigo y te quiero de vuelta: esta semana te dejo {descuento}% en tu próximo servicio. Nosotros recogemos, lavamos y entregamos — tú no mueves nada. ¿Te agendo el recojo?',
 };
 
 // --- WhatsApp: Tier C (chicas) — dos variantes ---
 export const TIER_C = {
   firstTouch:
-    'Hola {empresa}, tenemos rutas activas en tu zona esta semana y un {descuento}% para ti. Recojo y entrega gratis. ¿Agendamos hoy?',
+    'Hola {empresa}, soy Joaquín de {marca}. Somos tu lavandería con recojo y entrega gratis a domicilio, y esta semana tienes {descuento}% de descuento. Recogemos, lavamos y te lo devolvemos limpio en la puerta. ¿Te paso a recoger hoy?',
   soft:
-    'Hola {empresa}, ¿coordinamos tu lavado de esta semana? Recogemos y entregamos gratis. ¿Te agendo un recojo?',
+    'Hola {empresa}, soy Joaquín de {marca}. Lavamos tus toallas, sábanas y uniformes y te los devolvemos limpios en la puerta — recojo y entrega gratis, tú no mueves nada. ¿Reactivamos tu servicio esta semana? Te coordino el recojo cuando te quede.',
 };
 
 // --- 2do toque (Tier B y C) · a los 7 días → LLAMADA (solo a los que no respondieron) ---

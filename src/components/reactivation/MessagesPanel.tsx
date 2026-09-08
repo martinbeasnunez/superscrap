@@ -34,6 +34,10 @@ export default function MessagesPanel({
   const tier = client.tier;
   const showSecondTouch = client.status === 'toque1'; // 1er toque enviado / no respondió
 
+  // Link directo de WhatsApp con el texto ya cargado (abre el chat del cliente).
+  const wa = (text: string): string | null =>
+    client.phone_norm ? `https://wa.me/${client.phone_norm}?text=${encodeURIComponent(text)}` : null;
+
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
@@ -49,11 +53,11 @@ export default function MessagesPanel({
           Confirma la verificación (arriba) para habilitar el guion.
         </p>
       ) : tier === 'B' ? (
-        <CopyBlock label="1er toque · WhatsApp" text={fill(TIER_B.firstTouch)} />
+        <CopyBlock label="1er toque · WhatsApp" text={fill(TIER_B.firstTouch)} waHref={wa(fill(TIER_B.firstTouch))} />
       ) : tier === 'C' ? (
         <div className="space-y-2">
-          <CopyBlock label="1er toque · WhatsApp" text={fill(TIER_C.firstTouch)} />
-          <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(TIER_C.soft)} />
+          <CopyBlock label="1er toque · WhatsApp" text={fill(TIER_C.firstTouch)} waHref={wa(fill(TIER_C.firstTouch))} />
+          <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
         </div>
       ) : tier === 'A' ? (
         <TierAGuide fill={fill} />
@@ -75,8 +79,8 @@ export default function MessagesPanel({
   );
 }
 
-// Bloque de texto final + botón Copiar (con feedback).
-function CopyBlock({ label, text }: { label: string; text: string }) {
+// Bloque de texto final + botón Copiar (con feedback) + link directo de WhatsApp.
+function CopyBlock({ label, text, waHref }: { label: string; text: string; waHref?: string | null }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     let ok = false;
@@ -113,14 +117,26 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
     <div className="bg-white rounded-lg border border-gray-200 p-3">
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <span className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">{label}</span>
-        <button
-          onClick={copy}
-          className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
-            copied ? 'bg-emerald-100 text-emerald-700' : 'bg-[#0890F1] text-white hover:bg-[#0770C5]'
-          }`}
-        >
-          {copied ? '✓ Copiado' : 'Copiar'}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {waHref && (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+            >
+              💬 Abrir WhatsApp
+            </a>
+          )}
+          <button
+            onClick={copy}
+            className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${
+              copied ? 'bg-emerald-100 text-emerald-700' : 'bg-[#0890F1] text-white hover:bg-[#0770C5]'
+            }`}
+          >
+            {copied ? '✓ Copiado' : 'Copiar'}
+          </button>
+        </div>
       </div>
       <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{text}</p>
     </div>

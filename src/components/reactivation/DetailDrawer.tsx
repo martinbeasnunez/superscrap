@@ -163,6 +163,13 @@ export default function DetailDrawer({
             </div>
           )}
 
+          {/* Guía rápida de uso (para que nadie se confunda) */}
+          {!isControl && !locked && (
+            <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-800">
+              <b>Cómo se usa:</b> 1) copia y manda el mensaje · 2) pon la fecha del toque · 3) cuando responda, marca si respondió y si volvió a pedir.
+            </div>
+          )}
+
           {/* Contacto + marca (alimentan las plantillas) */}
           {!isControl && (
             <div className="grid grid-cols-2 gap-2">
@@ -186,7 +193,7 @@ export default function DetailDrawer({
 
           {/* 1er toque */}
           <fieldset disabled={locked} className={locked ? 'opacity-50' : ''}>
-            <legend className="text-sm font-semibold text-gray-900 mb-2">1er toque</legend>
+            <legend className="text-sm font-semibold text-gray-900 mb-2">2. Anota tu toque <span className="font-normal text-gray-400">· pon la fecha</span></legend>
             <div className="flex gap-2">
               <input type="date" value={t1Date} onChange={(e) => setT1Date(e.target.value)}
                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm" />
@@ -206,7 +213,7 @@ export default function DetailDrawer({
 
           {/* Resultado */}
           <fieldset disabled={locked} className={locked ? 'opacity-50' : ''}>
-            <legend className="text-sm font-semibold text-gray-900 mb-2">Resultado</legend>
+            <legend className="text-sm font-semibold text-gray-900 mb-2">3. ¿Qué pasó?</legend>
             {!canMarkOutcome && !locked && (
               <p className="text-xs text-amber-600 mb-2">Registra la fecha del 1er toque para habilitar esto.</p>
             )}

@@ -80,6 +80,19 @@ export default function Reactivacion() {
   // "Mi semana": scope a la ola actual del dueño seleccionado (solo pendientes)
   const [soloMiOla, setSoloMiOla] = useState(false);
 
+  // Auto-detectar al vendedor logueado (Joaquín/Fernanda) → abre SU semana solo.
+  // Martín/GM u otro nombre → ve todo (sin filtro).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('orbit_user');
+      if (!raw) return;
+      const n = String(JSON.parse(raw)?.name || '')
+        .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      const mapped = n.includes('joaquin') ? 'Joaquín' : n.includes('fernanda') ? 'Fernanda' : null;
+      if (mapped) setFOwner(mapped);
+    } catch { /* ignore */ }
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {

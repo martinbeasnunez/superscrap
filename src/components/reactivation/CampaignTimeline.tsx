@@ -39,11 +39,21 @@ export default function CampaignTimeline() {
       const ws = contactable.filter((c) => waveFor(c) === n);
       return { total: ws.length, done: ws.filter(touch1Done).length };
     };
+    // Desglose de la ola actual por rol: Tier A (llamadas · Fer) vs B/C (WhatsApp · Joaquín)
+    const curN = currentWave(today).n;
+    const inCur = contactable.filter((c) => waveFor(c) === curN);
+    const done = (arr: typeof inCur) => arr.filter(touch1Done).length;
+    const tierA = inCur.filter((c) => c.tier === 'A');
+    const bc = inCur.filter((c) => c.tier !== 'A');
     return {
       waves: { 1: perWave(1), 2: perWave(2), 3: perWave(3) },
       overdue: contactable.filter((c) => overdue(c, today) !== null).length,
       totalDone: contactable.filter(touch1Done).length,
       total: contactable.length,
+      curSplit: {
+        bc: { done: done(bc), total: bc.length },
+        tierA: { done: done(tierA), total: tierA.length },
+      },
     };
   }, [all, today]);
 
@@ -125,6 +135,16 @@ export default function CampaignTimeline() {
               <div className="h-full bg-[#0890F1] rounded-full transition-all" style={{ width: `${pct}%` }} />
             </div>
             <p className="text-[11px] text-gray-500 mt-1">{curProgress.done}/{curProgress.total} tocados · {pct}%</p>
+            {stats?.curSplit && (stats.curSplit.tierA.total > 0 || stats.curSplit.bc.total > 0) && (
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-[11px]">
+                <span className="text-gray-600">
+                  💬 Joaquín (WhatsApp B/C): <b className={stats.curSplit.bc.done >= stats.curSplit.bc.total && stats.curSplit.bc.total > 0 ? 'text-emerald-600' : ''}>{stats.curSplit.bc.done}/{stats.curSplit.bc.total}</b>
+                </span>
+                <span className="text-gray-600">
+                  📞 Fernanda (Tier A, llamadas): <b className={stats.curSplit.tierA.done >= stats.curSplit.tierA.total && stats.curSplit.tierA.total > 0 ? 'text-emerald-600' : 'text-amber-600'}>{stats.curSplit.tierA.done}/{stats.curSplit.tierA.total}</b>
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>

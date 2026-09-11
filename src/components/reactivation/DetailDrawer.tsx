@@ -41,6 +41,29 @@ export default function DetailDrawer({
 
   // Verificación de Tier A: persistida (no local). Joaquín confirma → Fernanda ve habilitado.
   const isVerified = !!client.verified_at;
+  // Descartar: Joaquín revisó y este NO se contacta (reclamo/deudor/desistió).
+  const doDiscard = async () => {
+    const reason = prompt('¿Por qué no se contacta? (reclamo, deudor, se fue, etc.)', client.notes || '');
+    if (reason === null) return; // canceló
+    setVerifying(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/reactivation', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id, discard: true, reason: reason.trim() || client.notes || 'No contactar' }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'No se pudo descartar.'); return; }
+      onDeleted(client.id); // sale de esta lista (va a "Excluir")
+      onClose();
+    } catch {
+      setError('Error de red.');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const doVerify = async (val: boolean) => {
     setVerifying(true);
     setError(null);
@@ -196,10 +219,16 @@ export default function DetailDrawer({
                   Si hay algún problema, escríbelo en Notas y déjalo bloqueado.
                   <b> Si está limpio, al confirmar Fernanda puede llamar.</b>
                 </p>
-                <button onClick={() => doVerify(true)} disabled={verifying}
-                  className="mt-2 text-sm font-medium px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white disabled:opacity-50">
-                  {verifying ? 'Guardando…' : '✓ Confirmar verificación (Joaquín)'}
-                </button>
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <button onClick={() => doVerify(true)} disabled={verifying}
+                    className="text-sm font-medium px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white disabled:opacity-50">
+                    {verifying ? 'Guardando…' : '✓ Está limpio, habilitar a Fer'}
+                  </button>
+                  <button onClick={doDiscard} disabled={verifying}
+                    className="text-sm font-medium px-3 py-1.5 rounded-lg bg-white border border-rose-300 text-rose-600 hover:bg-rose-50 disabled:opacity-50">
+                    🚫 Tiene problema · no contactar
+                  </button>
+                </div>
               </div>
             )
           )}

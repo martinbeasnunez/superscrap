@@ -83,6 +83,12 @@ export async function PATCH(request: Request) {
       patch.phone_norm = normPhone(p);
     }
     if ('email' in body) patch.email = body.email?.trim() || null;
+    // Descartar: Joaquín revisó y este NO se contacta (reclamo/deudor/desistió).
+    // Sale de la campaña de reactivación (va a "excluir") con su motivo.
+    if (body.discard) {
+      patch.list_type = 'excluir';
+      if (body.reason) patch.notes = body.reason;
+    }
     // Verificación de Tier A (handoff Joaquín → Fernanda): se persiste con quién y cuándo.
     if ('verify' in body) {
       if (body.verify) {

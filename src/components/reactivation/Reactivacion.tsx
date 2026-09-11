@@ -79,6 +79,8 @@ export default function Reactivacion() {
   const [importOpen, setImportOpen] = useState(false);
   // "Mi semana": scope a la ola actual del dueño seleccionado (solo pendientes)
   const [soloMiOla, setSoloMiOla] = useState(false);
+  // Cola de Joaquín: Tier A pendientes de verificar (sin importar de quién sean)
+  const [verifyQueue, setVerifyQueue] = useState(false);
 
   // Auto-detectar al vendedor logueado (Joaquín/Fernanda) → abre SU semana solo.
   // Martín/GM u otro nombre → ve todo (sin filtro).
@@ -113,7 +115,17 @@ export default function Reactivacion() {
     [clients]
   );
 
+  // Tier A que Joaquín aún no verifica (cola de verificación, cruza dueños)
+  const tierAPending = useMemo(
+    () => clients.filter((c) => c.tier === 'A' && c.needs_verify && !c.verified_at && !c.is_control),
+    [clients]
+  );
+
   const filtered = useMemo(() => {
+    // Cola de verificación: ignora los demás filtros, ordena por más frescos
+    if (verifyQueue) {
+      return [...tierAPending].sort((a, b) => (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity));
+    }
     const curWaveN = currentWave(todayISO()).n;
     let arr = clients.filter((c) => {
       if (fTier !== 'all' && c.tier !== fTier) return false;
@@ -137,7 +149,7 @@ export default function Reactivacion() {
       return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla, verifyQueue, tierAPending]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
@@ -240,6 +252,19 @@ export default function Reactivacion() {
         <SummaryCard label="Reactivados" value={summary.reactivated} tone="emerald" />
         <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." />
       </div>
+
+      {/* Cola de verificación de Joaquín (Tier A por verificar, cruza dueños) */}
+      {(tierAPending.length > 0 || verifyQueue) && (
+        <button
+          onClick={() => setVerifyQueue((v) => !v)}
+          className={`mb-3 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
+            verifyQueue ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300'
+          }`}
+        >
+          {verifyQueue ? '✓ Viendo Tier A por verificar' : `🔴 Tier A por verificar (${tierAPending.length})`}
+          <span className={`ml-2 font-normal ${verifyQueue ? 'text-white/80' : 'text-yellow-700'}`}>· trabajo de Joaquín</span>
+        </button>
+      )}
 
       {/* Filtros */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">

@@ -192,8 +192,9 @@ export default function DetailDrawer({
               <div className="rounded-xl bg-yellow-50 border border-yellow-300 p-4">
                 <p className="font-semibold text-yellow-800 text-sm">⏳ Tier A — falta que <b>Joaquín</b> verifique</p>
                 <p className="text-sm text-yellow-700 mt-1">
-                  Joaquín revisa que no tenga recojo fijo (tipo OXXO) ni reclamo abierto.
-                  <b> Al confirmar, Fernanda puede llamar.</b>
+                  Joaquín revisa que no tenga recojo fijo (tipo OXXO), reclamo abierto ni <b>deuda/pago pendiente</b>.
+                  Si hay algún problema, escríbelo en Notas y déjalo bloqueado.
+                  <b> Si está limpio, al confirmar Fernanda puede llamar.</b>
                 </p>
                 <button onClick={() => doVerify(true)} disabled={verifying}
                   className="mt-2 text-sm font-medium px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white disabled:opacity-50">

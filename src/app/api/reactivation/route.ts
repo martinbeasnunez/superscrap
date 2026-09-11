@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { deriveStatus, type ReactChannel } from '@/lib/reactivation';
+import { deriveStatus, normPhone, type ReactChannel } from '@/lib/reactivation';
 
 // GET /api/reactivation?list_type=reactivacion
 // Devuelve la lista completa (o filtrada por tipo de lista).
@@ -76,6 +76,12 @@ export async function PATCH(request: Request) {
     if ('notes' in body) patch.notes = body.notes ?? null;
     if ('contact_name' in body) patch.contact_name = body.contact_name?.trim() || null;
     if ('brand' in body) patch.brand = body.brand?.trim() || null;
+    // Corregir teléfono desactualizado (recalcula phone_norm para el link wa.me)
+    if ('phone' in body) {
+      const p = body.phone?.trim() || null;
+      patch.phone = p;
+      patch.phone_norm = normPhone(p);
+    }
     if ('discount_pct' in body) {
       const d = Number(body.discount_pct);
       patch.discount_pct = Number.isFinite(d) ? Math.min(15, Math.max(0, Math.round(d))) : 10;

@@ -32,6 +32,7 @@ export default function DetailDrawer({
   const [notes, setNotes] = useState(client.notes ?? '');
   const [contacto, setContacto] = useState(client.contact_name ?? '');
   const [brand, setBrand] = useState(client.brand ?? BRAND_DEFAULT);
+  const [phone, setPhone] = useState(client.phone ?? '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +86,7 @@ export default function DetailDrawer({
           notes,
           contact_name: contacto,
           brand,
+          phone,
         }),
       });
       const data = await res.json();
@@ -170,19 +172,26 @@ export default function DetailDrawer({
             </div>
           )}
 
-          {/* Contacto + marca (alimentan las plantillas) */}
+          {/* Datos de contacto (editables — corrige aquí si el número está viejo) */}
           {!isControl && (
-            <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs text-gray-500">
-                Contacto (persona)
-                <input value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder={client.company}
+            <div className="space-y-2">
+              <label className="text-xs text-gray-500 block">
+                📱 Teléfono <span className="text-gray-400">(si está desactualizado, corrígelo — el link de WhatsApp usa este número)</span>
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+51…"
                   className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
               </label>
-              <label className="text-xs text-gray-500">
-                Marca en el texto
-                <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder={BRAND_DEFAULT}
-                  className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
-              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-gray-500">
+                  Contacto (persona)
+                  <input value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder={client.company}
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                </label>
+                <label className="text-xs text-gray-500">
+                  Marca en el texto
+                  <input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder={BRAND_DEFAULT}
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                </label>
+              </div>
             </div>
           )}
 

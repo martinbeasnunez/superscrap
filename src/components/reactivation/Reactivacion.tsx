@@ -130,10 +130,11 @@ export default function Reactivacion() {
         const bv = b.days_inactive ?? -1;
         return sortDir === 'desc' ? bv - av : av - bv;
       }
-      // Prioridad: Alta → Media → Fría; empate = más días sin pedir primero.
+      // Prioridad: Alta → Media → Fría; dentro, los MÁS FRESCOS primero
+      // (menos días sin pedir = más chance de que vuelvan). Sin dato → al final.
       const pr = prioRank(a.priority) - prioRank(b.priority);
       if (pr !== 0) return pr;
-      return (b.days_inactive ?? -1) - (a.days_inactive ?? -1);
+      return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
   }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla]);
@@ -251,6 +252,12 @@ export default function Reactivacion() {
         )}
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} de {clients.length}</span>
       </div>
+
+      {sortKey === 'priority' && (
+        <p className="text-xs text-gray-500 mb-3 -mt-1">
+          👇 <b>Empieza de arriba:</b> primero prioridad Alta y, dentro, los <b>más frescos</b> (menos días sin pedir) — son los de más chance.
+        </p>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center h-48">

@@ -263,3 +263,10 @@ CREATE POLICY "Allow all for reactivation_clients" ON reactivation_clients
 -- ============================================================
 ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS contact_name TEXT;
 ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS brand TEXT;
+
+-- ============================================================
+-- Migration 015: Reactivación B2B — verificación Tier A (persistida) + correo
+-- ============================================================
+ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS verified_by TEXT;

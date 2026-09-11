@@ -82,6 +82,17 @@ export async function PATCH(request: Request) {
       patch.phone = p;
       patch.phone_norm = normPhone(p);
     }
+    if ('email' in body) patch.email = body.email?.trim() || null;
+    // Verificación de Tier A (handoff Joaquín → Fernanda): se persiste con quién y cuándo.
+    if ('verify' in body) {
+      if (body.verify) {
+        patch.verified_at = new Date().toISOString();
+        patch.verified_by = body.verified_by?.trim() || 'equipo';
+      } else {
+        patch.verified_at = null;
+        patch.verified_by = null;
+      }
+    }
     if ('discount_pct' in body) {
       const d = Number(body.discount_pct);
       patch.discount_pct = Number.isFinite(d) ? Math.min(15, Math.max(0, Math.round(d))) : 10;

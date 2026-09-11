@@ -33,10 +33,34 @@ export default function DetailDrawer({
   const [contacto, setContacto] = useState(client.contact_name ?? '');
   const [brand, setBrand] = useState(client.brand ?? BRAND_DEFAULT);
   const [phone, setPhone] = useState(client.phone ?? '');
+  const [email, setEmail] = useState(client.email ?? '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verifyAck, setVerifyAck] = useState(false);
+
+  // Verificación de Tier A: persistida (no local). Joaquín confirma → Fernanda ve habilitado.
+  const isVerified = !!client.verified_at;
+  const doVerify = async (val: boolean) => {
+    setVerifying(true);
+    setError(null);
+    let me: string | null = null;
+    try { me = JSON.parse(localStorage.getItem('orbit_user') || '{}').name || null; } catch { /* ignore */ }
+    try {
+      const res = await fetch('/api/reactivation', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id, verify: val, verified_by: me }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'No se pudo verificar.'); return; }
+      onUpdated(data.client);
+    } catch {
+      setError('Error de red.');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const remove = async () => {
     if (!confirm(`¿Borrar "${client.company}" de la lista? Esto no se puede deshacer.`)) return;
@@ -55,7 +79,7 @@ export default function DetailDrawer({
 
   const isControl = client.is_control;
   const mustVerify = !isControl && client.needs_verify && client.tier === 'A';
-  const locked = isControl || (mustVerify && !verifyAck);
+  const locked = isControl || (mustVerify && !isVerified);
   const canMarkOutcome = !!t1Date; // regla: sin 1er toque no hay respondió/reservó
 
   const save = async () => {
@@ -87,6 +111,7 @@ export default function DetailDrawer({
           contact_name: contacto,
           brand,
           phone,
+          email,
         }),
       });
       const data = await res.json();
@@ -154,15 +179,28 @@ export default function DetailDrawer({
           )}
 
           {mustVerify && !isControl && (
-            <div className="rounded-xl bg-yellow-50 border border-yellow-300 p-4">
-              <p className="font-semibold text-yellow-800 text-sm">⚠️ Tier A · Verificar antes de escribir</p>
-              <p className="text-sm text-yellow-700 mt-1">Puede tener recojo fijo (tipo OXXO) o un reclamo abierto. Revisa antes de contactar.</p>
-              {!verifyAck && (
-                <button onClick={() => setVerifyAck(true)} className="mt-2 text-sm font-medium px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white">
-                  Ya verifiqué, habilitar contacto
+            isVerified ? (
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                <p className="font-semibold text-emerald-700 text-sm">✅ Tier A verificado{client.verified_by ? ` por ${client.verified_by}` : ''}</p>
+                <p className="text-sm text-emerald-600 mt-1">
+                  Habilitado para la <b>llamada de Fernanda</b>.
+                  {client.verified_at ? ` (${new Date(client.verified_at).toLocaleDateString('es-PE')})` : ''}
+                </p>
+                <button onClick={() => doVerify(false)} disabled={verifying} className="mt-1 text-xs text-emerald-700 underline disabled:opacity-50">Quitar verificación</button>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-yellow-50 border border-yellow-300 p-4">
+                <p className="font-semibold text-yellow-800 text-sm">⏳ Tier A — falta que <b>Joaquín</b> verifique</p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  Joaquín revisa que no tenga recojo fijo (tipo OXXO) ni reclamo abierto.
+                  <b> Al confirmar, Fernanda puede llamar.</b>
+                </p>
+                <button onClick={() => doVerify(true)} disabled={verifying}
+                  className="mt-2 text-sm font-medium px-3 py-1.5 rounded-lg bg-yellow-600 hover:bg-yellow-700 text-white disabled:opacity-50">
+                  {verifying ? 'Guardando…' : '✓ Confirmar verificación (Joaquín)'}
                 </button>
-              )}
-            </div>
+              </div>
+            )
           )}
 
           {/* Guía rápida de uso (para que nadie se confunda) */}
@@ -175,11 +213,18 @@ export default function DetailDrawer({
           {/* Datos de contacto (editables — corrige aquí si el número está viejo) */}
           {!isControl && (
             <div className="space-y-2">
-              <label className="text-xs text-gray-500 block">
-                📱 Teléfono <span className="text-gray-400">(si está desactualizado, corrígelo — el link de WhatsApp usa este número)</span>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+51…"
-                  className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
-              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-gray-500">
+                  📱 Teléfono <span className="text-gray-400">(corrige si está viejo)</span>
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+51…"
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                </label>
+                <label className="text-xs text-gray-500">
+                  ✉️ Correo <span className="text-gray-400">(canal alterno)</span>
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@empresa.com"
+                    className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-sm" />
+                </label>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="text-xs text-gray-500">
                   Contacto (persona)

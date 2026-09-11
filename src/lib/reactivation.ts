@@ -39,6 +39,9 @@ export interface ReactClient extends ParsedRow {
   notes: string | null;
   contact_name: string | null; // nombre de la persona ({contacto} en plantillas)
   brand: string | null;        // marca en los textos (default "Lavado")
+  email: string | null;        // canal alterno si el teléfono está viejo
+  verified_at: string | null;  // Tier A: cuándo Joaquín lo verificó (habilita a Fer)
+  verified_by: string | null;  // quién verificó
   updated_at?: string;
 }
 

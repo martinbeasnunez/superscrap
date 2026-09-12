@@ -69,7 +69,7 @@ export default function CampaignTimeline() {
       return d <= 0 ? 'Arranca hoy' : `Arranca en ${d} día${d === 1 ? '' : 's'}`;
     }
     if (status === 'en_curso') {
-      const d = daysBetween(today, cur.end);
+      const d = daysBetween(today, cur.deadline ?? cur.end);
       return d <= 0 ? 'Cierra hoy' : `Cierra en ${d} día${d === 1 ? '' : 's'}`;
     }
     return 'Cerrada';
@@ -87,7 +87,7 @@ export default function CampaignTimeline() {
         </div>
         {stats && (
           <span className="text-xs text-gray-500">
-            {stats.totalDone}/{stats.total} con 1er toque
+{stats.totalDone}/{stats.total} ya contactados
             {stats.overdue > 0 && <span className="text-rose-600 font-semibold"> · {stats.overdue} vencidos</span>}
           </span>
         )}
@@ -126,7 +126,7 @@ export default function CampaignTimeline() {
               status === 'en_curso' ? 'bg-emerald-100 text-emerald-700' : status === 'proxima' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'
             }`}>{WAVE_STATUS_LABEL[status]}</span>
           </span>
-          <span className="text-xs font-semibold text-gray-700">⏳ {countdown} · deadline {fmtShort(cur.end)}</span>
+          <span className="text-xs font-semibold text-gray-700">⏳ {countdown} · fecha límite {fmtShort(cur.deadline ?? cur.end)}</span>
         </div>
         <p className="text-xs text-gray-500 mb-2">{cur.focus}</p>
         {curProgress && (
@@ -134,14 +134,14 @@ export default function CampaignTimeline() {
             <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
               <div className="h-full bg-[#0890F1] rounded-full transition-all" style={{ width: `${pct}%` }} />
             </div>
-            <p className="text-[11px] text-gray-500 mt-1">{curProgress.done}/{curProgress.total} tocados · {pct}%</p>
+            <p className="text-[11px] text-gray-500 mt-1">{curProgress.done}/{curProgress.total} ya contactados · {pct}%</p>
             {stats?.curSplit && (stats.curSplit.tierA.total > 0 || stats.curSplit.bc.total > 0) && (
               <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-[11px]">
                 <span className="text-gray-600">
-                  💬 Joaquín (WhatsApp B/C): <b className={stats.curSplit.bc.done >= stats.curSplit.bc.total && stats.curSplit.bc.total > 0 ? 'text-emerald-600' : ''}>{stats.curSplit.bc.done}/{stats.curSplit.bc.total}</b>
+                  💬 Joaquín (mensajes a medianos/chicos): <b className={stats.curSplit.bc.done >= stats.curSplit.bc.total && stats.curSplit.bc.total > 0 ? 'text-emerald-600' : ''}>{stats.curSplit.bc.done}/{stats.curSplit.bc.total}</b>
                 </span>
                 <span className="text-gray-600">
-                  📞 Fernanda (Tier A, llamadas): <b className={stats.curSplit.tierA.done >= stats.curSplit.tierA.total && stats.curSplit.tierA.total > 0 ? 'text-emerald-600' : 'text-amber-600'}>{stats.curSplit.tierA.done}/{stats.curSplit.tierA.total}</b>
+                  📞 Fernanda (llamadas a cuentas grandes): <b className={stats.curSplit.tierA.done >= stats.curSplit.tierA.total && stats.curSplit.tierA.total > 0 ? 'text-emerald-600' : 'text-amber-600'}>{stats.curSplit.tierA.done}/{stats.curSplit.tierA.total}</b>
                 </span>
               </div>
             )}

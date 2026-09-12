@@ -57,17 +57,17 @@ export default function MessagesPanel({
           Confirma la verificación (arriba) para habilitar el guion.
         </p>
       ) : tier === 'B' ? (
-        <CopyBlock label="1er toque · WhatsApp" text={fill(TIER_B.firstTouch)} waHref={wa(fill(TIER_B.firstTouch))} />
+        <CopyBlock label="1er mensaje · WhatsApp" text={fill(TIER_B.firstTouch)} waHref={wa(fill(TIER_B.firstTouch))} />
       ) : tier === 'C' ? (
         <div className="space-y-2">
-          <CopyBlock label="1er toque · WhatsApp" text={fill(TIER_C.firstTouch)} waHref={wa(fill(TIER_C.firstTouch))} />
+          <CopyBlock label="1er mensaje · WhatsApp" text={fill(TIER_C.firstTouch)} waHref={wa(fill(TIER_C.firstTouch))} />
           <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
         </div>
       ) : tier === 'A' ? (
         <TierAGuide fill={fill} />
       ) : isPrimeraRecompra ? (
         <div className="space-y-2">
-          <CopyBlock label="1er toque · primera recompra" text={fill(PRIMERA_RECOMPRA.firstTouch)} waHref={wa(fill(PRIMERA_RECOMPRA.firstTouch))} />
+          <CopyBlock label="1er mensaje · compró 1 vez" text={fill(PRIMERA_RECOMPRA.firstTouch)} waHref={wa(fill(PRIMERA_RECOMPRA.firstTouch))} />
           <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(PRIMERA_RECOMPRA.soft)} waHref={wa(fill(PRIMERA_RECOMPRA.soft))} />
         </div>
       ) : client.list_type === 'excluir' ? (
@@ -82,7 +82,7 @@ export default function MessagesPanel({
           <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 mb-2">
             📞 {SECOND_TOUCH.hint}
           </p>
-          <CopyBlock label="2do toque · llamada (7 días)" text={fill(SECOND_TOUCH.script)} />
+          <CopyBlock label="2da vuelta · llamada (7 días)" text={fill(SECOND_TOUCH.script)} />
           <p className="text-xs text-gray-400 mt-1">{SECOND_TOUCH.close}</p>
         </div>
       )}

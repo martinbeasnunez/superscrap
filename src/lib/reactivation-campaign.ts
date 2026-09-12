@@ -10,23 +10,26 @@ import type { ReactClient } from './reactivation';
 export interface CampaignWave {
   n: 1 | 2 | 3 | 4;
   name: string;
-  start: string;      // YYYY-MM-DD (martes)
-  end: string;        // YYYY-MM-DD (jueves) — deadline del 1er toque de la ola
+  start: string;       // YYYY-MM-DD — inicio de la semana (corrida, sin huecos)
+  end: string;         // YYYY-MM-DD — fin de la semana (el domingo; el finde no se trabaja)
+  deadline?: string;   // YYYY-MM-DD — fecha límite hábil del 1er contacto (viernes)
   checkpoint?: string; // viernes
   focus: string;
 }
 
 export const CAMPAIGN = {
-  name: 'Reactivación B2B · Setiembre 2026',
+  name: 'Recuperar clientes · Setiembre 2026',
   start: '2026-09-09',
   end: '2026-09-30',
   discountStart: 10,
   discountMax: 15,
+  // Semanas CORRIDAS (sin días muertos): cada una arranca el lunes siguiente.
+  // Fin de semana no se trabaja, pero lunes y martes SÍ entran a la semana.
   waves: [
-    { n: 1, name: 'Semana 1', start: '2026-09-09', end: '2026-09-11', checkpoint: '2026-09-11', focus: 'Tier A (verificar + llamada) · 1er toque B/C prioridad Alta' },
-    { n: 2, name: 'Semana 2', start: '2026-09-16', end: '2026-09-18', checkpoint: '2026-09-18', focus: '1er toque B/C Media · 2do toque a los que no respondieron (S1)' },
-    { n: 3, name: 'Semana 3', start: '2026-09-23', end: '2026-09-25', checkpoint: '2026-09-25', focus: '1er toque Baja + Primera recompra · 2do toque (S2)' },
-    { n: 4, name: 'Cierre', start: '2026-09-29', end: '2026-09-30', focus: 'Medición del lift y resultados finales' },
+    { n: 1, name: 'Semana 1', start: '2026-09-09', end: '2026-09-13', deadline: '2026-09-11', checkpoint: '2026-09-11', focus: 'Arranque (mié–vie): revisar cuentas grandes + 1er mensaje a medianos/chicos de prioridad Alta' },
+    { n: 2, name: 'Semana 2', start: '2026-09-14', end: '2026-09-20', deadline: '2026-09-18', checkpoint: '2026-09-18', focus: 'Lun–mar: llamar a las cuentas grandes. Luego: 1er mensaje a prioridad Media + 2da vuelta (llamada) a los que no respondieron' },
+    { n: 3, name: 'Semana 3', start: '2026-09-21', end: '2026-09-27', deadline: '2026-09-25', checkpoint: '2026-09-25', focus: '1er mensaje a los más fríos + los que compraron una vez · 2da vuelta a los que no respondieron' },
+    { n: 4, name: 'Cierre', start: '2026-09-28', end: '2026-09-30', deadline: '2026-09-30', focus: 'Ver resultados: cuántos volvieron' },
   ] as CampaignWave[],
 } as const;
 
@@ -62,11 +65,12 @@ export function waveFor(c: Pick<ReactClient, 'is_control' | 'list_type' | 'tier'
   return 3; // fría/baja o sin señal → cola
 }
 
-// Fecha objetivo del 1er toque = fin de su ola.
+// Fecha objetivo del 1er contacto = fecha límite hábil (viernes) de su semana.
 export function targetTouch1(c: Parameters<typeof waveFor>[0]): string | null {
   const w = waveFor(c);
   if (!w) return null;
-  return CAMPAIGN.waves.find((x) => x.n === w)?.end ?? null;
+  const wave = CAMPAIGN.waves.find((x) => x.n === w);
+  return wave?.deadline ?? wave?.end ?? null;
 }
 
 // Fecha objetivo del 2do toque = fecha del 1er toque + 7 días (solo si no respondió).

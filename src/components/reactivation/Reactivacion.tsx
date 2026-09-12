@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   REACT_STATUS_LABEL,
   REACT_STATUS_ORDER,
+  TIER_LABEL,
   type ReactClient,
   type ReactStatus,
   type ReactListType,
@@ -48,9 +49,9 @@ const STATUS_STYLE: Record<ReactStatus, string> = {
 };
 
 const LIST_TABS: { key: ReactListType; label: string }[] = [
-  { key: 'reactivacion', label: '♻️ Reactivación' },
-  { key: 'primera_recompra', label: '🌱 Primera recompra' },
-  { key: 'excluir', label: '🚫 Excluir / Revisar' },
+  { key: 'reactivacion', label: '♻️ Clientes frecuentes' },
+  { key: 'primera_recompra', label: '🌱 Compraron 1 vez' },
+  { key: 'excluir', label: '🚫 No contactar' },
 ];
 
 // ¿Toca el 2do toque? (1er toque hecho, no respondió, +7 días, sin 2do toque)
@@ -226,17 +227,17 @@ export default function Reactivacion() {
         <div className={`rounded-xl border p-4 mb-4 ${kpi.uplift >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <p className="text-xs font-medium text-gray-500">🎯 Tasa de reactivación · Contactado vs Control</p>
+              <p className="text-xs font-medium text-gray-500">🎯 Cuántos volvieron · los que contactamos vs los que dejamos quietos</p>
               <p className="text-sm text-gray-600 mt-0.5">
-                Contactado <b>{(kpi.contacted.rate * 100).toFixed(0)}%</b> ({kpi.contacted.reactivated}/{kpi.contacted.count})
-                {'  '}vs Control <b>{(kpi.control.rate * 100).toFixed(0)}%</b> ({kpi.control.reactivated}/{kpi.control.count})
+                Contactados: volvió el <b>{(kpi.contacted.rate * 100).toFixed(0)}%</b> ({kpi.contacted.reactivated} de {kpi.contacted.count})
+                {'  '}·  Control (sin tocar): volvió el <b>{(kpi.control.rate * 100).toFixed(0)}%</b> ({kpi.control.reactivated} de {kpi.control.count})
               </p>
             </div>
             <div className="text-right">
               <p className={`text-3xl font-bold ${kpi.uplift >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                 {kpi.uplift >= 0 ? '+' : ''}{(kpi.uplift * 100).toFixed(0)}%
               </p>
-              <p className="text-xs text-gray-500">diferencial (KPI real)</p>
+              <p className="text-xs text-gray-500">de diferencia (lo que sumó la campaña)</p>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-black/5">
@@ -261,14 +262,14 @@ export default function Reactivacion() {
             verifyQueue ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300'
           }`}
         >
-          {verifyQueue ? '✓ Viendo Tier A por verificar' : `🔴 Tier A por verificar (${tierAPending.length})`}
-          <span className={`ml-2 font-normal ${verifyQueue ? 'text-white/80' : 'text-yellow-700'}`}>· trabajo de Joaquín</span>
+          {verifyQueue ? '✓ Viendo cuentas grandes por revisar' : `🔴 Cuentas grandes por revisar (${tierAPending.length})`}
+          <span className={`ml-2 font-normal ${verifyQueue ? 'text-white/80' : 'text-yellow-700'}`}>· lo revisa Joaquín antes de que Fer llame</span>
         </button>
       )}
 
       {/* Filtros */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <Select label="Tier" value={fTier} onChange={setFTier} options={[['all', 'Todos'], ['A', 'A'], ['B', 'B'], ['C', 'C']]} />
+        <Select label="Tamaño" value={fTier} onChange={setFTier} options={[['all', 'Todos'], ['A', 'Grande'], ['B', 'Mediano'], ['C', 'Chico']]} />
         <Select label="Prioridad" value={fPriority} onChange={setFPriority} options={[['all', 'Todas'], ['alta', 'Alta'], ['media', 'Media'], ['fria', 'Fría']]} />
         <Select label="Dueño" value={fOwner} onChange={setFOwner} options={[['all', 'Todos'], ...owners.map((o) => [o, o] as [string, string])]} />
         <Select label="Estado" value={fStatus} onChange={setFStatus} options={[['all', 'Todos'], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
@@ -359,9 +360,9 @@ function Badges({ c }: { c: ReactClient }) {
   const t1 = targetTouch1(c);
   return (
     <div className="flex items-center gap-1 flex-wrap">
-      {c.tier && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${TIER_STYLE[c.tier]}`}>Tier {c.tier}</span>}
+      {c.tier && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${TIER_STYLE[c.tier]}`}>{TIER_LABEL[c.tier]}</span>}
       {c.priority && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${PRIORITY_STYLE[c.priority]}`}>{PRIORITY_LABEL[c.priority]}</span>}
-      {wave && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200" title={`1er toque objetivo: ${fmtShort(t1)}`}>Ola {wave} · {fmtShort(t1)}</span>}
+      {wave && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200" title={`Para contactar antes del ${fmtShort(t1)}`}>Semana {wave} · antes del {fmtShort(t1)}</span>}
       {c.is_control && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-600 text-white">CONTROL</span>}
       {!c.is_control && c.needs_verify && c.tier === 'A' && (
         c.verified_at
@@ -436,7 +437,7 @@ function TableView({ rows, sortKey, sortDir, onCycleDays, onSortPriority, onSele
               Días sin pedir {sortKey === 'days' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
             </th>
             <th className="px-3 py-3 font-medium">Pedidos</th>
-            <th className="px-3 py-3 font-medium">Segmento</th>
+            <th className="px-3 py-3 font-medium">Tamaño</th>
             <th className="px-3 py-3 font-medium">Estado</th>
           </tr>
         </thead>
@@ -459,7 +460,7 @@ function TableView({ rows, sortKey, sortDir, onCycleDays, onSortPriority, onSele
                 </span>
               </td>
               <td className="px-3 py-3 text-gray-600">{c.total_orders ?? '—'}</td>
-              <td className="px-3 py-3 text-gray-500 text-xs">{c.segment || '—'}</td>
+              <td className="px-3 py-3 text-gray-500 text-xs">{c.tier ? TIER_LABEL[c.tier] : (c.list_type === 'primera_recompra' ? 'Compró 1 vez' : '—')}</td>
               <td className="px-3 py-3">
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_STYLE[c.status]}`}>{REACT_STATUS_LABEL[c.status]}</span>
               </td>

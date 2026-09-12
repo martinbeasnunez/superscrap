@@ -109,12 +109,12 @@ export default function DetailDrawer({
     setError(null);
     if (isControl) { setError('Cliente de CONTROL: no se registran toques.'); return; }
     if ((responded != null || reserved != null) && !t1Date) {
-      setError('Marca primero la fecha del 1er toque.');
+      setError('Marca primero la fecha en que lo contactaste.');
       return;
     }
-    if (t1Chan && !t1Date) { setError('El 1er toque necesita fecha.'); return; }
+    if (t1Chan && !t1Date) { setError('El 1er contacto necesita fecha.'); return; }
     if (t2Chan && !t2Date && t2Date !== '') { /* canal por defecto ok */ }
-    if (t2Date && !t2Chan) { setError('Elige el canal del 2do toque.'); return; }
+    if (t2Date && !t2Chan) { setError('Elige el canal de la 2da vuelta.'); return; }
 
     setSaving(true);
     try {
@@ -177,11 +177,11 @@ export default function DetailDrawer({
             const isOverdue = overdue(client, todayISO()) !== null;
             return (
               <div className="flex items-center gap-2 mt-2 flex-wrap text-xs">
-                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">Ola {wave}</span>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">Semana {wave}</span>
                 <span className="text-gray-500">
                   {client.touch1_date
-                    ? <>2do toque objetivo: <b>{fmtShort(t2)}</b></>
-                    : <>1er toque objetivo: <b>{fmtShort(t1)}</b></>}
+                    ? <>Llamar antes del <b>{fmtShort(t2)}</b></>
+                    : <>Contactar antes del <b>{fmtShort(t1)}</b></>}
                 </span>
                 {isOverdue && <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-300 font-bold">⚠ Vencido</span>}
               </div>
@@ -204,7 +204,7 @@ export default function DetailDrawer({
           {mustVerify && !isControl && (
             isVerified ? (
               <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
-                <p className="font-semibold text-emerald-700 text-sm">✅ Tier A verificado{client.verified_by ? ` por ${client.verified_by}` : ''}</p>
+                <p className="font-semibold text-emerald-700 text-sm">✅ Cuenta grande revisada{client.verified_by ? ` por ${client.verified_by}` : ''}</p>
                 <p className="text-sm text-emerald-600 mt-1">
                   Habilitado para la <b>llamada de Fernanda</b>.
                   {client.verified_at ? ` (${new Date(client.verified_at).toLocaleDateString('es-PE')})` : ''}
@@ -213,7 +213,7 @@ export default function DetailDrawer({
               </div>
             ) : (
               <div className="rounded-xl bg-yellow-50 border border-yellow-300 p-4">
-                <p className="font-semibold text-yellow-800 text-sm">⏳ Tier A — falta que <b>Joaquín</b> verifique</p>
+                <p className="font-semibold text-yellow-800 text-sm">⏳ Cuenta grande — falta que <b>Joaquín</b> la revise</p>
                 <p className="text-sm text-yellow-700 mt-1">
                   Joaquín revisa que no tenga recojo fijo (tipo OXXO), reclamo abierto ni <b>deuda/pago pendiente</b>.
                   Si hay algún problema, escríbelo en Notas y déjalo bloqueado.
@@ -277,7 +277,7 @@ export default function DetailDrawer({
 
           {/* 1er toque */}
           <fieldset disabled={locked} className={locked ? 'opacity-50' : ''}>
-            <legend className="text-sm font-semibold text-gray-900 mb-2">2. Anota tu toque <span className="font-normal text-gray-400">· pon la fecha</span></legend>
+            <legend className="text-sm font-semibold text-gray-900 mb-2">2. Anota cuándo lo contactaste <span className="font-normal text-gray-400">· pon la fecha</span></legend>
             <div className="flex gap-2">
               <input type="date" value={t1Date} onChange={(e) => setT1Date(e.target.value)}
                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm" />
@@ -287,7 +287,7 @@ export default function DetailDrawer({
 
           {/* 2do toque */}
           <fieldset disabled={locked} className={locked ? 'opacity-50' : ''}>
-            <legend className="text-sm font-semibold text-gray-900 mb-2">2do toque <span className="font-normal text-gray-400">· a los 7 días, preferente llamada</span></legend>
+            <legend className="text-sm font-semibold text-gray-900 mb-2">2da vuelta <span className="font-normal text-gray-400">· llámalo a los 7 días si no respondió</span></legend>
             <div className="flex gap-2">
               <input type="date" value={t2Date} onChange={(e) => setT2Date(e.target.value)}
                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm" />
@@ -299,7 +299,7 @@ export default function DetailDrawer({
           <fieldset disabled={locked} className={locked ? 'opacity-50' : ''}>
             <legend className="text-sm font-semibold text-gray-900 mb-2">3. ¿Qué pasó?</legend>
             {!canMarkOutcome && !locked && (
-              <p className="text-xs text-amber-600 mb-2">Registra la fecha del 1er toque para habilitar esto.</p>
+              <p className="text-xs text-amber-600 mb-2">Pon la fecha del 1er contacto para habilitar esto.</p>
             )}
             <div className="space-y-2">
               <TriToggle label="¿Respondió?" value={responded} onChange={setResponded} disabled={!canMarkOutcome} />

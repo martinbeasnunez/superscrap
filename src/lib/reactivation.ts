@@ -212,11 +212,18 @@ export function deriveStatus(c: {
 }
 
 export const REACT_STATUS_LABEL: Record<ReactStatus, string> = {
-  pendiente: 'Pendiente',
-  toque1: '1er toque enviado',
+  pendiente: 'Sin tocar',
+  toque1: 'Ya le escribí',
   respondio: 'Respondió',
-  reservo: 'Reservó',
-  no_reservo: 'No reservó',
+  reservo: 'Volvió a pedir',
+  no_reservo: 'No volvió',
+};
+
+// Etiquetas en cristiano para el tamaño de cuenta (evita "Tier A/B/C").
+export const TIER_LABEL: Record<ReactTier, string> = {
+  A: 'Grande',
+  B: 'Mediano',
+  C: 'Chico',
 };
 
 export const REACT_STATUS_ORDER: ReactStatus[] = [

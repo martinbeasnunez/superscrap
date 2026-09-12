@@ -82,6 +82,8 @@ export default function Reactivacion() {
   const [soloMiOla, setSoloMiOla] = useState(false);
   // Cola de Joaquín: Tier A pendientes de verificar (sin importar de quién sean)
   const [verifyQueue, setVerifyQueue] = useState(false);
+  // Lente "Atrasados": lo que se debe de antes (pasó la fecha y sigue sin tocar)
+  const [overdueLens, setOverdueLens] = useState(false);
 
   // Auto-detectar al vendedor logueado (Joaquín/Fernanda) → abre SU semana solo.
   // Martín/GM u otro nombre → ve todo (sin filtro).
@@ -122,10 +124,20 @@ export default function Reactivacion() {
     [clients]
   );
 
+  // Atrasados: se les pasó la fecha y siguen sin contactar (lo que "se debe")
+  const overdueList = useMemo(
+    () => clients.filter((c) => overdue(c, todayISO()) !== null),
+    [clients]
+  );
+
   const filtered = useMemo(() => {
     // Cola de verificación: ignora los demás filtros, ordena por más frescos
     if (verifyQueue) {
       return [...tierAPending].sort((a, b) => (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity));
+    }
+    // Atrasados: lo que se debe, ordenado por más frescos (más chance)
+    if (overdueLens) {
+      return [...overdueList].sort((a, b) => (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity));
     }
     const curWaveN = currentWave(todayISO()).n;
     let arr = clients.filter((c) => {
@@ -150,7 +162,7 @@ export default function Reactivacion() {
       return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla, verifyQueue, tierAPending]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla, verifyQueue, tierAPending, overdueLens, overdueList]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
@@ -254,10 +266,23 @@ export default function Reactivacion() {
         <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." />
       </div>
 
+      {/* Atrasados: lo que se debe de antes — a avanzar primero */}
+      {(overdueList.length > 0 || overdueLens) && (
+        <button
+          onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); }}
+          className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
+            overdueLens ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-300'
+          }`}
+        >
+          {overdueLens ? '✓ Viendo atrasados' : `🔴 Atrasados: ${overdueList.length}`}
+          <span className={`ml-2 font-normal ${overdueLens ? 'text-white/80' : 'text-rose-600'}`}>· debías tocarlos antes — a avanzar</span>
+        </button>
+      )}
+
       {/* Cola de verificación de Joaquín (Tier A por verificar, cruza dueños) */}
       {(tierAPending.length > 0 || verifyQueue) && (
         <button
-          onClick={() => setVerifyQueue((v) => !v)}
+          onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); }}
           className={`mb-3 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             verifyQueue ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300'
           }`}

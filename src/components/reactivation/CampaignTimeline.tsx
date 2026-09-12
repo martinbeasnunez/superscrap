@@ -135,6 +135,9 @@ export default function CampaignTimeline() {
               <div className="h-full bg-[#0890F1] rounded-full transition-all" style={{ width: `${pct}%` }} />
             </div>
             <p className="text-[11px] text-gray-500 mt-1">{curProgress.done}/{curProgress.total} ya contactados · {pct}%</p>
+            {curProgress.total - curProgress.done > 0 && (
+              <p className="text-[11px] font-semibold text-[#0890F1] mt-0.5">⚡ Faltan {curProgress.total - curProgress.done} por tocar esta semana — ¡a avanzar!</p>
+            )}
             {stats?.curSplit && (stats.curSplit.tierA.total > 0 || stats.curSplit.bc.total > 0) && (
               <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-[11px]">
                 <span className="text-gray-600">
@@ -148,6 +151,14 @@ export default function CampaignTimeline() {
           </div>
         )}
       </div>
+
+      {/* Lo que se arrastra: "vienes debiendo" — a avanzar primero */}
+      {stats && stats.overdue > 0 && (
+        <div className="mt-2 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-sm">
+          <b className="text-rose-700">🔴 Vienes debiendo {stats.overdue}</b>
+          <span className="text-rose-600"> — se les pasó la fecha y siguen sin contactar. Son lo atrasado de la semana pasada: <b>arranca por estos</b>. ¡A avanzar!</span>
+        </div>
+      )}
 
       {/* Checkpoint */}
       {chk && (

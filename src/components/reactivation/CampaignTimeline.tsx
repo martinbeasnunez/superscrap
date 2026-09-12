@@ -83,7 +83,7 @@ export default function CampaignTimeline() {
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
         <div>
           <p className="font-bold text-gray-900">📅 {CAMPAIGN.name}</p>
-          <p className="text-xs text-gray-500">{fmtShort(CAMPAIGN.start)} – {fmtShort(CAMPAIGN.end)} · envíos mar–jue, 8–10am / 12–2pm</p>
+          <p className="text-xs text-gray-500">{fmtShort(CAMPAIGN.start)} – {fmtShort(CAMPAIGN.end)} · mensajes mar–jue · llamadas apenas estén listas</p>
         </div>
         {stats && (
           <span className="text-xs text-gray-500">

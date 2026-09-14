@@ -39,17 +39,22 @@ export default function CampaignTimeline() {
       const ws = contactable.filter((c) => waveFor(c) === n);
       return { total: ws.length, done: ws.filter(touch1Done).length };
     };
-    // Desglose de la ola actual por rol: Tier A (llamadas · Fer) vs B/C (WhatsApp · Joaquín)
+    // Desglose por PERSONA, acumulado de lo que ya toca hasta esta semana
+    // (no por ola aislada) — así el arrastre de Fer se ve y se actualiza solo.
     const curN = currentWave(today).n;
-    const inCur = contactable.filter((c) => waveFor(c) === curN);
-    const done = (arr: typeof inCur) => arr.filter(touch1Done).length;
-    const tierA = inCur.filter((c) => c.tier === 'A');
-    const bc = inCur.filter((c) => c.tier !== 'A');
+    const done = (arr: typeof contactable) => arr.filter(touch1Done).length;
+    const due = contactable.filter((c) => (waveFor(c) ?? 99) <= curN); // ya les toca
+    const tierA = contactable.filter((c) => c.tier === 'A'); // Fer: todas las grandes (ola 1)
+    const bc = due.filter((c) => c.tier !== 'A');            // Joaquín: medianos/chicos que ya tocan
+    const dueTotal = tierA.length + bc.length;
+    const dueDone = done(tierA) + done(bc);
     return {
       waves: { 1: perWave(1), 2: perWave(2), 3: perWave(3) },
       overdue: contactable.filter((c) => overdue(c, today) !== null).length,
       totalDone: contactable.filter(touch1Done).length,
       total: contactable.length,
+      dueTotal,
+      dueDone,
       curSplit: {
         bc: { done: done(bc), total: bc.length },
         tierA: { done: done(tierA), total: tierA.length },
@@ -75,7 +80,8 @@ export default function CampaignTimeline() {
     return 'Cerrada';
   })();
 
-  const curProgress = cur.n <= 3 && stats ? stats.waves[cur.n as 1 | 2 | 3] : null;
+  // Progreso = acumulado de lo que ya toca hasta esta semana (se actualiza solo)
+  const curProgress = cur.n <= 3 && stats ? { done: stats.dueDone, total: stats.dueTotal } : null;
   const pct = curProgress && curProgress.total > 0 ? Math.round((curProgress.done / curProgress.total) * 100) : 0;
 
   return (
@@ -136,7 +142,7 @@ export default function CampaignTimeline() {
             </div>
             <p className="text-[11px] text-gray-500 mt-1">{curProgress.done}/{curProgress.total} ya contactados · {pct}%</p>
             {curProgress.total - curProgress.done > 0 && (
-              <p className="text-[11px] font-semibold text-[#0890F1] mt-0.5">⚡ Faltan {curProgress.total - curProgress.done} por tocar esta semana — ¡a avanzar!</p>
+              <p className="text-[11px] font-semibold text-[#0890F1] mt-0.5">⚡ Faltan {curProgress.total - curProgress.done} por contactar — ¡a avanzar!</p>
             )}
             {stats?.curSplit && (stats.curSplit.tierA.total > 0 || stats.curSplit.bc.total > 0) && (
               <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-[11px]">

@@ -84,6 +84,8 @@ export default function Reactivacion() {
   const [verifyQueue, setVerifyQueue] = useState(false);
   // Lente "Atrasados": lo que se debe de antes (pasó la fecha y sigue sin tocar)
   const [overdueLens, setOverdueLens] = useState(false);
+  // Lente "2da vuelta": mensajeados hace 7+ días sin respuesta → toca llamar
+  const [secondTouchLens, setSecondTouchLens] = useState(false);
 
   // Auto-detectar al vendedor logueado (Joaquín/Fernanda) → abre SU semana solo.
   // Martín/GM u otro nombre → ve todo (sin filtro).
@@ -130,6 +132,12 @@ export default function Reactivacion() {
     [clients]
   );
 
+  // 2da vuelta: mensajeados hace 7+ días, sin respuesta, sin 2do toque → llamar
+  const secondTouchList = useMemo(
+    () => clients.filter((c) => needsSecondTouch(c) && c.list_type !== 'excluir'),
+    [clients]
+  );
+
   const filtered = useMemo(() => {
     // Cola de verificación: ignora los demás filtros, ordena por más frescos
     if (verifyQueue) {
@@ -138,6 +146,10 @@ export default function Reactivacion() {
     // Atrasados: lo que se debe, ordenado por más frescos (más chance)
     if (overdueLens) {
       return [...overdueList].sort((a, b) => (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity));
+    }
+    // 2da vuelta: los que toca llamar, más frescos primero
+    if (secondTouchLens) {
+      return [...secondTouchList].sort((a, b) => (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity));
     }
     const curWaveN = currentWave(todayISO()).n;
     let arr = clients.filter((c) => {
@@ -162,7 +174,7 @@ export default function Reactivacion() {
       return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla, verifyQueue, tierAPending, overdueLens, overdueList]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
@@ -266,10 +278,23 @@ export default function Reactivacion() {
         <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." />
       </div>
 
+      {/* 2da vuelta: mensajeados hace 7+ días sin respuesta — toca llamar */}
+      {(secondTouchList.length > 0 || secondTouchLens) && (
+        <button
+          onClick={() => { setSecondTouchLens((v) => !v); setOverdueLens(false); setVerifyQueue(false); }}
+          className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
+            secondTouchLens ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-300'
+          }`}
+        >
+          {secondTouchLens ? '✓ Viendo 2da vuelta' : `📞 2da vuelta: ${secondTouchList.length}`}
+          <span className={`ml-2 font-normal ${secondTouchLens ? 'text-white/80' : 'text-orange-600'}`}>· no respondieron el mensaje — llámalos</span>
+        </button>
+      )}
+
       {/* Atrasados: lo que se debe de antes — a avanzar primero */}
       {(overdueList.length > 0 || overdueLens) && (
         <button
-          onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); }}
+          onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); setSecondTouchLens(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             overdueLens ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-300'
           }`}
@@ -282,7 +307,7 @@ export default function Reactivacion() {
       {/* Cola de verificación de Joaquín (Tier A por verificar, cruza dueños) */}
       {(tierAPending.length > 0 || verifyQueue) && (
         <button
-          onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); }}
+          onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); setSecondTouchLens(false); }}
           className={`mb-3 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             verifyQueue ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300'
           }`}
@@ -299,7 +324,7 @@ export default function Reactivacion() {
         <Select label="Dueño" value={fOwner} onChange={setFOwner} options={[['all', 'Todos'], ...owners.map((o) => [o, o] as [string, string])]} />
         <Select label="Estado" value={fStatus} onChange={setFStatus} options={[['all', 'Todos'], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
         {(fTier !== 'all' || fPriority !== 'all' || fOwner !== 'all' || fStatus !== 'all') && (
-          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setSoloMiOla(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
+          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setSoloMiOla(false); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
         )}
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} de {clients.length}</span>
       </div>

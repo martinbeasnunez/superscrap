@@ -275,8 +275,8 @@ export default function Reactivacion() {
       {/* Timeline de la campaña (olas, deadline, progreso) */}
       <CampaignTimeline />
 
-      {/* KPI real: Contactado vs Control (solo lista de reactivación) */}
-      {listType === 'reactivacion' && kpi && (
+      {/* KPI Contactado vs Control — número de gerente, solo para el GM (no vendedores) */}
+      {meOwner === null && listType === 'reactivacion' && kpi && (
         <div className={`rounded-xl border p-4 mb-4 ${kpi.uplift >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>

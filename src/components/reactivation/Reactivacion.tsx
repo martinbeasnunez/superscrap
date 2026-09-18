@@ -78,8 +78,6 @@ export default function Reactivacion() {
 
   const [selected, setSelected] = useState<ReactClient | null>(null);
   const [importOpen, setImportOpen] = useState(false);
-  // "Mi semana": scope a la ola actual del dueño seleccionado (solo pendientes)
-  const [soloMiOla, setSoloMiOla] = useState(false);
   // Cola de Joaquín: Tier A pendientes de verificar (sin importar de quién sean)
   const [verifyQueue, setVerifyQueue] = useState(false);
   // Lente "Atrasados": lo que se debe de antes (pasó la fecha y sigue sin tocar)
@@ -175,14 +173,11 @@ export default function Reactivacion() {
     if (secondTouchLens) {
       return [...secondTouchList].sort((a, b) => (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity));
     }
-    const curWaveN = currentWave(todayISO()).n;
     let arr = clients.filter((c) => {
       if (fTier !== 'all' && c.tier !== fTier) return false;
       if (fPriority !== 'all' && c.priority !== fPriority) return false;
       if (fOwner !== 'all' && c.owner !== fOwner) return false;
       if (fStatus !== 'all' && c.status !== fStatus) return false;
-      // Scope "Mi semana": solo pendientes de la ola actual (no control)
-      if (soloMiOla && fOwner !== 'all' && (c.is_control || waveFor(c) !== curWaveN || c.touch1_date)) return false;
       return true;
     });
     arr = [...arr].sort((a, b) => {
@@ -198,7 +193,7 @@ export default function Reactivacion() {
       return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, soloMiOla, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
@@ -280,11 +275,6 @@ export default function Reactivacion() {
       {/* Timeline de la campaña (olas, deadline, progreso) */}
       <CampaignTimeline />
 
-      {/* Mi semana — filtrado por dueño (no hay login; se usa el selector de Dueño) */}
-      {fOwner !== 'all' && (
-        <MiSemana owner={fOwner} clients={clients} active={soloMiOla} onToggle={() => setSoloMiOla((v) => !v)} />
-      )}
-
       {/* KPI real: Contactado vs Control (solo lista de reactivación) */}
       {listType === 'reactivacion' && kpi && (
         <div className={`rounded-xl border p-4 mb-4 ${kpi.uplift >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
@@ -363,7 +353,7 @@ export default function Reactivacion() {
         <Select label="Dueño" value={fOwner} onChange={setFOwner} options={[['all', 'Todos'], ...owners.map((o) => [o, o] as [string, string])]} />
         <Select label="Estado" value={fStatus} onChange={setFStatus} options={[['all', 'Todos'], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
         {(fTier !== 'all' || fPriority !== 'all' || fOwner !== 'all' || fStatus !== 'all') && (
-          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setSoloMiOla(false); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
+          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
         )}
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} de {clients.length}</span>
       </div>
@@ -460,44 +450,6 @@ function Badges({ c }: { c: ReactClient }) {
       )}
       {isOverdue && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-100 text-rose-700 border border-rose-300">⚠ Vencido</span>}
       {needsSecondTouch(c) && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-orange-100 text-orange-700">📞 Toca 2do</span>}
-    </div>
-  );
-}
-
-// "Mi semana": resumen de la ola actual para el dueño seleccionado (no hay login).
-function MiSemana({ owner, clients, active, onToggle }: {
-  owner: string; clients: ReactClient[]; active: boolean; onToggle: () => void;
-}) {
-  const today = todayISO();
-  const cur = currentWave(today);
-  const mine = clients.filter((c) => c.owner === owner && !c.is_control && c.list_type !== 'excluir');
-  const enOla = mine.filter((c) => waveFor(c) === cur.n);
-  const pendientes = enOla.filter((c) => !c.touch1_date);
-  const vencidos = mine.filter((c) => overdue(c, today) !== null);
-  return (
-    <div className="rounded-xl border border-[#0890F1]/30 bg-[#0890F1]/5 p-3 mb-4">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div>
-          <span className="font-semibold text-[#0890F1]">🗓️ Mi semana · {owner}</span>
-          <span className="text-sm text-gray-600 ml-2">
-            {cur.name}: <b>{pendientes.length}</b> por tocar de <b>{enOla.length}</b> en tu ola
-            {vencidos.length > 0 && <span className="text-rose-600 font-semibold"> · {vencidos.length} vencidos</span>}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-[#0890F1]/30 text-[#0890F1]">
-            Hito: 1er toque · {fmtShort(cur.end)}
-          </span>
-          <button
-            onClick={onToggle}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
-              active ? 'bg-[#0890F1] text-white' : 'bg-white border border-[#0890F1]/30 text-[#0890F1] hover:bg-[#0890F1]/10'
-            }`}
-          >
-            {active ? '✓ Viendo mi ola' : 'Ver solo mi ola →'}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

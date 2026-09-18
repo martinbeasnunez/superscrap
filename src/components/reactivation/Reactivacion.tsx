@@ -308,7 +308,7 @@ export default function Reactivacion() {
       </div>
 
       {/* 2da vuelta: mensajeados hace 7+ días sin respuesta — toca llamar */}
-      {(secondTouchList.length > 0 || secondTouchLens) && (
+      {meOwner !== 'Fernanda' && (secondTouchList.length > 0 || secondTouchLens) && (
         <button
           onClick={() => { setSecondTouchLens((v) => !v); setOverdueLens(false); setVerifyQueue(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
@@ -321,7 +321,7 @@ export default function Reactivacion() {
       )}
 
       {/* Atrasados: lo que se debe de antes — a avanzar primero */}
-      {(overdueList.length > 0 || overdueLens) && (
+      {meOwner !== 'Fernanda' && (overdueList.length > 0 || overdueLens) && (
         <button
           onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); setSecondTouchLens(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
@@ -334,7 +334,7 @@ export default function Reactivacion() {
       )}
 
       {/* Cola de verificación de Joaquín (Tier A por verificar, cruza dueños) */}
-      {(tierAPending.length > 0 || verifyQueue) && (
+      {meOwner !== 'Fernanda' && (tierAPending.length > 0 || verifyQueue) && (
         <button
           onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); setSecondTouchLens(false); }}
           className={`mb-3 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${

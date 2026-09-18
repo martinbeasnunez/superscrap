@@ -86,6 +86,8 @@ export default function Reactivacion() {
   const [overdueLens, setOverdueLens] = useState(false);
   // Lente "2da vuelta": mensajeados hace 7+ días sin respuesta → toca llamar
   const [secondTouchLens, setSecondTouchLens] = useState(false);
+  // Vendedor logueado (para la línea "👉 Ahora" personalizada)
+  const [meOwner, setMeOwner] = useState<string | null>(null);
 
   // Auto-detectar al vendedor logueado (Joaquín/Fernanda) → abre SU semana solo.
   // Martín/GM u otro nombre → ve todo (sin filtro).
@@ -96,7 +98,7 @@ export default function Reactivacion() {
       const n = String(JSON.parse(raw)?.name || '')
         .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
       const mapped = n.includes('joaquin') ? 'Joaquín' : n.includes('fernanda') ? 'Fernanda' : null;
-      if (mapped) setFOwner(mapped);
+      if (mapped) { setFOwner(mapped); setMeOwner(mapped); }
     } catch { /* ignore */ }
   }, []);
 
@@ -137,6 +139,28 @@ export default function Reactivacion() {
     () => clients.filter((c) => needsSecondTouch(c) && c.list_type !== 'excluir'),
     [clients]
   );
+
+  // "👉 Ahora": la jugada de más valor para el vendedor logueado
+  const nextStep = useMemo(() => {
+    const curWaveN = currentWave(todayISO()).n;
+    const activo = (c: ReactClient) => !c.is_control && c.list_type !== 'excluir';
+    const goLens = () => { setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); };
+    if (meOwner === 'Joaquín') {
+      if (secondTouchList.length > 0)
+        return { text: `📞 Hoy toca: ${secondTouchList.length} llamadas de 2da vuelta — esas cierran mejor que otro mensaje.`, action: () => { goLens(); setSecondTouchLens(true); } };
+      const msgs = clients.filter((c) => activo(c) && c.owner === 'Joaquín' && c.tier !== 'A' && !c.touch1_date && (waveFor(c) ?? 99) <= curWaveN);
+      if (msgs.length > 0)
+        return { text: `💬 Te faltan ${msgs.length} mensajes por enviar — empieza por los de arriba.`, action: () => { goLens(); setFOwner('Joaquín'); } };
+      return { text: '✅ Al día. Sigue contactando de arriba hacia abajo.', action: undefined };
+    }
+    if (meOwner === 'Fernanda') {
+      const grandes = clients.filter((c) => activo(c) && c.tier === 'A' && !c.touch1_date);
+      if (grandes.length > 0)
+        return { text: `📞 Te quedan ${grandes.length} cuentas grandes por llamar — empieza por las de arriba.`, action: () => { goLens(); setFOwner('Fernanda'); } };
+      return { text: '✅ Llamaste a todas tus grandes. Grande 🙌', action: undefined };
+    }
+    return null; // GM u otro: sin línea personal
+  }, [meOwner, clients, secondTouchList]);
 
   const filtered = useMemo(() => {
     // Cola de verificación: ignora los demás filtros, ordena por más frescos
@@ -237,6 +261,21 @@ export default function Reactivacion() {
           >⬆ Importar mes</button>
         </div>
       </div>
+
+      {/* 👉 Ahora: la jugada de más valor para el vendedor logueado */}
+      {nextStep && (
+        <button
+          onClick={nextStep.action}
+          disabled={!nextStep.action}
+          className={`w-full text-left mb-3 rounded-xl border px-4 py-2.5 transition-colors ${
+            nextStep.action ? 'bg-[#0890F1]/10 border-[#0890F1]/30 hover:bg-[#0890F1]/15' : 'bg-emerald-50 border-emerald-200 cursor-default'
+          }`}
+        >
+          <span className="text-[11px] font-bold text-[#0890F1] uppercase tracking-wide">👉 Ahora</span>
+          <span className="text-sm text-gray-800 ml-2">{nextStep.text}</span>
+          {nextStep.action && <span className="text-xs font-semibold text-[#0890F1] ml-1">→ ver</span>}
+        </button>
+      )}
 
       {/* Timeline de la campaña (olas, deadline, progreso) */}
       <CampaignTimeline />

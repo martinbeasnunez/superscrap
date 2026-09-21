@@ -81,13 +81,12 @@ export function targetTouch2(c: Pick<ReactClient, 'touch1_date' | 'responded'>):
 
 export type OverdueWhich = 'toque1' | 'toque2' | null;
 
-// ¿Vencido? Pasó la fecha objetivo y sigue sin el toque registrado.
+// ¿Vencido/atrasado? = NUNCA se contactó y ya pasó la fecha del 1er contacto.
+// OJO: la 2da vuelta (llamada a los 7 días) NO cuenta como "vencido" — esos ya
+// fueron tocados y tienen su propio bloque "📞 2da vuelta". Mezclarlos confunde
+// (el vendedor ve "vencido" en clientes que sí tocó). Se maneja aparte.
 export function overdue(c: ReactClient, today: string): OverdueWhich {
   if (c.is_control || c.list_type === 'excluir') return null;
-  // 2do toque vencido (tiene prioridad: es una acción más urgente)
-  const t2 = targetTouch2(c);
-  if (c.touch1_date && !c.responded && !c.touch2_date && t2 && today > t2) return 'toque2';
-  // 1er toque vencido
   const t1 = targetTouch1(c);
   if (!c.touch1_date && t1 && today > t1) return 'toque1';
   return null;

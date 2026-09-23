@@ -41,6 +41,32 @@ export default function DetailDrawer({
 
   // Verificación de Tier A: persistida (no local). Joaquín confirma → Fernanda ve habilitado.
   const isVerified = !!client.verified_at;
+
+  // 🔄 Reconectar: guarda cuándo volver a contactarlo (el "próximo mes")
+  const [recontacting, setRecontacting] = useState(false);
+  const setRecontact = async (date: string | null) => {
+    setRecontacting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/reactivation', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id, recontact_date: date }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'No se pudo agendar.'); return; }
+      onUpdated(data.client);
+    } catch {
+      setError('Error de red.');
+    } finally {
+      setRecontacting(false);
+    }
+  };
+  // fecha de hoy + N días, en YYYY-MM-DD
+  const inDays = (n: number) => {
+    const d = new Date(); d.setDate(d.getDate() + n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
   // Descartar: Joaquín revisó y este NO se contacta (reclamo/deudor/desistió).
   const doDiscard = async () => {
     const reason = prompt('¿Por qué no se contacta? (reclamo, deudor, se fue, etc.)', client.notes || '');
@@ -306,6 +332,27 @@ export default function DetailDrawer({
               <TriToggle label="¿Volvió a pedir?" value={reserved} onChange={setReserved} disabled={!canMarkOutcome} />
             </div>
           </fieldset>
+
+          {/* 🔄 Reconectar: agendar cuándo volver a contactar ("próximo mes") */}
+          {!isControl && (
+            <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-3">
+              <p className="text-sm font-semibold text-gray-900">🔄 Reconectar</p>
+              {client.recontact_date ? (
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-sm text-teal-800">Agendado para <b>{new Date(client.recontact_date + 'T12:00:00').toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })}</b></span>
+                  <button onClick={() => setRecontact(null)} disabled={recontacting} className="text-xs text-gray-500 underline disabled:opacity-50">quitar</button>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 mt-0.5">¿Te dijo &quot;el próximo mes&quot;? Agenda cuándo volver a llamarlo.</p>
+              )}
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <button onClick={() => setRecontact(inDays(7))} disabled={recontacting} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white border border-teal-300 text-teal-700 hover:bg-teal-100 disabled:opacity-50">En 1 semana</button>
+                <button onClick={() => setRecontact(inDays(15))} disabled={recontacting} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-white border border-teal-300 text-teal-700 hover:bg-teal-100 disabled:opacity-50">En 2 semanas</button>
+                <button onClick={() => setRecontact(inDays(30))} disabled={recontacting} className="text-xs font-medium px-2.5 py-1 rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50">En 1 mes</button>
+                <input type="date" onChange={(e) => e.target.value && setRecontact(e.target.value)} disabled={recontacting} className="text-xs border border-teal-300 rounded-lg px-2 py-1" title="Otra fecha" />
+              </div>
+            </div>
+          )}
 
           {/* Descuento */}
           <fieldset disabled={locked} className={locked ? 'opacity-50' : ''}>

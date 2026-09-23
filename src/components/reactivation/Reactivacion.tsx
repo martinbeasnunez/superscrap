@@ -84,6 +84,8 @@ export default function Reactivacion() {
   const [overdueLens, setOverdueLens] = useState(false);
   // Lente "2da vuelta": mensajeados hace 7+ días sin respuesta → toca llamar
   const [secondTouchLens, setSecondTouchLens] = useState(false);
+  // Lente "Reconectar hoy": los que agendaron para hoy o antes (el "próximo mes" que ya llegó)
+  const [recontactLens, setRecontactLens] = useState(false);
   // Vendedor logueado (para la línea "👉 Ahora" personalizada)
   const [meOwner, setMeOwner] = useState<string | null>(null);
 
@@ -138,11 +140,21 @@ export default function Reactivacion() {
     [clients]
   );
 
+  // Reconectar hoy: agendaron para hoy o antes (el "próximo mes" que ya toca)
+  const recontactList = useMemo(
+    () => clients.filter((c) => c.recontact_date && c.recontact_date <= todayISO() && !c.is_control && c.list_type !== 'excluir'),
+    [clients]
+  );
+
   // "👉 Ahora": la jugada de más valor para el vendedor logueado
   const nextStep = useMemo(() => {
     const curWaveN = currentWave(todayISO()).n;
     const activo = (c: ReactClient) => !c.is_control && c.list_type !== 'excluir';
-    const goLens = () => { setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); };
+    const goLens = () => { setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); };
+    // Prioridad #1 para todos: reconectar a los que pidieron que los llames hoy
+    const myRecontacts = recontactList.filter((c) => !meOwner || c.owner === meOwner);
+    if (meOwner && myRecontacts.length > 0)
+      return { text: `🔄 Hoy toca reconectar a ${myRecontacts.length} — te pidieron que los llames hoy.`, action: () => { goLens(); setRecontactLens(true); } };
     if (meOwner === 'Joaquín') {
       if (secondTouchList.length > 0)
         return { text: `📞 Hoy toca: ${secondTouchList.length} llamadas de 2da vuelta — esas cierran mejor que otro mensaje.`, action: () => { goLens(); setSecondTouchLens(true); } };
@@ -158,7 +170,7 @@ export default function Reactivacion() {
       return { text: '✅ Llamaste a todas tus grandes. Grande 🙌', action: undefined };
     }
     return null; // GM u otro: sin línea personal
-  }, [meOwner, clients, secondTouchList]);
+  }, [meOwner, clients, secondTouchList, recontactList]);
 
   const filtered = useMemo(() => {
     // Cola de verificación: ignora los demás filtros, ordena por más frescos
@@ -172,6 +184,10 @@ export default function Reactivacion() {
     // 2da vuelta: los que toca llamar, más frescos primero
     if (secondTouchLens) {
       return [...secondTouchList].sort((a, b) => (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity));
+    }
+    // Reconectar hoy: los agendados que ya vencen, más viejos (más urgentes) primero
+    if (recontactLens) {
+      return [...recontactList].sort((a, b) => (a.recontact_date ?? '').localeCompare(b.recontact_date ?? ''));
     }
     let arr = clients.filter((c) => {
       if (fTier !== 'all' && c.tier !== fTier) return false;
@@ -193,7 +209,7 @@ export default function Reactivacion() {
       return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList, recontactLens, recontactList]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
@@ -307,10 +323,23 @@ export default function Reactivacion() {
         <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." />
       </div>
 
+      {/* 🔄 Reconectar hoy: los que agendaron para hoy (el "próximo mes" que ya toca) */}
+      {(recontactList.length > 0 || recontactLens) && (
+        <button
+          onClick={() => { setRecontactLens((v) => !v); setSecondTouchLens(false); setOverdueLens(false); setVerifyQueue(false); }}
+          className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
+            recontactLens ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200 border border-teal-300'
+          }`}
+        >
+          {recontactLens ? '✓ Viendo reconectar hoy' : `🔄 Reconectar hoy: ${recontactList.length}`}
+          <span className={`ml-2 font-normal ${recontactLens ? 'text-white/80' : 'text-teal-600'}`}>· te pidieron que los llames hoy</span>
+        </button>
+      )}
+
       {/* 2da vuelta: mensajeados hace 7+ días sin respuesta — toca llamar */}
       {meOwner !== 'Fernanda' && (secondTouchList.length > 0 || secondTouchLens) && (
         <button
-          onClick={() => { setSecondTouchLens((v) => !v); setOverdueLens(false); setVerifyQueue(false); }}
+          onClick={() => { setSecondTouchLens((v) => !v); setOverdueLens(false); setVerifyQueue(false); setRecontactLens(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             secondTouchLens ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-300'
           }`}
@@ -323,7 +352,7 @@ export default function Reactivacion() {
       {/* Atrasados: lo que se debe de antes — a avanzar primero */}
       {meOwner !== 'Fernanda' && (overdueList.length > 0 || overdueLens) && (
         <button
-          onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); setSecondTouchLens(false); }}
+          onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             overdueLens ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-300'
           }`}
@@ -336,7 +365,7 @@ export default function Reactivacion() {
       {/* Cola de verificación de Joaquín (Tier A por verificar, cruza dueños) */}
       {meOwner !== 'Fernanda' && (tierAPending.length > 0 || verifyQueue) && (
         <button
-          onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); setSecondTouchLens(false); }}
+          onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); setSecondTouchLens(false); setRecontactLens(false); }}
           className={`mb-3 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             verifyQueue ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300'
           }`}
@@ -353,7 +382,7 @@ export default function Reactivacion() {
         <Select label="Dueño" value={fOwner} onChange={setFOwner} options={[['all', 'Todos'], ...owners.map((o) => [o, o] as [string, string])]} />
         <Select label="Estado" value={fStatus} onChange={setFStatus} options={[['all', 'Todos'], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
         {(fTier !== 'all' || fPriority !== 'all' || fOwner !== 'all' || fStatus !== 'all') && (
-          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
+          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
         )}
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} de {clients.length}</span>
       </div>
@@ -450,6 +479,11 @@ function Badges({ c }: { c: ReactClient }) {
       )}
       {isOverdue && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-100 text-rose-700 border border-rose-300">⚠ Vencido</span>}
       {needsSecondTouch(c) && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-orange-100 text-orange-700">📞 Toca 2do</span>}
+      {c.recontact_date && (
+        c.recontact_date <= todayISO()
+          ? <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-teal-600 text-white">🔄 Reconectar hoy</span>
+          : <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">🔄 {fmtShort(c.recontact_date)}</span>
+      )}
     </div>
   );
 }

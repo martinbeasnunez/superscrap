@@ -83,6 +83,8 @@ export async function PATCH(request: Request) {
       patch.phone_norm = normPhone(p);
     }
     if ('email' in body) patch.email = body.email?.trim() || null;
+    // "Reconectar el [fecha]": guarda cuándo volver a contactar ("próximo mes")
+    if ('recontact_date' in body) patch.recontact_date = body.recontact_date || null;
     // Descartar: Joaquín revisó y este NO se contacta (reclamo/deudor/desistió).
     // Sale de la campaña de reactivación (va a "excluir") con su motivo.
     if (body.discard) {

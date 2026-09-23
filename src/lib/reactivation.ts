@@ -42,6 +42,7 @@ export interface ReactClient extends ParsedRow {
   email: string | null;        // canal alterno si el teléfono está viejo
   verified_at: string | null;  // Tier A: cuándo Joaquín lo verificó (habilita a Fer)
   verified_by: string | null;  // quién verificó
+  recontact_date: string | null; // "próximo mes": cuándo volver a contactarlo
   updated_at?: string;
 }
 

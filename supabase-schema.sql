@@ -270,3 +270,9 @@ ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS brand TEXT;
 ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
 ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS verified_by TEXT;
+
+-- ============================================================
+-- Migration 016: Reactivación B2B — fecha de reconexión ("próximo mes")
+-- ============================================================
+ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS recontact_date DATE;
+CREATE INDEX IF NOT EXISTS idx_reactivation_recontact ON reactivation_clients(recontact_date) WHERE recontact_date IS NOT NULL;

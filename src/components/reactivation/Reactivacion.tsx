@@ -19,6 +19,8 @@ import {
   currentWave,
   todayISO,
   fmtShort,
+  daysBetween,
+  CAMPAIGN,
 } from '@/lib/reactivation-campaign';
 
 type ViewMode = 'tabla' | 'tablero';
@@ -88,6 +90,8 @@ export default function Reactivacion() {
   const [recontactLens, setRecontactLens] = useState(false);
   // Filtro por cuadro de resumen (Pendientes / Reactivados / Control)
   const [cardFilter, setCardFilter] = useState<'none' | 'pendientes' | 'reactivados' | 'control'>('none');
+  // Apaga todos los lentes (los cuadros y los lentes son excluyentes entre sí).
+  const clearLenses = () => { setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); };
   // Vendedor logueado (para la línea "👉 Ahora" personalizada)
   const [meOwner, setMeOwner] = useState<string | null>(null);
 
@@ -321,18 +325,21 @@ export default function Reactivacion() {
         </div>
       )}
 
+      {/* Franja de cierre de mes: cuánto falta + cuántos recuperamos este mes */}
+      <MonthStrip reactivated={summary.reactivated} />
+
       {/* Resumen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <SummaryCard label="En lista" value={summary.total} active={cardFilter === 'none'} onClick={() => { setCardFilter('none'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }} />
-        <SummaryCard label="Pendientes" value={summary.pending} tone="blue" active={cardFilter === 'pendientes'} onClick={() => { setCardFilter((v) => v === 'pendientes' ? 'none' : 'pendientes'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }} />
-        <SummaryCard label="Reactivados" value={summary.reactivated} tone="emerald" active={cardFilter === 'reactivados'} onClick={() => { setCardFilter((v) => v === 'reactivados' ? 'none' : 'reactivados'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }} />
-        <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." active={cardFilter === 'control'} onClick={() => { setCardFilter((v) => v === 'control' ? 'none' : 'control'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }} />
+        <SummaryCard label="En lista" value={summary.total} active={cardFilter === 'none'} onClick={() => { clearLenses(); setCardFilter('none'); }} />
+        <SummaryCard label="Pendientes" value={summary.pending} tone="blue" active={cardFilter === 'pendientes'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'pendientes' ? 'none' : 'pendientes'); }} />
+        <SummaryCard label="Reactivados" value={summary.reactivated} tone="emerald" active={cardFilter === 'reactivados'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'reactivados' ? 'none' : 'reactivados'); }} />
+        <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." active={cardFilter === 'control'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'control' ? 'none' : 'control'); }} />
       </div>
 
       {/* 🔄 Reconectar hoy: los que agendaron para hoy (el "próximo mes" que ya toca) */}
       {(recontactList.length > 0 || recontactLens) && (
         <button
-          onClick={() => { setRecontactLens((v) => !v); setSecondTouchLens(false); setOverdueLens(false); setVerifyQueue(false); }}
+          onClick={() => { setRecontactLens((v) => !v); setSecondTouchLens(false); setOverdueLens(false); setVerifyQueue(false); setCardFilter('none'); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             recontactLens ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200 border border-teal-300'
           }`}
@@ -439,6 +446,31 @@ export default function Reactivacion() {
 }
 
 /* ---------- piezas ---------- */
+
+// Franja de cierre de mes: días que faltan para cerrar setiembre + clientes
+// recuperados en la campaña (lo que "entra" al mes). Se pone roja al final.
+function MonthStrip({ reactivated }: { reactivated: number }) {
+  const today = todayISO();
+  const daysLeft = Math.max(0, daysBetween(today, CAMPAIGN.end));
+  const closed = today > CAMPAIGN.end;
+  const urgent = daysLeft <= 7 && !closed;
+  const bg = closed ? 'bg-gray-50 border-gray-200' : urgent ? 'bg-amber-50 border-amber-200' : 'bg-[#0890F1]/5 border-[#0890F1]/20';
+  return (
+    <div className={`rounded-xl border px-4 py-3 mb-3 flex items-center justify-between gap-3 ${bg}`}>
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-lg">🏁</span>
+        <span className="font-semibold text-gray-800">
+          {closed ? 'Setiembre cerrado' : daysLeft === 0 ? 'Hoy cierra setiembre' : `Setiembre cierra en ${daysLeft} ${daysLeft === 1 ? 'día' : 'días'}`}
+        </span>
+        {urgent && <span className="text-xs bg-amber-500 text-white rounded px-1.5 py-0.5 font-medium">recta final</span>}
+      </div>
+      <div className="text-right">
+        <span className="text-xl font-bold text-emerald-600">{reactivated}</span>
+        <span className="text-xs text-gray-500 ml-1.5">clientes recuperados este mes</span>
+      </div>
+    </div>
+  );
+}
 
 function SummaryCard({ label, value, tone = 'gray', hint, active, onClick }: { label: string; value: number; tone?: string; hint?: string; active?: boolean; onClick?: () => void }) {
   const color = tone === 'blue' ? 'text-[#0890F1]' : tone === 'emerald' ? 'text-emerald-600' : tone === 'rose' ? 'text-rose-600' : 'text-gray-900';

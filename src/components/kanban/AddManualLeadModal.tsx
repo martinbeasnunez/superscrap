@@ -68,9 +68,15 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
           estimated_revenue_max: revenueMax ? parseInt(revenueMax, 10) : undefined,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || t('manual.error'));
+      }
+      // Si ya existía, avisar (si no, el modal se cierra y parece que "no se agregó")
+      if (data.duplicate) {
+        onCreated();
+        setError(data.message || t('manual.error'));
+        return;
       }
       reset();
       onCreated();

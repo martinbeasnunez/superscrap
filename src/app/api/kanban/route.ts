@@ -132,8 +132,10 @@ function classifyBusiness(business: KanbanBusiness): KanbanColumnId {
 
 export async function GET() {
   try {
-    // Obtener todos los businesses con sus searches y contact history
-    const { data: businesses, error } = await supabase
+    // Obtener todos los businesses con sus searches y contact history.
+    // Paginado: PostgREST corta en 1000 filas, y como los nuevos (contacted_at null) van al
+    // final, un lead recién agregado a mano quedaba fuera del tablero.
+    const selectBusinesses = (from: number, to: number) => supabase
       .from('businesses')
       .select(`
         id,
@@ -173,7 +175,24 @@ export async function GET() {
           estimated_revenue_max
         )
       `)
-      .order('contacted_at', { ascending: false, nullsFirst: false });
+      .order('contacted_at', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: true })
+      .range(from, to);
+
+    type BusinessRow = NonNullable<Awaited<ReturnType<typeof selectBusinesses>>['data']>[number];
+    const businesses: BusinessRow[] = [];
+    let error: unknown = null;
+    {
+      const chunkSize = 1000;
+      let from = 0;
+      while (true) {
+        const res = await selectBusinesses(from, from + chunkSize - 1);
+        if (res.error || !res.data) { error = res.error; break; }
+        businesses.push(...res.data);
+        if (res.data.length < chunkSize) break;
+        from += chunkSize;
+      }
+    }
 
     if (error) {
       console.error('Error fetching businesses for kanban:', error);

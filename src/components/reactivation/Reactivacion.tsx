@@ -329,8 +329,19 @@ export default function Reactivacion() {
         </div>
       )}
 
+      {/* Cartelito para "Compraron 1 vez": su turno es octubre, no es obligatorio ahora */}
+      {listType === 'primera_recompra' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 mb-3 flex items-start gap-2">
+          <span className="text-lg leading-none">🗓️</span>
+          <p className="text-sm text-amber-900">
+            <b>Su turno es octubre.</b> Son clientes que compraron una sola vez — los más fríos. No cuentan como pendiente de esta semana.
+            Si tienes un hueco puedes adelantarte a escribirles (suma), pero <b>primero cierra a los que ya respondieron</b>.
+          </p>
+        </div>
+      )}
+
       {/* Franja de cierre de mes: cuánto falta + cuántos recuperamos este mes */}
-      <MonthStrip reactivated={summary.reactivated} />
+      {listType === 'reactivacion' && <MonthStrip reactivated={summary.reactivated} />}
 
       {/* Resumen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

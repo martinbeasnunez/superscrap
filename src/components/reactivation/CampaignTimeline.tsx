@@ -32,9 +32,11 @@ export default function CampaignTimeline() {
 
   const stats = useMemo(() => {
     if (!all) return null;
-    // "Aparcados": sin tocar y marcados para octubre / muertos → no cuentan como
-    // pendiente de HOY (si no, Joaquín ve "faltan 42" cuando 40 son de octubre).
-    const parked = (c: ReactClient) => !touch1Done(c) && (c.outcome === 'octubre' || c.outcome === 'muerto');
+    // "Aparcados": sin tocar y o bien marcados muertos, o agendados para después
+    // (fecha de reconexión futura, p.ej. los "1era vez" que van a octubre). No
+    // cuentan como pendiente de HOY (si no, Joaquín ve "faltan 42").
+    const parked = (c: ReactClient) =>
+      !touch1Done(c) && (c.outcome === 'muerto' || c.outcome === 'octubre' || (!!c.recontact_date && c.recontact_date > today));
     const contactable = all.filter((c) => !c.is_control && c.list_type !== 'excluir' && !parked(c));
     const perWave = (n: 1 | 2 | 3) => {
       const ws = contactable.filter((c) => waveFor(c) === n);

@@ -5,10 +5,12 @@ import {
   fillTemplate,
   SEND_WINDOW,
   TIER_A,
-  TIER_B,
   TIER_C,
   PRIMERA_RECOMPRA,
   SECOND_TOUCH,
+  RECENCY_PITCH,
+  RECENCY_META,
+  recencyBucket,
   type FillVars,
 } from '@/lib/reactivation-messages';
 import type { ReactClient } from '@/lib/reactivation';
@@ -34,6 +36,9 @@ export default function MessagesPanel({
   const fill = (t: string) => fillTemplate(t, vars);
   const tier = client.tier;
   const isPrimeraRecompra = !tier && client.list_type === 'primera_recompra';
+  // Tono según cuánto lleva sin pedir (solo lista de reactivación B/C).
+  const recency = recencyBucket(client.days_inactive);
+  const recencyPitch = fill(RECENCY_PITCH[recency]);
   // 2do toque (llamada) aplica al flujo WhatsApp: Tier B/C y primera recompra
   const waFlow = tier === 'B' || tier === 'C' || isPrimeraRecompra;
   const showSecondTouch = client.status === 'toque1'; // 1er toque enviado / no respondió
@@ -57,10 +62,14 @@ export default function MessagesPanel({
           Confirma la verificación (arriba) para habilitar el guion.
         </p>
       ) : tier === 'B' ? (
-        <CopyBlock label="1er mensaje · WhatsApp" text={fill(TIER_B.firstTouch)} waHref={wa(fill(TIER_B.firstTouch))} />
+        <div className="space-y-2">
+          <RecencyNote recency={recency} />
+          <CopyBlock label="1er mensaje · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
+        </div>
       ) : tier === 'C' ? (
         <div className="space-y-2">
-          <CopyBlock label="1er mensaje · WhatsApp" text={fill(TIER_C.firstTouch)} waHref={wa(fill(TIER_C.firstTouch))} />
+          <RecencyNote recency={recency} />
+          <CopyBlock label="1er mensaje · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
           <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
         </div>
       ) : tier === 'A' ? (
@@ -86,6 +95,21 @@ export default function MessagesPanel({
           <p className="text-xs text-gray-400 mt-1">{SECOND_TOUCH.close}</p>
         </div>
       )}
+    </div>
+  );
+}
+
+// Aviso del tono según recencia (por qué este mensaje y no otro).
+function RecencyNote({ recency }: { recency: 'reciente' | 'medio' | 'viejo' }) {
+  const meta = RECENCY_META[recency];
+  const style = recency === 'reciente'
+    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+    : recency === 'medio'
+    ? 'bg-blue-50 text-blue-800 border-blue-200'
+    : 'bg-amber-50 text-amber-800 border-amber-200';
+  return (
+    <div className={`text-xs rounded-lg border px-3 py-1.5 ${style}`}>
+      <span className="font-semibold">{meta.label}.</span> {meta.hint}
     </div>
   );
 }

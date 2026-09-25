@@ -40,6 +40,35 @@ export const TIER_B = {
     'Hola {empresa}, soy Joaquín de {marca}, tu lavandería con recojo y entrega gratis a domicilio. Hace un tiempo no lavamos contigo y te quiero de vuelta: esta semana te dejo {descuento}% en tu próximo servicio. Nosotros recogemos, lavamos y entregamos — tú no mueves nada. ¿Te agendo el recojo?',
 };
 
+// --- Tono por RECENCIA (cuánto lleva sin pedir) ---------------------------
+// No es lo mismo alguien que se fue el mes pasado que uno de hace un año.
+// El mensaje del 1er toque (reactivación) se adapta al tiempo sin pedir.
+export type Recency = 'reciente' | 'medio' | 'viejo';
+
+// Días sin pedir → cubeta de recencia. Sin dato → medio (tono neutro).
+export function recencyBucket(daysInactive: number | null | undefined): Recency {
+  if (daysInactive == null) return 'medio';
+  if (daysInactive <= 90) return 'reciente';
+  if (daysInactive <= 180) return 'medio';
+  return 'viejo';
+}
+
+export const RECENCY_META: Record<Recency, { label: string; hint: string }> = {
+  reciente: { label: 'Pidió hace poco (≤3 meses)', hint: 'Casi no hay que vender — solo reconectar. Tono suave, el descuento va de yapa.' },
+  medio: { label: 'Hace un tiempo (3–6 meses)', hint: 'Recuérdale que existes y dale un motivo concreto para volver.' },
+  viejo: { label: 'Hace mucho (+6 meses)', hint: 'Es reconquista. Ve con el beneficio más fuerte por delante.' },
+};
+
+// 1er mensaje de reactivación (WhatsApp) según recencia. {descuento} lo pone la ficha.
+export const RECENCY_PITCH: Record<Recency, string> = {
+  reciente:
+    'Hola {empresa}, soy Joaquín de {marca} 👋 Hace poco que no coordinamos un recojo y quería saber si todo bien contigo. Seguimos con recojo y entrega gratis a domicilio — tú no mueves nada. ¿Te agendo uno esta semana? Y de yapa te dejo {descuento}% en este.',
+  medio:
+    'Hola {empresa}, soy Joaquín de {marca}, tu lavandería con recojo y entrega gratis a domicilio. Hace un tiempo no lavamos contigo y te quiero de vuelta: esta semana te dejo {descuento}% en tu próximo servicio. Nosotros recogemos, lavamos y entregamos — tú no mueves nada. ¿Te agendo el recojo?',
+  viejo:
+    'Hola {empresa}, soy Joaquín de {marca}. Ha pasado un buen tiempo desde tu última lavada con nosotros y quiero recuperarte: esta semana te dejo {descuento}% en tu próximo servicio, con recojo y entrega gratis a domicilio. Nos encargamos de todo, tú no mueves nada. ¿Lo probamos de nuevo esta semana?',
+};
+
 // --- WhatsApp: Tier C (chicas) — dos variantes ---
 export const TIER_C = {
   firstTouch:

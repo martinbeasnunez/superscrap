@@ -32,7 +32,10 @@ export default function CampaignTimeline() {
 
   const stats = useMemo(() => {
     if (!all) return null;
-    const contactable = all.filter((c) => !c.is_control && c.list_type !== 'excluir');
+    // "Aparcados": sin tocar y marcados para octubre / muertos → no cuentan como
+    // pendiente de HOY (si no, Joaquín ve "faltan 42" cuando 40 son de octubre).
+    const parked = (c: ReactClient) => !touch1Done(c) && (c.outcome === 'octubre' || c.outcome === 'muerto');
+    const contactable = all.filter((c) => !c.is_control && c.list_type !== 'excluir' && !parked(c));
     const perWave = (n: 1 | 2 | 3) => {
       const ws = contactable.filter((c) => waveFor(c) === n);
       return { total: ws.length, done: ws.filter(touch1Done).length };

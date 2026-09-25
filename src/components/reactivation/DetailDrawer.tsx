@@ -28,7 +28,8 @@ export default function DetailDrawer({
   const [t2Chan, setT2Chan] = useState<ReactChannel | ''>(client.touch2_channel ?? 'call');
   const [responded, setResponded] = useState<boolean | null>(client.responded);
   const [reserved, setReserved] = useState<boolean | null>(client.reserved);
-  const [discount, setDiscount] = useState<number>(client.discount_pct ?? 10);
+  // 0 o vacío → 10% por defecto (ofrecer 0% no tiene sentido).
+  const [discount, setDiscount] = useState<number>(client.discount_pct || 10);
   const [notes, setNotes] = useState(client.notes ?? '');
   const [contacto, setContacto] = useState(client.contact_name ?? '');
   const [brand, setBrand] = useState(client.brand ?? BRAND_DEFAULT);

@@ -276,3 +276,14 @@ ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS verified_by TEXT;
 -- ============================================================
 ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS recontact_date DATE;
 CREATE INDEX IF NOT EXISTS idx_reactivation_recontact ON reactivation_clients(recontact_date) WHERE recontact_date IS NOT NULL;
+
+-- ============================================================
+-- Migration 017: Reactivación B2B — resultado (vivo / octubre / muerto)
+-- Etiqueta el desenlace de la cuenta según la nota del vendedor:
+--   vivo    = oportunidad en juego este mes
+--   octubre = vuelve más adelante (reconectar en su fecha)
+--   muerto  = perdido, no vuelve (compró su lavadora, cambió de rubro, etc.)
+-- ============================================================
+ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS outcome TEXT
+  CHECK (outcome IN ('vivo','octubre','muerto'));
+CREATE INDEX IF NOT EXISTS idx_reactivation_outcome ON reactivation_clients(outcome) WHERE outcome IS NOT NULL;

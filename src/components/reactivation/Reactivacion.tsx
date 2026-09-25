@@ -5,6 +5,8 @@ import {
   REACT_STATUS_LABEL,
   REACT_STATUS_ORDER,
   TIER_LABEL,
+  OUTCOME_META,
+  type ReactOutcome,
   type ReactClient,
   type ReactStatus,
   type ReactListType,
@@ -74,6 +76,7 @@ export default function Reactivacion() {
   const [fPriority, setFPriority] = useState<string>('all');
   const [fOwner, setFOwner] = useState<string>('all');
   const [fStatus, setFStatus] = useState<string>('all');
+  const [fOutcome, setFOutcome] = useState<string>('all');
   // Por defecto: Prioridad Alta primero (y dentro, los más muertos arriba).
   const [sortKey, setSortKey] = useState<SortKey>('priority');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -204,6 +207,7 @@ export default function Reactivacion() {
       if (fPriority !== 'all' && c.priority !== fPriority) return false;
       if (fOwner !== 'all' && c.owner !== fOwner) return false;
       if (fStatus !== 'all' && c.status !== fStatus) return false;
+      if (fOutcome !== 'all' && (fOutcome === 'sin' ? c.outcome != null : c.outcome !== fOutcome)) return false;
       return true;
     });
     arr = [...arr].sort((a, b) => {
@@ -219,7 +223,7 @@ export default function Reactivacion() {
       return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, sortKey, sortDir, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList, recontactLens, recontactList, cardFilter]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, fOutcome, sortKey, sortDir, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList, recontactLens, recontactList, cardFilter]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
@@ -394,8 +398,9 @@ export default function Reactivacion() {
         <Select label="Prioridad" value={fPriority} onChange={setFPriority} options={[['all', 'Todas'], ['alta', 'Alta'], ['media', 'Media'], ['fria', 'Fría']]} />
         <Select label="Dueño" value={fOwner} onChange={setFOwner} options={[['all', 'Todos'], ...owners.map((o) => [o, o] as [string, string])]} />
         <Select label="Estado" value={fStatus} onChange={setFStatus} options={[['all', 'Todos'], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
-        {(fTier !== 'all' || fPriority !== 'all' || fOwner !== 'all' || fStatus !== 'all') && (
-          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
+        <Select label="Resultado" value={fOutcome} onChange={setFOutcome} options={[['all', 'Todos'], ['vivo', '🟢 Vivo'], ['octubre', '🟡 Octubre'], ['muerto', '⚫ Muerto'], ['sin', 'Sin marcar']]} />
+        {(fTier !== 'all' || fPriority !== 'all' || fOwner !== 'all' || fStatus !== 'all' || fOutcome !== 'all') && (
+          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setFOutcome('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
         )}
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} de {clients.length}</span>
       </div>
@@ -508,6 +513,7 @@ function Badges({ c }: { c: ReactClient }) {
   const t1 = targetTouch1(c);
   return (
     <div className="flex items-center gap-1 flex-wrap">
+      {c.outcome && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${OUTCOME_META[c.outcome].chip}`}>{OUTCOME_META[c.outcome].label}</span>}
       {c.tier && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${TIER_STYLE[c.tier]}`}>{TIER_LABEL[c.tier]}</span>}
       {c.priority && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${PRIORITY_STYLE[c.priority]}`}>{PRIORITY_LABEL[c.priority]}</span>}
       {wave && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200" title={`Para contactar antes del ${fmtShort(t1)}`}>Semana {wave} · antes del {fmtShort(t1)}</span>}

@@ -67,6 +67,26 @@ export default function DetailDrawer({
     const d = new Date(); d.setDate(d.getDate() + n);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
+  // Marcar desenlace: vivo / octubre / muerto (o null para desmarcar).
+  const [outcoming, setOutcoming] = useState(false);
+  const setOutcome = async (outcome: 'vivo' | 'octubre' | 'muerto' | null) => {
+    setOutcoming(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/reactivation', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id, outcome }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'No se pudo marcar.'); return; }
+      onUpdated(data.client);
+    } catch {
+      setError('Error de red.');
+    } finally {
+      setOutcoming(false);
+    }
+  };
   // Descartar: Joaquín revisó y este NO se contacta (reclamo/deudor/desistió).
   const doDiscard = async () => {
     const reason = prompt('¿Por qué no se contacta? (reclamo, deudor, se fue, etc.)', client.notes || '');
@@ -332,6 +352,34 @@ export default function DetailDrawer({
               <TriToggle label="¿Volvió a pedir?" value={reserved} onChange={setReserved} disabled={!canMarkOutcome} />
             </div>
           </fieldset>
+
+          {/* Resultado de la cuenta: vivo / octubre / muerto */}
+          {!isControl && (
+            <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-3">
+              <p className="text-sm font-semibold text-gray-900">¿En qué quedó?</p>
+              <p className="text-xs text-gray-500 mt-0.5">Marca según lo que te dijo, para verlo de un vistazo en la lista.</p>
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                {([
+                  ['vivo', '🟢 Vivo · en juego', 'emerald'],
+                  ['octubre', '🟡 Vuelve en octubre', 'amber'],
+                  ['muerto', '⚫ Muerto · no vuelve', 'gray'],
+                ] as const).map(([val, label, c]) => {
+                  const on = client.outcome === val;
+                  const ring = c === 'emerald' ? 'bg-emerald-600 text-white' : c === 'amber' ? 'bg-amber-500 text-white' : 'bg-gray-600 text-white';
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => setOutcome(on ? null : val)}
+                      disabled={outcoming}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-lg border disabled:opacity-50 ${on ? ring + ' border-transparent' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* 🔄 Reconectar: agendar cuándo volver a contactar ("próximo mes") */}
           {!isControl && (

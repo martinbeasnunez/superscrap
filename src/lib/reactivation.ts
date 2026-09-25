@@ -7,6 +7,9 @@ export type ReactTier = 'A' | 'B' | 'C';
 export type ReactChannel = 'whatsapp' | 'call';
 export type ReactStatus = 'pendiente' | 'toque1' | 'respondio' | 'reservo' | 'no_reservo';
 export type ReactListType = 'reactivacion' | 'primera_recompra' | 'excluir';
+// Desenlace de la cuenta (juicio del vendedor sobre la nota, no del sistema):
+//   vivo = en juego este mes · octubre = vuelve más adelante · muerto = perdido
+export type ReactOutcome = 'vivo' | 'octubre' | 'muerto';
 
 // Fila parseada desde el Excel (solo campos que vienen del import).
 export interface ParsedRow {
@@ -43,6 +46,7 @@ export interface ReactClient extends ParsedRow {
   verified_at: string | null;  // Tier A: cuándo Joaquín lo verificó (habilita a Fer)
   verified_by: string | null;  // quién verificó
   recontact_date: string | null; // "próximo mes": cuándo volver a contactarlo
+  outcome: ReactOutcome | null; // desenlace: vivo / octubre / muerto (o sin marcar)
   updated_at?: string;
 }
 
@@ -225,6 +229,13 @@ export const TIER_LABEL: Record<ReactTier, string> = {
   A: 'Grande',
   B: 'Mediano',
   C: 'Chico',
+};
+
+// Etiqueta y color del desenlace (chip en la lista + botones en la ficha).
+export const OUTCOME_META: Record<ReactOutcome, { label: string; short: string; dot: string; chip: string }> = {
+  vivo: { label: '🟢 Vivo · en juego', short: 'Vivo', dot: '🟢', chip: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  octubre: { label: '🟡 Vuelve en octubre', short: 'Octubre', dot: '🟡', chip: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  muerto: { label: '⚫ Muerto · no vuelve', short: 'Muerto', dot: '⚫', chip: 'bg-gray-100 text-gray-500 border border-gray-200' },
 };
 
 export const REACT_STATUS_ORDER: ReactStatus[] = [

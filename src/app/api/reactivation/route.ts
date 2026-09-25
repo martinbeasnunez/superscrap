@@ -85,6 +85,10 @@ export async function PATCH(request: Request) {
     if ('email' in body) patch.email = body.email?.trim() || null;
     // "Reconectar el [fecha]": guarda cuándo volver a contactar ("próximo mes")
     if ('recontact_date' in body) patch.recontact_date = body.recontact_date || null;
+    // Desenlace de la cuenta: vivo / octubre / muerto (o null para desmarcar).
+    if ('outcome' in body) {
+      patch.outcome = ['vivo', 'octubre', 'muerto'].includes(body.outcome) ? body.outcome : null;
+    }
     // Descartar: Joaquín revisó y este NO se contacta (reclamo/deudor/desistió).
     // Sale de la campaña de reactivación (va a "excluir") con su motivo.
     if (body.discard) {

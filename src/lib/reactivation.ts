@@ -75,7 +75,8 @@ export function parseDate(v: unknown): string | null {
     const d = new Date(Math.round((v - 25569) * 86400 * 1000));
     return isNaN(d.getTime()) ? null : isoDate(d);
   }
-  const s = String(v).trim();
+  // Quita la hora si viene ("20/08/2025 10:19" o "2026-09-16T17:22" → solo la fecha).
+  const s = String(v).trim().split(/[ T]/)[0];
   let m = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/); // dd/mm/aaaa
   if (m) {
     const [, d, mo, y] = m;

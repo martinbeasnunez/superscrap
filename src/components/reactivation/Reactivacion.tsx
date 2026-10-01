@@ -248,7 +248,8 @@ export default function Reactivacion() {
   // resumen rápido de la lista actual
   const summary = useMemo(() => {
     const control = clients.filter((c) => c.is_control).length;
-    const reactivated = clients.filter((c) => c.reserved === true).length;
+    // Recuperados de la campaña = reservó y NO es control (el control se mide aparte en el KPI).
+    const reactivated = clients.filter((c) => c.reserved === true && !c.is_control).length;
     const pending = clients.filter((c) => !c.is_control && c.status === 'pendiente').length;
     return { total: clients.length, control, reactivated, pending };
   }, [clients]);

@@ -59,7 +59,8 @@ function assignStratifiedControl(
   size: number
 ): Record<string, number> {
   const eligible = rows.filter((r) => r.list_type === 'reactivacion');
-  const n = Math.min(size, eligible.length);
+  // El control nunca pasa del 40% de los nuevos (si no, no quedaría a quién trabajar).
+  const n = Math.min(size, Math.floor(eligible.length * 0.4));
   if (n <= 0) return {};
   const buckets: Record<string, Record<string, unknown>[]> = { reciente: [], medio: [], viejo: [] };
   for (const r of eligible) buckets[recencyBucket(r.days_inactive as number | null)].push(r);

@@ -319,7 +319,13 @@ export default function Reactivacion() {
 
       {/* Encabezado de mes: cerrado (resultados) vs activo (lo que viene) */}
       {listType === 'reactivacion' && (
-        <MonthHeader reconnectToday={recontactList.length} fresh={freshList.length} onImport={() => setImportOpen(true)} onShowFirstBuy={() => setListType('primera_recompra')} />
+        <MonthHeader
+          reconnectToday={recontactList.length}
+          fresh={freshList.length}
+          onImport={() => setImportOpen(true)}
+          onShowFirstBuy={() => setListType('primera_recompra')}
+          onShowReconnect={() => { clearLenses(); setCardFilter('none'); setRecontactLens(true); }}
+        />
       )}
 
       {/* Resumen por mes (marcador fijo) — solo el GM */}

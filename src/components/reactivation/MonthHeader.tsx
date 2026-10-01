@@ -23,11 +23,13 @@ export default function MonthHeader({
   fresh,
   onImport,
   onShowFirstBuy,
+  onShowReconnect,
 }: {
   reconnectToday: number;
   fresh: number;
   onImport: () => void;
   onShowFirstBuy: () => void;
+  onShowReconnect: () => void;
 }) {
   const [closed, setClosed] = useState<MonthRow | null>(null);
   const [firstBuy, setFirstBuy] = useState<number | null>(null);
@@ -101,8 +103,10 @@ export default function MonthHeader({
             </li>
           )}
           {reconnectToday > 0 && (
-            <li className="text-xs text-gray-700">
-              <b>2.</b> 🔄 Atiende los que dijeron &quot;próximo mes&quot; el día que caen. <b>Hoy: {reconnectToday}</b> (salen en &quot;Reconectar hoy&quot;).
+            <li>
+              <button onClick={onShowReconnect} className="text-left text-xs text-gray-700 hover:text-[#0890F1] w-full">
+                <b>2.</b> 🔄 Los que dijeron &quot;próximo mes&quot; y ya toca hoy: <b>{reconnectToday}</b>. <span className="text-[#0890F1]">verlos →</span>
+              </button>
             </li>
           )}
           <li className="text-xs text-gray-700">

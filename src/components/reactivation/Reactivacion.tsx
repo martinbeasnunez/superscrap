@@ -14,6 +14,7 @@ import {
 import DetailDrawer from './DetailDrawer';
 import ImportModal from './ImportModal';
 import CampaignTimeline from './CampaignTimeline';
+import MonthlySummary from './MonthlySummary';
 import {
   waveFor,
   targetTouch1,
@@ -301,6 +302,9 @@ export default function Reactivacion() {
           {nextStep.action && <span className="text-xs font-semibold text-[#0890F1] ml-1">→ ver</span>}
         </button>
       )}
+
+      {/* Resumen por mes (marcador fijo) — solo el GM */}
+      {meOwner === null && <MonthlySummary />}
 
       {/* Timeline de la campaña (olas, deadline, progreso) */}
       <CampaignTimeline />

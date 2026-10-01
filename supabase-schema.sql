@@ -287,3 +287,32 @@ CREATE INDEX IF NOT EXISTS idx_reactivation_recontact ON reactivation_clients(re
 ALTER TABLE reactivation_clients ADD COLUMN IF NOT EXISTS outcome TEXT
   CHECK (outcome IN ('vivo','octubre','muerto'));
 CREATE INDEX IF NOT EXISTS idx_reactivation_outcome ON reactivation_clients(outcome) WHERE outcome IS NOT NULL;
+
+-- ============================================================
+-- Migration 018: Reactivación B2B — resumen mensual (marcador por mes)
+-- Una fila por mes: acciones realizadas + resultados VERIFICADOS (admin).
+-- Parte se deriva de reactivation_clients; los verificados (recuperados
+-- reales, plata, control que volvió) se guardan a mano tras chequear admin.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS reactivation_monthly (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  month DATE NOT NULL UNIQUE,          -- primer día del mes (2026-09-01)
+  label TEXT NOT NULL,                 -- "Setiembre 2026"
+  clients INT,                         -- clientes trabajables en la lista
+  control INT,                         -- grupo control (sin tocar)
+  contacted INT,                       -- contactados (1er toque)
+  contacted_wa INT,                    -- 1er toque por WhatsApp
+  contacted_call INT,                  -- 1er toque por llamada
+  second_touch INT,                    -- 2da vuelta hecha
+  untouched INT,                       -- quedaron sin tocar
+  recovered_real INT,                  -- recuperados REALES (admin)
+  recovered_marked INT,                -- recuperados marcados en ORBIT
+  revenue_recovered NUMERIC,           -- S/ recuperado real
+  control_returned INT,                -- control que volvió solo (admin)
+  verdict TEXT,                        -- lectura del mes
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE reactivation_monthly ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all reactivation_monthly" ON reactivation_monthly FOR ALL USING (true) WITH CHECK (true);

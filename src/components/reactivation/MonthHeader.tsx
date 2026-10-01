@@ -91,16 +91,24 @@ export default function MonthHeader({
           <span className="text-sm font-bold text-gray-800">{activeLabel}</span>
           <span className="text-[11px] font-semibold text-white bg-[#0890F1] rounded-full px-2 py-0.5">● En curso</span>
         </div>
-        <p className="text-xs text-gray-600 mt-2">A cosechar lo sembrado y arrancar con los nuevos:</p>
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <span className="text-xs font-medium bg-teal-100 text-teal-800 rounded-lg px-2 py-1">🔄 Reconectar hoy: {reconnectToday}</span>
-          <span className="text-xs font-medium bg-emerald-100 text-emerald-800 rounded-lg px-2 py-1">🌱 Frescos: {fresh}</span>
+        <p className="text-xs font-semibold text-gray-700 mt-2">Esto es lo que toca:</p>
+        <ol className="mt-1.5 space-y-1.5">
           {firstBuy != null && firstBuy > 0 && (
-            <button onClick={onShowFirstBuy} className="text-xs font-medium bg-amber-100 text-amber-800 rounded-lg px-2 py-1 hover:bg-amber-200">
-              🌱 Compraron 1 vez: {firstBuy} · su turno ahora
-            </button>
+            <li>
+              <button onClick={onShowFirstBuy} className="text-left text-xs text-gray-700 hover:text-[#0890F1] w-full">
+                <b>1.</b> 🌱 Los <b>{firstBuy}</b> que compraron 1 vez — su turno es ahora. <span className="text-[#0890F1]">empezar aquí →</span>
+              </button>
+            </li>
           )}
-        </div>
+          {reconnectToday > 0 && (
+            <li className="text-xs text-gray-700">
+              <b>2.</b> 🔄 Atiende los que dijeron &quot;próximo mes&quot; el día que caen. <b>Hoy: {reconnectToday}</b> (salen en &quot;Reconectar hoy&quot;).
+            </li>
+          )}
+          <li className="text-xs text-gray-700">
+            <b>{firstBuy ? '3' : reconnectToday ? '2' : '1'}.</b> ⬆ Sube la lista nueva del mes y ataca los <b>frescos</b> primero.
+          </li>
+        </ol>
         <button
           onClick={onImport}
           className="mt-3 w-full text-sm font-semibold px-3 py-2 rounded-lg bg-[#0890F1] text-white hover:bg-[#0770C5]"

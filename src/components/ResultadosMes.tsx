@@ -18,6 +18,18 @@ interface MesResultado {
   ganados: { name: string; tier: string | null; conOwner: boolean }[];
   perdidos: { humano: number; bot: number };
   hitos: { name: string; tier: string | null; texto: string; cuando: string }[];
+  orcasEnJuego: { name: string; stage: string | null; respondio: boolean }[];
+}
+
+// Etiqueta corta y honesta de la etapa de una jugada.
+function stageBadge(stage: string | null): { txt: string; cls: string } {
+  switch (stage) {
+    case 'cotizado': return { txt: '💬 propuesta enviada', cls: 'bg-purple-50 text-purple-700 border-purple-200' };
+    case 'interesado': return { txt: '🔥 mostró interés', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
+    case 'cliente': return { txt: '✅ ganada', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    case 'perdido': return { txt: '❌ perdida', cls: 'bg-gray-100 text-gray-500 border-gray-200' };
+    default: return { txt: '⏳ en seguimiento', cls: 'bg-blue-50 text-blue-700 border-blue-200' };
+  }
 }
 
 function Metric({ value, label, color }: { value: number | string; label: string; color: string }) {
@@ -128,6 +140,25 @@ export default function ResultadosMes() {
                 </span>
               )}
             </div>
+
+            {/* Orcas en juego: tus jugadas del mes, con nombre y etapa (aunque no hayan respondido) */}
+            {m.orcasEnJuego.length > 0 && (
+              <div className="px-5 pb-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">🐋 Orcas en juego este mes ({m.orcasEnJuego.length})</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {m.orcasEnJuego.map((o, i) => {
+                    const b = stageBadge(o.stage);
+                    return (
+                      <span key={i} className={`inline-flex items-center gap-1.5 border rounded-lg px-2.5 py-1 text-xs ${b.cls}`}>
+                        <b>{o.name}</b>
+                        <span className="opacity-70">· {b.txt}</span>
+                        {o.respondio && <span title="Te respondió este mes">· 💬 respondió</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Hitos: respuestas reales de orcas (lo más valioso) */}
             {m.hitos.length > 0 && (

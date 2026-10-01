@@ -116,17 +116,19 @@ export async function GET(request: Request) {
   const tier = new Map<string, string | null>();
   const nombre = new Map<string, string>();
   const owner = new Map<string, string | null>();
+  const stage = new Map<string, string | null>();
   for (let i = 0; i < ids.length; i += 200) {
     const lote = ids.slice(i, i + 200);
     const { data } = await supabase
       .from('businesses')
-      .select('id, name, contacted_by, service_analyses ( potential_tier )')
+      .select('id, name, contacted_by, sales_stage, service_analyses ( potential_tier )')
       .in('id', lote);
-    for (const b of (data || []) as { id: string; name: string; contacted_by: string | null; service_analyses: { potential_tier: string | null } | { potential_tier: string | null }[] | null }[]) {
+    for (const b of (data || []) as { id: string; name: string; contacted_by: string | null; sales_stage: string | null; service_analyses: { potential_tier: string | null } | { potential_tier: string | null }[] | null }[]) {
       const sa = Array.isArray(b.service_analyses) ? b.service_analyses[0] : b.service_analyses;
       tier.set(b.id, sa?.potential_tier ?? null);
       nombre.set(b.id, b.name);
       owner.set(b.id, b.contacted_by);
+      stage.set(b.id, b.sales_stage ?? null);
     }
   }
 
@@ -226,6 +228,19 @@ export async function GET(request: Request) {
         ganados: a.ganados,
         perdidos: a.perdidos,
         hitos: a.hitos.slice(0, 6),
+        // Orcas que tocaste a mano este mes, CON NOMBRE y su etapa actual.
+        // Así tus jugadas (Classo, Casa Andina, Nobility…) se ven aunque aún
+        // no te hayan respondido. Las que tienen propuesta enviada van primero.
+        orcasEnJuego: [...a.orca.trabajadas]
+          .map((id) => ({
+            name: nombre.get(id) || '?',
+            stage: stage.get(id) || null,
+            respondio: a.orca.respondieron.has(id),
+          }))
+          .sort((x, y) => {
+            const peso = (s: string | null) => (s === 'cotizado' ? 0 : s === 'interesado' ? 1 : 2);
+            return peso(x.stage) - peso(y.stage) || x.name.localeCompare(y.name);
+          }),
       };
     });
 

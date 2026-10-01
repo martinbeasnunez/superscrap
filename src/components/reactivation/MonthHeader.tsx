@@ -22,12 +22,15 @@ export default function MonthHeader({
   reconnectToday,
   fresh,
   onImport,
+  onShowFirstBuy,
 }: {
   reconnectToday: number;
   fresh: number;
   onImport: () => void;
+  onShowFirstBuy: () => void;
 }) {
   const [closed, setClosed] = useState<MonthRow | null>(null);
+  const [firstBuy, setFirstBuy] = useState<number | null>(null);
 
   // Mes activo = el de hoy (local Lima).
   const now = new Date();
@@ -43,6 +46,11 @@ export default function MonthHeader({
         const prev = (d.months as MonthRow[]).find((m) => m.month.slice(0, 7) !== activeYm);
         setClosed(prev ?? null);
       })
+      .catch(() => {});
+    // "Compraron 1 vez" (primera recompra): su turno es este mes.
+    fetch('/api/reactivation?list_type=primera_recompra')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.clients && setFirstBuy(d.clients.length))
       .catch(() => {});
   }, [activeYm]);
 
@@ -87,6 +95,11 @@ export default function MonthHeader({
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           <span className="text-xs font-medium bg-teal-100 text-teal-800 rounded-lg px-2 py-1">🔄 Reconectar hoy: {reconnectToday}</span>
           <span className="text-xs font-medium bg-emerald-100 text-emerald-800 rounded-lg px-2 py-1">🌱 Frescos: {fresh}</span>
+          {firstBuy != null && firstBuy > 0 && (
+            <button onClick={onShowFirstBuy} className="text-xs font-medium bg-amber-100 text-amber-800 rounded-lg px-2 py-1 hover:bg-amber-200">
+              🌱 Compraron 1 vez: {firstBuy} · su turno ahora
+            </button>
+          )}
         </div>
         <button
           onClick={onImport}

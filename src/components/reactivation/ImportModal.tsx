@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import type { ReactListType } from '@/lib/reactivation';
 
-type Result = { inserted: number; updated: number; total: number; sheets: Record<string, number> };
+type Result = {
+  inserted: number; updated: number; total: number; sheets: Record<string, number>;
+  control?: { total: number; byRecency: Record<string, number> };
+};
 
 // Modal de import: subir .xlsx o pegar texto (TSV/CSV).
 // Re-importable cada mes sin duplicar (match por teléfono en el backend).
@@ -15,6 +18,9 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  // Armar grupo control (para medir): separa N clientes NUEVOS, estratificados por recencia.
+  const [controlOn, setControlOn] = useState(false);
+  const [controlSize, setControlSize] = useState(30);
 
   const submit = async () => {
     setError(null); setResult(null); setBusy(true);
@@ -24,13 +30,14 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
         if (!file) { setError('Elige un archivo .xlsx'); setBusy(false); return; }
         const fd = new FormData();
         fd.append('file', file);
+        fd.append('controlSize', String(controlOn ? controlSize : 0));
         res = await fetch('/api/reactivation/import', { method: 'POST', body: fd });
       } else {
         if (!text.trim()) { setError('Pega la tabla primero'); setBusy(false); return; }
         res = await fetch('/api/reactivation/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, list_type: pasteList }),
+          body: JSON.stringify({ text, list_type: pasteList, controlSize: controlOn ? controlSize : 0 }),
         });
       }
       const data = await res.json();
@@ -63,6 +70,12 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
               <div className="text-xs text-gray-400 mt-2">
                 {Object.entries(result.sheets).map(([s, n]) => <div key={s}>{s}: {n}</div>)}
               </div>
+              {result.control && (
+                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mt-3">
+                  🎛️ Grupo control armado: <b>{result.control.total}</b> clientes sin tocar
+                  {' '}(recientes {result.control.byRecency.reciente ?? 0} · medios {result.control.byRecency.medio ?? 0} · viejos {result.control.byRecency.viejo ?? 0}).
+                </p>
+              )}
               <button onClick={onDone} className="mt-4 px-4 py-2 rounded-lg bg-[#0890F1] text-white font-medium">Ver la lista</button>
             </div>
           ) : (
@@ -96,6 +109,18 @@ export default function ImportModal({ onClose, onDone }: { onClose: () => void; 
                     placeholder={'Pega desde Excel (incluye la fila de headers):\nNombre\tTeléfono\tÚltima orden\tDías sin pedir\t...'} />
                 </div>
               )}
+
+              {/* Armar grupo control para medir (solo sobre los clientes nuevos de reactivación) */}
+              <label className="flex items-start gap-2 mt-4 rounded-lg border border-gray-200 bg-gray-50/60 p-3 cursor-pointer">
+                <input type="checkbox" checked={controlOn} onChange={(e) => setControlOn(e.target.checked)} className="mt-0.5" />
+                <span className="text-xs text-gray-600">
+                  <b className="text-gray-800">Armar grupo control para medir</b> — separa{' '}
+                  <input type="number" min={0} max={200} value={controlSize} disabled={!controlOn}
+                    onChange={(e) => setControlSize(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                    className="w-14 border border-gray-300 rounded px-1.5 py-0.5 text-center disabled:opacity-50" onClick={(e) => e.stopPropagation()} />
+                  {' '}clientes nuevos (repartidos por antigüedad) para dejarlos sin tocar y comparar. Solo aplica a los nuevos, no a los que ya están.
+                </span>
+              </label>
 
               {error && <p className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 mt-3">{error}</p>}
 

@@ -23,6 +23,53 @@ function pickStatic(r: ParsedRow): Record<string, unknown> {
   return o;
 }
 
+// Recencia → cubeta (igual que el pitch): reciente ≤90, medio 91-180, viejo >180.
+function recencyBucket(d: number | null | undefined): 'reciente' | 'medio' | 'viejo' {
+  if (d == null) return 'medio';
+  if (d <= 90) return 'reciente';
+  if (d <= 180) return 'medio';
+  return 'viejo';
+}
+
+// Arma un grupo CONTROL estratificado por recencia sobre las filas NUEVAS de
+// reactivación: separa ~size clientes (proporcional a cada cubeta) para dejarlos
+// SIN contactar y medir contra ellos. Muta is_control en las filas elegidas.
+// Devuelve el desglose por cubeta.
+function assignStratifiedControl(
+  rows: Record<string, unknown>[],
+  size: number
+): Record<string, number> {
+  const eligible = rows.filter((r) => r.list_type === 'reactivacion');
+  const n = Math.min(size, eligible.length);
+  if (n <= 0) return {};
+  const buckets: Record<string, Record<string, unknown>[]> = { reciente: [], medio: [], viejo: [] };
+  for (const r of eligible) buckets[recencyBucket(r.days_inactive as number | null)].push(r);
+  // Baraja cada cubeta (Fisher-Yates) para que el control sea aleatorio dentro de ella.
+  for (const b of Object.values(buckets)) {
+    for (let i = b.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [b[i], b[j]] = [b[j], b[i]];
+    }
+  }
+  const chosen: Record<string, number> = { reciente: 0, medio: 0, viejo: 0 };
+  // Cuota proporcional por cubeta (redondeo); el resto se completa por tamaño.
+  const order = ['reciente', 'medio', 'viejo'].sort((a, b) => buckets[b].length - buckets[a].length);
+  let left = n;
+  for (const b of order) {
+    const quota = Math.min(buckets[b].length, Math.round((buckets[b].length / eligible.length) * n));
+    chosen[b] = Math.min(quota, left);
+    left -= chosen[b];
+  }
+  // Completa lo que falte desde las cubetas con stock (por si el redondeo dejó hueco).
+  for (const b of order) {
+    while (left > 0 && chosen[b] < buckets[b].length) { chosen[b]++; left--; }
+  }
+  for (const b of order) {
+    for (let i = 0; i < chosen[b]; i++) buckets[b][i].is_control = true;
+  }
+  return chosen;
+}
+
 // Parsea texto pegado (TSV o CSV) a matriz de celdas.
 function parsePastedText(text: string): unknown[][] {
   const lines = text.replace(/\r/g, '').split('\n').filter((l) => l.trim().length);
@@ -35,11 +82,13 @@ export async function POST(request: Request) {
     const contentType = request.headers.get('content-type') || '';
     const parsed: ParsedRow[] = [];
     const sheetSummary: Record<string, number> = {};
+    let controlSize = 0; // 0 = usar lo que marque el Excel; >0 = armar control auto
 
     if (contentType.includes('multipart/form-data')) {
       // --- Subida de archivo .xlsx ---
       const form = await request.formData();
       const file = form.get('file');
+      controlSize = Math.max(0, parseInt(String(form.get('controlSize') ?? '0'), 10) || 0);
       if (!file || typeof file === 'string') {
         return NextResponse.json({ error: 'No se recibió archivo.' }, { status: 400 });
       }
@@ -60,6 +109,7 @@ export async function POST(request: Request) {
       const body = await request.json();
       const text: string = body.text || '';
       const lt: ReactListType = body.list_type || 'reactivacion';
+      controlSize = Math.max(0, parseInt(String(body.controlSize ?? '0'), 10) || 0);
       if (!text.trim()) return NextResponse.json({ error: 'No se recibió texto.' }, { status: 400 });
       const matrix = parsePastedText(text);
       const rows = parseRows(matrix, lt);
@@ -118,6 +168,13 @@ export async function POST(request: Request) {
       }
     }
 
+    // Control grande estratificado por recencia: solo sobre los NUEVOS (no pisa
+    // septiembre; estable si re-importas, porque los repetidos son update, no insert).
+    let controlAssigned: Record<string, number> = {};
+    if (controlSize > 0 && toInsert.length) {
+      controlAssigned = assignStratifiedControl(toInsert, controlSize);
+    }
+
     if (toInsert.length) {
       const { error, data } = await supabase
         .from('reactivation_clients')
@@ -130,12 +187,14 @@ export async function POST(request: Request) {
       inserted = data?.length ?? toInsert.length;
     }
 
+    const controlTotal = Object.values(controlAssigned).reduce((a, b) => a + b, 0);
     return NextResponse.json({
       ok: true,
       inserted,
       updated,
       total: incoming.length,
       sheets: sheetSummary,
+      control: controlTotal > 0 ? { total: controlTotal, byRecency: controlAssigned } : undefined,
     });
   } catch (e) {
     console.error('reactivation import exception:', e);

@@ -95,25 +95,26 @@ export default function ResultadosMes() {
             </div>
 
             <div className="p-5 grid gap-5 lg:grid-cols-2">
-              {/* Lo que se HIZO */}
+              {/* Lo que se HIZO (esfuerzo: a mano vs bot) */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Lo que se hizo</p>
                 <div className="flex items-center gap-5 flex-wrap">
                   <Metric value={m.trabajoHumano} label="toques a mano" color="text-[#0890F1]" />
                   <Metric value={m.cuentasTrabajadas} label="cuentas trabajadas" color="text-[#0890F1]" />
+                  <Metric value={m.orca.trabajadas} label="orcas trabajadas" color="text-[#9A7A35]" />
                   <div className="w-px h-10 bg-gray-200" />
                   <Metric value={m.botEnvios} label="envíos del bot 🤖" color="text-gray-400" />
                 </div>
               </div>
 
-              {/* Lo que RESULTÓ */}
+              {/* Lo que RESULTÓ (respuestas reales de ellos — números sueltos, sin fracciones) */}
               <div className="lg:border-l lg:border-gray-100 lg:pl-5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Lo que resultó</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Lo que resultó · respondieron de verdad</p>
                 <div className="flex items-center gap-5 flex-wrap">
-                  <Metric value={m.respuestasReales} label="respondieron de verdad" color="text-[#D4A84F]" />
+                  <Metric value={m.respuestasReales} label="en total" color="text-[#D4A84F]" />
                   <div className="w-px h-10 bg-gray-200" />
-                  <Metric value={`${m.orca.respondieron}/${m.orca.trabajadas}`} label="orcas respondieron/trabajadas" color="text-[#9A7A35]" />
-                  <Metric value={`${m.delfin.respondieron}/${m.delfin.trabajadas}`} label="delfines resp./trab." color="text-gray-500" />
+                  <Metric value={m.orca.respondieron} label="🐋 orcas" color="text-[#9A7A35]" />
+                  <Metric value={m.delfin.respondieron} label="🐬 delfines" color="text-gray-500" />
                 </div>
               </div>
             </div>

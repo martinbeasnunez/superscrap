@@ -32,7 +32,17 @@ const OrcaWarRoom = dynamic(() => import('@/components/OrcaWarRoom'), {
   ),
 });
 
-type PipelineView = 'lista' | 'tablero';
+// Resultados por mes — qué se hizo y qué resultó, client-only (fetch propio).
+const ResultadosMes = dynamic(() => import('@/components/ResultadosMes'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin h-10 w-10 border-3 border-[#0890F1] border-t-transparent rounded-full" />
+    </div>
+  ),
+});
+
+type PipelineView = 'lista' | 'tablero' | 'resultados';
 interface CurrentUser { id: string; name: string; email: string }
 interface QuickStats { newLeads: number; followUpNeeded: number; interested: number; quoted: number }
 interface MyStats { total: number; orcas: number; prospects: number }
@@ -75,7 +85,7 @@ export default function PipelinePage() {
   useEffect(() => {
     const v = localStorage.getItem('orbit_pipeline_view');
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (v === 'lista' || v === 'tablero') setView(v);
+    if (v === 'lista' || v === 'tablero' || v === 'resultados') setView(v);
     const saved = localStorage.getItem('orbit_user');
     if (saved) { try { setUser(JSON.parse(saved)); } catch { /* ignore */ } }
   }, []);
@@ -270,15 +280,28 @@ export default function PipelinePage() {
           >
             ▦ Tablero
           </button>
+          <button
+            onClick={() => changeView('resultados')}
+            className={`text-sm font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
+              view === 'resultados' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            📆 Resultados
+          </button>
         </div>
 
-        <div className="w-px h-6 bg-gray-200 mx-0.5" />
+        {/* Filtro por vendedor: aplica a Lista y Tablero, no a Resultados (vista global por mes). */}
+        {view !== 'resultados' && (
+          <>
+            <div className="w-px h-6 bg-gray-200 mx-0.5" />
 
-        {ownerChip('martin', '👑 Martín', ownerCounts.martin, 'bg-[#0890F1] text-white', 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200')}
-        {ownerChip('alejandro', '🧑 Alejandro', ownerCounts.alejandro, 'bg-teal-600 text-white', 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200')}
-        {ownerChip('bot', '🤖 Bot', ownerCounts.bot, 'bg-purple-600 text-white', 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200')}
-        {ownerFilter !== 'all' && (
-          <button onClick={() => setOwnerFilter('all')} className="text-xs text-gray-400 hover:text-gray-600" title="Quitar filtro de vendedor">✕ limpiar</button>
+            {ownerChip('martin', '👑 Martín', ownerCounts.martin, 'bg-[#0890F1] text-white', 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200')}
+            {ownerChip('alejandro', '🧑 Alejandro', ownerCounts.alejandro, 'bg-teal-600 text-white', 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200')}
+            {ownerChip('bot', '🤖 Bot', ownerCounts.bot, 'bg-purple-600 text-white', 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200')}
+            {ownerFilter !== 'all' && (
+              <button onClick={() => setOwnerFilter('all')} className="text-xs text-gray-400 hover:text-gray-600" title="Quitar filtro de vendedor">✕ limpiar</button>
+            )}
+          </>
         )}
       </div>
 
@@ -343,6 +366,8 @@ export default function PipelinePage() {
         <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-2 sm:p-3 lg:p-4 overflow-hidden">
           <KanbanBoard ownerFilter={ownerFilter} onOwnerFilterChange={setOwnerFilter} />
         </div>
+      ) : view === 'resultados' ? (
+        <ResultadosMes />
       ) : (
         <OrcaWarRoom ownerFilter={ownerFilter} />
       )}

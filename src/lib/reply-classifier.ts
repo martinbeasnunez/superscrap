@@ -52,9 +52,32 @@ const BOT_PHRASES = [
   // Hours-of-operation auto-replies
   'horario de atención',
   'horario de atencion',
+  'no estamos respondiendo',
+  // Reservation-channel bots (restaurants/hotels)
+  'canal de reservas',
+  'área de reservas',
+  'area de reservas',
+  'para reservar',
+  // "Soy X, tu asesora/asesor" self-intro bots
+  'tu asesora',
+  'tu asesor',
+  'su asesora',
+  'su asesor',
+  // Handoff/forwarding bots
+  'compartiendo su comunicación',
+  'compartiendo su comunicacion',
+  'derivamos su consulta',
+  'al área encargada',
+  'al area encargada',
+  // Disappearing-message notices (WhatsApp temporales)
+  'mensajes son temporales',
+  'conversación se borr',
+  'conversacion se borr',
   // English bots
   'thank you for contacting',
   'thanks for contacting',
+  "we're not available",
+  'we are not available',
   'welcome to ',
 ];
 

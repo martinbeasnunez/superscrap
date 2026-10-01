@@ -92,10 +92,12 @@ export default function Reactivacion() {
   const [secondTouchLens, setSecondTouchLens] = useState(false);
   // Lente "Reconectar hoy": los que agendaron para hoy o antes (el "próximo mes" que ya llegó)
   const [recontactLens, setRecontactLens] = useState(false);
+  // Lente "Frescos": se fueron hace poco (≤90d) y sin tocar → los de más chance de volver
+  const [freshLens, setFreshLens] = useState(false);
   // Filtro por cuadro de resumen (Pendientes / Reactivados / Control)
   const [cardFilter, setCardFilter] = useState<'none' | 'pendientes' | 'reactivados' | 'control'>('none');
   // Apaga todos los lentes (los cuadros y los lentes son excluyentes entre sí).
-  const clearLenses = () => { setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); };
+  const clearLenses = () => { setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setFreshLens(false); };
   // Vendedor logueado (para la línea "👉 Ahora" personalizada)
   const [meOwner, setMeOwner] = useState<string | null>(null);
 
@@ -156,6 +158,12 @@ export default function Reactivacion() {
     [clients]
   );
 
+  // Frescos: se fueron hace ≤90 días y aún sin tocar → los de más chance (ataca estos primero)
+  const freshList = useMemo(
+    () => clients.filter((c) => !c.is_control && c.list_type === 'reactivacion' && !c.touch1_date && (c.days_inactive ?? 999) <= 90),
+    [clients]
+  );
+
   // "👉 Ahora": la jugada de más valor para el vendedor logueado
   const nextStep = useMemo(() => {
     const curWaveN = currentWave(todayISO()).n;
@@ -199,6 +207,10 @@ export default function Reactivacion() {
     if (recontactLens) {
       return [...recontactList].sort((a, b) => (a.recontact_date ?? '').localeCompare(b.recontact_date ?? ''));
     }
+    // Frescos: los que se fueron hace menos, más frescos primero (más chance de volver)
+    if (freshLens) {
+      return [...freshList].sort((aa, bb) => (aa.days_inactive ?? Infinity) - (bb.days_inactive ?? Infinity));
+    }
     let arr = clients.filter((c) => {
       // Filtro por cuadro de resumen
       if (cardFilter === 'pendientes' && !(c.status === 'pendiente' && !c.is_control)) return false;
@@ -224,7 +236,7 @@ export default function Reactivacion() {
       return (a.days_inactive ?? Infinity) - (b.days_inactive ?? Infinity);
     });
     return arr;
-  }, [clients, fTier, fPriority, fOwner, fStatus, fOutcome, sortKey, sortDir, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList, recontactLens, recontactList, cardFilter]);
+  }, [clients, fTier, fPriority, fOwner, fStatus, fOutcome, sortKey, sortDir, verifyQueue, tierAPending, overdueLens, overdueList, secondTouchLens, secondTouchList, recontactLens, recontactList, freshLens, freshList, cardFilter]);
 
   const onUpdated = (updated: ReactClient) => {
     setClients((cur) => cur.map((c) => (c.id === updated.id ? updated : c)));
@@ -350,7 +362,7 @@ export default function Reactivacion() {
 
       {/* Resumen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <SummaryCard label="En lista" value={summary.total} active={cardFilter === 'none'} onClick={() => { clearLenses(); setCardFilter('none'); }} />
+        <SummaryCard label="En lista" value={summary.total} active={cardFilter === 'none'} onClick={() => { clearLenses(); setCardFilter('none'); setFreshLens(false); }} />
         <SummaryCard label="Pendientes" value={summary.pending} tone="blue" active={cardFilter === 'pendientes'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'pendientes' ? 'none' : 'pendientes'); }} />
         <SummaryCard label="Reactivados" value={summary.reactivated} tone="emerald" active={cardFilter === 'reactivados'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'reactivados' ? 'none' : 'reactivados'); }} />
         <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." active={cardFilter === 'control'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'control' ? 'none' : 'control'); }} />
@@ -359,7 +371,7 @@ export default function Reactivacion() {
       {/* 🔄 Reconectar hoy: los que agendaron para hoy (el "próximo mes" que ya toca) */}
       {(recontactList.length > 0 || recontactLens) && (
         <button
-          onClick={() => { setRecontactLens((v) => !v); setSecondTouchLens(false); setOverdueLens(false); setVerifyQueue(false); setCardFilter('none'); }}
+          onClick={() => { setRecontactLens((v) => !v); setSecondTouchLens(false); setOverdueLens(false); setVerifyQueue(false); setCardFilter('none'); setFreshLens(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             recontactLens ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200 border border-teal-300'
           }`}
@@ -369,10 +381,23 @@ export default function Reactivacion() {
         </button>
       )}
 
+      {/* Frescos: se fueron hace poco (≤90d) y sin tocar — los de más chance de volver */}
+      {(freshList.length > 0 || freshLens) && (
+        <button
+          onClick={() => { setFreshLens((v) => !v); setSecondTouchLens(false); setOverdueLens(false); setVerifyQueue(false); setRecontactLens(false); setCardFilter('none'); }}
+          className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
+            freshLens ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300'
+          }`}
+        >
+          {freshLens ? '✓ Viendo frescos' : `🌱 Frescos: ${freshList.length}`}
+          <span className={`ml-2 font-normal ${freshLens ? 'text-white/80' : 'text-emerald-600'}`}>· se fueron hace poco — los de más chance</span>
+        </button>
+      )}
+
       {/* 2da vuelta: mensajeados hace 7+ días sin respuesta — toca llamar */}
       {meOwner !== 'Fernanda' && (secondTouchList.length > 0 || secondTouchLens) && (
         <button
-          onClick={() => { setSecondTouchLens((v) => !v); setOverdueLens(false); setVerifyQueue(false); setRecontactLens(false); setCardFilter('none'); }}
+          onClick={() => { setSecondTouchLens((v) => !v); setOverdueLens(false); setVerifyQueue(false); setRecontactLens(false); setCardFilter('none'); setFreshLens(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             secondTouchLens ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-300'
           }`}
@@ -385,7 +410,7 @@ export default function Reactivacion() {
       {/* Atrasados: lo que se debe de antes — a avanzar primero */}
       {meOwner !== 'Fernanda' && (overdueList.length > 0 || overdueLens) && (
         <button
-          onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }}
+          onClick={() => { setOverdueLens((v) => !v); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); setFreshLens(false); }}
           className={`mb-3 mr-2 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             overdueLens ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-300'
           }`}
@@ -398,7 +423,7 @@ export default function Reactivacion() {
       {/* Cola de verificación de Joaquín (Tier A por verificar, cruza dueños) */}
       {meOwner !== 'Fernanda' && (tierAPending.length > 0 || verifyQueue) && (
         <button
-          onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }}
+          onClick={() => { setVerifyQueue((v) => !v); setOverdueLens(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); setFreshLens(false); }}
           className={`mb-3 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
             verifyQueue ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300'
           }`}
@@ -416,7 +441,7 @@ export default function Reactivacion() {
         <Select label="Estado" value={fStatus} onChange={setFStatus} options={[['all', 'Todos'], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
         <Select label="Resultado" value={fOutcome} onChange={setFOutcome} options={[['all', 'Todos'], ['vivo', '🟢 Vivo'], ['octubre', '🟡 Octubre'], ['muerto', '⚫ Muerto'], ['sin', 'Sin marcar']]} />
         {(fTier !== 'all' || fPriority !== 'all' || fOwner !== 'all' || fStatus !== 'all' || fOutcome !== 'all') && (
-          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setFOutcome('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
+          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setFOutcome('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); setFreshLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
         )}
         <span className="text-xs text-gray-400 ml-auto">{filtered.length} de {clients.length}</span>
       </div>

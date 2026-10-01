@@ -23,6 +23,25 @@ function pickStatic(r: ParsedRow): Record<string, unknown> {
   return o;
 }
 
+// Para clientes QUE YA EXISTEN: refrescar solo los datos "de hecho" (última orden,
+// días, total, teléfono). Las asignaciones (dueño, tier, prioridad) solo se pisan
+// si el archivo trae un valor; is_control / list_type / needs_verify NO se tocan
+// (así un reporte crudo del BO no borra el dueño ni el grupo control de septiembre).
+function pickUpdate(r: ParsedRow): Record<string, unknown> {
+  const o: Record<string, unknown> = {
+    company: r.company,
+    phone: r.phone,
+    phone_norm: r.phone_norm,
+    last_order_date: r.last_order_date,
+    days_inactive: r.days_inactive,
+    total_orders: r.total_orders,
+  };
+  if (r.owner) o.owner = r.owner;
+  if (r.tier) { o.tier = r.tier; o.segment = r.segment; }
+  if (r.priority) o.priority = r.priority;
+  return o;
+}
+
 // Recencia → cubeta (igual que el pitch): reciente ≤90, medio 91-180, viejo >180.
 function recencyBucket(d: number | null | undefined): 'reciente' | 'medio' | 'viejo' {
   if (d == null) return 'medio';
@@ -159,7 +178,7 @@ export async function POST(request: Request) {
       if (matchId) {
         const { error } = await supabase
           .from('reactivation_clients')
-          .update({ ...pickStatic(r), updated_at: new Date().toISOString() })
+          .update({ ...pickUpdate(r), updated_at: new Date().toISOString() })
           .eq('id', matchId);
         if (error) console.error('import update error', r.company, error.message);
         else updated++;

@@ -91,6 +91,15 @@ function isoDate(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
+// Días desde una fecha YYYY-MM-DD hasta hoy (para "días sin pedir" cuando el archivo no lo trae).
+function daysSince(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number);
+  const then = Date.UTC(y, m - 1, d);
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((today - then) / 86400000);
+}
+
 function parsePriority(v: unknown): ReactPriority | null {
   const s = norm(v);
   if (!s) return null;
@@ -184,12 +193,16 @@ export function parseRows(matrix: unknown[][], listType: ReactListType): ParsedR
     if (!company) continue;
     const phoneRaw = get(row, 'phone');
     const group = norm(get(row, 'group'));
+    const lastOrder = parseDate(get(row, 'last_order_date'));
+    let days = parseInt2(get(row, 'days_inactive'));
+    // Si el archivo no trae "días sin pedir" (p.ej. el reporte del BO), lo calculamos de la última orden.
+    if (days == null && lastOrder) days = Math.max(0, daysSince(lastOrder));
     out.push({
       company,
       phone: phoneRaw != null && String(phoneRaw).trim() ? String(phoneRaw).trim() : null,
       phone_norm: normPhone(phoneRaw),
-      last_order_date: parseDate(get(row, 'last_order_date')),
-      days_inactive: parseInt2(get(row, 'days_inactive')),
+      last_order_date: lastOrder,
+      days_inactive: days,
       total_orders: parseInt2(get(row, 'total_orders')),
       tier: parseTier(get(row, 'tier')),
       segment: get(row, 'tier') != null ? String(get(row, 'tier')).trim() : null,

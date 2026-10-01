@@ -15,6 +15,7 @@ import DetailDrawer from './DetailDrawer';
 import ImportModal from './ImportModal';
 import CampaignTimeline from './CampaignTimeline';
 import MonthlySummary from './MonthlySummary';
+import MonthHeader from './MonthHeader';
 import {
   waveFor,
   targetTouch1,
@@ -316,11 +317,16 @@ export default function Reactivacion() {
         </button>
       )}
 
+      {/* Encabezado de mes: cerrado (resultados) vs activo (lo que viene) */}
+      {listType === 'reactivacion' && (
+        <MonthHeader reconnectToday={recontactList.length} fresh={freshList.length} onImport={() => setImportOpen(true)} />
+      )}
+
       {/* Resumen por mes (marcador fijo) — solo el GM */}
       {meOwner === null && <MonthlySummary />}
 
-      {/* Timeline de la campaña (olas, deadline, progreso) */}
-      <CampaignTimeline />
+      {/* Timeline de la campaña — solo mientras la campaña del mes sigue viva */}
+      {todayISO() <= CAMPAIGN.end && <CampaignTimeline />}
 
       {/* KPI Contactado vs Control — número de gerente, solo para el GM (no vendedores) */}
       {meOwner === null && listType === 'reactivacion' && kpi && (
@@ -357,8 +363,8 @@ export default function Reactivacion() {
         </div>
       )}
 
-      {/* Franja de cierre de mes: cuánto falta + cuántos recuperamos este mes */}
-      {listType === 'reactivacion' && <MonthStrip reactivated={summary.reactivated} />}
+      {/* Franja de cierre de mes: solo mientras la campaña del mes sigue viva (ya lo cubre MonthHeader si cerró) */}
+      {listType === 'reactivacion' && todayISO() <= CAMPAIGN.end && <MonthStrip reactivated={summary.reactivated} />}
 
       {/* Resumen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

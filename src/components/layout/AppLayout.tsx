@@ -133,8 +133,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </div>
       </header>
 
-      {/* Main content */}
-      <main className={`${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'} pt-14 lg:pt-0 min-h-screen transition-all duration-300`}>
+      {/* Main content — bottom padding on mobile clears the fixed bottom nav (+ iOS home indicator) */}
+      <main className={`${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'} pt-14 lg:pt-0 pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0 min-h-screen transition-all duration-300`}>
         {children}
       </main>
 

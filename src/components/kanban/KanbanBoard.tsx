@@ -1180,7 +1180,7 @@ export default function KanbanBoard({
 
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-4 -mx-2 px-2 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:snap-none">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto overscroll-x-contain touch-scroll-x pb-4 -mx-2 px-2 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:snap-none">
           {COLUMN_ORDER.filter(columnId => {
             if (columnFilter === 'clientes') return columnId === 'cliente';
             if (columnFilter === 'por_cerrar') return columnId === 'interesado' || columnId === 'cotizado';

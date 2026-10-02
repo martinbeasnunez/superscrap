@@ -20,3 +20,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Respect iOS safe areas (notch / home indicator) when viewport-fit=cover */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Smoother momentum scrolling for the horizontal kanban on touch devices */
+.touch-scroll-x {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}

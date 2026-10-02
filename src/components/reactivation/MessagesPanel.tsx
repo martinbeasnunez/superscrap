@@ -15,8 +15,8 @@ import {
 } from '@/lib/reactivation-messages';
 import type { ReactClient } from '@/lib/reactivation';
 
-// Panel de guiones/mensajes dentro de la ficha. Copia el texto FINAL (ya con el
-// nombre puesto), nunca la plantilla con {empresa}.
+// Script/message panel inside the card. Copies the FINAL text (with the
+// name already filled in), never the template with {empresa}.
 export default function MessagesPanel({
   client,
   contacto,
@@ -30,68 +30,68 @@ export default function MessagesPanel({
   descuento: number;
   locked: boolean; // Tier A + Verificar sin confirmar → guion bloqueado
 }) {
-  if (client.is_control) return null; // Control: no se muestran mensajes.
+  if (client.is_control) return null; // Control: no messages are shown.
 
   const vars: FillVars = { empresa: client.company, contacto, marca: brand, descuento };
   const fill = (t: string) => fillTemplate(t, vars);
   const tier = client.tier;
   const isPrimeraRecompra = !tier && client.list_type === 'primera_recompra';
-  // Tono según cuánto lleva sin pedir (solo lista de reactivación B/C).
+  // Tone based on how long since they last ordered (only reactivation list B/C).
   const recency = recencyBucket(client.days_inactive);
   const recencyPitch = fill(RECENCY_PITCH[recency]);
-  // 2do toque (llamada) aplica al flujo WhatsApp: Tier B/C y primera recompra
+  // 2nd touch (call) applies to the WhatsApp flow: Tier B/C and first repurchase
   const waFlow = tier === 'B' || tier === 'C' || isPrimeraRecompra;
-  const showSecondTouch = client.status === 'toque1'; // 1er toque enviado / no respondió
+  const showSecondTouch = client.status === 'toque1'; // 1st touch sent / no reply
 
-  // Link directo de WhatsApp con el texto ya cargado (abre el chat del cliente).
+  // Direct WhatsApp link with the text preloaded (opens the client's chat).
   const wa = (text: string): string | null =>
     client.phone_norm ? `https://wa.me/${client.phone_norm}?text=${encodeURIComponent(text)}` : null;
 
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-        <span className="text-sm font-semibold text-gray-900">1. Manda el mensaje 💬</span>
+        <span className="text-sm font-semibold text-gray-900">1. Send the message 💬</span>
         <div className="flex items-center gap-1.5 text-[11px]">
-          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Descuento {descuento}%</span>
-          <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">Envío {SEND_WINDOW}</span>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Discount {descuento}%</span>
+          <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">Delivery {SEND_WINDOW}</span>
         </div>
       </div>
 
       {locked ? (
         <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
-          Confirma la verificación (arriba) para habilitar el guion.
+          Confirm the verification (above) to enable the script.
         </p>
       ) : tier === 'B' ? (
         <div className="space-y-2">
           <RecencyNote recency={recency} />
-          <CopyBlock label="1er mensaje · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
+          <CopyBlock label="1st message · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
         </div>
       ) : tier === 'C' ? (
         <div className="space-y-2">
           <RecencyNote recency={recency} />
-          <CopyBlock label="1er mensaje · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
-          <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
+          <CopyBlock label="1st message · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
+          <CopyBlock label="Soft alternative (without burning the %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
         </div>
       ) : tier === 'A' ? (
         <TierAGuide fill={fill} />
       ) : isPrimeraRecompra ? (
         <div className="space-y-2">
-          <CopyBlock label="1er mensaje · compró 1 vez" text={fill(PRIMERA_RECOMPRA.firstTouch)} waHref={wa(fill(PRIMERA_RECOMPRA.firstTouch))} />
-          <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(PRIMERA_RECOMPRA.soft)} waHref={wa(fill(PRIMERA_RECOMPRA.soft))} />
+          <CopyBlock label="1st message · bought once" text={fill(PRIMERA_RECOMPRA.firstTouch)} waHref={wa(fill(PRIMERA_RECOMPRA.firstTouch))} />
+          <CopyBlock label="Soft alternative (without burning the %)" text={fill(PRIMERA_RECOMPRA.soft)} waHref={wa(fill(PRIMERA_RECOMPRA.soft))} />
         </div>
       ) : client.list_type === 'excluir' ? (
-        <p className="text-sm text-gray-500">Segmento excluido — revisar antes de contactar (reclamo / pidió hace poco).</p>
+        <p className="text-sm text-gray-500">Excluded segment — review before contacting (complaint / ordered recently).</p>
       ) : (
-        <p className="text-sm text-gray-400">Sin plantilla para este segmento.</p>
+        <p className="text-sm text-gray-400">No template for this segment.</p>
       )}
 
-      {/* 2do toque (WhatsApp: Tier B/C y primera recompra) — guion de llamada de los 7 días */}
+      {/* 2nd touch (WhatsApp: Tier B/C and first repurchase) — 7-day call script */}
       {!locked && waFlow && showSecondTouch && (
         <div className="mt-3 pt-3 border-t border-gray-200">
           <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 mb-2">
             📞 {SECOND_TOUCH.hint}
           </p>
-          <CopyBlock label="2da vuelta · llamada (7 días)" text={fill(SECOND_TOUCH.script)} />
+          <CopyBlock label="2nd round · call (7 days)" text={fill(SECOND_TOUCH.script)} />
           <p className="text-xs text-gray-400 mt-1">{SECOND_TOUCH.close}</p>
         </div>
       )}
@@ -99,7 +99,7 @@ export default function MessagesPanel({
   );
 }
 
-// Aviso del tono según recencia (por qué este mensaje y no otro).
+// Tone note based on recency (why this message and not another).
 function RecencyNote({ recency }: { recency: 'reciente' | 'medio' | 'viejo' }) {
   const meta = RECENCY_META[recency];
   const style = recency === 'reciente'
@@ -114,7 +114,7 @@ function RecencyNote({ recency }: { recency: 'reciente' | 'medio' | 'viejo' }) {
   );
 }
 
-// Bloque de texto final + botón Copiar (con feedback) + link directo de WhatsApp.
+// Final text block + Copy button (with feedback) + direct WhatsApp link.
 function CopyBlock({ label, text, waHref }: { label: string; text: string; waHref?: string | null }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
@@ -128,7 +128,7 @@ function CopyBlock({ label, text, waHref }: { label: string; text: string; waHre
       ok = false;
     }
     if (!ok) {
-      // Fallback para contextos donde clipboard API está bloqueada (iframes, http).
+      // Fallback for contexts where the clipboard API is blocked (iframes, http).
       try {
         const ta = document.createElement('textarea');
         ta.value = text;
@@ -160,7 +160,7 @@ function CopyBlock({ label, text, waHref }: { label: string; text: string; waHre
               rel="noopener noreferrer"
               className="text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
             >
-              💬 Abrir WhatsApp
+              💬 Open WhatsApp
             </a>
           )}
           <button
@@ -169,7 +169,7 @@ function CopyBlock({ label, text, waHref }: { label: string; text: string; waHre
               copied ? 'bg-emerald-100 text-emerald-700' : 'bg-[#0890F1] text-white hover:bg-[#0770C5]'
             }`}
           >
-            {copied ? '✓ Copiado' : 'Copiar'}
+            {copied ? '✓ Copied' : 'Copy'}
           </button>
         </div>
       </div>
@@ -178,7 +178,7 @@ function CopyBlock({ label, text, waHref }: { label: string; text: string; waHre
   );
 }
 
-// Guion de llamada Tier A: por pasos, para leer/guiar (no se pega).
+// Tier A call script: step by step, to read/guide (not pasted).
 function TierAGuide({ fill }: { fill: (t: string) => string }) {
   return (
     <div className="space-y-3">
@@ -191,7 +191,7 @@ function TierAGuide({ fill }: { fill: (t: string) => string }) {
 
           {s.quote && (
             s.copy ? (
-              <div className="mt-1.5"><CopyBlock label="Apertura" text={fill(s.quote)} /></div>
+              <div className="mt-1.5"><CopyBlock label="Opening" text={fill(s.quote)} /></div>
             ) : (
               <p className="mt-1 text-sm text-gray-700 italic">“{fill(s.quote)}”</p>
             )
@@ -210,7 +210,7 @@ function TierAGuide({ fill }: { fill: (t: string) => string }) {
       ))}
 
       <div className="rounded-lg border border-gray-200 bg-white p-3">
-        <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1.5">Objeciones · respuestas rápidas</p>
+        <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1.5">Objections · quick responses</p>
         <div className="space-y-1">
           {TIER_A.objeciones.map((o) => (
             <p key={o.k} className="text-sm text-gray-600">

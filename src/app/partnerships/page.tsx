@@ -1,8 +1,8 @@
 'use client';
 
-// URL de la app Partnerships (proyecto aparte: partnertship-lh).
-// Corre local con launchd en localhost:3000 (siempre vivo).
-// Se puede sobreescribir con NEXT_PUBLIC_PARTNERSHIPS_URL si cambia el dominio.
+// URL of the Partnerships app (separate project: partnertship-lh).
+// Runs locally via launchd on localhost:3000 (always alive).
+// Can be overridden with NEXT_PUBLIC_PARTNERSHIPS_URL if the domain changes.
 const PARTNERSHIPS_URL =
   process.env.NEXT_PUBLIC_PARTNERSHIPS_URL || 'http://localhost:3000/pipeline';
 

@@ -19,7 +19,7 @@ interface DailyResponse {
   senders: Sender[];  // sellers with manual sends, sorted by volume
 }
 
-// Color por vendedor (clases literales para que Tailwind las incluya).
+// Color per seller (literal classes so Tailwind includes them).
 const SENDER_COLORS: Record<string, string> = {
   'Alejandro': 'bg-orange-500',
   'Martin': 'bg-blue-500',
@@ -29,7 +29,7 @@ const FALLBACK_COLORS = ['bg-teal-500', 'bg-pink-500', 'bg-amber-500', 'bg-indig
 function colorFor(name: string, idx: number): string {
   return SENDER_COLORS[name] || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
 }
-// Emoji por vendedor para la leyenda/tooltip.
+// Emoji per seller for the legend/tooltip.
 function iconFor(name: string): string {
   if (name === 'Alejandro') return '✋';
   if (name === 'Martin' || name === 'Martín') return '👑';
@@ -73,7 +73,7 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
   if (loading) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <div className="h-40 flex items-center justify-center text-sm text-gray-400">Cargando gráfico...</div>
+        <div className="h-40 flex items-center justify-center text-sm text-gray-400">Loading chart...</div>
       </div>
     );
   }
@@ -95,8 +95,8 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
       {/* Header */}
       <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
         <div>
-          <h3 className="font-bold text-sm sm:text-base text-gray-900">📈 WhatsApps por día</h3>
-          <p className="text-xs text-gray-500 mt-0.5">Últimos {days} días · Lima</p>
+          <h3 className="font-bold text-sm sm:text-base text-gray-900">📈 WhatsApps per day</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Last {days} days · Lima</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <span className="flex items-center gap-1.5">
@@ -111,12 +111,12 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
           ))}
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-3 rounded-sm bg-emerald-500"></span>
-            <span className="text-gray-700">💬 Respuestas <strong>{data.totals.reply}</strong></span>
+            <span className="text-gray-700">💬 Replies <strong>{data.totals.reply}</strong></span>
           </span>
         </div>
       </div>
 
-      {/* Rango selector */}
+      {/* Range selector */}
       <div className="flex gap-1 mb-2">
         {RANGE_OPTIONS.map(opt => (
           <button
@@ -143,7 +143,7 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
               <span key={name} className="text-gray-700 ml-2">{iconFor(name)} {name} {n}</span>
             ))}
             <span className="text-emerald-700 ml-2">💬 {hover.reply}</span>
-            <span className="text-gray-500 ml-2">· Total enviado: {hover.auto + hover.manual}</span>
+            <span className="text-gray-500 ml-2">· Total sent: {hover.auto + hover.manual}</span>
           </span>
         )}
       </div>
@@ -159,7 +159,7 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
               const sentTotal = d.manual + d.auto;
               const totalPx = Math.round((sentTotal / yMax) * CHART_H);
               const autoPx = sentTotal > 0 ? Math.round((d.auto / sentTotal) * totalPx) : 0;
-              // Un segmento por vendedor (mismo orden que la leyenda).
+              // One segment per seller (same order as the legend).
               const senderSegs = (data.senders || [])
                 .map((sd, si) => {
                   const c = d.manualBy?.[sd.name] || 0;
@@ -231,9 +231,9 @@ export default function WhatsAppDailyChart({ days: defaultDays = 30 }: { days?: 
 
       {/* Footer note */}
       <p className="text-[10px] text-gray-400 mt-2">
-        Promedio enviados/día: <strong>{(totalSent / days).toFixed(1)}</strong>
-        {' '}· Días sin enviar: <strong>{series.filter(d => d.auto + d.manual === 0).length}</strong>
-        {' '}· Fines de semana atenuados (cron salta sábado/domingo)
+        Average sent/day: <strong>{(totalSent / days).toFixed(1)}</strong>
+        {' '}· Days with no sends: <strong>{series.filter(d => d.auto + d.manual === 0).length}</strong>
+        {' '}· Weekends dimmed (cron skips Saturday/Sunday)
       </p>
     </div>
   );

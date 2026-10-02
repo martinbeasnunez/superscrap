@@ -100,7 +100,7 @@ export default function HistorialPage() {
     return '🔍';
   };
 
-  // Filtrar búsquedas
+  // Filter searches
   const filteredSearches = searches.filter((search) => {
     if (filter === 'with_prospects') return search.contact_stats.prospects > 0;
     if (filter === 'completed') return search.status === 'completed';

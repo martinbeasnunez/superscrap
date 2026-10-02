@@ -279,7 +279,7 @@ export default function SearchDetailPage({
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                🐬 Delfines ({businesses.filter((b) => b.analysis?.potential_tier === 'delfin').length})
+                🐬 Dolphins ({businesses.filter((b) => b.analysis?.potential_tier === 'delfin').length})
               </button>
             )}
           </div>

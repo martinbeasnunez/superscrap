@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-// Fila del marcador mensual (coincide con la tabla reactivation_monthly).
+// Monthly scoreboard row (matches the reactivation_monthly table).
 interface MonthRow {
   id: string;
   month: string;
@@ -22,30 +22,30 @@ interface MonthRow {
   notes: string | null;
 }
 
-// Una métrica = una fila de la tabla; cada mes es una columna.
+// One metric = one table row; each month is a column.
 type Metric = {
   key: keyof MonthRow;
   label: string;
   fmt?: (v: number) => string;
-  section?: boolean; // encabezado de grupo
+  section?: boolean; // group header
 };
 
 const soles = (v: number) => `S/ ${v.toLocaleString('es-PE')}`;
 
 const METRICS: Metric[] = [
-  { key: 'clients', label: 'ACCIONES', section: true },
-  { key: 'clients', label: 'Clientes en lista' },
-  { key: 'control', label: 'Grupo control (sin tocar)' },
-  { key: 'contacted', label: 'Contactados' },
-  { key: 'contacted_wa', label: '→ por WhatsApp' },
-  { key: 'contacted_call', label: '→ por llamada' },
-  { key: 'second_touch', label: '2da vuelta (insistencia)' },
-  { key: 'untouched', label: 'Quedaron sin tocar' },
-  { key: 'recovered_real', label: 'RESULTADOS', section: true },
-  { key: 'recovered_real', label: 'Recuperados reales (admin)' },
-  { key: 'recovered_marked', label: 'Marcados en ORBIT' },
-  { key: 'revenue_recovered', label: 'Plata recuperada', fmt: soles },
-  { key: 'control_returned', label: 'Control que volvió solo' },
+  { key: 'clients', label: 'ACTIONS', section: true },
+  { key: 'clients', label: 'Clients in list' },
+  { key: 'control', label: 'Control group (untouched)' },
+  { key: 'contacted', label: 'Contacted' },
+  { key: 'contacted_wa', label: '→ by WhatsApp' },
+  { key: 'contacted_call', label: '→ by call' },
+  { key: 'second_touch', label: '2nd round (follow-up)' },
+  { key: 'untouched', label: 'Left untouched' },
+  { key: 'recovered_real', label: 'RESULTS', section: true },
+  { key: 'recovered_real', label: 'Real recoveries (admin)' },
+  { key: 'recovered_marked', label: 'Marked in ORBIT' },
+  { key: 'revenue_recovered', label: 'Revenue recovered', fmt: soles },
+  { key: 'control_returned', label: 'Control that returned on its own' },
 ];
 
 export default function MonthlySummary() {
@@ -61,7 +61,7 @@ export default function MonthlySummary() {
         if (d.error) setError(d.error);
         else setMonths(d.months ?? []);
       })
-      .catch(() => setError('No se pudo cargar.'));
+      .catch(() => setError('Could not load.'));
   }, [open, months]);
 
   return (
@@ -70,23 +70,23 @@ export default function MonthlySummary() {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 text-left"
       >
-        <span className="text-sm font-semibold text-gray-900">📅 Resumen por mes</span>
-        <span className="text-xs text-gray-400">{open ? 'ocultar ▲' : 'ver ▼'}</span>
+        <span className="text-sm font-semibold text-gray-900">📅 Monthly summary</span>
+        <span className="text-xs text-gray-400">{open ? 'hide ▲' : 'show ▼'}</span>
       </button>
 
       {open && (
         <div className="px-4 pb-4 overflow-x-auto">
           {error && <p className="text-sm text-rose-600">{error}</p>}
-          {!error && !months && <p className="text-sm text-gray-400">Cargando…</p>}
+          {!error && !months && <p className="text-sm text-gray-400">Loading…</p>}
           {months && months.length === 0 && (
-            <p className="text-sm text-gray-400">Aún no hay meses cerrados.</p>
+            <p className="text-sm text-gray-400">No closed months yet.</p>
           )}
           {months && months.length > 0 && (
             <>
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr>
-                    <th className="text-left py-2 pr-4 font-medium text-gray-500 w-56">Métrica</th>
+                    <th className="text-left py-2 pr-4 font-medium text-gray-500 w-56">Metric</th>
                     {months.map((m) => (
                       <th key={m.id} className="text-right py-2 px-3 font-semibold text-gray-900 whitespace-nowrap">
                         {m.label}
@@ -117,14 +117,14 @@ export default function MonthlySummary() {
                       </tr>
                     )
                   )}
-                  {/* Veredicto como fila de texto */}
+                  {/* Verdict as a text row */}
                   <tr className="bg-gray-50">
                     <td colSpan={months.length + 1} className="py-1.5 px-2 text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
-                      Lectura
+                      Takeaway
                     </td>
                   </tr>
                   <tr>
-                    <td className="py-1.5 pr-4 text-gray-600 align-top">¿La campaña sumó de más?</td>
+                    <td className="py-1.5 pr-4 text-gray-600 align-top">Did the campaign add extra?</td>
                     {months.map((m) => (
                       <td key={m.id} className="py-1.5 px-3 text-right text-gray-700 align-top max-w-xs">
                         {m.verdict || '—'}
@@ -134,7 +134,7 @@ export default function MonthlySummary() {
                 </tbody>
               </table>
               <p className="text-[11px] text-gray-400 mt-2">
-                Recuperados y plata = verificados contra pedidos reales en el admin, no lo que marcó el equipo.
+                Recoveries and revenue = verified against real orders in the admin, not what the team marked.
               </p>
             </>
           )}

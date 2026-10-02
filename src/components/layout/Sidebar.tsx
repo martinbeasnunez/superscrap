@@ -45,7 +45,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
       badge: null,
     },
     {
-      name: 'Reactivación',
+      name: 'Reactivation',
       href: '/reactivacion',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +225,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
           <button
             onClick={onToggleCollapse}
             className="w-full flex items-center justify-center py-2.5 text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-            title={collapsed ? 'Expandir' : 'Colapsar'}
+            title={collapsed ? 'Expand' : 'Collapse'}
           >
             <svg className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />

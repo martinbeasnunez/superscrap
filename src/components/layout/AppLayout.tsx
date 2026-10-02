@@ -17,15 +17,15 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-// Rutas públicas que no requieren autenticación (landing pages para SEO)
-// /landing/[industria] es público, pero /landings (gestión) requiere auth
+// Public routes that don't require authentication (landing pages for SEO)
+// /landing/[industry] is public, but /landings (management) requires auth
 const isPublicLandingPage = (path: string) => {
-  // Solo las landing pages públicas: /landing, /landing/hoteles, etc.
-  // NO incluye /landings (con s) que es la página de gestión
+  // Only the public landing pages: /landing, /landing/hoteles, etc.
+  // Does NOT include /landings (with an s), which is the management page
   return path === '/landing' || (path.startsWith('/landing/') && !path.startsWith('/landings'));
 };
 
-// Títulos de página según la ruta
+// Page titles based on the route
 const getPageTitle = (pathname: string, t: (key: string) => string) => {
   if (pathname === '/estadisticas' || pathname === '/') return t('nav.home');
   if (pathname === '/seguimiento') return t('nav.pipeline');
@@ -46,7 +46,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter();
   const { t } = useI18n();
 
-  // Verificar si es una ruta pública
+  // Check whether it's a public route
   const isPublicRoute = pathname === '/login' || isPublicLandingPage(pathname);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     });
   };
 
-  // Cerrar sidebar cuando cambia la ruta
+  // Close sidebar when the route changes
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
@@ -86,12 +86,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
     );
   }
 
-  // Rutas públicas (landings) - mostrar sin layout
+  // Public routes (landings) - show without layout
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  // Si no hay usuario, mostrar login
+  // If there's no user, show login
   if (!user) {
     return <LoginForm onLogin={(u) => {
       setUser(u);
@@ -99,7 +99,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }} />;
   }
 
-  // Layout con sidebar para usuarios autenticados
+  // Layout with sidebar for authenticated users
   return (
     <div className="min-h-screen bg-[#EDF0F2]">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />

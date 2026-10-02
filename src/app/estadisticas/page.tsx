@@ -18,25 +18,25 @@ interface IndustryItem {
 }
 
 const INDUSTRY_LABELS: Record<string, { emoji: string; label: string }> = {
-  hotel_luxury: { emoji: '🏨', label: 'Hoteles 5★' },
-  hotel_mid: { emoji: '🏨', label: 'Hoteles 3-4★' },
-  hotel_budget: { emoji: '🛏️', label: 'Hostales' },
-  hospital: { emoji: '🏥', label: 'Hospitales' },
-  clinic: { emoji: '⚕️', label: 'Clínicas' },
-  club: { emoji: '🏌️', label: 'Clubes' },
-  spa_premium: { emoji: '💆', label: 'Spas Premium' },
+  hotel_luxury: { emoji: '🏨', label: 'Hotels 5★' },
+  hotel_mid: { emoji: '🏨', label: 'Hotels 3-4★' },
+  hotel_budget: { emoji: '🛏️', label: 'Hostels' },
+  hospital: { emoji: '🏥', label: 'Hospitals' },
+  clinic: { emoji: '⚕️', label: 'Clinics' },
+  club: { emoji: '🏌️', label: 'Clubs' },
+  spa_premium: { emoji: '💆', label: 'Premium Spas' },
   spa_basic: { emoji: '💆', label: 'Spas' },
-  gym_premium: { emoji: '🏋️', label: 'Gyms Premium' },
+  gym_premium: { emoji: '🏋️', label: 'Premium Gyms' },
   gym_basic: { emoji: '🏋️', label: 'Gyms' },
   pilates: { emoji: '🧘', label: 'Pilates' },
-  restaurant_gourmet: { emoji: '🍽️', label: 'Restaurantes Gourmet' },
-  restaurant_mid: { emoji: '🍽️', label: 'Restaurantes' },
-  security: { emoji: '🛡️', label: 'Seguridad' },
-  cleaning: { emoji: '🧹', label: 'Limpieza' },
+  restaurant_gourmet: { emoji: '🍽️', label: 'Gourmet Restaurants' },
+  restaurant_mid: { emoji: '🍽️', label: 'Restaurants' },
+  security: { emoji: '🛡️', label: 'Security' },
+  cleaning: { emoji: '🧹', label: 'Cleaning' },
   industrial: { emoji: '🏭', label: 'Industrial' },
-  events: { emoji: '🎪', label: 'Eventos' },
-  residence: { emoji: '🏠', label: 'Residencias' },
-  other: { emoji: '🏢', label: 'Otros' },
+  events: { emoji: '🎪', label: 'Events' },
+  residence: { emoji: '🏠', label: 'Nursing homes' },
+  other: { emoji: '🏢', label: 'Other' },
 };
 
 interface UserStats {
@@ -110,7 +110,7 @@ interface Stats {
   };
 }
 
-// Componente para mostrar comparación semanal
+// Component to show weekly comparison
 function WeekComparison({ current, previous, label, icon, subtitle, previousSubtitle }: {
   current: number;
   previous: number;
@@ -166,7 +166,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
-  // Tips de ventas rotativos
+  // Rotating sales tips
   const salesTips = [
     { emoji: '🎯', title: t('dash.tip_followup_title'), tip: t('dash.tip_followup_desc'), action: t('dash.tip_followup_cta'), link: '/seguimiento' },
     { emoji: '⏰', title: t('dash.tip_timing_title'), tip: t('dash.tip_timing_desc'), action: t('dash.tip_timing_cta'), link: '/seguimiento' },
@@ -190,7 +190,7 @@ export default function HomePage() {
 
     fetchData();
 
-    // Rotar tips cada 10 segundos
+    // Rotate tips every 10 seconds
     const tipInterval = setInterval(() => {
       setCurrentTipIndex((prev) => (prev + 1) % salesTips.length);
     }, 10000);
@@ -212,14 +212,14 @@ export default function HomePage() {
   const currentTip = salesTips[currentTipIndex];
   const todayContacts = stats ? stats.today.whatsapp + stats.today.email + stats.today.call : 0;
 
-  // Calcular días de la semana
+  // Calculate days of the week
   const today = new Date();
   const dayOfWeek = today.getDay();
-  const daysInWeek = dayOfWeek === 0 ? 7 : dayOfWeek; // Domingo = 7
+  const daysInWeek = dayOfWeek === 0 ? 7 : dayOfWeek; // Sunday = 7
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto pb-20 lg:pb-8">
-      {/* Header con saludo */}
+      {/* Header with greeting */}
       <div className="flex items-center justify-between mb-4 sm:mb-8">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -242,7 +242,7 @@ export default function HomePage() {
 
       {stats && (
         <>
-          {/* Actividad de Hoy - Card prominente */}
+          {/* Today's Activity - Prominent card */}
           <div className="bg-gradient-to-br from-[#1C2026] to-[#202B93] rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div>
@@ -270,7 +270,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-xl sm:text-2xl font-bold">{stats.today.whatsapp}</p>
-                    <p className="text-white/60 text-[10px] sm:text-xs" title={`${stats.today.whatsappManual} enviados por Alejandro · ${stats.today.whatsappAuto} enviados por el sistema`}>
+                    <p className="text-white/60 text-[10px] sm:text-xs" title={`${stats.today.whatsappManual} sent by Alejandro · ${stats.today.whatsappAuto} sent by the system`}>
                       WhatsApp
                       {(stats.today.whatsappManual > 0 || stats.today.whatsappAuto > 0) && (
                         <span>
@@ -329,7 +329,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Resumen total del día */}
+            {/* Total summary of the day */}
             <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-between">
               <p className="text-white/70 text-xs sm:text-sm">
                 {t('dash.total_today')} <span className="font-bold text-white">{todayContacts}</span>
@@ -350,23 +350,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Reactivación B2B — KPI Contactado vs Control */}
+          {/* B2B Reactivation — KPI Contacted vs Control */}
           <div className="mb-4 sm:mb-6">
             <ReactivationStats />
           </div>
 
-          {/* Inbound vs Outbound — de dónde vienen los leads */}
+          {/* Inbound vs Outbound — where leads come from */}
           <SourceMix />
 
-          {/* Por qué perdemos leads — motivos de rechazo + recomendaciones */}
+          {/* Why we lose leads — rejection reasons + recommendations */}
           <LossInsights />
 
-          {/* Gráfico de envíos diarios — para detectar caídas a simple vista */}
+          {/* Daily sends chart — to spot drops at a glance */}
           <div className="mb-4 sm:mb-6">
             <WhatsAppDailyChart days={14} />
           </div>
 
-          {/* Progreso Semanal - Comparación */}
+          {/* Weekly Progress - Comparison */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <h2 className="text-sm sm:text-lg font-semibold text-gray-900">
@@ -394,14 +394,14 @@ export default function HomePage() {
                 previous={stats.lastWeek.whatsapp}
                 label={t('dash.whatsapp')}
                 subtitle={(stats.thisWeek.whatsappManual || 0) + (stats.thisWeek.whatsappAuto || 0) > 0 ? (
-                  <span title={`${stats.thisWeek.whatsappManual || 0} de Alejandro · ${stats.thisWeek.whatsappAuto || 0} del sistema`}>
+                  <span title={`${stats.thisWeek.whatsappManual || 0} by Alejandro · ${stats.thisWeek.whatsappAuto || 0} by the system`}>
                     {(stats.thisWeek.whatsappManual || 0) > 0 && <span className="text-orange-600 font-medium">✋{stats.thisWeek.whatsappManual}</span>}
                     {(stats.thisWeek.whatsappManual || 0) > 0 && (stats.thisWeek.whatsappAuto || 0) > 0 && <span className="text-gray-400"> · </span>}
                     {(stats.thisWeek.whatsappAuto || 0) > 0 && <span className="text-purple-600 font-medium">🤖{stats.thisWeek.whatsappAuto}</span>}
                   </span>
                 ) : null}
                 previousSubtitle={(stats.lastWeek.whatsappManual || 0) + (stats.lastWeek.whatsappAuto || 0) > 0 ? (
-                  <span title={`${stats.lastWeek.whatsappManual || 0} de Alejandro · ${stats.lastWeek.whatsappAuto || 0} del sistema`}>
+                  <span title={`${stats.lastWeek.whatsappManual || 0} by Alejandro · ${stats.lastWeek.whatsappAuto || 0} by the system`}>
                     ({(stats.lastWeek.whatsappManual || 0) > 0 && <span className="text-orange-500">✋{stats.lastWeek.whatsappManual}</span>}
                     {(stats.lastWeek.whatsappManual || 0) > 0 && (stats.lastWeek.whatsappAuto || 0) > 0 && <span> · </span>}
                     {(stats.lastWeek.whatsappAuto || 0) > 0 && <span className="text-purple-500">🤖{stats.lastWeek.whatsappAuto}</span>})
@@ -524,7 +524,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Coaching de ventas */}
+          {/* Sales coaching */}
           {stats.coaching && stats.coaching.prospectBreakdown.total > 0 && (
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 mb-4 sm:mb-6">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -548,7 +548,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-lg">🐬</span>
                     <span className="text-xl sm:text-2xl font-bold text-emerald-700">{stats.coaching.prospectBreakdown.delfin}</span>
-                    <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">Delfines</span>
+                    <span className="text-[10px] sm:text-xs text-emerald-600 font-medium">Dolphins</span>
                   </div>
                   {stats.coaching.prospectBreakdown.unknown > 0 && (
                     <div className="flex items-center gap-1.5">
@@ -742,11 +742,11 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Grid principal */}
+          {/* Main grid */}
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
-            {/* Acciones pendientes - CTA principal */}
+            {/* Pending actions - Main CTA */}
             <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-              {/* Follow-ups pendientes */}
+              {/* Pending follow-ups */}
               {stats.total.needsFollowUp > 0 && (
                 <Link
                   href="/seguimiento"
@@ -761,12 +761,12 @@ export default function HomePage() {
                       </div>
                       <div>
                         <p className="text-2xl sm:text-3xl font-bold">{stats.total.needsFollowUp}</p>
-                        <p className="text-white/90 font-medium text-sm sm:text-base">leads esperan follow-up</p>
-                        <p className="text-white/70 text-xs sm:text-sm hidden sm:block">+3 días sin contacto</p>
+                        <p className="text-white/90 font-medium text-sm sm:text-base">leads waiting for follow-up</p>
+                        <p className="text-white/70 text-xs sm:text-sm hidden sm:block">3+ days without contact</p>
                       </div>
                     </div>
                     <div className="hidden sm:flex items-center gap-2 bg-white/20 px-4 py-2 rounded-xl group-hover:bg-white/30 transition-colors flex-shrink-0">
-                      <span className="font-semibold">Revisar</span>
+                      <span className="font-semibold">Review</span>
                       <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -778,7 +778,7 @@ export default function HomePage() {
                 </Link>
               )}
 
-              {/* Stats del pipeline */}
+              {/* Pipeline stats */}
               <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-3 sm:mb-5">
                   <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{t('dash.your_pipeline')}</h3>
@@ -802,7 +802,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Tasa de conversión simplificada */}
+                {/* Simplified conversion rate */}
                 <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-gray-100">
                   <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                     <span className="text-xs sm:text-sm text-gray-600">{t('dash.conversion')}</span>
@@ -819,15 +819,15 @@ export default function HomePage() {
                     />
                   </div>
                   <p className="text-[10px] sm:text-xs text-gray-400 mt-1.5 sm:mt-2 hidden sm:block">
-                    {t('dash.conversion_info').split(',')[0]}, {((stats.total.prospects / Math.max(stats.total.whatsapp + stats.total.email + stats.total.call, 1)) * 100).toFixed(0)} {t('dash.conversion_info').split(',')[1]?.trim() || 'se convierten en prospectos'}
+                    {t('dash.conversion_info').split(',')[0]}, {((stats.total.prospects / Math.max(stats.total.whatsapp + stats.total.email + stats.total.call, 1)) * 100).toFixed(0)} {t('dash.conversion_info').split(',')[1]?.trim() || 'become prospects'}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Tips y coaching */}
+            {/* Tips and coaching */}
             <div className="space-y-3 sm:space-y-4">
-              {/* Tip del día */}
+              {/* Tip of the day */}
               <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white">
                 <div className="flex items-center gap-2 mb-3 sm:mb-4">
                   <span className="text-xl sm:text-2xl">{currentTip.emoji}</span>
@@ -847,7 +847,7 @@ export default function HomePage() {
                   </svg>
                 </Link>
 
-                {/* Indicadores de tips */}
+                {/* Tip indicators */}
                 <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-3 sm:mt-4">
                   {salesTips.map((_, i) => (
                     <button
@@ -861,7 +861,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Insights rápidos - Solo en desktop o si hay datos */}
+              {/* Quick insights - Desktop only or if there's data */}
               {stats.insights?.bestType && (
                 <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 hidden sm:block">
                   <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
@@ -880,7 +880,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Top zonas - Solo en desktop */}
+              {/* Top zones - Desktop only */}
               {stats.insights?.topDistricts && stats.insights.topDistricts.length > 0 && (
                 <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 hidden lg:block">
                   <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
@@ -907,7 +907,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Actividad del equipo hoy - Solo en desktop */}
+          {/* Team activity today - Desktop only */}
           {stats.today.byUser && stats.today.byUser.length > 0 && (
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 hidden sm:block">
               <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base">{t('dash.team_activity')}</h3>

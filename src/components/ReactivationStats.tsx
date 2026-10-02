@@ -13,7 +13,7 @@ interface Stats {
 
 const pct = (n: number) => `${(n * 100).toFixed(0)}%`;
 
-// Tarjeta de Home: reactivados vs no + el KPI real (Contactado vs Control).
+// Home card: reactivated vs not + the real KPI (Contacted vs Control).
 export default function ReactivationStats() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [failed, setFailed] = useState(false);
@@ -25,7 +25,7 @@ export default function ReactivationStats() {
       .catch(() => setFailed(true));
   }, []);
 
-  // Sin tabla creada aún o sin datos: no estorbar el Home.
+  // No table created yet or no data: don't clutter the Home.
   if (failed || (stats && stats.total === 0)) return null;
   if (!stats) {
     return <div className="bg-white rounded-2xl border border-gray-100 shadow-sm h-40 animate-pulse" />;
@@ -37,35 +37,35 @@ export default function ReactivationStats() {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-bold text-gray-900">♻️ Reactivación B2B</h3>
-          <p className="text-xs text-gray-500">{stats.total} clientes · {stats.pending} pendientes</p>
+          <h3 className="font-bold text-gray-900">♻️ B2B Reactivation</h3>
+          <p className="text-xs text-gray-500">{stats.total} clients · {stats.pending} pending</p>
         </div>
-        <Link href="/seguimiento" className="text-xs font-medium text-[#0890F1] hover:underline">Abrir →</Link>
+        <Link href="/seguimiento" className="text-xs font-medium text-[#0890F1] hover:underline">Open →</Link>
       </div>
 
-      {/* KPI real: uplift Contactado vs Control */}
+      {/* Real KPI: uplift Contacted vs Control */}
       <div className={`rounded-xl p-4 mb-4 border ${upliftPositive ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
-        <p className="text-xs font-medium text-gray-500">Diferencial Contactado − Control (KPI real)</p>
+        <p className="text-xs font-medium text-gray-500">Contacted − Control differential (real KPI)</p>
         <p className={`text-3xl font-bold ${upliftPositive ? 'text-emerald-700' : 'text-rose-600'}`}>
           {upliftPositive ? '+' : ''}{pct(stats.uplift)}
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          Contactado {pct(stats.contacted.rate)} vs Control {pct(stats.control.rate)}
+          Contacted {pct(stats.contacted.rate)} vs Control {pct(stats.control.rate)}
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-3 text-center">
         <div>
           <p className="text-xl font-bold text-emerald-600">{stats.contacted.reactivated}</p>
-          <p className="text-xs text-gray-500">Reactivados</p>
+          <p className="text-xs text-gray-500">Reactivated</p>
         </div>
         <div>
           <p className="text-xl font-bold text-gray-400">{stats.contacted.notReactivated}</p>
-          <p className="text-xs text-gray-500">No reactivados</p>
+          <p className="text-xs text-gray-500">Not reactivated</p>
         </div>
         <div>
           <p className="text-xl font-bold text-rose-600">{stats.control.count}</p>
-          <p className="text-xs text-gray-500">En control</p>
+          <p className="text-xs text-gray-500">In control</p>
         </div>
       </div>
     </div>

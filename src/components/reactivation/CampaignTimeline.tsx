@@ -14,16 +14,16 @@ import {
   fmtShort,
 } from '@/lib/reactivation-campaign';
 
-// Banner/timeline de la campaña en el Home de /reactivacion.
-// Fase actual + deadline + cuenta regresiva + barra de progreso (toques hechos /
-// total de la fase) + próximo checkpoint. Todo derivado de la data real.
+// Campaign banner/timeline on the /reactivacion Home.
+// Current phase + deadline + countdown + progress bar (touches done /
+// phase total) + next checkpoint. All derived from real data.
 export default function CampaignTimeline() {
   const [all, setAll] = useState<ReactClient[] | null>(null);
   const today = todayISO();
 
   useEffect(() => {
-    // Trae TODAS las listas (reactivación + primera recompra + excluir) para
-    // que el progreso de campaña sea exacto sin importar la sub-lista visible.
+    // Fetch ALL lists (reactivation + first repurchase + exclude) so that
+    // campaign progress is exact regardless of the visible sub-list.
     fetch('/api/reactivation')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && setAll(d.clients ?? []))
@@ -32,9 +32,9 @@ export default function CampaignTimeline() {
 
   const stats = useMemo(() => {
     if (!all) return null;
-    // "Aparcados": sin tocar y o bien marcados muertos, o agendados para después
-    // (fecha de reconexión futura, p.ej. los "1era vez" que van a octubre). No
-    // cuentan como pendiente de HOY (si no, Joaquín ve "faltan 42").
+    // "Parked": untouched and either marked dead, or scheduled for later
+    // (future reconnect date, e.g. the "first-timers" going to October). They
+    // don't count as pending TODAY (otherwise Joaquín sees "42 left").
     const parked = (c: ReactClient) =>
       !touch1Done(c) && (c.outcome === 'muerto' || c.outcome === 'octubre' || (!!c.recontact_date && c.recontact_date > today));
     const contactable = all.filter((c) => !c.is_control && c.list_type !== 'excluir' && !parked(c));
@@ -42,13 +42,13 @@ export default function CampaignTimeline() {
       const ws = contactable.filter((c) => waveFor(c) === n);
       return { total: ws.length, done: ws.filter(touch1Done).length };
     };
-    // Desglose por PERSONA, acumulado de lo que ya toca hasta esta semana
-    // (no por ola aislada) — así el arrastre de Fer se ve y se actualiza solo.
+    // Breakdown by PERSON, accumulated for what's due up to this week
+    // (not per isolated wave) — so Fer's backlog shows and updates on its own.
     const curN = currentWave(today).n;
     const done = (arr: typeof contactable) => arr.filter(touch1Done).length;
-    const due = contactable.filter((c) => (waveFor(c) ?? 99) <= curN); // ya les toca
-    const tierA = contactable.filter((c) => c.tier === 'A'); // Fer: todas las grandes (ola 1)
-    const bc = due.filter((c) => c.tier !== 'A');            // Joaquín: medianos/chicos que ya tocan
+    const due = contactable.filter((c) => (waveFor(c) ?? 99) <= curN); // already due
+    const tierA = contactable.filter((c) => c.tier === 'A'); // Fer: all big accounts (wave 1)
+    const bc = due.filter((c) => c.tier !== 'A');            // Joaquín: medium/small accounts already due
     const dueTotal = tierA.length + bc.length;
     const dueDone = done(tierA) + done(bc);
     return {
@@ -68,49 +68,49 @@ export default function CampaignTimeline() {
   const cur = currentWave(today);
   const status = waveStatus(cur, today);
 
-  // Cuenta regresiva según el estado de la ola actual.
+  // Countdown based on the current wave's status.
   const countdown = (() => {
-    if (cur.n === 4 && today > cur.end) return 'Campaña cerrada';
+    if (cur.n === 4 && today > cur.end) return 'Campaign closed';
     if (status === 'proxima') {
       const d = daysBetween(today, cur.start);
-      return d <= 0 ? 'Arranca hoy' : `Arranca en ${d} día${d === 1 ? '' : 's'}`;
+      return d <= 0 ? 'Starts today' : `Starts in ${d} day${d === 1 ? '' : 's'}`;
     }
     if (status === 'en_curso') {
       const d = daysBetween(today, cur.deadline ?? cur.end);
-      return d <= 0 ? 'Cierra hoy' : `Cierra en ${d} día${d === 1 ? '' : 's'}`;
+      return d <= 0 ? 'Closes today' : `Closes in ${d} day${d === 1 ? '' : 's'}`;
     }
-    return 'Cerrada';
+    return 'Closed';
   })();
 
   const totalSemanas = CAMPAIGN.waves.length;
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4 mb-4">
-      {/* Dónde estamos, en una línea */}
+      {/* Where we are, in one line */}
       <div className="flex items-baseline justify-between gap-2 flex-wrap mb-3">
-        <p className="font-bold text-gray-900">📅 Semana {cur.n} de {totalSemanas}</p>
-        <p className="text-sm font-semibold text-gray-600">{countdown}{cur.n <= 3 ? ` · cierra ${fmtShort(cur.deadline ?? cur.end)}` : ''}</p>
+        <p className="font-bold text-gray-900">📅 Week {cur.n} of {totalSemanas}</p>
+        <p className="text-sm font-semibold text-gray-600">{countdown}{cur.n <= 3 ? ` · closes ${fmtShort(cur.deadline ?? cur.end)}` : ''}</p>
       </div>
 
-      {/* Cada persona, una barra simple */}
+      {/* Each person, one simple bar */}
       {stats && (
         <div className="space-y-2.5">
-          <PersonRow icon="💬" label="Joaquín · mensajes" done={stats.curSplit.bc.done} total={stats.curSplit.bc.total} />
-          <PersonRow icon="📞" label="Fernanda · llamadas a grandes" done={stats.curSplit.tierA.done} total={stats.curSplit.tierA.total} />
+          <PersonRow icon="💬" label="Joaquín · messages" done={stats.curSplit.bc.done} total={stats.curSplit.bc.total} />
+          <PersonRow icon="📞" label="Fernanda · calls to big accounts" done={stats.curSplit.tierA.done} total={stats.curSplit.tierA.total} />
         </div>
       )}
 
-      {/* Lo atrasado, en una línea */}
+      {/* What's overdue, in one line */}
       {stats && stats.overdue > 0 && (
         <p className="mt-3 text-sm font-semibold text-rose-600">
-          🔴 {stats.overdue} quedaron de antes — empieza por esos.
+          🔴 {stats.overdue} left over from before — start with those.
         </p>
       )}
     </div>
   );
 }
 
-// Una fila por persona: nombre, cuántos van, y una barra.
+// One row per person: name, how many done, and a bar.
 function PersonRow({ icon, label, done, total }: { icon: string; label: string; done: number; total: number }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   const falta = total - done;
@@ -119,8 +119,8 @@ function PersonRow({ icon, label, done, total }: { icon: string; label: string; 
       <div className="flex items-center justify-between gap-2 mb-1 text-sm">
         <span className="font-semibold text-gray-800">{icon} {label}</span>
         <span className="text-gray-500">
-          <b className="text-gray-900">{done}</b> de {total}
-          {falta > 0 ? <span className="text-[#0890F1] font-medium"> · faltan {falta}</span> : total > 0 ? <span className="text-emerald-600 font-medium"> · ✅ listo</span> : null}
+          <b className="text-gray-900">{done}</b> of {total}
+          {falta > 0 ? <span className="text-[#0890F1] font-medium"> · {falta} left</span> : total > 0 ? <span className="text-emerald-600 font-medium"> · ✅ done</span> : null}
         </span>
       </div>
       <div className="h-2.5 rounded-full bg-gray-200 overflow-hidden">

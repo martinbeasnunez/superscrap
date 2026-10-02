@@ -72,7 +72,7 @@ export default function AddManualLeadModal({ isOpen, onClose, onCreated }: AddMa
       if (!res.ok) {
         throw new Error(data.error || t('manual.error'));
       }
-      // Si ya existía, avisar (si no, el modal se cierra y parece que "no se agregó")
+      // If it already existed, notify (otherwise the modal closes and it looks like it "wasn't added")
       if (data.duplicate) {
         onCreated();
         setError(data.message || t('manual.error'));

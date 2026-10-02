@@ -30,7 +30,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
   const [searchedTypes, setSearchedTypes] = useState<Set<string>>(new Set());
   const [showAllSuggestions, setShowAllSuggestions] = useState(false);
 
-  // Cargar tipos ya buscados
+  // Load types already searched
   useEffect(() => {
     async function fetchSearchedTypes() {
       try {
@@ -52,7 +52,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
     setProgress(null);
 
     if (!businessType.trim()) {
-      setError('Ingresa el tipo de negocio');
+      setError('Enter the business type');
       return;
     }
 
@@ -72,14 +72,14 @@ export default function SearchForm({ userId }: SearchFormProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Error en la búsqueda');
+        throw new Error(data.error || 'Search error');
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
       if (!reader) {
-        throw new Error('No se pudo iniciar la lectura');
+        throw new Error('Could not start reading');
       }
 
       let searchId: string | null = null;
@@ -110,13 +110,13 @@ export default function SearchForm({ userId }: SearchFormProps) {
                 throw new Error(data.message);
               }
             } catch (parseError) {
-              // Ignorar errores de parsing de líneas vacías
+              // Ignore parsing errors from empty lines
             }
           }
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : 'Unknown error');
       setLoading(false);
       setProgress(null);
     }
@@ -130,16 +130,16 @@ export default function SearchForm({ userId }: SearchFormProps) {
   const getEstimatedTime = () => {
     if (!progress?.total || !progress?.current) return null;
     const remaining = progress.total - progress.current;
-    // Estimamos ~3 segundos por negocio (scraping + análisis)
+    // We estimate ~3 seconds per business (scraping + analysis)
     const seconds = remaining * 3;
-    if (seconds < 60) return `~${seconds} segundos`;
+    if (seconds < 60) return `~${seconds} seconds`;
     const minutes = Math.ceil(seconds / 60);
-    return `~${minutes} minuto${minutes > 1 ? 's' : ''}`;
+    return `~${minutes} minute${minutes > 1 ? 's' : ''}`;
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Selector de fuente */}
+      {/* Source selector */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {t('sf.search_in')}
@@ -195,15 +195,15 @@ export default function SearchForm({ userId }: SearchFormProps) {
           disabled={loading}
         />
 
-        {/* Sugerencias de búsqueda */}
+        {/* Search suggestions */}
         <div className="mt-2">
           {(() => {
-            // Distritos premium para multiplicar sugerencias
+            // Premium districts to multiply suggestions
             const premiumDistricts = ['miraflores', 'san isidro', 'surco', 'san borja', 'la molina', 'barranco'];
 
-            // Tipos base de negocio
+            // Base business types
             const baseTypes = source === 'google' ? [
-              // TIER 1 - Hoteles (ropa de cama + toallas)
+              // TIER 1 - Hotels (bed linens + towels)
               'hotel 5 estrellas',
               'hotel 4 estrellas',
               'hotel 3 estrellas',
@@ -213,45 +213,45 @@ export default function SearchForm({ userId }: SearchFormProps) {
               'resort',
               'apart hotel',
               'hostal turistico',
-              // TIER 1 - Salud (uniformes + ropa de cama)
+              // TIER 1 - Healthcare (uniforms + bed linens)
               'hospital privado',
               'clinica estetica',
               'clinica dental',
               'clinica dermatologica',
               'centro medico',
               'policlinico',
-              // TIER 1 - Clubs (toallas + manteles)
+              // TIER 1 - Clubs (towels + tablecloths)
               'country club',
               'club deportivo',
               'club de tenis',
               'club de golf',
-              // TIER 2 - Spas y bienestar (toallas)
+              // TIER 2 - Spas and wellness (towels)
               'spa',
               'day spa',
               'centro de masajes',
               'sauna',
-              // TIER 2 - Gimnasios (toallas)
+              // TIER 2 - Gyms (towels)
               'gimnasio',
               'gimnasio premium',
               'crossfit',
               'pilates',
-              // TIER 2 - Restaurantes (manteles + uniformes)
+              // TIER 2 - Restaurants (tablecloths + uniforms)
               'restaurante gourmet',
               'restaurante de autor',
               'cevicheria',
               'steakhouse',
               'restaurante japones',
               'restaurante italiano',
-              // TIER 3 - Eventos (manteles + uniformes)
+              // TIER 3 - Events (tablecloths + uniforms)
               'salon de eventos',
               'centro de convenciones',
               'catering',
-              // TIER 3 - Residencias (ropa de cama + toallas)
+              // TIER 3 - Residences (bed linens + towels)
               'casa de reposo',
               'residencia geriatrica',
               'hogar de ancianos',
             ] : [
-              // Directorio no necesita multiplicar por distrito
+              // Directory doesn't need to multiply by district
               'empresa de seguridad',
               'vigilancia privada',
               'seguridad patrimonial',
@@ -292,12 +292,12 @@ export default function SearchForm({ userId }: SearchFormProps) {
               'mudanzas empresariales',
             ];
 
-            // Para Google Maps: generar combinaciones tipo + distrito
+            // For Google Maps: generate type + district combinations
             const suggestions = source === 'google'
               ? [
-                  // Primero los tipos sin distrito (busqueda general en Lima)
+                  // First the types with no district (general search in Lima)
                   ...baseTypes,
-                  // Luego combinaciones con distritos premium
+                  // Then combinations with premium districts
                   ...baseTypes.flatMap(type =>
                     premiumDistricts.map(district => `${type} ${district}`)
                   ),
@@ -307,11 +307,11 @@ export default function SearchForm({ userId }: SearchFormProps) {
             const usedCount = suggestions.filter(s => searchedTypes.has(s.toLowerCase())).length;
             const pendingCount = suggestions.length - usedCount;
 
-            // Separar en pendientes primero, usadas despues
+            // Split into pending first, then used
             const pendingSuggestions = suggestions.filter(s => !searchedTypes.has(s.toLowerCase()));
             const usedSuggestions = suggestions.filter(s => searchedTypes.has(s.toLowerCase()));
 
-            // Mostrar todas o solo 50 segun toggle
+            // Show all or just 50 depending on the toggle
             const visiblePending = showAllSuggestions ? pendingSuggestions : pendingSuggestions.slice(0, 50);
             const hiddenPendingCount = pendingSuggestions.length - (showAllSuggestions ? pendingSuggestions.length : 50);
             const canShowMore = hiddenPendingCount > 0 && !showAllSuggestions;
@@ -341,7 +341,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
                 </div>
 
                 <div className={`flex flex-wrap gap-1.5 overflow-y-auto pr-1 ${showAllSuggestions ? 'max-h-80' : 'max-h-40'}`}>
-                  {/* Pendientes primero */}
+                  {/* Pending first */}
                   {visiblePending.map((suggestion) => (
                     <button
                       key={suggestion}
@@ -354,7 +354,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
                     </button>
                   ))}
 
-                  {/* Toggle para ver mas/menos pendientes */}
+                  {/* Toggle to see more/fewer pending */}
                   {canShowMore && (
                     <button
                       type="button"
@@ -374,14 +374,14 @@ export default function SearchForm({ userId }: SearchFormProps) {
                     </button>
                   )}
 
-                  {/* Separador si hay usadas */}
+                  {/* Separator if there are used ones */}
                   {usedSuggestions.length > 0 && visiblePending.length > 0 && (
                     <div className="w-full border-t border-gray-200 my-1 pt-1">
                       <span className="text-xs text-gray-400">{t('sf.already_searched')}</span>
                     </div>
                   )}
 
-                  {/* Usadas al final */}
+                  {/* Used ones at the end */}
                   {usedSuggestions.map((suggestion) => (
                     <button
                       key={suggestion}
@@ -415,7 +415,7 @@ export default function SearchForm({ userId }: SearchFormProps) {
         />
       </div>
 
-      {/* Info sobre detección automática */}
+      {/* Info about automatic detection */}
       <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
         <p className="text-sm text-gray-600">
           <span className="font-medium text-gray-800">{t('sf.auto_detection')}</span> {t('sf.auto_detection_desc')}

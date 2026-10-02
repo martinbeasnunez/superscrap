@@ -11,7 +11,7 @@ interface KanbanCardProps {
   onFocusToggled?: () => void;
 }
 
-// Extraer distrito de la dirección
+// Extract district from the address
 function extractDistrict(address: string | null): string {
   if (!address) return '';
   const lower = address.toLowerCase();
@@ -28,7 +28,7 @@ function extractDistrict(address: string | null): string {
   return '';
 }
 
-// Determina el nivel de urgencia de follow-up
+// Determines the follow-up urgency level
 function getFollowUpUrgency(daysSinceContact: number | null, contactCount: number, t?: (key: string) => string): {
   level: 'none' | 'ok' | 'warning' | 'urgent' | 'critical';
   message: string;
@@ -43,7 +43,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact === 0) {
     return {
       level: 'ok',
-      message: t?.('card.today') || 'Hoy',
+      message: t?.('card.today') || 'Today',
       color: 'text-green-600',
       bgColor: 'bg-green-100',
       pulseColor: '',
@@ -53,7 +53,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact === 1) {
     return {
       level: 'ok',
-      message: t?.('card.yesterday') || 'Ayer',
+      message: t?.('card.yesterday') || 'Yesterday',
       color: 'text-green-600',
       bgColor: 'bg-green-100',
       pulseColor: '',
@@ -63,7 +63,7 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact === 2) {
     return {
       level: 'warning',
-      message: t?.('card.2days') || '2 días',
+      message: t?.('card.2days') || '2 days',
       color: 'text-[#B8923F]',
       bgColor: 'bg-[#FFE9B3]',
       pulseColor: '',
@@ -73,72 +73,72 @@ function getFollowUpUrgency(daysSinceContact: number | null, contactCount: numbe
   if (daysSinceContact >= 3 && daysSinceContact <= 4) {
     return {
       level: 'urgent',
-      message: `${daysSinceContact}d - ${t?.('card.followup') || '¡Seguimiento!'}`,
+      message: `${daysSinceContact}d - ${t?.('card.followup') || 'Follow up!'}`,
       color: 'text-blue-700',
       bgColor: 'bg-blue-100',
       pulseColor: 'animate-pulse',
     };
   }
 
-  // 5+ días - crítico
+  // 5+ days - critical
   return {
     level: 'critical',
-    message: `${daysSinceContact}d - ${t?.('card.urgent') || '¡URGENTE!'}`,
+    message: `${daysSinceContact}d - ${t?.('card.urgent') || 'URGENT!'}`,
     color: 'text-red-700',
     bgColor: 'bg-red-100',
     pulseColor: 'animate-pulse',
   };
 }
 
-// Etiqueta corta para razón de pérdida (solo en columna "perdido")
+// Short label for the loss reason (only in the "perdido" column)
 function getLostReasonBadge(reason: string | null): { emoji: string; label: string } | null {
   switch (reason) {
-    case 'precio': return { emoji: '💰', label: 'Precio' };
-    case 'lavado_interno': return { emoji: '🏠', label: 'Lav. interno' };
-    case 'tiene_proveedor': return { emoji: '🤝', label: 'Tiene prov.' };
+    case 'precio': return { emoji: '💰', label: 'Price' };
+    case 'lavado_interno': return { emoji: '🏠', label: 'In-house' };
+    case 'tiene_proveedor': return { emoji: '🤝', label: 'Has provider' };
     case 'mal_timing': return { emoji: '⏰', label: 'Timing' };
-    case 'no_interesado': return { emoji: '🚫', label: 'No interesa' };
-    case 'no_contesta': return { emoji: '📵', label: 'No contesta' };
-    case 'no_decisor': return { emoji: '🚪', label: 'No decisor' };
-    case 'otro': return { emoji: '❓', label: 'Otro' };
+    case 'no_interesado': return { emoji: '🚫', label: 'Not interested' };
+    case 'no_contesta': return { emoji: '📵', label: 'No answer' };
+    case 'no_decisor': return { emoji: '🚪', label: 'Not decision-maker' };
+    case 'otro': return { emoji: '❓', label: 'Other' };
     default: return null;
   }
 }
 
-// Etiqueta corta para el canal de adquisición (solo leads manuales)
+// Short label for the acquisition channel (manual leads only)
 function getChannelBadge(channel: string | null): { emoji: string; label: string } | null {
   switch (channel) {
-    case 'comercial': return { emoji: '🤝', label: 'Comercial' };
+    case 'comercial': return { emoji: '🤝', label: 'Sales' };
     case 'google_seo': return { emoji: '🌱', label: 'SEO' };
     case 'google_sem': return { emoji: '💸', label: 'SEM' };
     case 'laundryheap': return { emoji: '🧺', label: 'LH' };
     case 'getlavado_b2c': return { emoji: '🌐', label: 'B2C' };
     case 'getlavado_b2b': return { emoji: '🏢', label: 'B2B' };
-    case 'referido': return { emoji: '👥', label: 'Referido' };
+    case 'referido': return { emoji: '👥', label: 'Referral' };
     case 'linkedin': return { emoji: '💼', label: 'LinkedIn' };
-    case 'eventos': return { emoji: '🎪', label: 'Evento' };
-    case 'otro': return { emoji: '❓', label: 'Otro' };
+    case 'eventos': return { emoji: '🎪', label: 'Event' };
+    case 'otro': return { emoji: '❓', label: 'Other' };
     default: return null;
   }
 }
 
-// Obtener label corto del resultado de llamada IA
+// Get the short label for the AI call outcome
 function getAICallLabel(outcome: string | null, t?: (key: string) => string): { text: string; color: string; bg: string } {
   switch (outcome) {
     case 'wants_quote':
-      return { text: `💰 ${t?.('biz.call_wants_quote') || 'Quiere cotización'}`, color: 'text-green-700', bg: 'bg-green-100' };
+      return { text: `💰 ${t?.('biz.call_wants_quote') || 'Wants quote'}`, color: 'text-green-700', bg: 'bg-green-100' };
     case 'interested':
-      return { text: `🎯 ${t?.('biz.call_interested') || 'Interesado'}`, color: 'text-blue-700', bg: 'bg-blue-100' };
+      return { text: `🎯 ${t?.('biz.call_interested') || 'Interested'}`, color: 'text-blue-700', bg: 'bg-blue-100' };
     case 'not_interested':
-      return { text: `❌ ${t?.('biz.call_not_interested') || 'No interesado'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
+      return { text: `❌ ${t?.('biz.call_not_interested') || 'Not interested'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
     case 'callback':
-      return { text: `📅 ${t?.('biz.call_later') || 'Llamar después'}`, color: 'text-[#9A7A35]', bg: 'bg-[#FFE9B3]' };
+      return { text: `📅 ${t?.('biz.call_later') || 'Call later'}`, color: 'text-[#9A7A35]', bg: 'bg-[#FFE9B3]' };
     case 'no_answer':
-      return { text: `📵 ${t?.('biz.call_no_answer') || 'No contestó'}`, color: 'text-red-600', bg: 'bg-red-50' };
+      return { text: `📵 ${t?.('biz.call_no_answer') || 'No answer'}`, color: 'text-red-600', bg: 'bg-red-50' };
     case 'voicemail':
-      return { text: `📭 ${t?.('card.voicemail') || 'Buzón de voz'}`, color: 'text-gray-500', bg: 'bg-gray-50' };
+      return { text: `📭 ${t?.('card.voicemail') || 'Voicemail'}`, color: 'text-gray-500', bg: 'bg-gray-50' };
     default:
-      return { text: `🤖 ${t?.('card.ai_call') || 'Llamada IA'}`, color: 'text-purple-700', bg: 'bg-purple-100' };
+      return { text: `🤖 ${t?.('card.ai_call') || 'AI Call'}`, color: 'text-purple-700', bg: 'bg-purple-100' };
   }
 }
 
@@ -155,7 +155,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
   const urgency = getFollowUpUrgency(business.daysSinceContact, business.contactCount, t);
   const aiLabel = hasAICall ? getAICallLabel(business.aiCallResult?.outcome || null, t) : null;
 
-  // Borde especial según urgencia (Orcas sin urgencia tienen borde azul; ⭐ pisa todo)
+  // Special border based on urgency (Orcas without urgency get a blue border; ⭐ overrides everything)
   const getBorderStyle = () => {
     if (business.is_focus) return 'border-l-4 border-l-yellow-400 ring-1 ring-yellow-200';
     if (urgency.level === 'critical') return 'border-l-4 border-l-red-500';
@@ -210,7 +210,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
             {business.is_focus ? '⭐' : '☆'}
           </button>
 
-          {/* Badge INBOUND - lead caliente que nos buscó */}
+          {/* INBOUND badge - hot lead that reached out to us */}
           {isInbound && (
             <div className="mb-2 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-300 animate-pulse">
               <span>🔥</span>
@@ -218,11 +218,11 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
             </div>
           )}
 
-          {/* Badge RESPONDIÓ — distingue cliente real vs bot del cliente */}
+          {/* REPLIED badge — distinguishes a real customer vs the customer's bot */}
           {business.has_unread_reply && business.has_human_reply && (
             <div className="mb-1.5 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-green-50 to-emerald-100 text-green-800 border border-green-400 animate-pulse">
               <span>💬</span>
-              Cliente respondió
+              Customer replied
               {business.last_reply_text && (
                 <span className="font-normal truncate max-w-[140px]">• {business.last_reply_text}</span>
               )}
@@ -231,7 +231,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
           {business.has_unread_reply && !business.has_human_reply && (
             <div className="mb-1.5 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 bg-gray-100 text-gray-600 border border-gray-300">
               <span>🤖</span>
-              Bot del cliente
+              Customer bot
               {business.last_reply_text && (
                 <span className="font-normal truncate max-w-[140px] opacity-70">• {business.last_reply_text}</span>
               )}
@@ -255,7 +255,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
             </span>
           )}
 
-          {/* Badge de urgencia - prominente arriba */}
+          {/* Urgency badge - prominent at the top */}
           {!isInbound && urgency.level !== 'none' && urgency.level !== 'ok' && (
             <div className={`mb-2 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 ${urgency.bgColor} ${urgency.color} ${urgency.pulseColor}`}>
               {urgency.level === 'critical' && <span>🔥</span>}
@@ -265,12 +265,12 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
             </div>
           )}
 
-          {/* Nombre del negocio — fila completa para que respire (pr-7 = espacio para la estrella) */}
+          {/* Business name — full row so it can breathe (pr-7 = space for the star) */}
           <h4 className="font-medium text-gray-900 text-sm truncate leading-tight pr-7" title={business.name}>
             {business.name}
           </h4>
 
-          {/* Chips de metadata — fila aparte, wrappean si hace falta */}
+          {/* Metadata chips — separate row, wrap if needed */}
           {(business.source === 'manual'
             || getChannelBadge(business.lead_channel)
             || business.sales_stage === 'perdido') && (
@@ -278,7 +278,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
               {business.source === 'manual' && (
                 <span
                   className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
-                  title="Lead agregado a mano por Alejandro — sin automatización de WhatsApp"
+                  title="Lead added manually by Alejandro — no WhatsApp automation"
                 >
                   ✋ {t('card.manual_badge')}
                 </span>
@@ -289,7 +289,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
                 return (
                   <span
                     className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-stone-100 text-stone-700 border border-stone-200"
-                    title={`Canal: ${ch.label}`}
+                    title={`Channel: ${ch.label}`}
                   >
                     {ch.emoji} {ch.label}
                   </span>
@@ -301,7 +301,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
                   return (
                     <span
                       className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-50 text-red-700 border border-red-200"
-                      title={`Razón: ${r.label}`}
+                      title={`Reason: ${r.label}`}
                     >
                       {r.emoji} {r.label}
                     </span>
@@ -310,7 +310,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
                 return (
                   <span
                     className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-500 border border-gray-200"
-                    title="Click para marcar la razón de pérdida"
+                    title="Click to set the loss reason"
                   >
                     {t('card.lost_reason_missing')}
                   </span>
@@ -326,7 +326,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
               ? dms[business.primary_dm_index ?? 0] || dms[0]
               : null;
             if (primaryDM) {
-              const dmName = primaryDM.fullName || primaryDM.firstName || primaryDM.email?.split('@')[0] || 'Contacto';
+              const dmName = primaryDM.fullName || primaryDM.firstName || primaryDM.email?.split('@')[0] || 'Contact';
               return (
                 <div className="mt-0.5 flex items-center gap-1">
                   <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-50 text-green-700 font-medium truncate max-w-full">
@@ -353,7 +353,7 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
             </div>
           )}
 
-          {/* Info secundaria */}
+          {/* Secondary info */}
           <div className="flex items-center justify-between mt-1.5">
             <div className="flex items-center gap-1.5 min-w-0">
               {district && (
@@ -368,15 +368,15 @@ export default function KanbanCard({ business, index, onClick, onFocusToggled }:
               )}
             </div>
 
-            {/* Indicadores de acción */}
+            {/* Action indicators */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {hasWhatsapp && <span className="text-xs opacity-70" title="WhatsApp enviado">📱</span>}
-              {hasEmail && <span className="text-xs opacity-70" title="Email enviado">📧</span>}
-              {hasCall && <span className="text-xs opacity-70" title="Llamada realizada">📞</span>}
+              {hasWhatsapp && <span className="text-xs opacity-70" title="WhatsApp sent">📱</span>}
+              {hasEmail && <span className="text-xs opacity-70" title="Email sent">📧</span>}
+              {hasCall && <span className="text-xs opacity-70" title="Call made">📞</span>}
             </div>
           </div>
 
-          {/* Contador de contactos + tiempo desde último */}
+          {/* Contact counter + time since last */}
           <div className="mt-1.5 flex items-center justify-between">
             {business.contactCount > 0 ? (
               <span className="text-xs text-gray-500">

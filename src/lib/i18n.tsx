@@ -11,7 +11,7 @@ interface I18nContextType {
 }
 
 const I18nContext = createContext<I18nContextType>({
-  locale: 'es',
+  locale: 'en',
   setLocale: () => {},
   t: (key: string) => key,
 });
@@ -789,7 +789,7 @@ const translations: Record<Locale, Record<string, string>> = {
     'coaching.growth_plan': 'Growth plan',
     'coaching.to_get': 'To get',
     'coaching.more_orcas': 'more Orcas',
-    'coaching.more_delfines': 'more Delfines',
+    'coaching.more_delfines': 'more Dolphins',
     'coaching.need_to_contact': 'you need to contact',
     'coaching.new_leads': 'new leads',
     'coaching.search_orcas': 'Search for Orcas',
@@ -1010,7 +1010,7 @@ const translations: Record<Locale, Record<string, string>> = {
     'manual.address': 'Address (optional)',
     'manual.tier': 'Tier',
     'manual.tier_orca': '🐋 Orca',
-    'manual.tier_delfin': '🐬 Delfin',
+    'manual.tier_delfin': '🐬 Dolphin',
     'manual.tier_unknown': 'Unclassified',
     'manual.revenue_min': 'Min estimated revenue (S/ per month, optional)',
     'manual.revenue_max': 'Max estimated revenue (S/ per month, optional)',
@@ -1309,19 +1309,18 @@ const translations: Record<Locale, Record<string, string>> = {
 };
 
 function detectBrowserLocale(): Locale {
-  if (typeof window === 'undefined') return 'es';
+  // Default to English for the global team. A saved preference always wins,
+  // so anyone can switch back to Spanish with the language toggle.
+  if (typeof window === 'undefined') return 'en';
 
-  // Check localStorage first
   const saved = localStorage.getItem('orbit_locale');
   if (saved === 'en' || saved === 'es') return saved;
 
-  // Detect from browser
-  const browserLang = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'es';
-  return browserLang.startsWith('en') ? 'en' : 'es';
+  return 'en';
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('es');
+  const [locale, setLocaleState] = useState<Locale>('en');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -1335,13 +1334,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback((key: string): string => {
-    return translations[locale]?.[key] || translations['es']?.[key] || key;
+    return translations[locale]?.[key] || translations['en']?.[key] || key;
   }, [locale]);
 
   const value = useMemo(() => ({
-    locale: mounted ? locale : 'es' as Locale,
+    locale: mounted ? locale : 'en' as Locale,
     setLocale,
-    t: mounted ? t : (key: string) => translations['es']?.[key] || key,
+    t: mounted ? t : (key: string) => translations['en']?.[key] || key,
   }), [mounted, locale, setLocale, t]);
 
   return (

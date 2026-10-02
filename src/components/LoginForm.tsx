@@ -162,7 +162,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
+                placeholder="you@email.com"
                 className="w-full px-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-[#0890F1] focus:border-transparent transition-all"
                 disabled={loading}
               />

@@ -24,63 +24,63 @@ const COLUMN_ORDER: KanbanColumnId[] = [
   'perdido',
 ];
 
-// 'YYYY-MM' -> 'Junio 2026'
+// 'YYYY-MM' -> 'June 2026'
 function monthLabel(key: string): string {
   const [y, m] = key.split('-').map(Number);
   const d = new Date(y, m - 1, 1);
-  const s = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+  const s = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// Frases motivacionales sobre follow-up
+// Motivational quotes about follow-up
 const FOLLOW_UP_QUOTES = [
-  { quote: "El 80% de las ventas requieren 5 follow-ups. El 44% de vendedores se rinden después de 1.", author: "Estadística de ventas B2B" },
-  { quote: "La fortuna está en el seguimiento.", author: "Jim Rohn" },
-  { quote: "Un seguimiento vale más que 100 primeros contactos.", author: "Sabiduría comercial" },
-  { quote: "El que persevera, vende.", author: "Dicho de ventas" },
-  { quote: "Cada follow-up te acerca más al cierre.", author: "Principio de ventas" },
+  { quote: "80% of sales require 5 follow-ups. 44% of salespeople give up after 1.", author: "B2B sales statistic" },
+  { quote: "The fortune is in the follow-up.", author: "Jim Rohn" },
+  { quote: "One follow-up is worth more than 100 first contacts.", author: "Sales wisdom" },
+  { quote: "He who perseveres, sells.", author: "Sales saying" },
+  { quote: "Every follow-up brings you closer to the close.", author: "Sales principle" },
 ];
 
 const INDUSTRY_LABELS: Record<string, { emoji: string; label: string }> = {
-  hotel_luxury: { emoji: '🏨', label: 'Hoteles 5★' },
-  hotel_mid: { emoji: '🏨', label: 'Hoteles 3-4★' },
-  hotel_budget: { emoji: '🛏️', label: 'Hostales' },
-  hospital: { emoji: '🏥', label: 'Hospitales' },
-  clinic: { emoji: '⚕️', label: 'Clínicas' },
-  club: { emoji: '🏌️', label: 'Clubes' },
-  spa_premium: { emoji: '💆', label: 'Spas Premium' },
+  hotel_luxury: { emoji: '🏨', label: 'Hotels 5★' },
+  hotel_mid: { emoji: '🏨', label: 'Hotels 3-4★' },
+  hotel_budget: { emoji: '🛏️', label: 'Hostels' },
+  hospital: { emoji: '🏥', label: 'Hospitals' },
+  clinic: { emoji: '⚕️', label: 'Clinics' },
+  club: { emoji: '🏌️', label: 'Clubs' },
+  spa_premium: { emoji: '💆', label: 'Premium Spas' },
   spa_basic: { emoji: '💆', label: 'Spas' },
-  gym_premium: { emoji: '🏋️', label: 'Gyms Premium' },
+  gym_premium: { emoji: '🏋️', label: 'Premium Gyms' },
   gym_basic: { emoji: '🏋️', label: 'Gyms' },
   pilates: { emoji: '🧘', label: 'Pilates' },
-  restaurant_gourmet: { emoji: '🍽️', label: 'Rest. Gourmet' },
-  restaurant_mid: { emoji: '🍽️', label: 'Restaurantes' },
-  security: { emoji: '🛡️', label: 'Seguridad' },
-  cleaning: { emoji: '🧹', label: 'Limpieza' },
+  restaurant_gourmet: { emoji: '🍽️', label: 'Gourmet Rest.' },
+  restaurant_mid: { emoji: '🍽️', label: 'Restaurants' },
+  security: { emoji: '🛡️', label: 'Security' },
+  cleaning: { emoji: '🧹', label: 'Cleaning' },
   industrial: { emoji: '🏭', label: 'Industrial' },
-  events: { emoji: '🎪', label: 'Eventos' },
-  residence: { emoji: '🏠', label: 'Geriátricos' },
-  university: { emoji: '🎓', label: 'Universidades' },
-  cooperative: { emoji: '🤝', label: 'Cooperativas' },
-  real_estate: { emoji: '🏢', label: 'Inmobiliarias' },
-  other: { emoji: '🏢', label: 'Otros' },
+  events: { emoji: '🎪', label: 'Events' },
+  residence: { emoji: '🏠', label: 'Nursing homes' },
+  university: { emoji: '🎓', label: 'Universities' },
+  cooperative: { emoji: '🤝', label: 'Cooperatives' },
+  real_estate: { emoji: '🏢', label: 'Real Estate' },
+  other: { emoji: '🏢', label: 'Other' },
 };
 
-// Tips de seguimiento según situación
+// Follow-up tips by situation
 function getFollowUpTip(urgentCount: number, criticalCount: number, contactedWithoutFollowUp: number, finalCount?: number): string {
   if (finalCount && finalCount > 0) {
-    return `💀 ¡${finalCount} leads llevan +9 días! Es ahora o nunca. Mensaje killer: "¿Sí o no?"`;
+    return `💀 ${finalCount} leads have gone +9 days! It's now or never. Killer message: "Yes or no?"`;
   }
   if (criticalCount > 0) {
-    return `🔥 ¡${criticalCount} leads llevan 6-8 días sin contacto! El interés se enfría rápido. Actúa HOY.`;
+    return `🔥 ${criticalCount} leads have gone 6-8 days without contact! Interest cools fast. Act TODAY.`;
   }
   if (urgentCount > 0) {
-    return `⏰ ${urgentCount} leads necesitan seguimiento (3-5 días). Un mensaje ahora puede cerrar la venta.`;
+    return `⏰ ${urgentCount} leads need follow-up (3-5 days). A message now can close the sale.`;
   }
   if (contactedWithoutFollowUp > 5) {
-    return `💡 Tip: Los mejores vendedores hacen 3-5 contactos por lead. ¿Ya hiciste seguimiento?`;
+    return `💡 Tip: The best salespeople make 3-5 contacts per lead. Have you followed up yet?`;
   }
-  return `✅ ¡Buen trabajo! Mantén el ritmo de seguimiento constante.`;
+  return `✅ Great work! Keep a steady follow-up pace.`;
 }
 
 type OwnerFilter = 'all' | 'martin' | 'alejandro' | 'bot';
@@ -120,12 +120,12 @@ export default function KanbanBoard({
   const [tierFilter, setTierFilter] = useState<'all' | 'orca' | 'delfin'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual'>('all');
   const [focusFilter, setFocusFilter] = useState<'all' | 'focus'>('all');
-  // Filtro por vendedor/dueño: ver en qué va cada uno (Martín, Alejandro, Bot).
-  // Controlado desde el Pipeline (barra compartida) cuando llega por prop; si no, local.
+  // Rep/owner filter: see how each one is doing (Martín, Alejandro, Bot).
+  // Controlled from the Pipeline (shared bar) when it arrives by prop; otherwise local.
   const [ownerFilterInternal, setOwnerFilterInternal] = useState<OwnerFilter>('all');
   const ownerFilter = ownerFilterProp ?? ownerFilterInternal;
   const setOwnerFilter = onOwnerFilterChange ?? setOwnerFilterInternal;
-  // Filtro por mes de creación del lead ('all' | 'YYYY-MM')
+  // Filter by lead creation month ('all' | 'YYYY-MM')
   const [monthFilter, setMonthFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -135,7 +135,7 @@ export default function KanbanBoard({
   const [audioLoading, setAudioLoading] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Seleccionar una frase motivacional random (pero estable durante la sesión)
+  // Pick a random motivational quote (but stable during the session)
   const [quoteIndex] = useState(() => Math.floor(Math.random() * FOLLOW_UP_QUOTES.length));
   const motivationalQuote = FOLLOW_UP_QUOTES[quoteIndex];
 
@@ -178,14 +178,14 @@ export default function KanbanBoard({
     return () => document.removeEventListener('keydown', handler);
   }, [searchQuery]);
 
-  // Calcular métricas de seguimiento - ahora basado en las columnas
+  // Calculate follow-up metrics - now based on the columns
   const followUpMetrics = useMemo(() => {
     const seguimiento1Count = columns.seguimiento_1.length;
     const seguimiento2Count = columns.seguimiento_2.length;
     const seguimiento3Count = columns.seguimiento_3.length;
     const recentCount = columns.contactado.length;
 
-    // Leads contactados solo 1 vez en todo el pipeline activo
+    // Leads contacted only once in the entire active pipeline
     const allActiveLeads = [
       ...columns.contactado,
       ...columns.seguimiento_1,
@@ -196,11 +196,11 @@ export default function KanbanBoard({
     ];
     const singleContactLeads = allActiveLeads.filter(l => l.contactCount === 1).length;
 
-    // Contar leads que tuvieron llamada con IA
+    // Count leads that had an AI call
     const allLeads = COLUMN_ORDER.flatMap(col => columns[col]);
     const aiCallLeads = allLeads.filter(l => l.aiCallResult?.hasAICall).length;
 
-    // Contar por outcome de llamadas IA
+    // Count by AI call outcome
     const aiOutcomes = {
       interested: allLeads.filter(l => l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote').length,
       notInterested: allLeads.filter(l => l.aiCallResult?.outcome === 'not_interested').length,
@@ -273,7 +273,7 @@ export default function KanbanBoard({
     );
   };
 
-  // Meses disponibles (por fecha de creación del lead), de más reciente a más antiguo
+  // Available months (by lead creation date), most recent to oldest
   const availableMonths = useMemo(() => {
     const set = new Set<string>();
     COLUMN_ORDER.forEach(col => {
@@ -329,11 +329,11 @@ export default function KanbanBoard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sales_stage: newStage,
-          previous_stage: oldStage // Para registrar el historial
+          previous_stage: oldStage // To record the history
         }),
       });
       if (!response.ok) {
-        throw new Error('Error al actualizar etapa');
+        throw new Error('Failed to update stage');
       }
     } catch (err) {
       console.error('Error updating business stage:', err);
@@ -370,7 +370,7 @@ export default function KanbanBoard({
       return newColumns;
     });
 
-    // Actualizar en DB con el stage anterior
+    // Update in DB with the previous stage
     if (sourceColumn !== destColumn) {
       updateBusinessStage(draggableId, destColumn, sourceColumn);
     }
@@ -404,7 +404,7 @@ export default function KanbanBoard({
     });
 
     setSelectedBusiness((prev) => prev ? { ...prev, sales_stage: newStage as typeof prev.sales_stage } : null);
-    setSelectedBusinessColumn(newStage); // Actualizar la columna del modal
+    setSelectedBusinessColumn(newStage); // Update the modal's column
     updateBusinessStage(businessId, newStage, sourceColumn);
   };
 
@@ -424,13 +424,13 @@ export default function KanbanBoard({
     }
   }, [columns]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Obtener todos los leads con llamadas IA para el modal de insights
+  // Get all leads with AI calls for the insights modal
   const aiCallLeadsList = useMemo(() => {
     const allLeads = COLUMN_ORDER.flatMap(col =>
       columns[col].map(lead => ({ ...lead, currentColumn: col }))
     );
 
-    // Filtrar por tiempo
+    // Filter by time
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfWeek = new Date(startOfToday);
@@ -453,12 +453,12 @@ export default function KanbanBoard({
         }
       })
       .sort((a, b) => {
-        // Primero ordenar por fecha (más recientes primero)
+        // First sort by date (most recent first)
         const dateA = a.aiCallResult?.callDate ? new Date(a.aiCallResult.callDate).getTime() : 0;
         const dateB = b.aiCallResult?.callDate ? new Date(b.aiCallResult.callDate).getTime() : 0;
         if (dateA !== dateB) return dateB - dateA;
 
-        // Si misma fecha, ordenar por outcome: interesados primero
+        // If same date, sort by outcome: interested first
         const priority: Record<string, number> = {
           'wants_quote': 1,
           'interested': 2,
@@ -474,7 +474,7 @@ export default function KanbanBoard({
       });
   }, [columns, insightsTimeFilter]);
 
-  // Reproducir audio de llamada IA
+  // Play AI call audio
   const handlePlayAudio = (conversationId: string) => {
     if (playingAudioId === conversationId && audioRef.current) {
       audioRef.current.pause();
@@ -509,30 +509,30 @@ export default function KanbanBoard({
     audio.load();
   };
 
-  // Obtener label y color del outcome
+  // Get outcome label and color
   const getOutcomeInfo = (outcome: string | null, shortSummary?: string | null) => {
     const summary = shortSummary || '';
 
     switch (outcome) {
       case 'wants_quote':
-        return { label: `💰 ${summary || 'Quiere cotización'}`, color: 'text-green-700', bg: 'bg-green-100' };
+        return { label: `💰 ${summary || 'Wants a quote'}`, color: 'text-green-700', bg: 'bg-green-100' };
       case 'interested':
-        return { label: `🎯 ${summary || 'Interesado'}`, color: 'text-blue-700', bg: 'bg-blue-100' };
+        return { label: `🎯 ${summary || 'Interested'}`, color: 'text-blue-700', bg: 'bg-blue-100' };
       case 'not_interested':
-        return { label: `❌ ${summary || 'No interesado'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
+        return { label: `❌ ${summary || 'Not interested'}`, color: 'text-gray-600', bg: 'bg-gray-100' };
       case 'callback':
-        return { label: `📅 ${summary || 'Llamar después'}`, color: 'text-[#9A7A35]', bg: 'bg-[#FFE9B3]' };
+        return { label: `📅 ${summary || 'Call later'}`, color: 'text-[#9A7A35]', bg: 'bg-[#FFE9B3]' };
       case 'no_answer':
-        return { label: `📵 ${summary || 'No contestó'}`, color: 'text-red-600', bg: 'bg-red-50' };
+        return { label: `📵 ${summary || 'No answer'}`, color: 'text-red-600', bg: 'bg-red-50' };
       case 'voicemail':
-        return { label: `📭 ${summary || 'Buzón de voz'}`, color: 'text-gray-500', bg: 'bg-gray-50' };
+        return { label: `📭 ${summary || 'Voicemail'}`, color: 'text-gray-500', bg: 'bg-gray-50' };
       default:
-        // Para 'completed', usar el resumen corto que es más descriptivo
-        return { label: `📞 ${summary || 'Llamada completada'}`, color: 'text-purple-700', bg: 'bg-purple-100' };
+        // For 'completed', use the short summary which is more descriptive
+        return { label: `📞 ${summary || 'Call completed'}`, color: 'text-purple-700', bg: 'bg-purple-100' };
     }
   };
 
-  // Formatear fecha de llamada (inside component to use t())
+  // Format call date (inside component to use t())
   const formatCallDate = (dateStr: string | null) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
@@ -540,21 +540,21 @@ export default function KanbanBoard({
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return `${t('ai.today_at')} ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t('ai.today_at')} ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
     } else if (diffDays === 1) {
-      return `${t('ai.yesterday_at')} ${date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t('ai.yesterday_at')} ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
     } else if (diffDays < 7) {
       return `${diffDays} ${t('ai.days_ago')}`;
     } else {
-      return date.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
+      return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
     }
   };
 
-  // Calcular insights adicionales
+  // Calculate additional insights
   const aiInsightsStats = useMemo(() => {
     if (aiCallLeadsList.length === 0) return null;
 
-    // Calcular outcomes basados en la lista filtrada
+    // Calculate outcomes based on the filtered list
     const filteredOutcomes = {
       interested: aiCallLeadsList.filter(l => l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote').length,
       notInterested: aiCallLeadsList.filter(l => l.aiCallResult?.outcome === 'not_interested').length,
@@ -563,17 +563,17 @@ export default function KanbanBoard({
       other: aiCallLeadsList.filter(l => l.aiCallResult?.hasAICall && !['interested', 'wants_quote', 'not_interested', 'no_answer', 'voicemail'].includes(l.aiCallResult?.outcome || '')).length,
     };
 
-    // Tasa de conexión (llamadas que conectaron vs total)
+    // Connection rate (calls that connected vs total)
     const connected = aiCallLeadsList.filter(l =>
       ['wants_quote', 'interested', 'not_interested', 'callback'].includes(l.aiCallResult?.outcome || '')
     ).length;
     const connectionRate = Math.round((connected / aiCallLeadsList.length) * 100);
 
-    // Tasa de interés (interesados vs conectados)
+    // Interest rate (interested vs connected)
     const interested = filteredOutcomes.interested;
     const interestRate = connected > 0 ? Math.round((interested / connected) * 100) : 0;
 
-    // Llamadas por día (aproximado)
+    // Calls per day (approximate)
     const dates = aiCallLeadsList
       .map(l => l.aiCallResult?.callDate)
       .filter(Boolean)
@@ -581,13 +581,13 @@ export default function KanbanBoard({
     const uniqueDays = new Set(dates).size;
     const avgPerDay = uniqueDays > 0 ? Math.round(aiCallLeadsList.length / uniqueDays) : 0;
 
-    // NUEVO: Leads que pidieron cotización pero no están en "cotizado" o "cliente"
+    // NEW: Leads that asked for a quote but aren't in "cotizado" or "cliente"
     const pendingQuotes = aiCallLeadsList.filter(l =>
       (l.aiCallResult?.outcome === 'wants_quote' || l.aiCallResult?.outcome === 'interested') &&
       !['cotizado', 'cliente'].includes(l.currentColumn)
     );
 
-    // NUEVO: Mejores horarios (análisis de cuándo contestan)
+    // NEW: Best time slots (analysis of when they answer)
     const hourStats: Record<number, { total: number; connected: number }> = {};
     aiCallLeadsList.forEach(l => {
       if (l.aiCallResult?.callDate) {
@@ -600,11 +600,11 @@ export default function KanbanBoard({
       }
     });
 
-    // Encontrar mejor horario
+    // Find the best time slot
     let bestHour = null;
     let bestRate = 0;
     Object.entries(hourStats).forEach(([hour, stats]) => {
-      if (stats.total >= 3) { // Solo considerar si hay al menos 3 llamadas
+      if (stats.total >= 3) { // Only consider if there are at least 3 calls
         const rate = stats.connected / stats.total;
         if (rate > bestRate) {
           bestRate = rate;
@@ -613,18 +613,18 @@ export default function KanbanBoard({
       }
     });
 
-    // NUEVO: Costo estimado (aprox 1000 créditos por llamada de 1 min)
-    const estimatedCreditsUsed = aiCallLeadsList.length * 1500; // promedio estimado
+    // NEW: Estimated cost (approx 1000 credits per 1-min call)
+    const estimatedCreditsUsed = aiCallLeadsList.length * 1500; // estimated average
     const costPerLead = interested > 0 ? Math.round(estimatedCreditsUsed / interested) : 0;
 
-    // Contar cotizados y clientes que fueron contactados por IA
+    // Count quoted and customers that were contacted by AI
     const aiCotizados = aiCallLeadsList.filter(l => l.currentColumn === 'cotizado').length;
     const aiClientes = aiCallLeadsList.filter(l => l.currentColumn === 'cliente').length;
 
-    // Cambios de etapa por resultado de IA
-    // Cuenta basándose en el OUTCOME de la llamada, no en la columna actual
-    // Si la IA clasificó como interested/wants_quote = la IA lo movió a "Interesado"
-    // Si la IA clasificó como not_interested = la IA lo movió a "Perdido"
+    // Stage changes by AI result
+    // Counts based on the call OUTCOME, not the current column
+    // If the AI classified as interested/wants_quote = the AI moved it to "Interesado"
+    // If the AI classified as not_interested = the AI moved it to "Perdido"
     const movedToInteresado = aiCallLeadsList.filter(l =>
       l.aiCallResult?.outcome === 'interested' || l.aiCallResult?.outcome === 'wants_quote'
     ).length;
@@ -691,7 +691,7 @@ export default function KanbanBoard({
 
   return (
     <div className="h-full">
-      {/* Banner de seguimiento - Solo si hay leads que necesitan atención */}
+      {/* Follow-up banner - Only if there are leads that need attention */}
       {followUpMetrics.needsAttention > 0 && (
         <div className={`mb-3 lg:mb-4 p-3 lg:p-4 rounded-xl border-2 ${
           followUpMetrics.finalCount > 0
@@ -735,9 +735,9 @@ export default function KanbanBoard({
         </div>
       )}
 
-      {/* ⭐ Banner de leads en foco — sprint actual */}
+      {/* ⭐ Focus leads banner — current sprint */}
       {(() => {
-        // Solo leads activos — ganados/perdidos ya no son foco accionable
+        // Only active leads — won/lost are no longer actionable focus
         const activeFocusCols: KanbanColumnId[] = [
           'nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2',
           'seguimiento_3', 'interesado', 'cotizado',
@@ -768,7 +768,7 @@ export default function KanbanBoard({
                       onClick={() => setFocusFilter('focus')}
                       className="px-2 py-0.5 rounded-full text-xs text-yellow-700 hover:text-yellow-900 underline"
                     >
-                      +{focused.length - 8} más
+                      +{focused.length - 8} more
                     </button>
                   )}
                 </div>
@@ -778,7 +778,7 @@ export default function KanbanBoard({
         );
       })()}
 
-      {/* ⚠️ Alerta de respuestas humanas pendientes — máxima prioridad */}
+      {/* ⚠️ Alert for pending human replies — top priority */}
       {repliedLeads.total > 0 && (
         <div className={`mb-3 p-3 lg:p-4 rounded-xl border-2 ${
           repliedLeads.stale.length > 0
@@ -793,15 +793,15 @@ export default function KanbanBoard({
               <div className="flex-1 min-w-0">
                 <h3 className={`font-bold text-sm sm:text-base ${repliedLeads.stale.length > 0 ? 'text-red-800' : 'text-green-800'}`}>
                   {repliedLeads.stale.length > 0 ? (
-                    <>{repliedLeads.stale.length} {repliedLeads.stale.length === 1 ? 'cliente respondió' : 'clientes respondieron'} hace +{STALE_REPLY_DAYS} días — avanzar o descartar</>
+                    <>{repliedLeads.stale.length} {repliedLeads.stale.length === 1 ? 'customer replied' : 'customers replied'} +{STALE_REPLY_DAYS} days ago — advance or discard</>
                   ) : (
-                    <>{repliedLeads.recent.length} {repliedLeads.recent.length === 1 ? 'cliente respondió' : 'clientes respondieron'} — avanzar o descartar</>
+                    <>{repliedLeads.recent.length} {repliedLeads.recent.length === 1 ? 'customer replied' : 'customers replied'} — advance or discard</>
                   )}
                 </h3>
                 <p className={`text-xs mt-0.5 hidden sm:block ${repliedLeads.stale.length > 0 ? 'text-red-600' : 'text-green-700'}`}>
-                  Estos leads están calientes. Ábrelos, cotiza o descártalos antes de que se enfríen.
+                  These leads are hot. Open them, quote or discard them before they cool off.
                 </p>
-                {/* Chips clicables */}
+                {/* Clickable chips */}
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {[...repliedLeads.stale, ...repliedLeads.recent].slice(0, 8).map(({ lead, days }) => (
                     <button
@@ -812,7 +812,7 @@ export default function KanbanBoard({
                           ? 'bg-red-200 text-red-900 hover:bg-red-300 border border-red-300'
                           : 'bg-white text-green-800 hover:bg-green-100 border border-green-200'
                       }`}
-                      title={`${days}d sin respuesta`}
+                      title={`${days}d without reply`}
                     >
                       {lead.name.split(' ').slice(0, 3).join(' ')} <span className="opacity-60">· {days}d</span>
                     </button>
@@ -820,7 +820,7 @@ export default function KanbanBoard({
                 </div>
               </div>
             </div>
-            {/* Botón Ver todos */}
+            {/* View all button */}
             <button
               onClick={() => setPhoneFilter(phoneFilter === 'replied_human' ? 'all' : 'replied_human')}
               className={`flex-shrink-0 self-center px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm ${
@@ -829,21 +829,21 @@ export default function KanbanBoard({
                   : 'bg-green-600 text-white hover:bg-green-700'
               }`}
             >
-              Ver todos →
+              View all →
             </button>
           </div>
         </div>
       )}
 
-      {/* Frase motivacional - Hidden on mobile */}
+      {/* Motivational quote - Hidden on mobile */}
       <div className="hidden lg:block mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
         <p className="text-sm text-blue-800 italic">"{motivationalQuote.quote}"</p>
         <p className="text-xs text-blue-600 mt-1">— {motivationalQuote.author}</p>
       </div>
 
-      {/* Stats rápidos con métricas de seguimiento */}
+      {/* Quick stats with follow-up metrics */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 lg:mb-4 text-xs sm:text-sm">
-        {/* Botón de Campaña IA — OCULTO TEMPORALMENTE */}
+        {/* AI Campaign button — TEMPORARILY HIDDEN */}
 
         <button
           onClick={() => setShowAddManual(true)}
@@ -883,7 +883,7 @@ export default function KanbanBoard({
         })()}
 
         {(() => {
-          // Chip cuenta solo los activos para no contradecir al banner
+          // Chip counts only active ones so it doesn't contradict the banner
           const activeFocusCols: KanbanColumnId[] = [
             'nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2',
             'seguimiento_3', 'interesado', 'cotizado',
@@ -908,8 +908,8 @@ export default function KanbanBoard({
           );
         })()}
 
-        {/* Filtro por vendedor: ver en qué va cada uno.
-            Se oculta cuando el Pipeline controla el filtro (barra compartida). */}
+        {/* Rep filter: see how each one is doing.
+            Hidden when the Pipeline controls the filter (shared bar). */}
         {!onOwnerFilterChange && (() => {
           const flat = Object.values(columns).flat();
           const mCount = flat.filter(l => l.owner_name === 'Martin' || l.owner_name === 'Martín').length;
@@ -960,7 +960,7 @@ export default function KanbanBoard({
               <span className="hidden sm:block border-l border-gray-300 h-4 mx-1"></span>
               <button
                 onClick={() => setTierFilter(tierFilter === 'orca' ? 'all' : 'orca')}
-                title="Filtrar Orcas"
+                title="Filter Orcas"
                 className={`px-1.5 py-0.5 rounded-full font-medium transition-colors cursor-pointer ${
                   tierFilter === 'orca'
                     ? 'bg-blue-600 text-white'
@@ -971,7 +971,7 @@ export default function KanbanBoard({
               </button>
               <button
                 onClick={() => setTierFilter(tierFilter === 'delfin' ? 'all' : 'delfin')}
-                title="Filtrar Delfines"
+                title="Filter Dolphins"
                 className={`px-1.5 py-0.5 rounded-full transition-colors cursor-pointer ${
                   tierFilter === 'delfin'
                     ? 'bg-emerald-600 text-white'
@@ -982,7 +982,7 @@ export default function KanbanBoard({
               </button>
               {pipelineValue > 0 && (
                 <span className="hidden sm:inline text-blue-600 text-xs">
-                  ~S/{(pipelineValue / 1000).toFixed(0)}k/mes
+                  ~S/{(pipelineValue / 1000).toFixed(0)}k/mo
                 </span>
               )}
             </>
@@ -996,7 +996,7 @@ export default function KanbanBoard({
             {whatsappStats.repliesHuman > 0 && (
               <button
                 onClick={() => setPhoneFilter(phoneFilter === 'replied_human' ? 'all' : 'replied_human')}
-                title={`Filtrar ${whatsappStats.repliesHuman} leads con respuesta humana`}
+                title={`Filter ${whatsappStats.repliesHuman} leads with a human reply`}
                 className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                   phoneFilter === 'replied_human'
                     ? 'bg-green-600 text-white'
@@ -1014,7 +1014,7 @@ export default function KanbanBoard({
             {whatsappStats.repliesBot > 0 && (
               <button
                 onClick={() => setPhoneFilter(phoneFilter === 'replied_bot' ? 'all' : 'replied_bot')}
-                title={`Filtrar ${whatsappStats.repliesBot} leads cuya respuesta fue solo un bot automático`}
+                title={`Filter ${whatsappStats.repliesBot} leads whose reply was only an automatic bot`}
                 className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
                   phoneFilter === 'replied_bot'
                     ? 'bg-gray-600 text-white'
@@ -1027,14 +1027,14 @@ export default function KanbanBoard({
             {whatsappStats.sentToday > 0 && (
               <button
                 onClick={() => setPhoneFilter(phoneFilter === 'sent_today' ? 'all' : 'sent_today')}
-                title={`${whatsappStats.sentManualToday} enviados por Alejandro · ${whatsappStats.sentAutoToday} enviados por el sistema`}
+                title={`${whatsappStats.sentManualToday} sent by Alejandro · ${whatsappStats.sentAutoToday} sent by the system`}
                 className={`text-xs transition-colors cursor-pointer ${
                   phoneFilter === 'sent_today'
                     ? 'text-green-700 font-bold'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                📱 {whatsappStats.sentToday} enviados hoy{' '}
+                📱 {whatsappStats.sentToday} sent today{' '}
                 <span className="opacity-70">
                   ({whatsappStats.sentManualToday > 0 && <span className="text-orange-600">✋{whatsappStats.sentManualToday}</span>}
                   {whatsappStats.sentManualToday > 0 && whatsappStats.sentAutoToday > 0 && <span> · </span>}
@@ -1045,12 +1045,12 @@ export default function KanbanBoard({
           </>
         )}
 
-        {/* Métricas de llamadas IA — OCULTO TEMPORALMENTE */}
+        {/* AI call metrics — TEMPORARILY HIDDEN */}
       </div>
 
-      {/* Buscador + Filtros */}
+      {/* Search + Filters */}
       <div className="flex items-center gap-2 mb-2 lg:mb-3 flex-wrap">
-        {/* Buscador */}
+        {/* Search */}
         <div className="relative flex items-center">
           <svg className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
@@ -1060,7 +1060,7 @@ export default function KanbanBoard({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar lead… (/)"
+            placeholder="Search lead… (/)"
             className={`pl-7 pr-6 py-1 text-xs sm:text-sm rounded-lg border transition-colors focus:outline-none w-40 sm:w-52 ${
               searchQuery
                 ? 'bg-blue-50 border-blue-400 text-blue-900 placeholder-blue-300'
@@ -1071,7 +1071,7 @@ export default function KanbanBoard({
             <button
               onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors text-xs leading-none"
-              title="Limpiar búsqueda (Esc)"
+              title="Clear search (Esc)"
             >✕</button>
           )}
         </div>
@@ -1079,12 +1079,12 @@ export default function KanbanBoard({
           const total = COLUMN_ORDER.reduce((s, col) => s + filteredColumns[col].length, 0);
           return (
             <span className="text-xs text-blue-600 font-medium">
-              {total} resultado{total !== 1 ? 's' : ''}
+              {total} result{total !== 1 ? 's' : ''}
             </span>
           );
         })()}
 
-        {/* Filtro estado WhatsApp */}
+        {/* WhatsApp status filter */}
         <select
           value={phoneFilter}
           onChange={(e) => setPhoneFilter(e.target.value as 'all' | 'whatsapp' | 'no_phone')}
@@ -1094,25 +1094,25 @@ export default function KanbanBoard({
               : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
           }`}
         >
-          <option value="all">📱 Todos</option>
-          <option value="whatsapp">📱 Con WhatsApp</option>
-          <option value="sent_today">📤 Enviados hoy</option>
-          <option value="replied_today">💬 Respondieron hoy</option>
-          <option value="replied_human">💬 Respondió (todos)</option>
-          <option value="replied_bot">🤖 Respondió bot</option>
-          <option value="no_phone">🚫 Sin WhatsApp</option>
+          <option value="all">📱 All</option>
+          <option value="whatsapp">📱 With WhatsApp</option>
+          <option value="sent_today">📤 Sent today</option>
+          <option value="replied_today">💬 Replied today</option>
+          <option value="replied_human">💬 Replied (all)</option>
+          <option value="replied_bot">🤖 Bot replied</option>
+          <option value="no_phone">🚫 No WhatsApp</option>
         </select>
         {phoneFilter !== 'all' && (
           <button
             onClick={() => setPhoneFilter('all')}
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-            title="Limpiar filtro"
+            title="Clear filter"
           >
             ✕
           </button>
         )}
 
-        {/* Filtro por mes de creación del lead */}
+        {/* Filter by lead creation month */}
         {availableMonths.length > 0 && (
           <>
             <select
@@ -1124,7 +1124,7 @@ export default function KanbanBoard({
                   : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
               }`}
             >
-              <option value="all">📅 Todos los meses</option>
+              <option value="all">📅 All months</option>
               {availableMonths.map((m) => (
                 <option key={m} value={m}>
                   {monthLabel(m)}
@@ -1135,7 +1135,7 @@ export default function KanbanBoard({
               <button
                 onClick={() => setMonthFilter('all')}
                 className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                title="Limpiar filtro"
+                title="Clear filter"
               >
                 ✕
               </button>
@@ -1144,7 +1144,7 @@ export default function KanbanBoard({
         )}
       </div>
 
-      {/* Filtro por industria — compact select */}
+      {/* Industry filter — compact select */}
       {availableIndustries.length > 1 && (
         <div className="flex items-center gap-1.5 mb-2 lg:mb-3">
           <select
@@ -1170,7 +1170,7 @@ export default function KanbanBoard({
             <button
               onClick={() => setIndustryFilter('all')}
               className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-              title="Limpiar filtro"
+              title="Clear filter"
             >
               ✕
             </button>
@@ -1198,7 +1198,7 @@ export default function KanbanBoard({
         </div>
       </DragDropContext>
 
-      {/* Modal de detalle */}
+      {/* Detail modal */}
       {selectedBusiness && (
         <LeadDetailModal
           business={selectedBusiness}
@@ -1209,7 +1209,7 @@ export default function KanbanBoard({
         />
       )}
 
-      {/* Modal de AI Insights */}
+      {/* AI Insights modal */}
       {showAIInsights && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowAIInsights(false)}>
           <div
@@ -1237,7 +1237,7 @@ export default function KanbanBoard({
                 </button>
               </div>
 
-              {/* Filtro de tiempo */}
+              {/* Time filter */}
               <div className="flex gap-2 mt-3">
                 {[
                   { value: 'today', label: t('ai.today') },
@@ -1259,7 +1259,7 @@ export default function KanbanBoard({
                 ))}
               </div>
 
-              {/* Resumen de resultados */}
+              {/* Results summary */}
               {aiInsightsStats && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
@@ -1282,7 +1282,7 @@ export default function KanbanBoard({
                 </div>
               )}
 
-              {/* Insights adicionales */}
+              {/* Additional insights */}
               {aiInsightsStats && (
                 <div className="grid grid-cols-4 gap-3 mt-4 pt-3 border-t border-purple-100">
                   <div className="text-center">
@@ -1297,7 +1297,7 @@ export default function KanbanBoard({
                     <div className="text-2xl font-bold text-blue-600">{aiInsightsStats.avgPerDay}</div>
                     <div className="text-xs text-gray-500">{t('ai.calls_day')}</div>
                   </div>
-                  {/* Cambios de etapa por IA - inline */}
+                  {/* Stage changes by AI - inline */}
                   <div className="text-center">
                     <div className="text-2xl font-bold text-indigo-600">
                       {aiInsightsStats.totalAIMoves}
@@ -1315,7 +1315,7 @@ export default function KanbanBoard({
 
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
-            {/* ALERTA DE ACCIÓN - Leads pendientes de cotización */}
+            {/* ACTION ALERT - Leads pending a quote */}
             {aiInsightsStats?.pendingQuotes && aiInsightsStats.pendingQuotes.length > 0 && (
               <div className="mx-6 mt-4 p-4 bg-[#FFF8E7] border-2 border-[#FFD06D] rounded-xl">
                 <div className="flex items-start gap-3">
@@ -1342,7 +1342,7 @@ export default function KanbanBoard({
                       ))}
                       {aiInsightsStats.pendingQuotes.length > 5 && (
                         <span className="px-3 py-1 text-sm text-[#B8923F]">
-                          +{aiInsightsStats.pendingQuotes.length - 5} más
+                          +{aiInsightsStats.pendingQuotes.length - 5} more
                         </span>
                       )}
                     </div>
@@ -1358,7 +1358,7 @@ export default function KanbanBoard({
                   📊 {t('ai.conversion_funnel')}
                 </h4>
                 <div className="flex items-center justify-between gap-2">
-                  {/* Llamadas */}
+                  {/* Calls */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-blue-500 text-white rounded-lg py-3 px-2">
                       <div className="text-xl font-bold">{aiCallLeadsList.length}</div>
@@ -1366,7 +1366,7 @@ export default function KanbanBoard({
                     </div>
                   </div>
                   <span className="text-gray-400">→</span>
-                  {/* Conectaron */}
+                  {/* Connected */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-purple-500 text-white rounded-lg py-3 px-2" style={{ width: `${Math.max(60, aiInsightsStats.connectionRate)}%`, margin: '0 auto' }}>
                       <div className="text-xl font-bold">{aiInsightsStats.connected}</div>
@@ -1375,7 +1375,7 @@ export default function KanbanBoard({
                     <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.connectionRate}%</div>
                   </div>
                   <span className="text-gray-400">→</span>
-                  {/* Interesados */}
+                  {/* Interested */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-green-500 text-white rounded-lg py-3 px-2" style={{ width: `${Math.max(50, aiInsightsStats.interestRate)}%`, margin: '0 auto' }}>
                       <div className="text-xl font-bold">{aiInsightsStats.outcomes.interested}</div>
@@ -1384,7 +1384,7 @@ export default function KanbanBoard({
                     <div className="text-xs text-gray-500 mt-1">{aiInsightsStats.interestRate}%</div>
                   </div>
                   <span className="text-gray-400">→</span>
-                  {/* Cotizados (por IA) */}
+                  {/* Quoted (by AI) */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-[#FFF8E7]0 text-white rounded-lg py-3 px-2">
                       <div className="text-xl font-bold">{aiInsightsStats.aiCotizados}</div>
@@ -1392,7 +1392,7 @@ export default function KanbanBoard({
                     </div>
                   </div>
                   <span className="text-gray-400">→</span>
-                  {/* Clientes (por IA) */}
+                  {/* Customers (by AI) */}
                   <div className="flex-1 text-center">
                     <div className="w-full bg-emerald-600 text-white rounded-lg py-3 px-2">
                       <div className="text-xl font-bold">{aiInsightsStats.aiClientes}</div>
@@ -1403,7 +1403,7 @@ export default function KanbanBoard({
               </div>
             )}
 
-            {/* MOVIMIENTOS DE ETAPA POR IA */}
+            {/* STAGE MOVES BY AI */}
             {aiInsightsStats && aiInsightsStats.totalAIMoves > 0 && (
               <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
                 <div className="flex items-center gap-3 mb-3">
@@ -1438,7 +1438,7 @@ export default function KanbanBoard({
               </div>
             )}
 
-            {/* MEJOR HORARIO */}
+            {/* BEST TIME SLOT */}
             {aiInsightsStats && aiInsightsStats.bestHour !== null && (
               <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
                 <div className="flex items-center justify-between">
@@ -1461,7 +1461,7 @@ export default function KanbanBoard({
               </div>
             )}
 
-            {/* Lista de llamadas */}
+            {/* Call list */}
             <div className="px-6 py-4 overflow-y-auto max-h-[calc(85vh-180px)]">
               <div className="space-y-3">
                 {aiCallLeadsList.map((lead) => {
@@ -1484,7 +1484,7 @@ export default function KanbanBoard({
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          {/* Nombre y etapa */}
+                          {/* Name and stage */}
                           <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-semibold text-gray-900 truncate">{lead.name}</h3>
                             <span className={`px-2 py-0.5 rounded text-xs ${leadColumnConfig?.bgColor || 'bg-gray-100'} ${leadColumnConfig?.color || 'text-gray-600'}`}>
@@ -1492,26 +1492,26 @@ export default function KanbanBoard({
                             </span>
                           </div>
 
-                          {/* Tipo de negocio y distrito */}
+                          {/* Business type and district */}
                           <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                             {lead.business_type && <span>{lead.business_type}</span>}
                             {lead.city && <span>📍 {lead.city}</span>}
                           </div>
 
-                          {/* Resultado de la llamada */}
+                          {/* Call result */}
                           <div className="mt-2">
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-medium ${outcomeInfo.bg} ${outcomeInfo.color}`}>
                               {outcomeInfo.label}
                               {lead.aiCallResult?.contactName && (
                                 <span className="ml-2 font-normal opacity-75">
-                                  • Contacto: {lead.aiCallResult.contactName}
+                                  • Contact: {lead.aiCallResult.contactName}
                                 </span>
                               )}
                             </span>
                           </div>
                         </div>
 
-                        {/* Botón de reproducir */}
+                        {/* Play button */}
                         {conversationId && (
                           <button
                             onClick={() => handlePlayAudio(conversationId)}
@@ -1521,7 +1521,7 @@ export default function KanbanBoard({
                                 ? 'bg-red-500 text-white hover:bg-red-600'
                                 : 'bg-purple-600 text-white hover:bg-purple-700'
                             } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
-                            title={isPlaying ? 'Pausar' : 'Escuchar llamada'}
+                            title={isPlaying ? 'Pause' : 'Listen to call'}
                           >
                             {isLoading ? (
                               <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24">
@@ -1542,7 +1542,7 @@ export default function KanbanBoard({
                         )}
                       </div>
 
-                      {/* Botón para ver detalle */}
+                      {/* View detail button */}
                       <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                         <div className="flex items-center gap-3 text-xs text-gray-400">
                           {lead.aiCallResult?.callDate && (
@@ -1581,7 +1581,7 @@ export default function KanbanBoard({
             <div className="flex-shrink-0 px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <span>
-                  {t('ai.connected')} <strong className="text-blue-600">{aiInsightsStats?.connected || 0}</strong> de {aiCallLeadsList.length}
+                  {t('ai.connected')} <strong className="text-blue-600">{aiInsightsStats?.connected || 0}</strong> of {aiCallLeadsList.length}
                 </span>
                 <span className="text-gray-300">|</span>
                 <span>
@@ -1601,14 +1601,14 @@ export default function KanbanBoard({
         </div>
       )}
 
-      {/* Modal de agregar lead manual */}
+      {/* Add manual lead modal */}
       <AddManualLeadModal
         isOpen={showAddManual}
         onClose={() => setShowAddManual(false)}
         onCreated={fetchKanbanData}
       />
 
-      {/* Modal de insights */}
+      {/* Insights modal */}
       <InsightsModal
         isOpen={showInsights}
         onClose={() => setShowInsights(false)}
@@ -1627,7 +1627,7 @@ export default function KanbanBoard({
         }}
       />
 
-      {/* Modal de Campaña IA */}
+      {/* AI Campaign modal */}
       <AICampaignModal
         isOpen={showAICampaign}
         onClose={() => setShowAICampaign(false)}

@@ -6,23 +6,23 @@ import { useI18n } from '@/lib/i18n';
 import DailyActivity from '@/components/DailyActivity';
 import type { KanbanBusiness, KanbanColumnId } from '@/app/api/kanban/route';
 
-// Filtro por vendedor/dueño compartido entre las dos vistas (Lista y Tablero).
+// Rep/owner filter shared between the two views (List and Board).
 export type OwnerFilter = 'all' | 'martin' | 'alejandro' | 'bot';
 
-// Tablero (kanban) — carga dinámica para evitar problemas de SSR con drag-drop
+// Board (kanban) — dynamic load to avoid SSR issues with drag-drop
 const KanbanBoard = dynamic(() => import('@/components/kanban/KanbanBoard'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-64">
       <div className="text-center">
         <div className="animate-spin h-10 w-10 border-3 border-[#0890F1] border-t-transparent rounded-full mx-auto mb-3"></div>
-        <p className="text-gray-500">Cargando pipeline...</p>
+        <p className="text-gray-500">Loading pipeline...</p>
       </div>
     </div>
   ),
 });
 
-// Lista (brújula de orcas priorizada) — client-only, hace su propio fetch
+// List (prioritized orca compass) — client-only, does its own fetch
 const OrcaWarRoom = dynamic(() => import('@/components/OrcaWarRoom'), {
   ssr: false,
   loading: () => (
@@ -32,7 +32,7 @@ const OrcaWarRoom = dynamic(() => import('@/components/OrcaWarRoom'), {
   ),
 });
 
-// Resultados por mes — qué se hizo y qué resultó, client-only (fetch propio).
+// Results by month — what was done and what resulted, client-only (own fetch).
 const ResultadosMes = dynamic(() => import('@/components/ResultadosMes'), {
   ssr: false,
   loading: () => (
@@ -47,9 +47,9 @@ interface CurrentUser { id: string; name: string; email: string }
 interface QuickStats { newLeads: number; followUpNeeded: number; interested: number; quoted: number }
 interface MyStats { total: number; orcas: number; prospects: number }
 /**
- * Actividad real separada por origen. Antes "Tu día" contaba `contacted_at`, que
- * el cron de auto-followup también escribe: al vendedor le aparecían como propios
- * los envíos automáticos del bot. Ahora se cuenta el historial y se separa.
+ * Real activity split by origin. Before, "Your day" counted `contacted_at`, which
+ * the auto-followup cron also writes: the rep saw the bot's automatic sends as their
+ * own. Now the history is counted and split apart.
  */
 interface MiActividad {
   trabajoNuestroHoy: number;
@@ -59,13 +59,13 @@ interface MiActividad {
   porOrigenHoy: { humano: number; agente: number; cron: number; cliente: number };
 }
 
-// ¿Este lead es de Martín? (tolera "Martin"/"Martín")
+// Is this lead Martín's? (tolerates "Martin"/"Martín")
 function isMartin(name: string | null | undefined): boolean {
   const n = (name || '').toLowerCase();
   return n === 'martin' || n === 'martín';
 }
 
-// ¿El lead pertenece al usuario logueado? (por nombre de dueño)
+// Does the lead belong to the logged-in user? (by owner name)
 function ownsLead(ownerName: string | null | undefined, userName: string): boolean {
   if (userName.toLowerCase().startsWith('mart')) return isMartin(ownerName);
   return (ownerName || '').toLowerCase() === userName.toLowerCase();
@@ -80,8 +80,8 @@ export default function PipelinePage() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const { t } = useI18n();
 
-  // Recordar la última vista elegida (respetar el contexto del usuario).
-  // Se lee en effect (no en el initializer) para no romper la hidratación SSR.
+  // Remember the last chosen view (respect the user's context).
+  // Read in an effect (not the initializer) so SSR hydration isn't broken.
   useEffect(() => {
     const v = localStorage.getItem('orbit_pipeline_view');
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -120,7 +120,7 @@ export default function PipelinePage() {
     };
   }, [columns]);
 
-  // 👑 Tu día — computado desde los leads del usuario logueado
+  // 👑 Your day — computed from the logged-in user's leads
   const myStats: MyStats | null = useMemo(() => {
     if (!user || flat.length === 0) return null;
     const mine = flat.filter((l) => ownsLead(l.owner_name, user.name));
@@ -132,7 +132,7 @@ export default function PipelinePage() {
     };
   }, [flat, user]);
 
-  // Actividad real de la semana, separada por origen (a mano / dirigido / automático).
+  // Real activity for the week, split by origin (manual / directed / automatic).
   const [actividad, setActividad] = useState<MiActividad | null>(null);
   useEffect(() => {
     if (!user) return;
@@ -142,12 +142,12 @@ export default function PipelinePage() {
       .catch(() => {});
   }, [user]);
 
-  // Clave de dueño del usuario actual (para el botón "Ver los míos")
+  // Current user's owner key (for the "View mine" button)
   const myOwnerKey: OwnerFilter | null = user
     ? (isMartin(user.name) ? 'martin' : user.name === 'Alejandro' ? 'alejandro' : null)
     : null;
 
-  // Conteos por vendedor para los chips compartidos
+  // Counts by rep for the shared chips
   const ownerCounts = useMemo(() => ({
     martin: flat.filter((l) => isMartin(l.owner_name)).length,
     alejandro: flat.filter((l) => l.owner_name === 'Alejandro').length,
@@ -173,7 +173,7 @@ export default function PipelinePage() {
       <div className="hidden lg:flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('pipe.title')}</h1>
-          <p className="text-gray-500 mt-0.5">Una sola sección · tus leads en dos lentes</p>
+          <p className="text-gray-500 mt-0.5">One single section · your leads in two views</p>
         </div>
         {view === 'tablero' && stats && (
           <div className="flex items-center gap-6 bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-100">
@@ -200,7 +200,7 @@ export default function PipelinePage() {
         )}
       </div>
 
-      {/* 👑 Tu día — franja persistente, arriba de ambas vistas */}
+      {/* 👑 Your day — persistent strip, above both views */}
       {myStats && (
         <button
           onClick={() => myOwnerKey && toggleOwner(myOwnerKey)}
@@ -213,39 +213,39 @@ export default function PipelinePage() {
         >
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-baseline gap-4 flex-wrap">
-              <span className={`font-bold ${myOwnerKey && ownerFilter === myOwnerKey ? 'text-white' : 'text-[#0890F1]'}`}>👑 Tu día</span>
+              <span className={`font-bold ${myOwnerKey && ownerFilter === myOwnerKey ? 'text-white' : 'text-[#0890F1]'}`}>👑 Your day</span>
               <span className={`text-sm ${myOwnerKey && ownerFilter === myOwnerKey ? 'text-white/90' : 'text-gray-600'}`}>
                 {actividad ? (
                   <>
-                    Hoy trabajaste <b>{actividad.trabajoNuestroHoy}</b> · esta semana <b>{actividad.trabajoNuestroRango}</b> en <b>{actividad.negociosTrabajados}</b> cuentas
+                    Today you worked <b>{actividad.trabajoNuestroHoy}</b> · this week <b>{actividad.trabajoNuestroRango}</b> across <b>{actividad.negociosTrabajados}</b> accounts
                     {actividad.porOrigen.cron > 0 && (
                       <span className={myOwnerKey && ownerFilter === myOwnerKey ? 'text-white/60' : 'text-gray-400'}>
-                        {' '}· el bot mandó <b>{actividad.porOrigen.cron}</b> aparte
+                        {' '}· the bot sent <b>{actividad.porOrigen.cron}</b> separately
                       </span>
                     )}
                   </>
                 ) : (
-                  <>Cargando tu actividad…</>
+                  <>Loading your activity…</>
                 )}
-                {' '}· <b>{myStats.prospects}</b> prospectos · <b>{myStats.orcas}</b> orcas · <b>{myStats.total}</b> leads tuyos
+                {' '}· <b>{myStats.prospects}</b> prospects · <b>{myStats.orcas}</b> orcas · <b>{myStats.total}</b> of your leads
               </span>
             </div>
             {myOwnerKey && (
               <span className={`text-xs font-semibold ${ownerFilter === myOwnerKey ? 'text-white' : 'text-[#0890F1]'}`}>
-                {ownerFilter === myOwnerKey ? '✓ viendo los tuyos' : 'Ver los míos →'}
+                {ownerFilter === myOwnerKey ? '✓ viewing yours' : 'View mine →'}
               </span>
             )}
           </div>
         </button>
       )}
 
-      {/* 📅 Actividad por día — colapsable, visible en Lista y Tablero (chips de vendedor propios) */}
+      {/* 📅 Daily activity — collapsible, visible in List and Board (its own rep chips) */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm mb-4">
         <button
           onClick={() => setShowActivity((s) => !s)}
           className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
         >
-          <span className="font-semibold text-sm text-gray-900">📅 Actividad por día</span>
+          <span className="font-semibold text-sm text-gray-900">📅 Daily activity</span>
           <svg
             className={`w-4 h-4 text-gray-400 transition-transform ${showActivity ? 'rotate-90' : ''}`}
             fill="currentColor"
@@ -261,7 +261,7 @@ export default function PipelinePage() {
         )}
       </div>
 
-      {/* Barra compartida: toggle de vista + filtros por vendedor (aplican a Lista y Tablero) */}
+      {/* Shared bar: view toggle + rep filters (apply to List and Board) */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
           <button
@@ -270,7 +270,7 @@ export default function PipelinePage() {
               view === 'lista' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            ☰ Lista
+            ☰ List
           </button>
           <button
             onClick={() => changeView('tablero')}
@@ -278,7 +278,7 @@ export default function PipelinePage() {
               view === 'tablero' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            ▦ Tablero
+            ▦ Board
           </button>
           <button
             onClick={() => changeView('resultados')}
@@ -286,11 +286,11 @@ export default function PipelinePage() {
               view === 'resultados' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            📆 Resultados
+            📆 Results
           </button>
         </div>
 
-        {/* Filtro por vendedor: aplica a Lista y Tablero, no a Resultados (vista global por mes). */}
+        {/* Rep filter: applies to List and Board, not Results (global monthly view). */}
         {view !== 'resultados' && (
           <>
             <div className="w-px h-6 bg-gray-200 mx-0.5" />
@@ -299,13 +299,13 @@ export default function PipelinePage() {
             {ownerChip('alejandro', '🧑 Alejandro', ownerCounts.alejandro, 'bg-teal-600 text-white', 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200')}
             {ownerChip('bot', '🤖 Bot', ownerCounts.bot, 'bg-purple-600 text-white', 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200')}
             {ownerFilter !== 'all' && (
-              <button onClick={() => setOwnerFilter('all')} className="text-xs text-gray-400 hover:text-gray-600" title="Quitar filtro de vendedor">✕ limpiar</button>
+              <button onClick={() => setOwnerFilter('all')} className="text-xs text-gray-400 hover:text-gray-600" title="Remove rep filter">✕ clear</button>
             )}
           </>
         )}
       </div>
 
-      {/* Guía de etapas — solo Tablero, colapsable */}
+      {/* Stage guide — Board only, collapsible */}
       <div className={`${view === 'tablero' ? 'hidden lg:block' : 'hidden'} mb-4`}>
         <button
           onClick={() => setShowTips(!showTips)}
@@ -361,7 +361,7 @@ export default function PipelinePage() {
         )}
       </div>
 
-      {/* Contenido según vista */}
+      {/* Content by view */}
       {view === 'tablero' ? (
         <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-2 sm:p-3 lg:p-4 overflow-hidden">
           <KanbanBoard ownerFilter={ownerFilter} onOwnerFilterChange={setOwnerFilter} />

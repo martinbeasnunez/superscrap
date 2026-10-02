@@ -10,7 +10,7 @@ import { isLikelyBotReply } from '@/lib/reply-classifier';
 
 interface LeadDetailModalProps {
   business: KanbanBusiness | null;
-  currentColumn: KanbanColumnId; // La columna actual donde está la card
+  currentColumn: KanbanColumnId; // The current column where the card is
   onClose: () => void;
   onStageChange: (businessId: string, newStage: KanbanColumnId) => void;
   onActionRegistered: () => void;
@@ -29,7 +29,7 @@ interface EmailModal {
   body: string;
 }
 
-// Detecta si es número de celular peruano
+// Detects whether it is a Peruvian mobile number
 function isPeruvianMobile(phone: string | null): boolean {
   if (!phone) return false;
   const cleaned = phone.replace(/\D/g, '');
@@ -49,13 +49,13 @@ function getWhatsAppNumber(phone: string): string {
 // WhatsApp pitch — uses shared function from src/lib/whatsapp-pitch.ts
 const getWhatsAppPitch = getWhatsAppPitchServer;
 
-// Genera email pitch según etapa del pipeline y número de contactos
+// Generates the email pitch based on the pipeline stage and the number of contacts
 function getEmailPitch(businessName: string, businessType: string | null, salesStage?: string, contactCount?: number): { subject: string; body: string } {
   const typeLower = (businessType || '').toLowerCase();
   const stage = salesStage || 'nuevo';
   const contacts = contactCount || 0;
 
-  // Detectar industria
+  // Detect industry
   let industria = 'empresa';
   let textiles = 'textiles';
 
@@ -76,7 +76,7 @@ function getEmailPitch(businessName: string, businessType: string | null, salesS
     textiles = 'uniformes de su personal';
   }
 
-  // Si tiene 5+ contactos, usar email de cierre sin importar el stage
+  // If it has 5+ contacts, use the closing email regardless of the stage
   if (contacts >= 5 && !['interesado', 'cotizado', 'cliente'].includes(stage)) {
     return {
       subject: `Último mensaje - Lavandería para ${businessName}`,
@@ -104,7 +104,7 @@ GetLavado - Lavandería Industrial 🧺
     };
   }
 
-  // Si tiene 3-4 contactos, email más directo
+  // If it has 3-4 contacts, a more direct email
   if (contacts >= 3 && !['interesado', 'cotizado', 'cliente', 'seguimiento_3'].includes(stage)) {
     return {
       subject: `Re: Lavandería industrial - ${businessName}`,
@@ -129,7 +129,7 @@ GetLavado - Lavandería Industrial 🧺
     };
   }
 
-  // SEGUIMIENTO 3 - Email final, amigable pero cerrando el tema
+  // FOLLOW-UP 3 - Final email, friendly but closing the topic
   if (stage === 'seguimiento_3') {
     return {
       subject: `Cerrando el tema - Lavandería para ${businessName}`,
@@ -158,7 +158,7 @@ GetLavado - Lavandería Industrial 🧺
     };
   }
 
-  // SEGUIMIENTO 2 - Email de seguimiento urgente
+  // FOLLOW-UP 2 - Urgent follow-up email
   if (stage === 'seguimiento_2') {
     return {
       subject: `Re: Lavandería industrial para ${businessName}`,
@@ -188,7 +188,7 @@ GetLavado - Lavandería Industrial 🧺
     };
   }
 
-  // SEGUIMIENTO 1 / CONTACTADO - Email de seguimiento suave
+  // FOLLOW-UP 1 / CONTACTED - Soft follow-up email
   if (stage === 'seguimiento_1' || stage === 'contactado') {
     return {
       subject: `Seguimiento: Lavandería para ${businessName}`,
@@ -221,7 +221,7 @@ GetLavado - Lavandería Industrial 🧺
     };
   }
 
-  // INTERESADO - Email de push hacia cotización
+  // INTERESTED - Email pushing toward a quote
   if (stage === 'interesado') {
     return {
       subject: `Tu cotización de lavandería - ${businessName}`,
@@ -261,7 +261,7 @@ GetLavado - Lavandería Industrial 🧺
     };
   }
 
-  // COTIZADO - Email de push hacia cierre
+  // QUOTED - Email pushing toward the close
   if (stage === 'cotizado') {
     return {
       subject: `Re: Cotización lavandería - ${businessName}`,
@@ -292,7 +292,7 @@ GetLavado - Lavandería Industrial 🧺
     };
   }
 
-  // NUEVO - Email de primer contacto (el original)
+  // NEW - First-contact email (the original)
   const subjects = [
     `¿Están pagando de más por lavandería? (pregunta seria)`,
     `Propuesta para reducir 40% en costos de ${textiles}`,
@@ -356,22 +356,22 @@ function formatTimeAgo(dateStr: string): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffSecs < 60) return 'ahora';
-  if (diffMins < 2) return 'hace 1 min';
-  if (diffMins < 60) return `hace ${diffMins} min`;
-  if (diffHours === 1) return 'hace 1 hora';
-  if (diffHours < 24) return `hace ${diffHours} horas`;
-  if (diffDays === 1) return 'ayer';
-  if (diffDays < 7) return `hace ${diffDays} días`;
-  if (diffDays < 14) return 'hace 1 semana';
-  if (diffDays < 30) return `hace ${Math.floor(diffDays / 7)} semanas`;
-  return `hace ${Math.floor(diffDays / 30)} mes${Math.floor(diffDays / 30) > 1 ? 'es' : ''}`;
+  if (diffSecs < 60) return 'now';
+  if (diffMins < 2) return '1 min ago';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours === 1) return '1 hour ago';
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 14) return '1 week ago';
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
 }
 
 function getActionIcon(action: string, isBotReply = false): string {
   switch (action) {
     case 'whatsapp': return '✋';                 // Manual — Alejandro
-    case 'auto_whatsapp': return '🤖';            // Automated — Sistema
+    case 'auto_whatsapp': return '🤖';            // Automated — System
     case 'whatsapp_reply': return isBotReply ? '🤖' : '💬';
     case 'email': return '📧';
     case 'call': return '📞';
@@ -384,14 +384,14 @@ function getActionIcon(action: string, isBotReply = false): string {
 
 function getActionLabel(action: string, isBotReply = false): string {
   switch (action) {
-    case 'whatsapp': return 'Alejandro envió WhatsApp';
-    case 'auto_whatsapp': return 'Sistema envió WhatsApp';
-    case 'whatsapp_reply': return isBotReply ? 'Bot del cliente respondió' : 'Cliente respondió';
+    case 'whatsapp': return 'Alejandro sent WhatsApp';
+    case 'auto_whatsapp': return 'System sent WhatsApp';
+    case 'whatsapp_reply': return isBotReply ? 'Customer bot replied' : 'Customer replied';
     case 'email': return 'Email';
-    case 'call': return 'Llamada';
-    case 'ai_call': return 'Llamada IA';
-    case 'stage_change': return 'Cambio de etapa';
-    case 'note': return 'Nota';
+    case 'call': return 'Call';
+    case 'ai_call': return 'AI Call';
+    case 'stage_change': return 'Stage change';
+    case 'note': return 'Note';
     default: return action;
   }
 }
@@ -417,7 +417,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
   const [newNoteText, setNewNoteText] = useState<string>('');
   const [notesSaving, setNotesSaving] = useState(false);
 
-  // Próxima acción — texto libre curado por el humano (estilo Partnerships)
+  // Next action — free text curated by the human (Partnerships style)
   const [nextAction, setNextAction] = useState<string>('');
   const [nextActionSaving, setNextActionSaving] = useState(false);
 
@@ -463,11 +463,11 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         onClose();
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(`Error: ${data.error || 'No se pudo eliminar'}`);
+        alert(`Error: ${data.error || 'Could not delete'}`);
       }
     } catch (err) {
       console.error('Delete error:', err);
-      alert('Error de conexión');
+      alert('Connection error');
     } finally {
       setDeleting(false);
     }
@@ -549,8 +549,8 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     }
   };
 
-  // USAR currentColumn (la columna donde está la card) como fuente de verdad
-  // Esto garantiza que el pitch siempre refleje la posición visual de la card
+  // USE currentColumn (the column where the card is) as the source of truth
+  // This guarantees the pitch always reflects the card's visual position
   const currentStage = currentColumn;
 
   useEffect(() => {
@@ -580,7 +580,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     setActionLoading(action);
 
     try {
-      // Obtener userId
+      // Get userId
       let userId = null;
       try {
         const savedUser = localStorage.getItem('orbit_user');
@@ -598,13 +598,13 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         }),
       });
 
-      // Actualizar contact_actions
+      // Update contact_actions
       const currentActions = business.contact_actions || [];
       const isFirstContact = currentActions.length === 0;
       const newActions = currentActions.includes(action) ? currentActions : [...currentActions, action];
 
-      // Regla simple: Si está en "nuevo" y es primer contacto → mover a "contactado"
-      // El resto de movimientos (interesado, perdido, etc.) solo los hace la IA
+      // Simple rule: if it's in "nuevo" and it's the first contact → move to "contactado"
+      // The rest of the moves (interesado, perdido, etc.) are only done by the AI
       const updateData: Record<string, unknown> = {
         contact_actions: newActions,
         user_id: userId,
@@ -620,7 +620,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         body: JSON.stringify(updateData),
       });
 
-      // Refrescar historial y notificar
+      // Refresh history and notify
       await fetchContactHistory();
       onActionRegistered();
     } catch (err) {
@@ -632,7 +632,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
   const handleWhatsAppClick = () => {
     if (!business?.phone) return;
-    // Usar currentStage que ya está calculado (incluye el fallback a 'nuevo')
+    // Use currentStage, which is already computed (includes the fallback to 'nuevo')
     const pitch = getWhatsAppPitch(business.name, business.business_type, currentStage, business.contactCount);
     console.log('[WhatsApp] business.sales_stage:', business.sales_stage, '| currentStage:', currentStage, '| pitch type:',
       currentStage === 'seguimiento_1' || currentStage === 'seguimiento_2' || currentStage === 'contactado' ? 'FOLLOW-UP' :
@@ -703,12 +703,12 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     setAiCallStatus('calling');
     setAiCallResult(null);
 
-    // Buscar si hay resumen de llamada IA anterior
+    // Check whether there is a summary from a previous AI call
     const lastAICall = contactHistory.find(h => h.notes?.startsWith('🤖'));
     const lastAICallSummary = lastAICall?.notes || null;
 
-    // IMPORTANTE: Usar currentStage (posición visual de la card) como fuente de verdad
-    // Esto garantiza que el pitch refleje la columna donde está la card, no el valor en DB
+    // IMPORTANT: Use currentStage (the card's visual position) as the source of truth
+    // This guarantees the pitch reflects the column where the card is, not the DB value
     console.log('[AI Call] Using currentStage for pitch:', currentStage, '| (DB sales_stage:', business.sales_stage, ')');
 
     try {
@@ -720,7 +720,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
           phoneNumber: business.phone,
           businessName: business.name,
           businessType: business.business_type,
-          // CORREGIDO: Usar currentStage (columna visual) en vez de business.sales_stage (DB)
+          // FIXED: Use currentStage (visual column) instead of business.sales_stage (DB)
           salesStage: currentStage,
           contactCount: business.contactCount,
           lastAICallSummary,
@@ -731,12 +731,12 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
 
       if (res.ok) {
         setAiCallStatus('success');
-        // Registrar como acción de contacto
+        // Register it as a contact action
         await fetchContactHistory();
         onActionRegistered();
 
-        // Esperar y consultar resultado después de que termine la llamada
-        // Consultar cada 30 segundos por 5 minutos max
+        // Wait and poll for the result after the call ends
+        // Poll every 30 seconds for 5 minutes max
         const conversationId = data.conversation_id;
         if (conversationId) {
           pollForResult(conversationId);
@@ -753,23 +753,23 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     }
   };
 
-  // Reproducir audio de llamada IA
+  // Play AI call audio
   const handlePlayAudio = (conversationId: string) => {
-    // Si ya está reproduciéndose este audio, pausar
+    // If this audio is already playing, pause it
     if (playingAudioId === conversationId && audioRef.current) {
       audioRef.current.pause();
       setPlayingAudioId(null);
       return;
     }
 
-    // Si hay otro audio reproduciéndose, detenerlo
+    // If another audio is playing, stop it
     if (audioRef.current) {
       audioRef.current.pause();
     }
 
     setAudioLoading(conversationId);
 
-    // Crear nuevo elemento de audio
+    // Create a new audio element
     const audio = new Audio(`/api/ai-call/audio?conversationId=${conversationId}`);
     audioRef.current = audio;
 
@@ -792,10 +792,10 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
     audio.load();
   };
 
-  // Consultar resultado de la llamada periódicamente
+  // Poll for the call result periodically
   const pollForResult = async (conversationId: string) => {
     let attempts = 0;
-    const maxAttempts = 20; // 10 minutos (30s x 20)
+    const maxAttempts = 20; // 10 minutes (30s x 20)
 
     const checkResult = async () => {
       attempts++;
@@ -815,29 +815,29 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
         console.log('[AI Call] Poll result:', result);
 
         if (res.ok && result.success) {
-          // La llamada terminó exitosamente
+          // The call finished successfully
           console.log('[AI Call] Call completed! Outcome:', result.outcome);
           setAiCallResult({
             summary: result.summary,
             outcome: result.outcome,
           });
-          // Refrescar historial y datos
+          // Refresh history and data
           await fetchContactHistory();
           if (result.salesStageUpdated) {
             onActionRegistered();
           }
-          return; // Parar polling
+          return; // Stop polling
         }
 
-        // Si la API dice que aún está en progreso, continuar polling
+        // If the API says it's still in progress, keep polling
         if (result.message === 'Conversación aún en progreso') {
           console.log('[AI Call] Conversation still in progress...');
         }
 
-        // Si hubo error 404, la conversación aún está en progreso
-        // Continuar polling si no ha terminado
+        // If there was a 404 error, the conversation is still in progress
+        // Keep polling if it hasn't finished
         if (attempts < maxAttempts) {
-          const delay = attempts < 4 ? 15000 : 30000; // Más rápido al inicio
+          const delay = attempts < 4 ? 15000 : 30000; // Faster at the start
           console.log(`[AI Call] Will retry in ${delay/1000}s`);
           setTimeout(checkResult, delay);
         } else {
@@ -851,7 +851,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
       }
     };
 
-    // Primera consulta después de 15 segundos (las llamadas pueden ser cortas)
+    // First poll after 15 seconds (calls can be short)
     setTimeout(checkResult, 15000);
   };
 
@@ -915,7 +915,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           )}
 
-          {/* Etapa actual */}
+          {/* Current stage */}
           <div className="mb-4">
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('lead.stage')}</label>
             <div className="relative mt-1">
@@ -948,10 +948,10 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           </div>
 
-          {/* Próxima acción — texto libre curado por el humano (el bot no la toca) */}
+          {/* Next action — free text curated by the human (the bot doesn't touch it) */}
           <div className="mb-4">
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block">
-              → Próxima acción
+              → Next action
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -960,7 +960,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') { e.preventDefault(); saveNextAction(); }
                 }}
-                placeholder="ej. mandar propuesta, llamar jueves…"
+                placeholder="e.g. send proposal, call Thursday…"
                 className="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none bg-white"
               />
               <button
@@ -968,7 +968,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 disabled={nextActionSaving || nextAction.trim() === (business.next_action ?? '')}
                 className="text-xs px-2.5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex-shrink-0"
               >
-                {nextActionSaving ? '⏳' : 'Guardar'}
+                {nextActionSaving ? '⏳' : 'Save'}
               </button>
             </div>
           </div>
@@ -992,13 +992,13 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 <p className={`text-sm font-medium ${
                   business.potential_tier === 'orca' ? 'text-blue-700' : 'text-emerald-700'
                 }`}>
-                  Revenue estimado: S/{business.estimated_revenue_min.toLocaleString()} - S/{business.estimated_revenue_max.toLocaleString()}/mes
+                  Estimated revenue: S/{business.estimated_revenue_min.toLocaleString()} - S/{business.estimated_revenue_max.toLocaleString()}/mo
                 </p>
               )}
             </div>
           )}
 
-          {/* Info de contacto */}
+          {/* Contact info */}
           <div className="space-y-3 mb-4">
             {business.phone && (
               <div className="flex items-center gap-3">
@@ -1040,12 +1040,12 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 </div>
               )}
               {business.reviews_count && (
-                <span className="text-gray-500 text-sm">({business.reviews_count} reseñas)</span>
+                <span className="text-gray-500 text-sm">({business.reviews_count} reviews)</span>
               )}
             </div>
           </div>
 
-          {/* Decision Makers / Contactos - ELEVATED (v2) */}
+          {/* Decision Makers / Contacts - ELEVATED (v2) */}
           {(!business.decision_makers || business.decision_makers.length === 0) && (
             <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
               <p className="text-sm font-bold text-red-700">{t('lead.no_dm_warning')}</p>
@@ -1083,7 +1083,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         </button>
                         <div className="min-w-0">
                           <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                            {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contacto')}
+                            {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contact')}
                             {isPrimary && <span className="ml-1 text-[10px] text-green-600 font-normal">({t('lead.primary_contact')})</span>}
                           </p>
                           {dm.position && (
@@ -1117,7 +1117,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                           <button
                             onClick={() => handleEmailClick(dm.email!)}
                             className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded"
-                            title="Ver pitch de email"
+                            title="View email pitch"
                           >
                             <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -1141,7 +1141,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                           <a
                             href={`tel:${dm.phone}`}
                             className="p-1 sm:p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                            title={`Llamar: ${dm.phone}`}
+                            title={`Call: ${dm.phone}`}
                           >
                             <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -1156,7 +1156,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           )}
 
-          {/* Descripcion */}
+          {/* Description */}
           {business.description && (
             <div className="mb-4">
               <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 block">{t('lead.description')}</label>
@@ -1164,7 +1164,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           )}
 
-          {/* Acciones rápidas */}
+          {/* Quick actions */}
           <div className="mb-4">
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">{t('lead.actions')}</label>
             <div className="grid grid-cols-3 gap-2">
@@ -1226,16 +1226,16 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         }),
                       });
                       if (res.ok) {
-                        alert('✅ WhatsApp enviado por Kapso');
+                        alert('✅ WhatsApp sent via Kapso');
                         onActionRegistered();
                         await fetchContactHistory();
                       } else {
                         const data = await res.json().catch(() => ({}));
-                        alert(`❌ Error enviando WhatsApp: ${data.error || 'Error desconocido'}`);
+                        alert(`❌ Error sending WhatsApp: ${data.error || 'Unknown error'}`);
                       }
                     } catch (err) {
                       console.error('Kapso send error:', err);
-                      alert('❌ Error de conexión con Kapso');
+                      alert('❌ Connection error with Kapso');
                     } finally {
                       setActionLoading(null);
                     }
@@ -1319,7 +1319,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-purple-700 flex items-center gap-1">
-                    ✨ Borrador IA
+                    ✨ AI Draft
                   </span>
                   <button
                     onClick={async () => {
@@ -1335,10 +1335,10 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         if (res.ok && data.suggestion) {
                           setAiSuggestion(data.suggestion);
                         } else {
-                          setAiSuggestError(data.error || 'Error generando borrador');
+                          setAiSuggestError(data.error || 'Error generating draft');
                         }
                       } catch (err) {
-                        setAiSuggestError('Error de conexión');
+                        setAiSuggestError('Connection error');
                       } finally {
                         setAiSuggestLoading(false);
                       }
@@ -1346,7 +1346,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     disabled={aiSuggestLoading}
                     className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
                   >
-                    {aiSuggestLoading ? '⏳ Pensando…' : aiSuggestion ? '🔄 Regenerar' : '✨ Sugerir respuesta'}
+                    {aiSuggestLoading ? '⏳ Thinking…' : aiSuggestion ? '🔄 Regenerate' : '✨ Suggest reply'}
                   </button>
                 </div>
 
@@ -1361,7 +1361,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                       onChange={(e) => setAiSuggestion(e.target.value)}
                       rows={5}
                       className="w-full p-2 text-sm border border-purple-200 rounded resize-y bg-white focus:outline-none focus:border-purple-400"
-                      placeholder="Edita el borrador antes de enviar…"
+                      placeholder="Edit the draft before sending…"
                     />
                     <div className="flex gap-2 mt-2">
                       <button
@@ -1380,12 +1380,12 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                             });
                             if (res.ok) {
                               setAiSuggestion('');
-                              alert('✅ Respuesta enviada por Kapso');
+                              alert('✅ Reply sent via Kapso');
                               onActionRegistered();
                               await fetchContactHistory();
                             } else {
                               const data = await res.json().catch(() => ({}));
-                              alert(`❌ Error: ${data.error || 'Error enviando'}`);
+                              alert(`❌ Error: ${data.error || 'Error sending'}`);
                             }
                           } finally {
                             setActionLoading(null);
@@ -1394,13 +1394,13 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                         disabled={actionLoading === 'ai-send' || !aiSuggestion.trim()}
                         className="flex-1 px-3 py-1.5 text-sm bg-emerald-500 text-white rounded hover:bg-emerald-600 disabled:opacity-50 font-medium"
                       >
-                        {actionLoading === 'ai-send' ? '⏳ Enviando…' : '📤 Enviar borrador'}
+                        {actionLoading === 'ai-send' ? '⏳ Sending…' : '📤 Send draft'}
                       </button>
                       <button
                         onClick={() => setAiSuggestion('')}
                         className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
                       >
-                        Cancelar
+                        Cancel
                       </button>
                     </div>
                   </>
@@ -1408,10 +1408,10 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               </div>
             )}
 
-            {/* Boton de Llamada con IA - OCULTO TEMPORALMENTE */}
+            {/* AI Call button - TEMPORARILY HIDDEN */}
           </div>
 
-          {/* Notas del lead — feed cronológico (cada guardado = nueva nota) */}
+          {/* Lead notes — chronological feed (each save = a new note) */}
           {(() => {
             const pastNotes = contactHistory
               .filter(h => h.action_type === 'note')
@@ -1424,7 +1424,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                 const opts: Intl.DateTimeFormatOptions = sameDay
                   ? { hour: '2-digit', minute: '2-digit' }
                   : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
-                return d.toLocaleString('es-PE', opts);
+                return d.toLocaleString('en-US', opts);
               } catch { return ''; }
             };
             return (
@@ -1524,7 +1524,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             );
           })()}
 
-          {/* Razón de pérdida — solo si el lead está en perdido */}
+          {/* Loss reason — only if the lead is in perdido */}
           {currentColumn === 'perdido' && (
             <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50/60">
               <div className="text-xs font-medium text-red-700 uppercase tracking-wide mb-2">
@@ -1562,7 +1562,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           )}
 
-          {/* Historial de contactos */}
+          {/* Contact history */}
           <div>
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">
               {t('lead.history')} ({contactHistory.length})
@@ -1577,7 +1577,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
               </div>
             ) : (
               <>
-                {/* Tip de seguimiento si solo hay 1 contacto */}
+                {/* Follow-up tip if there is only 1 contact */}
                 {contactHistory.length === 1 && (
                   <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
                     💡 <strong>Tip:</strong> {t('lead.tip_single_contact')}
@@ -1604,7 +1604,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                     const isReply = h.action_type === 'whatsapp_reply';
                     const isBotReply = isReply && isLikelyBotReply(h.notes);
                     const isHumanReply = isReply && !isBotReply;
-                    // Extraer conversation_id de las notas para reproducir audio
+                    // Extract conversation_id from the notes to play the audio
                     const convIdMatch = h.notes?.match(/conv_[a-z0-9]+/);
                     const conversationId = convIdMatch ? convIdMatch[0] : null;
                     const isPlaying = playingAudioId === conversationId;
@@ -1636,10 +1636,10 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                             : isAutoSend ? 'text-purple-700'
                             : 'text-gray-700'
                           }>
-                            {isAICall ? 'Llamada IA' : getActionLabel(h.action_type, isBotReply)}
+                            {isAICall ? 'AI Call' : getActionLabel(h.action_type, isBotReply)}
                           </span>
                           <span className="text-gray-400 text-xs ml-auto">{formatTimeAgo(h.created_at)}</span>
-                          {/* Botón de play para llamadas IA */}
+                          {/* Play button for AI calls */}
                           {isAICall && conversationId && (
                             <button
                               onClick={() => handlePlayAudio(conversationId)}
@@ -1649,7 +1649,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                                   ? 'bg-red-500 text-white hover:bg-red-600'
                                   : 'bg-purple-600 text-white hover:bg-purple-700'
                               } ${isLoading ? 'opacity-50 cursor-wait' : ''}`}
-                              title={isPlaying ? 'Pausar' : 'Escuchar llamada'}
+                              title={isPlaying ? 'Pause' : 'Listen to call'}
                             >
                               {isLoading ? (
                                 <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
@@ -1702,7 +1702,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             )}
           </div>
 
-          {/* Recordatorio de seguimiento si hace más de 2 días */}
+          {/* Follow-up reminder if it has been more than 2 days */}
           {business.daysSinceContact !== null && business.daysSinceContact >= 2 && business.contactCount > 0 && (
             <div className={`mt-4 p-3 rounded-lg border-2 ${
               business.daysSinceContact >= 5
@@ -1739,7 +1739,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
             </div>
           )}
 
-          {/* ⚠️ Danger zone — eliminar lead (CASCADE limpia notas + historial) */}
+          {/* ⚠️ Danger zone — delete lead (CASCADE clears notes + history) */}
           {!deleteConfirm ? (
             <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
               <button
@@ -1828,7 +1828,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.to); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                    title="Copiar email"
+                    title="Copy email"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1836,7 +1836,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   </button>
                 </div>
                 <p className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded">
-                  {emailModal.to || <span className="text-gray-400 italic">No hay email disponible</span>}
+                  {emailModal.to || <span className="text-gray-400 italic">No email available</span>}
                 </p>
               </div>
               <div className="mb-4">
@@ -1845,7 +1845,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.subject); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                    title="Copiar asunto"
+                    title="Copy subject"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1860,7 +1860,7 @@ export default function LeadDetailModal({ business, currentColumn, onClose, onSt
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.body); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                    title="Copiar cuerpo"
+                    title="Copy body"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

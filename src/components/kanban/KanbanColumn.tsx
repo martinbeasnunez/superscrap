@@ -118,15 +118,15 @@ export function getColumnConfig(t: (key: string) => string): Record<KanbanColumn
 // Static fallback for non-i18n contexts
 export const COLUMN_CONFIG: Record<KanbanColumnId, ColumnConfig> = getColumnConfig((key: string) => {
   const fallback: Record<string, string> = {
-    'col.new': 'Nuevos', 'col.new_desc': 'Sin contactar aún',
-    'col.first': '1er Contacto', 'col.first_short': '1er', 'col.first_desc': 'Contactados hace 0-2 días',
-    'col.seg1': 'Seguimiento 1', 'col.seg1_short': 'Seg 1', 'col.seg1_desc': '3-5 días sin respuesta',
-    'col.seg2': 'Seguimiento 2', 'col.seg2_short': 'Seg 2', 'col.seg2_desc': '6-8 días - ¡URGENTE!',
-    'col.last': 'Último Intento', 'col.last_short': 'Último', 'col.last_desc': '9+ días - Sí o No',
-    'col.interested': 'Interesados', 'col.interested_short': 'Interés', 'col.interested_desc': 'Respondieron con interés',
-    'col.quoted': 'Cotizados', 'col.quoted_short': 'Cotiz', 'col.quoted_desc': 'Tienen cotización',
-    'col.customer': 'Clientes', 'col.customer_short': 'Cliente', 'col.customer_desc': '¡Venta cerrada!',
-    'col.lost': 'Perdidos', 'col.lost_short': 'Perdido', 'col.lost_desc': 'No interesados',
+    'col.new': 'New', 'col.new_desc': 'Not contacted yet',
+    'col.first': '1st Contact', 'col.first_short': '1st', 'col.first_desc': 'Contacted 0-2 days ago',
+    'col.seg1': 'Follow-up 1', 'col.seg1_short': 'F/U 1', 'col.seg1_desc': '3-5 days without reply',
+    'col.seg2': 'Follow-up 2', 'col.seg2_short': 'F/U 2', 'col.seg2_desc': '6-8 days - URGENT!',
+    'col.last': 'Last Attempt', 'col.last_short': 'Last', 'col.last_desc': '9+ days - Yes or No',
+    'col.interested': 'Interested', 'col.interested_short': 'Interest', 'col.interested_desc': 'Replied with interest',
+    'col.quoted': 'Quoted', 'col.quoted_short': 'Quote', 'col.quoted_desc': 'Have a quote',
+    'col.customer': 'Customers', 'col.customer_short': 'Customer', 'col.customer_desc': 'Deal closed!',
+    'col.lost': 'Lost', 'col.lost_short': 'Lost', 'col.lost_desc': 'Not interested',
   };
   return fallback[key] || key;
 });
@@ -207,7 +207,7 @@ export default function KanbanColumn({ id, columnId, businesses, onCardClick, on
         )}
       </Droppable>
 
-      {/* Footer con tip para columnas de seguimiento - Hidden on small mobile */}
+      {/* Footer with tip for follow-up columns - Hidden on small mobile */}
       {config.isFollowUp && businesses.length > 0 && (
         <div className={`hidden sm:block px-2 py-1.5 border-t ${config.borderColor} text-center`}>
           <p className={`text-xs font-medium ${columnId === 'seguimiento_2' ? 'text-red-700' : 'text-blue-700'}`}>

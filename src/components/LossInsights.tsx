@@ -25,7 +25,7 @@ interface TierBreakdown {
 type Tier = 'all' | 'orca' | 'delfin';
 type Source = 'all' | 'auto' | 'manual';
 
-// Matriz tier × source: cada celda es un desglose completo de pérdidas.
+// Tier × source matrix: each cell is a complete loss breakdown.
 type BySource = Record<Source, TierBreakdown>;
 
 interface Insights {
@@ -43,38 +43,38 @@ interface Insights {
   lossByTierSource: Record<Tier, BySource>;
 }
 
-// 'YYYY-MM' -> 'Junio 2026'
+// 'YYYY-MM' -> 'June 2026'
 function monthLabel(key: string): string {
   const [y, m] = key.split('-').map(Number);
   const d = new Date(y, m - 1, 1);
-  const s = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+  const s = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// Mes en curso ('YYYY-MM') — default del selector: arranca en el mes actual,
-// no en todo el histórico.
+// Current month ('YYYY-MM') — selector default: starts on the current month,
+// not on the full history.
 function currentMonthKey(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-// Recomendación accionable por cada motivo de pérdida.
-// La gracia del bloque no es el gráfico, es el "¿y ahora qué hago?".
+// Actionable recommendation for each loss reason.
+// The point of the block isn't the chart, it's the "so what do I do now?".
 const REASON_TIPS: Record<string, string> = {
   precio:
-    'Ofrece un plan de entrada o precio por volumen, y muéstrales el ahorro real vs. lavar internamente.',
+    'Offer an entry plan or volume pricing, and show them the real savings vs. doing laundry in-house.',
   lavado_interno:
-    'Cuantifica su costo oculto (personal, agua, espacio, roturas) y véndeles ahorro + consistencia.',
+    'Quantify their hidden cost (staff, water, space, damages) and sell them savings + consistency.',
   tiene_proveedor:
-    'Ofrece un piloto sin compromiso y compite por tiempos y servicio, no solo por precio.',
+    'Offer a no-commitment pilot and compete on turnaround and service, not just price.',
   mal_timing:
-    'No los pierdas: agéndalos para recontacto en 30–60 días. El interés existe, falta el momento.',
+    'Don\'t lose them: schedule a follow-up in 30–60 days. The interest is there, just not the timing.',
   no_interesado:
-    'Revisa a quién estás prospectando — puede ser un problema de segmentación, no de venta.',
+    'Review who you are prospecting — it may be a targeting problem, not a sales one.',
   no_contesta:
-    'Prueba otro canal y horario, y combina WhatsApp con llamada antes de darlos por perdidos.',
+    'Try another channel and time, and combine WhatsApp with a call before giving them up.',
   no_decisor:
-    'Desde el primer contacto pide hablar con el dueño o gerente que toma la decisión.',
+    'From the first contact, ask to speak with the owner or manager who makes the decision.',
 };
 
 function Bar({ value, max, color, track }: { value: number; max: number; color: string; track: string }) {
@@ -110,25 +110,25 @@ export default function LossInsights() {
     );
   }
   if (!data) return null;
-  // En "todo el tiempo" sin perdidos, ocultamos el bloque entero.
-  // Con un mes elegido mostramos el header + un vacío (para poder cambiar de mes).
+  // In "all time" with no losses, we hide the whole block.
+  // With a month selected we show the header + an empty state (so you can switch months).
   if (month === 'all' && data.summary.lostPerdidos === 0) return null;
 
   const { summary, lossByTierSource } = data;
 
-  // Celda activa de la matriz tier × source. Los dos filtros se cruzan: p.ej.
-  // 🐋 orcas + ✋ manuales. El reporte (motivos, etapa, insight) sale de aquí.
+  // Active cell of the tier × source matrix. The two filters intersect: e.g.
+  // 🐋 orcas + ✋ manual. The report (reasons, stage, insight) comes from here.
   const active = lossByTierSource[tier][source];
   const activeLost = active.lost;
   const lossByReason = active.lossByReason;
   const lossByPreviousStage = active.lossByPreviousStage;
 
-  // Contadores contextuales: cada pill se cuenta dentro del OTRO filtro activo,
-  // así los números de las dos filas siempre cuadran con lo que se ve.
+  // Contextual counters: each pill is counted within the OTHER active filter,
+  // so the two rows' numbers always match what's on screen.
   const tierCount = (t: Tier) => lossByTierSource[t][source].lost;
   const sourceCount = (s: Source) => lossByTierSource[tier][s].lost;
 
-  // Motivos con razón registrada (excluye "Sin razón") para las recomendaciones.
+  // Reasons with a recorded reason (excludes "No reason") for the recommendations.
   const reasonsWithLabel = lossByReason.filter((r) => r.reason !== 'unset');
   const unset = lossByReason.find((r) => r.reason === 'unset');
   const unsetShare = activeLost > 0 ? (unset?.count ?? 0) / activeLost : 0;
@@ -136,23 +136,24 @@ export default function LossInsights() {
   const maxReason = Math.max(1, ...lossByReason.map((r) => r.count));
   const maxStage = Math.max(1, ...lossByPreviousStage.map((s) => s.count));
 
-  // Top 3 motivos accionables para las recomendaciones.
+  // Top 3 actionable reasons for the recommendations.
   const topTips = reasonsWithLabel
     .filter((r) => REASON_TIPS[r.reason])
     .slice(0, 3);
 
-  // Insight de embudo: ¿dónde se caen realmente los leads perdidos?
-  // Cuatro momentos, no dos. El detalle clave: el seguimiento no es un solo
-  // saco — caer en Seguimiento 1-2 (abandonaste antes de tiempo) pide MÁS
-  // insistencia, pero caer en Último Intento (ya agotaste la secuencia) pide
-  // lo contrario: el problema ya no es insistir, es a quién prospectas y si el
-  // mensaje engancha. Meterlos juntos daría el consejo al revés.
+  // Funnel insight: where do lost leads actually drop off?
+  // Four moments, not two. The key detail: follow-up isn't a single bucket —
+  // dropping at Follow-up 1-2 (you gave up too early) calls for MORE
+  // persistence, but dropping at Last Attempt (you already exhausted the
+  // sequence) calls for the opposite: the problem is no longer persistence,
+  // it's who you prospect and whether the message hooks. Lumping them together
+  // would give the advice backwards.
   const STAGE_BUCKET: Record<string, 'prospeccion' | 'seguimiento' | 'agotado' | 'cierre'> = {
     nuevo: 'prospeccion',
     contactado: 'prospeccion',
     seguimiento_1: 'seguimiento',
     seguimiento_2: 'seguimiento',
-    seguimiento_3: 'agotado', // "Último Intento" — perseguido hasta el final
+    seguimiento_3: 'agotado', // "Last Attempt" — pursued to the very end
     interesado: 'cierre',
     cotizado: 'cierre',
     cliente: 'cierre',
@@ -172,25 +173,25 @@ export default function LossInsights() {
   const decided = summary.wonClientes + summary.lostPerdidos;
   const lostShare = decided > 0 ? Math.round((summary.lostPerdidos / decided) * 100) : 0;
 
-  // El % de decididos solo tiene sentido en el total sin filtrar.
+  // The % of decided only makes sense on the unfiltered total.
   const headerCount =
     tier === 'all' && source === 'all'
-      ? `${summary.lostPerdidos} perdidos · ${lostShare}% de los decididos`
-      : `${activeLost} ${activeLost === 1 ? 'perdido' : 'perdidos'}`;
+      ? `${summary.lostPerdidos} lost · ${lostShare}% of decided`
+      : `${activeLost} ${activeLost === 1 ? 'lost' : 'lost'}`;
 
   const TIER_PILLS: { key: Tier; label: string }[] = [
-    { key: 'all', label: `Todos ${tierCount('all')}` },
+    { key: 'all', label: `All ${tierCount('all')}` },
     { key: 'orca', label: `🐋 Orcas ${tierCount('orca')}` },
-    { key: 'delfin', label: `🐬 Delfines ${tierCount('delfin')}` },
+    { key: 'delfin', label: `🐬 Dolphins ${tierCount('delfin')}` },
   ];
   const SOURCE_PILLS: { key: Source; label: string }[] = [
-    { key: 'all', label: `Todos ${sourceCount('all')}` },
+    { key: 'all', label: `All ${sourceCount('all')}` },
     { key: 'auto', label: `🤖 Auto ${sourceCount('auto')}` },
     { key: 'manual', label: `✋ Manual ${sourceCount('manual')}` },
   ];
 
-  // Garantiza que el mes seleccionado (por defecto el mes en curso) siempre sea
-  // una opción, aunque el API aún no lo devuelva por no tener leads decididos.
+  // Ensures the selected month (the current month by default) is always an
+  // option, even if the API doesn't return it yet for lack of decided leads.
   const monthOptions =
     month === 'all' || data.availableMonths.includes(month)
       ? data.availableMonths
@@ -199,7 +200,7 @@ export default function LossInsights() {
   return (
     <div className="mb-4 sm:mb-6">
       <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
-        <h2 className="text-sm sm:text-lg font-semibold text-gray-900">¿Por qué perdemos leads?</h2>
+        <h2 className="text-sm sm:text-lg font-semibold text-gray-900">Why are we losing leads?</h2>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">
             {headerCount}
@@ -209,7 +210,7 @@ export default function LossInsights() {
             onChange={(e) => setMonth(e.target.value)}
             className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
-            <option value="all">Todo el tiempo</option>
+            <option value="all">All time</option>
             {monthOptions.map((m) => (
               <option key={m} value={m}>
                 {monthLabel(m)}
@@ -219,7 +220,7 @@ export default function LossInsights() {
         </div>
       </div>
 
-      {/* Dos filtros que se cruzan: valor del lead (🐋/🐬) y quién lo trabaja (🤖/✋) */}
+      {/* Two filters that intersect: lead value (🐋/🐬) and who works it (🤖/✋) */}
       <div className="flex flex-col gap-1.5 mb-3">
         <div className="flex items-center gap-1.5">
           {TIER_PILLS.map((p) => (
@@ -255,14 +256,14 @@ export default function LossInsights() {
 
       {activeLost === 0 ? (
         <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-gray-100 shadow-sm text-center text-sm text-gray-400">
-          No se perdió ningún lead con ese filtro{month === 'all' ? ' en todo el tiempo' : ` en ${monthLabel(month)}`}
+          No leads were lost with that filter{month === 'all' ? ' in all time' : ` in ${monthLabel(month)}`}
         </div>
       ) : (
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          {/* Motivos de rechazo */}
+          {/* Rejection reasons */}
           <div>
-            <div className="text-xs sm:text-sm font-bold text-gray-800 mb-3">🧨 Motivo del rechazo</div>
+            <div className="text-xs sm:text-sm font-bold text-gray-800 mb-3">🧨 Reason for rejection</div>
             <div className="flex flex-col gap-2.5">
               {lossByReason.slice(0, 7).map((r) => (
                 <div key={r.reason}>
@@ -276,11 +277,11 @@ export default function LossInsights() {
             </div>
           </div>
 
-          {/* En qué etapa se caen */}
+          {/* What stage they drop off at */}
           <div>
-            <div className="text-xs sm:text-sm font-bold text-gray-800 mb-3">💀 ¿En qué etapa se caen?</div>
+            <div className="text-xs sm:text-sm font-bold text-gray-800 mb-3">💀 At what stage do they drop off?</div>
             {lossByPreviousStage.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">Sin datos de etapa aún.</p>
+              <p className="text-xs text-gray-400 italic">No stage data yet.</p>
             ) : (
               <div className="flex flex-col gap-2.5">
                 {lossByPreviousStage.map((s) => (
@@ -291,7 +292,7 @@ export default function LossInsights() {
                     </div>
                     <Bar value={s.count} max={maxStage} color="#f97316" track="#fff7ed" />
                     {s.topReasonLabel && (
-                      <div className="text-[10px] text-gray-400 italic mt-0.5">↳ sobre todo por {s.topReasonLabel}</div>
+                      <div className="text-[10px] text-gray-400 italic mt-0.5">↳ mostly due to {s.topReasonLabel}</div>
                     )}
                   </div>
                 ))}
@@ -300,42 +301,42 @@ export default function LossInsights() {
           </div>
         </div>
 
-        {/* Insight de embudo */}
+        {/* Funnel insight */}
         {stagedTotal > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600">
             {dominantBucket === 'cierre' ? (
               <span>
-                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren tarde (interesados o cotizados). El
-                problema está en el <strong>cierre</strong>, no en la prospección — cuida precio, seguimiento y
-                objeciones en la recta final.
+                📉 <strong>{dominantShare}%</strong> of losses happen late (interested or quoted). The
+                problem is in <strong>closing</strong>, not prospecting — mind price, follow-up and
+                objections in the home stretch.
               </span>
             ) : dominantBucket === 'agotado' ? (
               <span>
-                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren en el <strong>Último Intento</strong> —
-                leads que perseguiste hasta agotar el seguimiento y aun así no cerraron. Insistir más no es la
-                solución: el problema está <strong>arriba, en la calificación</strong> — apunta a mejores leads y a
-                una apertura que enganche, para no gastar toda la secuencia en quien no iba a comprar.
+                📉 <strong>{dominantShare}%</strong> of losses happen at the <strong>Last Attempt</strong> —
+                leads you chased until the follow-up sequence was exhausted and still didn't close. Pushing harder
+                isn't the answer: the problem is <strong>upstream, in qualification</strong> — aim for better leads and
+                an opener that hooks, so you don't burn the whole sequence on someone who was never going to buy.
               </span>
             ) : dominantBucket === 'seguimiento' ? (
               <span>
-                📉 <strong>{dominantShare}%</strong> de las pérdidas ocurren a mitad del <strong>seguimiento</strong> —
-                leads que dejaste de perseguir antes de tiempo. Aún hay margen: suma toques, varía canal y horario, y
-                combina WhatsApp con llamada antes de darlos por perdidos.
+                📉 <strong>{dominantShare}%</strong> of losses happen mid <strong>follow-up</strong> —
+                leads you stopped chasing too early. There's still room: add touches, vary channel and time, and
+                combine WhatsApp with a call before giving them up.
               </span>
             ) : (
               <span>
-                📉 La mayoría de las pérdidas son <strong>tempranas</strong> (antes de establecer contacto real). El
-                cuello de botella está en <strong>prospección y primer contacto</strong> — mejora a quién prospectas y
-                el mensaje de apertura.
+                📉 Most losses are <strong>early</strong> (before real contact is established). The
+                bottleneck is in <strong>prospecting and first contact</strong> — improve who you prospect and
+                the opening message.
               </span>
             )}
           </div>
         )}
 
-        {/* Recomendaciones accionables */}
+        {/* Actionable recommendations */}
         {topTips.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="text-xs sm:text-sm font-bold text-gray-800 mb-2">💡 Qué hacer</div>
+            <div className="text-xs sm:text-sm font-bold text-gray-800 mb-2">💡 What to do</div>
             <div className="flex flex-col gap-2">
               {topTips.map((r) => (
                 <div key={r.reason} className="flex gap-2 text-xs">
@@ -348,12 +349,12 @@ export default function LossInsights() {
           </div>
         )}
 
-        {/* Nudge de calidad de datos: si muchos perdidos no tienen razón, los insights valen poco */}
+        {/* Data-quality nudge: if many losses have no reason, the insights are worth little */}
         {unsetShare >= 0.3 && (
           <div className="mt-3 text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-            ⚠️ El {Math.round(unsetShare * 100)}% de los leads perdidos no tiene un motivo registrado. Pide al equipo
-            marcar la razón al mover una card a <strong>Perdido</strong> — así estos insights se vuelven mucho más
-            útiles.
+            ⚠️ {Math.round(unsetShare * 100)}% of lost leads have no recorded reason. Ask the team to
+            mark the reason when moving a card to <strong>Lost</strong> — that makes these insights far more
+            useful.
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
-// URL de la app Crossup (proyecto aparte, deploy propio).
-// Se puede sobreescribir con NEXT_PUBLIC_CROSSUP_URL si cambia el dominio.
+// URL of the Crossup app (separate project, its own deploy).
+// Can be overridden with NEXT_PUBLIC_CROSSUP_URL if the domain changes.
 const CROSSUP_URL =
   process.env.NEXT_PUBLIC_CROSSUP_URL || 'https://crossup-rho.vercel.app';
 

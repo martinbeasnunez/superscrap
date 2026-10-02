@@ -11,7 +11,7 @@ interface BusinessCardProps {
   businessType: string;
 }
 
-// Obtener userId del localStorage como fallback
+// Get userId from localStorage as a fallback
 function getUserIdFromStorage(): string | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -26,7 +26,7 @@ function getUserIdFromStorage(): string | null {
   return null;
 }
 
-// Obtener email del usuario logueado
+// Get the logged-in user's email
 function getUserEmailFromStorage(): string | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -41,7 +41,7 @@ function getUserEmailFromStorage(): string | null {
   return null;
 }
 
-// Detecta si es número de celular peruano (9 dígitos empezando con 9)
+// Detects whether it's a Peruvian mobile number (9 digits starting with 9)
 function isPeruvianMobile(phone: string | null): boolean {
   if (!phone) return false;
   const cleaned = phone.replace(/\D/g, '');
@@ -58,8 +58,8 @@ function getWhatsAppNumber(phone: string): string {
   return `51${cleaned}`;
 }
 
-// Genera el pitch de WhatsApp killer seller según la industria
-// Con casos de exito locales y numeros especificos
+// Generates the killer-seller WhatsApp pitch based on the industry
+// With local success stories and specific numbers
 function getWhatsAppPitch(businessName: string, businessType: string): string {
   const typeLower = businessType.toLowerCase();
 
@@ -179,7 +179,7 @@ function getGoogleMapsUrl(address: string, businessName: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
-// Distritos prioritarios donde GetLavado tiene mejor conversion
+// Priority districts where GetLavado converts best
 const PRIORITY_DISTRICTS = [
   'miraflores',
   'surco',
@@ -190,31 +190,31 @@ const PRIORITY_DISTRICTS = [
   'san isidro',
 ];
 
-// Detecta si la direccion esta en un distrito prioritario
+// Detects whether the address is in a priority district
 export function isPriorityDistrict(address: string | null): boolean {
   if (!address) return false;
   const addressLower = address.toLowerCase();
   return PRIORITY_DISTRICTS.some(district => addressLower.includes(district));
 }
 
-// Obtiene el nombre del distrito de la direccion
+// Gets the district name from the address
 export function getDistrict(address: string | null): string | null {
   if (!address) return null;
   const addressLower = address.toLowerCase();
   for (const district of PRIORITY_DISTRICTS) {
     if (addressLower.includes(district)) {
-      // Capitalizar
+      // Capitalize
       return district.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
   }
   return null;
 }
 
-// Genera email pitch killer con FOMO y CTA
+// Generates a killer email pitch with FOMO and CTA
 function getEmailPitch(businessName: string, businessType: string, detectedServices: string[]): { subject: string; body: string } {
   const typeLower = businessType.toLowerCase();
 
-  // Detectar industria
+  // Detect industry
   let industria = 'empresa';
   let textiles = 'textiles';
   let beneficio = 'optimizar sus costos de lavandería';
@@ -256,7 +256,7 @@ function getEmailPitch(businessName: string, businessType: string, detectedServi
     beneficio = 'mantener la imagen profesional de su equipo';
   }
 
-  // Asuntos killer - sin nombre de empresa al inicio, generan curiosidad
+  // Killer subjects - no company name at the start, they spark curiosity
   const subjects = [
     `¿Están pagando de más por lavandería? (pregunta seria)`,
     `Propuesta para reducir 40% en costos de ${textiles}`,
@@ -313,7 +313,7 @@ GetLavado - Lavandería Industrial 🧺
   return { subject, body };
 }
 
-// Copia email pitch al clipboard (asunto + cuerpo formateado)
+// Copies the email pitch to the clipboard (subject + formatted body)
 function copyEmailToClipboard(toEmail: string, subject: string, body: string): void {
   const fullEmail = `Para: ${toEmail}
 Asunto: ${subject}
@@ -330,26 +330,26 @@ function isValidWebsite(website: string | null): boolean {
   return true;
 }
 
-// Migrar datos legacy a nuevo formato
+// Migrate legacy data to the new format
 function migrateContactStatus(business: BusinessWithAnalysis): ContactAction[] {
-  // Si ya tiene el nuevo formato, usarlo
+  // If it already has the new format, use it
   if (business.contact_actions && business.contact_actions.length > 0) {
     return business.contact_actions;
   }
-  // Si tiene el formato legacy, migrar
+  // If it has the legacy format, migrate
   if (business.contact_status) {
     if (business.contact_status === 'whatsapp') return ['whatsapp'];
     if (business.contact_status === 'called') return ['call'];
-    if (business.contact_status === 'contacted') return ['whatsapp']; // asumimos whatsapp
+    if (business.contact_status === 'contacted') return ['whatsapp']; // we assume whatsapp
   }
   return [];
 }
 
 function migrateleadStatus(business: BusinessWithAnalysis): LeadStatus {
-  // Si ya tiene el nuevo formato, usarlo
+  // If it already has the new format, use it
   if (business.lead_status) {
     const rawStatus = business.lead_status as string;
-    // Migrar 'lead' a 'prospect' y 'contacted' a 'no_contact'
+    // Migrate 'lead' to 'prospect' and 'contacted' to 'no_contact'
     if (rawStatus === 'lead') return 'prospect';
     if (rawStatus === 'contacted') return 'no_contact';
     if (rawStatus === 'prospect') return 'prospect';
@@ -416,10 +416,10 @@ export default function BusinessCard({
     const hasAnyContact = contactActions.length > 0;
     const currentUserId = getUserIdFromStorage();
 
-    // Es follow-up si el negocio ya fue contactado antes (por cualquier método)
+    // It's a follow-up if the business was already contacted before (by any method)
     const isFollowUp = hasAnyContact;
 
-    // Siempre registrar en historial (primer contacto o follow-up)
+    // Always record in history (first contact or follow-up)
     try {
       await fetch('/api/contact-history', {
         method: 'POST',
@@ -435,9 +435,9 @@ export default function BusinessCard({
       console.error('Error registering contact history:', error);
     }
 
-    // Si ya estaba marcado, solo registramos el follow-up (no desmarcamos)
+    // If it was already marked, we only log the follow-up (we don't unmark it)
     if (isAlreadyMarked) {
-      // Actualizar contacted_at para reflejar el nuevo contacto
+      // Update contacted_at to reflect the new contact
       try {
         await supabase
           .from('businesses')
@@ -446,21 +446,21 @@ export default function BusinessCard({
       } catch (error) {
         console.error('Error updating contacted_at:', error);
       }
-      return; // No cambiar el estado del botón
+      return; // Don't change the button state
     }
 
-    // Si no estaba marcado, agregarlo
+    // If it wasn't marked, add it
     const newActions = [...contactActions, action];
     updateBusiness(newActions, leadStatus);
   };
 
   const toggleLeadStatus = (status: LeadStatus) => {
-    // Si ya tiene ese estado, quitarlo (volver a no_contact)
+    // If it already has that status, remove it (back to no_contact)
     const newStatus = leadStatus === status ? 'no_contact' : status;
     updateBusiness(contactActions, newStatus);
   };
 
-  // Llamada con Agente IA
+  // Call with AI Agent
   const handleAICall = async () => {
     if (!business.phone) return;
     setAiCallStatus('calling');
@@ -475,7 +475,7 @@ export default function BusinessCard({
           phoneNumber: business.phone,
           businessName: business.name,
           businessType: businessType,
-          salesStage: 'nuevo', // Desde búsqueda siempre es nuevo
+          salesStage: 'nuevo', // From search it's always new
           contactCount: 0,
         }),
       });
@@ -485,11 +485,11 @@ export default function BusinessCard({
       if (res.ok) {
         setAiCallStatus('success');
 
-        // Marcar como contactado
+        // Mark as contacted
         const newActions: ContactAction[] = contactActions.includes('call') ? contactActions : [...contactActions, 'call' as ContactAction];
         updateBusiness(newActions, leadStatus);
 
-        // Polling para obtener resultado
+        // Polling to get the result
         const conversationId = data.conversation_id;
         if (conversationId) {
           pollForAICallResult(conversationId);
@@ -506,7 +506,7 @@ export default function BusinessCard({
     }
   };
 
-  // Polling para resultado de llamada IA
+  // Polling for the AI call result
   const pollForAICallResult = async (conversationId: string) => {
     let attempts = 0;
     const maxAttempts = 20;
@@ -567,7 +567,7 @@ export default function BusinessCard({
     ? encodeURIComponent(getWhatsAppPitch(business.name, businessType))
     : '';
 
-  // Colores del estado del lead
+  // Lead status colors
   const getLeadStatusStyle = () => {
     switch (leadStatus) {
       case 'prospect': return 'bg-green-100 text-green-800 border-green-300';
@@ -607,7 +607,7 @@ export default function BusinessCard({
         )}
         {analysis?.potential_tier === 'delfin' && (
           <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-emerald-50 text-emerald-700 rounded text-[10px] sm:text-xs font-medium border border-emerald-200 flex items-center gap-1">
-            🐬 <span className="hidden sm:inline">DELFIN</span>
+            🐬 <span className="hidden sm:inline">DOLPHIN</span>
             {analysis.estimated_revenue_min != null && analysis.estimated_revenue_max != null && (
               <span className="font-normal text-emerald-500 hidden sm:inline">
                 S/{analysis.estimated_revenue_min.toLocaleString()}-{analysis.estimated_revenue_max.toLocaleString()}
@@ -632,12 +632,12 @@ export default function BusinessCard({
         )}
         {contactActions.includes('call') && (
           <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-50 text-blue-700 rounded text-[10px] sm:text-xs font-medium">
-            📞 <span className="hidden sm:inline">Llamada</span>
+            📞 <span className="hidden sm:inline">Call</span>
           </span>
         )}
         {business.contacted_by_name && contactActions.length > 0 && (
           <span className="text-[10px] sm:text-xs text-gray-500 self-center hidden sm:inline">
-            por {business.contacted_by_name}
+            by {business.contacted_by_name}
           </span>
         )}
       </div>
@@ -753,7 +753,7 @@ export default function BusinessCard({
                 <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-1.5 sm:p-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                      {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contacto')}
+                      {dm.fullName || (dm.email ? dm.email.split('@')[0] : dm.phone || 'Contact')}
                     </p>
                     {dm.email && (
                       <p className="text-[10px] sm:text-xs text-gray-500 truncate">{dm.email}</p>
@@ -788,7 +788,7 @@ export default function BusinessCard({
                           setEmailModal({ to: dm.email!, subject: pitch.subject, body: pitch.body });
                         }}
                         className="p-1 sm:p-1.5 text-red-600 hover:bg-red-50 rounded"
-                        title="Ver pitch de email"
+                        title="View email pitch"
                       >
                         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -812,7 +812,7 @@ export default function BusinessCard({
                       <a
                         href={`tel:${dm.phone}`}
                         className="p-1 sm:p-1.5 text-gray-600 hover:bg-gray-100 rounded"
-                        title={`Llamar: ${dm.phone}`}
+                        title={`Call: ${dm.phone}`}
                       >
                         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -825,7 +825,7 @@ export default function BusinessCard({
             })}
             {business.decision_makers.length > 2 && (
               <p className="text-[10px] sm:text-xs text-gray-400 text-center">
-                +{business.decision_makers.length - 2} más
+                +{business.decision_makers.length - 2} more
               </p>
             )}
           </div>
@@ -869,7 +869,7 @@ export default function BusinessCard({
             <span className="hidden sm:inline">WhatsApp</span>
           </a>
         )}
-        {/* Botón de Llamada con IA */}
+        {/* AI Call button */}
         {business.phone && (
           <button
             onClick={handleAICall}
@@ -908,7 +908,7 @@ export default function BusinessCard({
         )}
       </div>
 
-      {/* Resultado de llamada IA */}
+      {/* AI call result */}
       {aiCallResult && (
         <div className={`mt-2 sm:mt-3 p-2 sm:p-3 rounded-lg border-2 ${
           aiCallResult.outcome === 'interested' || aiCallResult.outcome === 'wants_quote'
@@ -941,7 +941,7 @@ export default function BusinessCard({
         </div>
       )}
 
-      {/* Contact actions y Lead status combinados para mobile */}
+      {/* Contact actions and Lead status combined for mobile */}
       <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200">
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
           <button
@@ -975,7 +975,7 @@ export default function BusinessCard({
                 : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
             } ${updating ? 'opacity-50' : ''}`}
           >
-            📞 <span className="hidden sm:inline">Llamada</span>
+            📞 <span className="hidden sm:inline">Call</span>
           </button>
           <span className="hidden sm:inline text-gray-300">|</span>
           <button
@@ -1028,7 +1028,7 @@ export default function BusinessCard({
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.to); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                    title="Copiar email"
+                    title="Copy email"
                   >
                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1043,7 +1043,7 @@ export default function BusinessCard({
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.subject); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                    title="Copiar asunto"
+                    title="Copy subject"
                   >
                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1058,7 +1058,7 @@ export default function BusinessCard({
                   <button
                     onClick={() => { navigator.clipboard.writeText(emailModal.body); }}
                     className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-                    title="Copiar cuerpo"
+                    title="Copy body"
                   >
                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

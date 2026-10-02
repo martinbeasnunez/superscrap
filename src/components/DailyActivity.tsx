@@ -3,18 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 
-// ── Actividad por día: nuevos vs follows (últimos 14 días) ────────────────────
+// ── Activity per day: new vs follows (last 14 days) ────────────────────
 interface Vendedor { id: string; name: string; }
 interface ActividadResp {
   porDiaNuevoFollow: Record<string, { nuevos: number; follows: number }>;
   vendedores: Vendedor[];
 }
 
-/** Hoy en Lima (YYYY-MM-DD). */
+/** Today in Lima (YYYY-MM-DD). */
 function limaToday(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' });
 }
-/** Los últimos n días de Lima como YYYY-MM-DD (más viejo → más nuevo). */
+/** The last n Lima days as YYYY-MM-DD (oldest → newest). */
 function lastNDays(n: number): string[] {
   const [y, m, d] = limaToday().split('-').map(Number);
   const base = Date.UTC(y, m - 1, d);
@@ -34,12 +34,12 @@ function isWeekend(iso: string): boolean {
 
 export default function DailyActivity({ showTitle = true }: { showTitle?: boolean } = {}) {
   const { t } = useI18n();
-  const [sel, setSel] = useState<string>('all'); // 'all' = equipo, o userId
+  const [sel, setSel] = useState<string>('all'); // 'all' = team, or userId
   const [data, setData] = useState<ActividadResp | null>(null);
   const [loading, setLoading] = useState(true);
 
   const dias = lastNDays(14);
-  const desde = `${dias[0]}T00:00:00-05:00`; // medianoche Lima del día más viejo
+  const desde = `${dias[0]}T00:00:00-05:00`; // Lima midnight of the oldest day
 
   useEffect(() => {
     setLoading(true);
@@ -50,7 +50,7 @@ export default function DailyActivity({ showTitle = true }: { showTitle?: boolea
       .then((d: ActividadResp) => setData(d))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-    // desde cambia solo con el día; sel es la dependencia real.
+    // desde only changes with the day; sel is the real dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel]);
 
@@ -75,7 +75,7 @@ export default function DailyActivity({ showTitle = true }: { showTitle?: boolea
       {showTitle && <h3 className="font-bold text-sm text-gray-900 mb-1">📅 {t('insights.activity_title')}</h3>}
       <p className="text-xs text-gray-500 mb-2">{t('insights.activity_subtitle')}</p>
 
-      {/* Titular claro: HOY (grande) + esta semana */}
+      {/* Clear headline: TODAY (large) + this week */}
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-3">
         <span className="text-base font-bold text-gray-900">
           {t('insights.activity_today')}:{' '}
@@ -92,7 +92,7 @@ export default function DailyActivity({ showTitle = true }: { showTitle?: boolea
         </span>
       </div>
 
-      {/* Selector de vendedor + leyenda (total 14 días) */}
+      {/* Seller selector + legend (14-day total) */}
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
         <div className="flex flex-wrap gap-1">
           <button
@@ -134,7 +134,7 @@ export default function DailyActivity({ showTitle = true }: { showTitle?: boolea
         <div className="text-xs text-gray-400 italic py-6 text-center">{t('insights.activity_no_data')}</div>
       ) : (
         <>
-          {/* Barras apiladas: follows abajo (azul), nuevos arriba (verde) */}
+          {/* Stacked bars: follows at the bottom (blue), new on top (green) */}
           <div className="flex gap-0.5 sm:gap-1 border-b border-gray-200" style={{ height: `${CHART_H}px` }}>
             {serie.map(s => {
               const total = s.nuevos + s.follows;
@@ -159,7 +159,7 @@ export default function DailyActivity({ showTitle = true }: { showTitle?: boolea
               );
             })}
           </div>
-          {/* Etiquetas X: 1 de cada 2 para que no se apelotonen en móvil */}
+          {/* X labels: every other one so they don't crowd on mobile */}
           <div className="flex gap-0.5 sm:gap-1 mt-1 text-[9px] text-gray-400">
             {serie.map((s, i) => (
               <div key={s.iso} className="flex-1 text-center min-w-0 truncate">

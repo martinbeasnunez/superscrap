@@ -26,7 +26,7 @@ interface Mix {
 type Tier = 'all' | 'orca' | 'delfin';
 type Source = 'all' | 'auto' | 'manual';
 
-// Matriz tier × source: cada celda es un mix inbound/outbound completo.
+// Tier × source matrix: each cell is a complete inbound/outbound mix.
 type BySource = Record<Source, Mix>;
 
 interface SourceMixData extends Mix {
@@ -35,23 +35,23 @@ interface SourceMixData extends Mix {
   byTierSource: Record<Tier, BySource>;
 }
 
-// 'YYYY-MM' -> 'Junio 2026'
+// 'YYYY-MM' -> 'June 2026'
 function monthLabel(key: string): string {
   const [y, m] = key.split('-').map(Number);
   const d = new Date(y, m - 1, 1);
-  const s = d.toLocaleDateString('es-PE', { month: 'long', year: 'numeric' });
+  const s = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// Mes en curso ('YYYY-MM') — es el default del selector: por defecto muestras
-// el mes actual, no todo el histórico.
+// Current month ('YYYY-MM') — the selector default: by default you show
+// the current month, not the full history.
 function currentMonthKey(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-// % de cierre legible: muestra 1 decimal cuando es <1% pero no cero,
-// para no mostrar "0%" cuando en realidad sí hubo cierres (ej. 3/1004 = 0.3%)
+// Readable close %: shows 1 decimal when it's <1% but not zero,
+// so we don't show "0%" when there actually were closes (e.g. 3/1004 = 0.3%)
 function convLabel(clientes: number, total: number): string {
   if (!total || clientes === 0) return '0%';
   const raw = (clientes / total) * 100;
@@ -59,11 +59,11 @@ function convLabel(clientes: number, total: number): string {
 }
 
 function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: number; color: string; track: string }) {
-  // Barra de leads: relativa al canal más grande del lado (volumen)
+  // Leads bar: relative to the largest channel on the side (volume)
   const volWidth = max > 0 ? Math.round((item.total / max) * 100) : 0;
-  // Barra de cierre: % de conversión real, sobre 100% (calidad)
+  // Close bar: real conversion %, over 100% (quality)
   const convRaw = item.total > 0 ? (item.clientes / item.total) * 100 : 0;
-  // mínimo visible cuando hay al menos 1 cierre, para que no desaparezca
+  // minimum visible when there's at least 1 close, so it doesn't disappear
   const convWidth = item.clientes > 0 ? Math.max(3, Math.round(convRaw)) : 0;
   return (
     <div>
@@ -75,16 +75,16 @@ function ChannelBar({ item, max, color, track }: { item: ChannelItem; max: numbe
           <span className="text-gray-400">{convLabel(item.clientes, item.total)}</span>
         </span>
       </div>
-      {/* Barra LEADS (volumen) — tono claro */}
+      {/* LEADS bar (volume) — light tone */}
       <div className="flex items-center gap-1.5 mb-1">
         <span className="text-[9px] text-gray-400 w-9 shrink-0">leads</span>
         <div className="flex-1 h-1.5 rounded-full" style={{ background: track }}>
           <div className="h-1.5 rounded-full" style={{ width: `${volWidth}%`, background: color, opacity: 0.45 }} />
         </div>
       </div>
-      {/* Barra CIERRE (conversión %) — tono fuerte, escala 0-100% */}
+      {/* CLOSE bar (conversion %) — strong tone, 0-100% scale */}
       <div className="flex items-center gap-1.5">
-        <span className="text-[9px] text-gray-400 w-9 shrink-0">cierre</span>
+        <span className="text-[9px] text-gray-400 w-9 shrink-0">close</span>
         <div className="flex-1 h-1.5 rounded-full" style={{ background: track }}>
           <div className="h-1.5 rounded-full" style={{ width: `${convWidth}%`, background: color }} />
         </div>
@@ -123,12 +123,12 @@ function Side({
           className="text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 rounded-full"
           style={{ color, background: track }}
         >
-          {data.clientes} clientes · {convLabel(data.clientes, data.total)} cierre
+          {data.clientes} clients · {convLabel(data.clientes, data.total)} close
         </span>
       </div>
       <div className="flex flex-col gap-2.5 sm:gap-3">
         {data.channels.length === 0 ? (
-          <p className="text-xs text-gray-400">Sin datos</p>
+          <p className="text-xs text-gray-400">No data</p>
         ) : (
           data.channels.map((c) => (
             <ChannelBar key={c.channel} item={c} max={max} color={color} track={track} />
@@ -157,43 +157,43 @@ export default function SourceMix() {
       .finally(() => setLoading(false));
   }, [month]);
 
-  // En la primera carga aún no hay data
+  // On the first load there's no data yet
   if (!data && loading) {
     return (
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm mb-4 sm:mb-6 h-40 animate-pulse" />
     );
   }
   if (!data) return null;
-  // Si el histórico completo está vacío, no mostrar nada
+  // If the full history is empty, don't show anything
   if (month === 'all' && data.grandTotal === 0) return null;
 
-  // Celda activa de la matriz tier × source. Los dos filtros se cruzan: p.ej.
-  // 🐋 orcas + 🤖 automáticas. Todo el mix de origen sale de aquí.
+  // Active cell of the tier × source matrix. The two filters intersect: e.g.
+  // 🐋 orcas + 🤖 automatic. The whole source mix comes from here.
   const activeMix: Mix = data.byTierSource[tier][source];
   const inPct = activeMix.inbound.pct;
   const outPct = activeMix.outbound.pct;
 
-  // Contadores contextuales: cada pill se cuenta dentro del OTRO filtro activo,
-  // así los números de las dos filas siempre cuadran con lo que se ve.
+  // Contextual counters: each pill is counted within the OTHER active filter,
+  // so the two rows' numbers always match what's on screen.
   const tierCount = (t: Tier) => data.byTierSource[t][source].grandTotal;
   const sourceCount = (s: Source) => data.byTierSource[tier][s].grandTotal;
 
   const periodLabel =
-    month === 'all' ? `${activeMix.grandTotal} leads en total` : `${activeMix.grandTotal} leads en el mes`;
+    month === 'all' ? `${activeMix.grandTotal} leads total` : `${activeMix.grandTotal} leads this month`;
 
   const TIER_PILLS: { key: Tier; label: string }[] = [
-    { key: 'all', label: `Todos ${tierCount('all')}` },
+    { key: 'all', label: `All ${tierCount('all')}` },
     { key: 'orca', label: `🐋 Orcas ${tierCount('orca')}` },
-    { key: 'delfin', label: `🐬 Delfines ${tierCount('delfin')}` },
+    { key: 'delfin', label: `🐬 Dolphins ${tierCount('delfin')}` },
   ];
   const SOURCE_PILLS: { key: Source; label: string }[] = [
-    { key: 'all', label: `Todos ${sourceCount('all')}` },
+    { key: 'all', label: `All ${sourceCount('all')}` },
     { key: 'auto', label: `🤖 Auto ${sourceCount('auto')}` },
     { key: 'manual', label: `✋ Manual ${sourceCount('manual')}` },
   ];
 
-  // Garantiza que el mes seleccionado (por defecto, el mes en curso) siempre
-  // sea una opción, aunque el API aún no lo devuelva por no tener leads.
+  // Ensures the selected month (the current month by default) is always
+  // an option, even if the API doesn't return it yet for lack of leads.
   const monthOptions =
     month === 'all' || data.availableMonths.includes(month)
       ? data.availableMonths
@@ -202,7 +202,7 @@ export default function SourceMix() {
   return (
     <div className="mb-4 sm:mb-6">
       <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
-        <h2 className="text-sm sm:text-lg font-semibold text-gray-900">¿De dónde vienen tus leads?</h2>
+        <h2 className="text-sm sm:text-lg font-semibold text-gray-900">Where do your leads come from?</h2>
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline text-[10px] sm:text-xs text-gray-400">{periodLabel}</span>
           <select
@@ -210,7 +210,7 @@ export default function SourceMix() {
             onChange={(e) => setMonth(e.target.value)}
             className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-100"
           >
-            <option value="all">Todo el tiempo</option>
+            <option value="all">All time</option>
             {monthOptions.map((m) => (
               <option key={m} value={m}>
                 {monthLabel(m)}
@@ -220,7 +220,7 @@ export default function SourceMix() {
         </div>
       </div>
 
-      {/* Dos filtros que se cruzan: valor del lead (🐋/🐬) y quién lo trabaja (🤖/✋) */}
+      {/* Two filters that intersect: lead value (🐋/🐬) and who works it (🤖/✋) */}
       <div className="flex flex-col gap-1.5 mb-3">
         <div className="flex items-center gap-1.5">
           {TIER_PILLS.map((p) => (
@@ -256,11 +256,11 @@ export default function SourceMix() {
 
       {activeMix.grandTotal === 0 ? (
         <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-gray-100 shadow-sm text-center text-sm text-gray-400">
-          No entraron leads con ese filtro{month === 'all' ? ' en todo el tiempo' : ` en ${monthLabel(month)}`}
+          No leads came in with that filter{month === 'all' ? ' in all time' : ` in ${monthLabel(month)}`}
         </div>
       ) : (
       <>
-      {/* Barra resumen inbound vs outbound */}
+      {/* Summary bar inbound vs outbound */}
       <div className="flex h-3 sm:h-3.5 rounded-full overflow-hidden mb-1.5">
         {inPct > 0 && <div style={{ width: `${inPct}%`, background: '#10b981' }} />}
         {outPct > 0 && <div style={{ width: `${outPct}%`, background: '#3b82f6' }} />}
@@ -277,7 +277,7 @@ export default function SourceMix() {
           color="#059669"
           track="#ecfdf5"
           data={activeMix.inbound}
-          subtitle="vinieron solos"
+          subtitle="came on their own"
         />
         <Side
           title="OUTBOUND"
@@ -285,7 +285,7 @@ export default function SourceMix() {
           color="#2563eb"
           track="#eff6ff"
           data={activeMix.outbound}
-          subtitle="fuimos a buscarlos"
+          subtitle="we went after them"
         />
       </div>
       </>

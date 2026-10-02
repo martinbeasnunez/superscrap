@@ -71,10 +71,10 @@ interface Insights {
 }
 
 const STAGE_LABELS: Record<string, string> = {
-  nuevo: 'Nuevos', contactado: 'Contactado',
-  seguimiento_1: 'Seg. 1', seguimiento_2: 'Seg. 2', seguimiento_3: 'Seg. 3',
-  interesado: 'Interesado', cotizado: 'Cotizado',
-  cliente: '✅ Cliente', perdido: '❌ Perdido',
+  nuevo: 'New', contactado: 'Contacted',
+  seguimiento_1: 'Follow-up 1', seguimiento_2: 'Follow-up 2', seguimiento_3: 'Follow-up 3',
+  interesado: 'Interested', cotizado: 'Quoted',
+  cliente: '✅ Customer', perdido: '❌ Lost',
 };
 
 function DuplicateGroupRow({ group, onOpenLead }: { group: DuplicateGroup; onOpenLead?: (id: string) => void }) {
@@ -92,9 +92,9 @@ function DuplicateGroupRow({ group, onOpenLead }: { group: DuplicateGroup; onOpe
             className={`w-full flex items-center gap-2 text-xs text-left px-1.5 py-1 rounded transition-colors ${
               onOpenLead ? 'hover:bg-white cursor-pointer' : 'cursor-default'
             }`}
-            title={onOpenLead ? 'Abrir lead' : undefined}
+            title={onOpenLead ? 'Open lead' : undefined}
           >
-            <span className="font-medium text-gray-800 truncate flex-1">{l.name || '(sin nombre)'}</span>
+            <span className="font-medium text-gray-800 truncate flex-1">{l.name || '(no name)'}</span>
             <span className="text-[10px] text-gray-500 flex-shrink-0">{STAGE_LABELS[l.sales_stage || 'nuevo'] || l.sales_stage}</span>
             {l.phone && (
               <span className="text-[10px] text-gray-400 hidden sm:inline flex-shrink-0">{l.phone}</span>
@@ -204,7 +204,7 @@ export default function InsightsModal({ isOpen, onClose, onOpenLead, refreshKey 
                 </div>
               </div>
 
-              {/* Actividad por día — nuevos vs follows, con filtro de vendedor */}
+              {/* Daily activity — new vs follows, with rep filter */}
               <DailyActivity />
 
               {/* Where leads die */}

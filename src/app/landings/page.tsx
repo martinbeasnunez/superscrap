@@ -44,7 +44,7 @@ export default function LandingsPage() {
           <button
             disabled
             className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed font-medium text-sm"
-            title="Próximamente"
+            title="Coming soon"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -161,7 +161,7 @@ export default function LandingsPage() {
                 <button
                   onClick={() => handleCopyUrl(industry.slug)}
                   className="p-1 hover:bg-gray-200 rounded transition-colors"
-                  title="Copiar URL"
+                  title="Copy URL"
                 >
                   {copiedUrl === industry.slug ? (
                     <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +191,7 @@ export default function LandingsPage() {
                 <button
                   onClick={() => handleCopyUrl(industry.slug)}
                   className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm"
-                  title="Copiar URL completa"
+                  title="Copy full URL"
                 >
                   {copiedUrl === industry.slug ? t('ladm.copied') : t('ladm.copy')}
                 </button>

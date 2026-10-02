@@ -32,32 +32,32 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
   const [status, setStatus] = useState<CampaignStatus>('idle');
   const [callResults, setCallResults] = useState<CallResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [delayBetweenCalls] = useState(5); // 5 segundos entre llamadas
+  const [delayBetweenCalls] = useState(5); // 5 seconds between calls
 
-  // IDs de leads llamados en esta sesión (usa state para forzar re-render)
+  // IDs of leads called in this session (uses state to force a re-render)
   const [calledInSession, setCalledInSession] = useState<Set<string>>(new Set());
 
-  // IDs de leads excluidos manualmente por el usuario
+  // IDs of leads manually excluded by the user
   const [excludedLeads, setExcludedLeads] = useState<Set<string>>(new Set());
 
-  // Leads disponibles según target
+  // Available leads by target
   const availableLeads = target === 'nuevos'
     ? leads.nuevos
     : target === 'seguimiento'
       ? leads.seguimiento
       : [...leads.nuevos, ...leads.seguimiento];
 
-  // Leads sin llamada IA previa Y no llamados en esta sesión Y no excluidos
+  // Leads without a prior AI call AND not called in this session AND not excluded
   const leadsWithoutAICall = availableLeads.filter(l => {
-    // Excluir si ya tiene resultado de llamada IA
+    // Exclude if it already has an AI call result
     if (l.aiCallResult?.hasAICall) return false;
-    // Excluir si no tiene teléfono
+    // Exclude if it has no phone
     if (!l.phone) return false;
-    // Excluir si fue llamado en esta sesión
+    // Exclude if it was called in this session
     if (calledInSession.has(l.id)) return false;
-    // Excluir si el usuario lo quitó manualmente
+    // Exclude if the user removed it manually
     if (excludedLeads.has(l.id)) return false;
-    // Excluir si fue llamado recientemente (últimas 24h) - verificar por contacted_at
+    // Exclude if it was called recently (last 24h) - check by contacted_at
     if (l.contacted_at) {
       const lastContact = new Date(l.contacted_at);
       const hoursAgo = (Date.now() - lastContact.getTime()) / (1000 * 60 * 60);
@@ -66,20 +66,20 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
     return true;
   });
 
-  // Función para excluir un lead del preview
+  // Function to exclude a lead from the preview
   const excludeLead = (leadId: string) => {
     setExcludedLeads(prev => new Set(prev).add(leadId));
   };
 
-  // Función para restaurar todos los leads excluidos
+  // Function to restore all excluded leads
   const restoreExcludedLeads = () => {
     setExcludedLeads(new Set());
   };
 
-  // Leads a llamar (limitados por quantity)
+  // Leads to call (limited by quantity)
   const leadsToCall = leadsWithoutAICall.slice(0, quantity);
 
-  // Estadísticas de la campaña
+  // Campaign statistics
   const stats = {
     total: callResults.length,
     completed: callResults.filter(r => r.status === 'completed').length,
@@ -88,11 +88,11 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
     calling: callResults.filter(r => r.status === 'calling').length,
   };
 
-  // Iniciar campaña
+  // Start campaign
   const startCampaign = useCallback(() => {
     if (leadsToCall.length === 0) return;
 
-    // Inicializar resultados
+    // Initialize results
     const initialResults: CallResult[] = leadsToCall.map(lead => ({
       leadId: lead.id,
       leadName: lead.name,
@@ -104,12 +104,12 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
     setStatus('running');
   }, [leadsToCall]);
 
-  // Hacer una llamada individual
+  // Make an individual call
   const makeCall = useCallback(async (lead: KanbanBusiness, index: number) => {
-    // Marcar como llamado en esta sesión INMEDIATAMENTE (con setState para forzar re-render)
+    // Mark as called in this session IMMEDIATELY (with setState to force a re-render)
     setCalledInSession(prev => new Set(prev).add(lead.id));
 
-    // Actualizar estado a "llamando"
+    // Update status to "calling"
     setCallResults(prev => prev.map((r, i) =>
       i === index ? { ...r, status: 'calling' as const } : r
     ));
@@ -129,23 +129,23 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
       });
 
       if (!response.ok) {
-        throw new Error('Error al iniciar llamada');
+        throw new Error('Failed to start call');
       }
 
       const data = await response.json();
 
-      // Actualizar resultado
+      // Update result
       setCallResults(prev => prev.map((r, i) =>
         i === index ? { ...r, status: 'completed' as const, outcome: data.conversation_id } : r
       ));
     } catch (error) {
       setCallResults(prev => prev.map((r, i) =>
-        i === index ? { ...r, status: 'failed' as const, error: 'Error al llamar' } : r
+        i === index ? { ...r, status: 'failed' as const, error: 'Call failed' } : r
       ));
     }
   }, []);
 
-  // Efecto para ejecutar las llamadas secuencialmente
+  // Effect to run the calls sequentially
   useEffect(() => {
     if (status !== 'running') return;
     if (currentIndex >= leadsToCall.length) {
@@ -156,26 +156,26 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
     const lead = leadsToCall[currentIndex];
     if (!lead) return;
 
-    // Hacer la llamada
+    // Make the call
     makeCall(lead, currentIndex).then(() => {
-      // Esperar antes de la siguiente llamada
+      // Wait before the next call
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
       }, delayBetweenCalls * 1000);
     });
   }, [status, currentIndex, leadsToCall, makeCall, delayBetweenCalls]);
 
-  // Pausar campaña
+  // Pause campaign
   const pauseCampaign = () => {
     setStatus('paused');
   };
 
-  // Reanudar campaña
+  // Resume campaign
   const resumeCampaign = () => {
     setStatus('running');
   };
 
-  // Cerrar y limpiar
+  // Close and clean up
   const handleClose = () => {
     if (status === 'running') {
       if (!confirm(t('campaign.confirm_cancel'))) return;
@@ -197,7 +197,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
         className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header con gradiente */}
+        {/* Header with gradient */}
         <div className="px-6 py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -220,11 +220,11 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
           </div>
         </div>
 
-        {/* Contenido */}
+        {/* Content */}
         <div className="p-6">
           {status === 'idle' ? (
             <>
-              {/* Selector de target */}
+              {/* Target selector */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   {t('campaign.who_to_call')}
@@ -252,7 +252,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 </div>
               </div>
 
-              {/* Selector de cantidad */}
+              {/* Quantity selector */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   {t('campaign.how_many')}
@@ -282,7 +282,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 )}
               </div>
 
-              {/* Preview de leads */}
+              {/* Leads preview */}
               <div className="mb-6 p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-gray-700">{t('campaign.preview')}</span>
@@ -309,7 +309,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                       <button
                         onClick={() => excludeLead(lead.id)}
                         className="w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 transition-colors flex-shrink-0 opacity-50 group-hover:opacity-100"
-                        title={`Quitar ${lead.name} de la campaña`}
+                        title={`Remove ${lead.name} from the campaign`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -325,14 +325,14 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 </div>
               </div>
 
-              {/* Info de tiempo estimado */}
+              {/* Estimated time info */}
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 mb-6">
                 <div className="flex items-start gap-3">
                   <span className="text-xl">⏱️</span>
                   <div>
                     <p className="text-sm font-medium text-blue-900">{t('campaign.estimated_time')}</p>
                     <p className="text-xs text-blue-700">
-                      ~{Math.ceil(leadsToCall.length * (delayBetweenCalls + 2) / 60)} {t('campaign.minutes_for')} {leadsToCall.length} llamadas
+                      ~{Math.ceil(leadsToCall.length * (delayBetweenCalls + 2) / 60)} {t('campaign.minutes_for')} {leadsToCall.length} calls
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
                       {t('campaign.interval_info').replace('intervalo', `${delayBetweenCalls}s intervalo`)}
@@ -341,7 +341,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 </div>
               </div>
 
-              {/* Botón de inicio */}
+              {/* Start button */}
               <button
                 onClick={startCampaign}
                 disabled={leadsToCall.length === 0}
@@ -351,12 +351,12 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                     : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300 hover:scale-[1.02]'
                 }`}
               >
-                🚀 {t('campaign.start')} ({leadsToCall.length} llamadas)
+                🚀 {t('campaign.start')} ({leadsToCall.length} calls)
               </button>
             </>
           ) : (
             <>
-              {/* Estado de la campaña */}
+              {/* Campaign status */}
               <div className="text-center mb-6">
                 {status === 'running' && (
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full">
@@ -378,7 +378,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 )}
               </div>
 
-              {/* Barra de progreso */}
+              {/* Progress bar */}
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">{t('campaign.progress')}</span>
@@ -414,7 +414,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 </div>
               </div>
 
-              {/* Lista de llamadas */}
+              {/* Call list */}
               <div className="max-h-48 overflow-y-auto space-y-2 mb-6">
                 {callResults.map((result, i) => (
                   <div
@@ -464,7 +464,7 @@ export default function AICampaignModal({ isOpen, onClose, leads, onCampaignComp
                 ))}
               </div>
 
-              {/* Botones de control */}
+              {/* Control buttons */}
               <div className="flex gap-3">
                 {status === 'running' && (
                   <button

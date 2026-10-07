@@ -165,31 +165,39 @@ export default function Reactivacion() {
     [clients]
   );
 
-  // "👉 Now": the highest-value play for the logged-in salesperson
-  const nextStep = useMemo(() => {
-    const curWaveN = currentWave(todayISO()).n;
-    const activo = (c: ReactClient) => !c.is_control && c.list_type !== 'excluir';
-    const goLens = () => { setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); };
-    // Priority #1 for everyone: reconnect with those who asked you to call today
-    const myRecontacts = recontactList.filter((c) => !meOwner || c.owner === meOwner);
-    if (meOwner && myRecontacts.length > 0)
-      return { text: `🔄 Today you need to reconnect with ${myRecontacts.length} — they asked you to call today.`, action: () => { goLens(); setRecontactLens(true); } };
-    if (meOwner === 'Joaquín') {
-      if (secondTouchList.length > 0)
-        return { text: `📞 Today: ${secondTouchList.length} 2nd-round calls — those close better than another message.`, action: () => { goLens(); setSecondTouchLens(true); } };
-      const msgs = clients.filter((c) => activo(c) && c.owner === 'Joaquín' && c.tier !== 'A' && !c.touch1_date && (waveFor(c) ?? 99) <= curWaveN);
-      if (msgs.length > 0)
-        return { text: `💬 You have ${msgs.length} messages left to send — start from the top.`, action: () => { goLens(); setFOwner('Joaquín'); } };
-      return { text: '✅ All caught up. Keep contacting top to bottom.', action: undefined };
-    }
-    if (meOwner === 'Fernanda') {
-      const grandes = clients.filter((c) => activo(c) && c.tier === 'A' && !c.touch1_date);
-      if (grandes.length > 0)
-        return { text: `📞 You have ${grandes.length} big accounts left to call — start from the top.`, action: () => { goLens(); setFOwner('Fernanda'); } };
-      return { text: '✅ You\'ve called all your big accounts. Great 🙌', action: undefined };
-    }
-    return null; // GM or other: no personal line
-  }, [meOwner, clients, secondTouchList, recontactList]);
+  // "Bought once" (primera recompra) pending a first touch — lives in another list,
+  // so we fetch its count to show it in the seller's plan.
+  const [firstBuyPending, setFirstBuyPending] = useState(0);
+  useEffect(() => {
+    fetch('/api/reactivation?list_type=primera_recompra')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.clients && setFirstBuyPending(d.clients.filter((c: ReactClient) => !c.touch1_date).length))
+      .catch(() => {});
+  }, []);
+
+  // "Your plan for today": the logged-in salesperson's queues, in priority order,
+  // each one clickable. Replaces the old single "Now" line so October is unmistakable.
+  const myPlan = useMemo((): { icon: string; title: string; sub: string; action: () => void }[] => {
+    if (!meOwner) return [];
+    const go = () => { clearLenses(); setCardFilter('none'); };
+    const steps: { icon: string; title: string; sub: string; action: () => void }[] = [];
+    // 1) Reconnects already due (they asked you to call back)
+    const reconnectDue = recontactList.filter((c) => c.owner === meOwner);
+    if (reconnectDue.length)
+      steps.push({ icon: '🔄', title: `Reconnect now: ${reconnectDue.length}`, sub: 'they asked you to call back — overdue', action: () => { go(); setRecontactLens(true); } });
+    // 2) New / not yet contacted (yours)
+    const newUntouched = clients.filter((c) => !c.is_control && c.list_type === 'reactivacion' && c.owner === meOwner && !c.touch1_date);
+    if (newUntouched.length)
+      steps.push({ icon: meOwner === 'Fernanda' ? '📞' : '💬', title: `${meOwner === 'Fernanda' ? 'Call' : 'Message'} new ones: ${newUntouched.length}`, sub: 'not contacted yet — start from the top', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('asc'); } });
+    // 3) Joaquín: the "bought once" list, its turn this month
+    if (meOwner === 'Joaquín' && firstBuyPending > 0)
+      steps.push({ icon: '🌱', title: `"Bought once": ${firstBuyPending}`, sub: 'their turn this month — copy & send', action: () => setListType('primera_recompra') });
+    // 4) Fresh (left recently) — highest chance
+    const fresh = freshList.filter((c) => c.owner === meOwner);
+    if (fresh.length)
+      steps.push({ icon: '🌱', title: `Fresh (left recently): ${fresh.length}`, sub: 'the most likely to come back', action: () => { go(); setFreshLens(true); } });
+    return steps;
+  }, [meOwner, clients, recontactList, freshList, firstBuyPending]);
 
   const filtered = useMemo(() => {
     // Verification queue: ignores the other filters, sorted by freshest
@@ -302,19 +310,30 @@ export default function Reactivacion() {
         </div>
       </div>
 
-      {/* 👉 Now: the highest-value play for the logged-in salesperson */}
-      {nextStep && (
-        <button
-          onClick={nextStep.action}
-          disabled={!nextStep.action}
-          className={`w-full text-left mb-3 rounded-xl border px-4 py-2.5 transition-colors ${
-            nextStep.action ? 'bg-[#0890F1]/10 border-[#0890F1]/30 hover:bg-[#0890F1]/15' : 'bg-emerald-50 border-emerald-200 cursor-default'
-          }`}
-        >
-          <span className="text-[11px] font-bold text-[#0890F1] uppercase tracking-wide">👉 Now</span>
-          <span className="text-sm text-gray-800 ml-2">{nextStep.text}</span>
-          {nextStep.action && <span className="text-xs font-semibold text-[#0890F1] ml-1">→ view</span>}
-        </button>
+      {/* Your plan for today: the logged-in salesperson's queues, in order, clickable */}
+      {meOwner && listType === 'reactivacion' && (
+        myPlan.length > 0 ? (
+          <div className="mb-3 rounded-xl border border-[#0890F1]/30 bg-[#0890F1]/5 p-3">
+            <p className="text-[11px] font-bold text-[#0890F1] uppercase tracking-wide mb-2">👉 Your plan for today</p>
+            <ol className="space-y-1.5">
+              {myPlan.map((step, i) => (
+                <li key={i}>
+                  <button onClick={step.action} className="w-full text-left flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#0890F1]/10">
+                    <span className="text-xs font-bold text-gray-400 w-4">{i + 1}.</span>
+                    <span className="text-base leading-none">{step.icon}</span>
+                    <span className="text-sm font-semibold text-gray-800">{step.title}</span>
+                    <span className="text-xs text-gray-500">· {step.sub}</span>
+                    <span className="text-xs font-semibold text-[#0890F1] ml-auto">view →</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : (
+          <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
+            <span className="text-sm text-emerald-800 font-medium">✅ All caught up — nothing pending for you today. Great 🙌</span>
+          </div>
+        )
       )}
 
       {/* Month header: closed (results) vs active (what's coming) */}

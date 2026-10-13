@@ -17,6 +17,18 @@ export interface ReplyAlert {
   autoReplyIntent?: string | null;
 }
 
+// A quién etiquetar en cada aviso: IDs de miembro de Slack separados por coma
+// (SLACK_MENTION_IDS="U01ABC,U02DEF"). Slack solo notifica con el ID (<@U…>); escribir
+// "@nombre" como texto no etiqueta a nadie.
+function mentions(): string {
+  return (process.env.SLACK_MENTION_IDS || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => /^[UW][A-Z0-9]+$/.test(id))
+    .map((id) => `<@${id}>`)
+    .join(' ');
+}
+
 // Slack usa su propio escape para &, < y >.
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -40,8 +52,9 @@ export async function notifyReplyOnSlack(alert: ReplyAlert): Promise<boolean> {
   ].filter(Boolean).join(' · ');
 
   const who = alert.contactName ? ` (${esc(alert.contactName)})` : '';
+  const tags = mentions();
   const lines = [
-    `💬 *${esc(alert.businessName)}*${who} respondió`,
+    `💬 *${esc(alert.businessName)}*${who} respondió${tags ? ` · ${tags}` : ''}`,
     `> ${esc(alert.message.slice(0, 500)).replace(/\n/g, '\n> ')}`,
     facts,
     alert.autoReplyIntent ? `🤖 El bot ya contestó solo (${esc(alert.autoReplyIntent)})` : null,

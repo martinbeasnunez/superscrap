@@ -15,6 +15,13 @@ trabaja el bot.
   sin decidir o tomado sin tocar). Si es 0, no caces: reporta la cola pendiente y termina.
 - **Calidad sobre cantidad.** Si solo 6 valen la pena, se entregan 6. Nunca rellenar.
 - **Solo Lima Metropolitana** (hay cobertura). Nada de provincias.
+- **Solo cuentas con canal directo a quien decide.** Martín solo aprueba sí/no y ORBIT ejecuta
+  el contacto por WhatsApp desde su número; por eso cada lead debe tener un **celular** del
+  negocio, del dueño o del administrador. Si lo único que hay es una central telefónica o un
+  fijo de recepción, NO se propone (nadie que decida contesta ahí). Esto deja fuera, por ahora,
+  a los hoteles de cadena y a casi todo el inventario de rescate: no los propongas salvo que
+  encuentres un celular directo de un decisor.
+- **No proponer cuentas con negociación o licitación abierta** (p. ej. Casa Andina).
 - **Nunca enviar mensajes.** Esta rutina solo propone; el primer contacto lo decide un humano.
 - El servidor vuelve a aplicar cuota, anti-duplicado y corte de orca: lo que no pase vuelve en
   `omitidos`.
@@ -42,11 +49,12 @@ por qué. Criterio:
 - Aprender de `apuestasAnteriores`: repetir las que generaron respuesta o leads tomados;
   soltar las que terminaron en descartes (leer `motivosDescarte`).
 - Estacionalidad y contexto (temporada alta hotelera, fiestas, verano en el sur, etc.).
-- **Rescate antes que caza:** si `inventarioSinTrabajar` tiene cuentas mejores que lo que
-  saldría de una búsqueda nueva, una de las apuestas puede ser "rescate" y llenar parte de
-  la cuota con esas (hasta la mitad). Ojo: "sin registro en ORBIT" no significa sin tocar;
-  el trabajo de Martín por WhatsApp personal y LinkedIn no se ve. En el `why` de un rescate
-  decirlo así: "sin registro en ORBIT".
+- **Rescate solo con celular:** una cuenta de `inventarioSinTrabajar` entra únicamente si
+  tiene celular (regla dura de canal directo). Ojo: "sin registro en ORBIT" no significa sin
+  tocar; el trabajo de Martín por WhatsApp personal y LinkedIn no se ve. En el `why` de un
+  rescate decirlo así: "sin registro en ORBIT".
+- Preferir rubros donde el celular de Google Maps llega a quien decide: restaurantes de
+  grupo, clínicas privadas, spas, gimnasios boutique, clubes, casas de reposo, catering.
 
 ## Paso 3 — Cazador (código existente)
 
@@ -78,9 +86,8 @@ Para cada lead aprobado escribir:
 - `decision_maker`: nombre y cargo, o el cargo a buscar.
 - `angle`: la jugada de entrada, en una frase.
 - `draft_message`: primer mensaje listo para copiar, en español, natural y corto.
-- `suggested_route`: `humano` para cuentas grandes (hoteles, clínicas, cadenas, potencial
-  ≥ S/5,000) — las trabaja Martín por WhatsApp personal, LinkedIn o correo @laundryheap;
-  `bot` para leads normales con celular (número ORBIT). Sin celular, siempre `humano`.
+- `suggested_route`: `bot` (todas tienen celular; ORBIT las trabaja al aprobarlas). Usa
+  `humano` solo si hay una razón concreta para que Martín escriba en persona, y dila en `why`.
 
 Reglas del mensaje:
 

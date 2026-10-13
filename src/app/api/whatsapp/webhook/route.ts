@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { sendWhatsAppMessage } from '@/lib/kapso';
 import { classifyReplyIntent, getAutoReplyText, shouldCloseAsLost } from '@/lib/reply-intent';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
+import { notifyReplyOnSlack } from '@/lib/slack';
+import { fetchAll } from '@/lib/hunt';
 
 // Kapso webhook for incoming WhatsApp messages
 export async function POST(request: NextRequest) {
@@ -35,12 +37,17 @@ export async function POST(request: NextRequest) {
     const incomingDigits = fromPhone.replace(/\D/g, '');
     const incomingLast9 = incomingDigits.slice(-9);
 
-    const { data: businesses } = await supabase
-      .from('businesses')
-      .select('id, phone, source')
-      .not('phone', 'is', null);
+    // Paginado: Supabase corta en 1000 filas y ya hay más negocios que eso; sin paginar,
+    // las respuestas de los leads más nuevos no encontraban su negocio y se perdían.
+    const businesses = await fetchAll<{ id: string; phone: string | null; source: string | null; name: string; contacted_by: string | null }>(
+      (from, to) =>
+        supabase
+          .from('businesses')
+          .select('id, phone, source, name, contacted_by')
+          .not('phone', 'is', null)
+          .range(from, to));
 
-    const match = businesses?.find(b => {
+    const match = businesses.find(b => {
       const dbDigits = (b.phone || '').replace(/\D/g, '');
       if (!dbDigits) return false;
       // Match by full digits or by last 9 (Peru mobile is 9 digits, ignore country code)
@@ -122,6 +129,34 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    }
+
+    // Aviso a Slack: solo cuando responde una persona (no el contestador automático del negocio).
+    if (!isLikelyBotReply(fullNote)) {
+      const [{ data: analysis }, { data: huntLead }, { data: owner }] = await Promise.all([
+        supabase
+          .from('service_analyses')
+          .select('potential_tier, estimated_revenue_min, estimated_revenue_max')
+          .eq('business_id', businessId)
+          .limit(1)
+          .maybeSingle(),
+        supabase.from('hunt_leads').select('id').eq('business_id', businessId).limit(1).maybeSingle(),
+        match.contacted_by
+          ? supabase.from('users').select('name').eq('id', match.contacted_by).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+      await notifyReplyOnSlack({
+        businessName: match.name,
+        phone: match.phone,
+        contactName: contactName || null,
+        message: messageText,
+        tier: analysis?.potential_tier ?? null,
+        revenueMin: analysis?.estimated_revenue_min ?? null,
+        revenueMax: analysis?.estimated_revenue_max ?? null,
+        ownerName: owner?.name ?? null,
+        fromHunt: !!huntLead,
+        autoReplyIntent,
+      });
     }
 
     return NextResponse.json({ ok: true, matched: true, businessId, autoReplied, autoReplyIntent });

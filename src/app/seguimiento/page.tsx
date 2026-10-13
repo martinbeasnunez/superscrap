@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n';
 import DailyActivity from '@/components/DailyActivity';
+import TodaysHunt from '@/components/TodaysHunt';
 import type { KanbanBusiness, KanbanColumnId } from '@/app/api/kanban/route';
 
 // Rep/owner filter shared between the two views (List and Board).
@@ -238,6 +239,9 @@ export default function PipelinePage() {
           </div>
         </button>
       )}
+
+      {/* 🎯 Today's hunt — leads proposed by the daily hunt, waiting for a human/bot decision */}
+      <TodaysHunt />
 
       {/* 📅 Daily activity — collapsible, visible in List and Board (its own rep chips) */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm mb-4">

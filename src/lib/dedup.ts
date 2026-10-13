@@ -6,7 +6,7 @@ export interface DedupResult {
   matchType?: 'external_id' | 'phone' | 'name_address';
 }
 
-function normalizePhone(phone: string | null | undefined): string | null {
+export function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
   // Strip everything except digits
   const digits = phone.replace(/\D/g, '');

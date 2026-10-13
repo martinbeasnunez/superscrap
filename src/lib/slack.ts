@@ -17,11 +17,14 @@ export interface ReplyAlert {
   autoReplyIntent?: string | null;
 }
 
-// A quién etiquetar en cada aviso: IDs de miembro de Slack separados por coma
-// (SLACK_MENTION_IDS="U01ABC,U02DEF"). Slack solo notifica con el ID (<@U…>); escribir
-// "@nombre" como texto no etiqueta a nadie.
+// A quién etiquetar en cada aviso: IDs de miembro de Slack. Slack solo notifica con el ID
+// (<@U…>); escribir "@nombre" como texto no etiqueta a nadie.
+// Por defecto: Martín (U07DPU4MRKM) y Alejandro Ramos (U07EBT6HKQU).
+// SLACK_MENTION_IDS="U01ABC,U02DEF" los reemplaza sin tocar el código.
+const DEFAULT_MENTION_IDS = 'U07DPU4MRKM,U07EBT6HKQU';
+
 function mentions(): string {
-  return (process.env.SLACK_MENTION_IDS || '')
+  return (process.env.SLACK_MENTION_IDS || DEFAULT_MENTION_IDS)
     .split(',')
     .map((id) => id.trim())
     .filter((id) => /^[UW][A-Z0-9]+$/.test(id))

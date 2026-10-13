@@ -95,6 +95,18 @@ export async function loadDedupIndex(): Promise<DedupIndex> {
   return idx;
 }
 
+// Suma un negocio recién guardado al índice, para que la misma corrida no lo duplique.
+export function addToIndex(
+  idx: DedupIndex,
+  id: string,
+  c: { place_id?: string | null; phone?: string | null; name: string; address?: string | null },
+): void {
+  if (c.place_id && !c.place_id.startsWith('pa-')) idx.byExternalId.set(c.place_id, id);
+  const p = normalizePhone(c.phone);
+  if (p && p.length >= 7) idx.byPhone.set(p, id);
+  if (c.name && c.address) idx.byNameAddress.set(nameAddressKey(c.name, c.address), id);
+}
+
 export function findInIndex(
   idx: DedupIndex,
   c: { place_id?: string | null; phone?: string | null; name: string; address?: string | null },

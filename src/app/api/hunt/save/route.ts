@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { calculatePotentialScore } from '@/lib/scoring';
 import {
-  GRANDE_REV, findInIndex, getHuntCapacity, isMissingHuntTables, isMobilePhone, limaToday, loadDedupIndex,
+  GRANDE_REV, addToIndex, findInIndex, getHuntCapacity, isMissingHuntTables, isMobilePhone, limaToday, loadDedupIndex,
   type HuntRoute,
 } from '@/lib/hunt';
 
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
         }
         businessId = business.id;
         // Para que el siguiente lead de esta misma corrida no duplique a este.
-        if (lead.place_id) index.byExternalId.set(lead.place_id, businessId);
+        addToIndex(index, businessId, { place_id: lead.place_id, phone: lead.phone, name: lead.name, address: lead.address });
 
         await supabase.from('service_analyses').insert({
           business_id: businessId,

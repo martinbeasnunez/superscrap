@@ -23,6 +23,7 @@ export interface HuntLeadCard {
   phone: string | null;
   phoneIsMobile: boolean;
   website: string | null;
+  mapsUrl: string | null;
   email: string | null;
   rating: number | null;
   reviews: number | null;
@@ -37,6 +38,8 @@ export interface HuntLeadCard {
 }
 
 const one = (v: any) => (Array.isArray(v) ? v[0] : v) || {};
+// Correos que el scraper recoge de la web pero no sirven para un primer contacto.
+const JUNK_EMAIL = /^(unsubscribe|no-?reply|donotreply|privacy|privacidad|abuse|postmaster|webmaster|mailer-daemon)@|@(example|sentry|wixpress|sentry-next)\./i;
 
 export async function GET() {
   try {
@@ -48,7 +51,7 @@ export async function GET() {
         id, business_id, hunt_date, rank, thesis, origin, why, decision_maker, angle, draft_message,
         suggested_route, decision,
         businesses (
-          name, address, phone, website, rating, reviews_count, business_type, decision_makers,
+          name, address, phone, website, rating, reviews_count, business_type, decision_makers, external_id,
           service_analyses ( potential_score, estimated_revenue_min, estimated_revenue_max )
         )`)
       .or(`decision.is.null,hunt_date.eq.${today}`)
@@ -82,7 +85,10 @@ export async function GET() {
           phone: b.phone || null,
           phoneIsMobile: isMobilePhone(b.phone),
           website: b.website || null,
-          email: dms.find((d) => d?.email)?.email || null,
+          mapsUrl: b.external_id && !String(b.external_id).startsWith('pa-')
+            ? `https://www.google.com/maps/place/?q=place_id:${b.external_id}`
+            : null,
+          email: dms.find((d) => d?.email && !JUNK_EMAIL.test(d.email))?.email || null,
           rating: b.rating ?? null,
           reviews: b.reviews_count ?? null,
           score: a.potential_score ?? null,

@@ -4,6 +4,7 @@
 const ORBIT_URL = process.env.ORBIT_URL || 'https://superscrap.vercel.app';
 
 export interface ReplyAlert {
+  businessId: string;
   businessName: string;
   phone: string | null;
   contactName?: string | null;
@@ -63,7 +64,7 @@ export async function notifyReplyOnSlack(alert: ReplyAlert): Promise<boolean> {
     alert.autoReplyIntent ? `🤖 El bot ya contestó solo (${esc(alert.autoReplyIntent)})` : null,
     [
       alert.phone ? `<${waLink(alert.phone)}|Responder por WhatsApp>` : null,
-      `<${ORBIT_URL}/seguimiento|Abrir ORBIT>`,
+      `<${ORBIT_URL}/seguimiento?lead=${encodeURIComponent(alert.businessId)}|Abrir en ORBIT>`,
     ].filter(Boolean).join('  ·  '),
   ].filter(Boolean);
 

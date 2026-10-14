@@ -79,14 +79,22 @@ export default function PipelinePage() {
   const [view, setView] = useState<PipelineView>('tablero');
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
   const [user, setUser] = useState<CurrentUser | null>(null);
+  // ?lead=<id> (enlaces de Slack): abre el tablero con la ficha de ese lead.
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { t } = useI18n();
 
   // Remember the last chosen view (respect the user's context).
   // Read in an effect (not the initializer) so SSR hydration isn't broken.
   useEffect(() => {
     const v = localStorage.getItem('orbit_pipeline_view');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (v === 'lista' || v === 'tablero' || v === 'resultados') setView(v);
+    const lead = new URLSearchParams(window.location.search).get('lead');
+    if (lead) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOpenLeadId(lead);
+      setView('tablero');
+    } else if (v === 'lista' || v === 'tablero' || v === 'resultados') {
+      setView(v);
+    }
     const saved = localStorage.getItem('orbit_user');
     if (saved) { try { setUser(JSON.parse(saved)); } catch { /* ignore */ } }
   }, []);
@@ -368,7 +376,7 @@ export default function PipelinePage() {
       {/* Content by view */}
       {view === 'tablero' ? (
         <div className="bg-white rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 p-2 sm:p-3 lg:p-4 overflow-hidden">
-          <KanbanBoard ownerFilter={ownerFilter} onOwnerFilterChange={setOwnerFilter} />
+          <KanbanBoard ownerFilter={ownerFilter} onOwnerFilterChange={setOwnerFilter} openLeadId={openLeadId} />
         </div>
       ) : view === 'resultados' ? (
         <ResultadosMes />

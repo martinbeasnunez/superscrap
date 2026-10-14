@@ -146,6 +146,7 @@ export async function POST(request: NextRequest) {
           : Promise.resolve({ data: null }),
       ]);
       await notifyReplyOnSlack({
+        businessId,
         businessName: match.name,
         phone: match.phone,
         contactName: contactName || null,

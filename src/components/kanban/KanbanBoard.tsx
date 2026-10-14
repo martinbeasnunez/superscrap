@@ -88,9 +88,12 @@ type OwnerFilter = 'all' | 'martin' | 'alejandro' | 'bot';
 export default function KanbanBoard({
   ownerFilter: ownerFilterProp,
   onOwnerFilterChange,
+  openLeadId,
 }: {
   ownerFilter?: OwnerFilter;
   onOwnerFilterChange?: (o: OwnerFilter) => void;
+  // Abre la ficha de este lead apenas cargue el tablero (enlaces "Abrir en ORBIT" de Slack).
+  openLeadId?: string | null;
 } = {}) {
   const [columns, setColumns] = useState<Record<KanbanColumnId, KanbanBusiness[]>>({
     nuevo: [],
@@ -143,6 +146,22 @@ export default function KanbanBoard({
   const columnConfig = getColumnConfig(t);
 
   const [whatsappStats, setWhatsappStats] = useState({ sentToday: 0, sentManualToday: 0, sentAutoToday: 0, repliesUnread: 0, repliesHuman: 0, repliesBot: 0 });
+
+  // Deep link: abrir la ficha pedida una sola vez, cuando ya están las columnas.
+  const openedLeadRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!openLeadId || loading || openedLeadRef.current === openLeadId) return;
+    openedLeadRef.current = openLeadId;
+    for (const col of COLUMN_ORDER) {
+      const found = columns[col].find((b) => b.id === openLeadId);
+      if (found) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedBusiness(found);
+        setSelectedBusinessColumn(col);
+        return;
+      }
+    }
+  }, [openLeadId, loading, columns]);
 
   const fetchKanbanData = useCallback(async () => {
     try {

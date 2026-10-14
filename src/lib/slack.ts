@@ -2,10 +2,14 @@
 // Sin la variable configurada no hace nada: el flujo de WhatsApp nunca depende de Slack.
 
 const ORBIT_URL = process.env.ORBIT_URL || 'https://superscrap.vercel.app';
+// Proyecto de Kapso donde vive el número de ORBIT (bandeja de conversaciones).
+const KAPSO_PROJECT_ID = process.env.KAPSO_PROJECT_ID || '420a8328-9366-4b26-8fcf-cf347b28f039';
 
 export interface ReplyAlert {
   businessId: string;
   businessName: string;
+  // Conversación en la bandeja de Kapso (para leer el hilo completo y contestar desde ahí).
+  conversationId?: string | null;
   phone: string | null;
   contactName?: string | null;
   message: string;
@@ -63,6 +67,9 @@ export async function notifyReplyOnSlack(alert: ReplyAlert): Promise<boolean> {
     facts,
     alert.autoReplyIntent ? `🤖 El bot ya contestó solo (${esc(alert.autoReplyIntent)})` : null,
     [
+      alert.conversationId
+        ? `<https://app.kapso.ai/projects/${KAPSO_PROJECT_ID}/inbox?conversation_id=${encodeURIComponent(alert.conversationId)}|Ver conversación>`
+        : null,
       alert.phone ? `<${waLink(alert.phone)}|Responder por WhatsApp>` : null,
       `<${ORBIT_URL}/seguimiento?lead=${encodeURIComponent(alert.businessId)}|Abrir en ORBIT>`,
     ].filter(Boolean).join('  ·  '),

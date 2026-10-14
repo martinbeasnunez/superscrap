@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
       ]);
       await notifyReplyOnSlack({
         businessId,
+        conversationId: conversation.id ?? null,
         businessName: match.name,
         phone: match.phone,
         contactName: contactName || null,

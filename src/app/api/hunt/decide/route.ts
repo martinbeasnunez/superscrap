@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { isMobilePhone, type HuntDecision } from '@/lib/hunt';
+import { sendFirstBotTouch, type FirstTouchResult } from '@/lib/bot-touch';
 
 // POST /api/hunt/decide  { huntLeadId, decision, userId, reason?, contact? }
 // La decisión por lead de la caza:
 //  - humano     → el lead queda a nombre de quien lo toma; el bot NO le escribe.
 //                 Con `contact` ({ channel, message }) además registra ese primer contacto
 //                 en el historial y mueve el lead a 'contactado': un clic = hecho y anotado.
-//  - bot        → se enciende el auto-followup: el cron (número ORBIT/Kapso) hace el primer
-//                 contacto y la escalera de seguimientos. Solo celulares.
+//  - bot        → se enciende el auto-followup y el primer WhatsApp sale al instante por el
+//                 número ORBIT (en horario de oficina); el cron sigue con los seguimientos.
+//                 Solo celulares.
 //  - descartado → no se trabaja; el motivo queda para que el estratega aprenda.
 
 const DECISIONS: HuntDecision[] = ['humano', 'bot', 'descartado'];
@@ -101,7 +103,19 @@ export async function POST(request: NextRequest) {
       .eq('id', huntLeadId);
     if (huntError) throw huntError;
 
-    return NextResponse.json({ ok: true, decision });
+    // Aprobada para el bot: no esperar a la próxima pasada del cron.
+    let firstTouch: FirstTouchResult | null = null;
+    if (decision === 'bot') {
+      try {
+        firstTouch = await sendFirstBotTouch(huntLead.business_id);
+      } catch (e) {
+        // Si falla el envío, la decisión ya quedó guardada y el cron lo intenta en su pasada.
+        console.error('Hunt decide: first bot touch failed:', e);
+        firstTouch = { sent: false, reason: 'send_failed' };
+      }
+    }
+
+    return NextResponse.json({ ok: true, decision, firstTouch });
   } catch (error) {
     console.error('Hunt decide error:', error);
     return NextResponse.json({ error: 'Error al registrar la decisión' }, { status: 500 });

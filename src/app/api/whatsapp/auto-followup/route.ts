@@ -1,19 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/kapso';
 import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
-
-// Try text message first, fall back to template if outside 24h window
-async function sendWithFallback(phone: string, pitch: string, bizName: string, stage: string, address?: string | null) {
-  const textResult = await sendWhatsAppMessage(phone, pitch);
-  if (textResult.success) return { ...textResult, method: 'text' as const };
-  if (textResult.error?.includes('24-hour') || textResult.error?.includes('Re-engagement')) {
-    const templateResult = await sendWhatsAppTemplate(phone, bizName, stage, address);
-    return { ...templateResult, method: 'template' as const };
-  }
-  return { ...textResult, method: 'text' as const };
-}
+import { sendWithFallback } from '@/lib/bot-touch';
 
 // Días a esperar antes del siguiente toque. Sirve tanto para el stage humano
 // (leads SIN dueño) como para el peldaño del bot (leads CON dueño).

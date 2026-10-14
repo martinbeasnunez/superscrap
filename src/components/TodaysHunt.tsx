@@ -164,6 +164,9 @@ function HuntApproval({
   const [expanded, setExpanded] = useState<string | null>(null);
   const [launching, setLaunching] = useState(false);
   const [progress, setProgress] = useState(0);
+  // Primer WhatsApp del bot: cuántos salieron al aprobar y cuántos quedan para la pasada del cron.
+  const [sentNow, setSentNow] = useState(0);
+  const [sentLater, setSentLater] = useState(0);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -198,6 +201,11 @@ function HuntApproval({
           body: JSON.stringify({ huntLeadId: lead.id, userId, ...body }),
         });
         if (!res.ok) throw new Error('decide failed');
+        if (c === 'bot') {
+          const out = await res.json().catch(() => null);
+          if (out?.firstTouch?.sent) setSentNow((n) => n + 1);
+          else setSentLater((n) => n + 1);
+        }
       } catch {
         // Stop here: what was already launched stays launched, the rest remains pending.
         setError(`${tt('hunt.error')} (${lead.name})`);
@@ -237,6 +245,12 @@ function HuntApproval({
             <div className="w-14 h-14 rounded-full bg-emerald-500 text-white text-2xl flex items-center justify-center mb-4">✓</div>
             <h3 className="text-xl font-bold text-gray-900">{tt('hunt.ap_done')}</h3>
             <p className="text-sm text-gray-500 mt-1 max-w-sm">{tt('hunt.ap_done_sub')}</p>
+            {(sentNow > 0 || sentLater > 0) && (
+              <div className="mt-4 space-y-1 text-sm">
+                {sentNow > 0 && <p className="font-semibold text-emerald-700">✓ {tt('hunt.ap_sent_now', { n: sentNow })}</p>}
+                {sentLater > 0 && <p className="text-amber-700">{tt('hunt.ap_sent_later', { n: sentLater })}</p>}
+              </div>
+            )}
             <p className="text-sm font-medium text-gray-700 mt-5">
               {tt('hunt.ap_summary', { a: count('bot'), m: count('mine'), o: count('out') })}
             </p>

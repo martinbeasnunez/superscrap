@@ -43,7 +43,7 @@ export default function FocusBanner({
       </div>
 
       <p className="text-[11px] text-emerald-800/80 mt-2.5">
-        👉 <b>Empieza por estos dos</b> — son los de más chance. Al resto de la lista, dale después si te queda tiempo.
+        👉 <b>Empieza por estos dos</b> — son los de más chance.
       </p>
     </div>
   );

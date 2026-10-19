@@ -16,6 +16,7 @@ import ImportModal from './ImportModal';
 import CampaignTimeline from './CampaignTimeline';
 import MonthlySummary from './MonthlySummary';
 import MonthHeader from './MonthHeader';
+import FocusBanner from './FocusBanner';
 import {
   waveFor,
   targetTouch1,
@@ -314,6 +315,17 @@ export default function Reactivacion() {
           >⬆ Import month</button>
         </div>
       </div>
+
+      {/* Estrategia del mes: foco en frescos + tibios (no rociar toda la lista) */}
+      {listType === 'reactivacion' && (
+        <FocusBanner
+          fresh={freshList.filter((c) => !meOwner || c.owner === meOwner).length}
+          warm={recontactList.filter((c) => !meOwner || c.owner === meOwner).length}
+          total={summary.total}
+          onFresh={() => { clearLenses(); setCardFilter('none'); setFreshLens(true); }}
+          onWarm={() => { clearLenses(); setCardFilter('none'); setRecontactLens(true); }}
+        />
+      )}
 
       {/* Your plan for today: the logged-in salesperson's queues, in order, clickable */}
       {meOwner && listType === 'reactivacion' && (

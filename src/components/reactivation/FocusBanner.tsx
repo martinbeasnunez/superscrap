@@ -7,13 +7,11 @@
 export default function FocusBanner({
   fresh,
   warm,
-  total,
   onFresh,
   onWarm,
 }: {
   fresh: number;
   warm: number;
-  total: number;
   onFresh: () => void;
   onWarm: () => void;
 }) {
@@ -44,8 +42,8 @@ export default function FocusBanner({
         </button>
       </div>
 
-      <p className="text-[11px] text-emerald-800/70 mt-2.5">
-        El resto de la lista ({total}) es <b>baja prioridad</b> — no gastes el día rociando a todos.
+      <p className="text-[11px] text-emerald-800/80 mt-2.5">
+        👉 <b>Empieza por estos dos</b> — son los de más chance. Al resto de la lista, dale después si te queda tiempo.
       </p>
     </div>
   );

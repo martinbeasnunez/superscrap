@@ -222,7 +222,7 @@ export default function Reactivacion() {
     }
     let arr = clients.filter((c) => {
       // Filter by summary card
-      if (cardFilter === 'pendientes' && !(c.status === 'pendiente' && !c.is_control)) return false;
+      if (cardFilter === 'pendientes' && !(!c.touch1_date && !c.is_control)) return false;
       if (cardFilter === 'reactivados' && c.reserved !== true) return false;
       if (cardFilter === 'control' && !c.is_control) return false;
       if (fTier !== 'all' && c.tier !== fTier) return false;
@@ -268,12 +268,16 @@ export default function Reactivacion() {
 
   // quick summary of the current list
   const summary = useMemo(() => {
-    const control = clients.filter((c) => c.is_control).length;
+    // A logged-in salesperson sees THEIR numbers (their view is auto-filtered to them);
+    // the GM (no meOwner) sees everyone. Keeps the cards matching the list below.
+    const scope = meOwner ? clients.filter((c) => c.owner === meOwner) : clients;
+    const control = scope.filter((c) => c.is_control).length;
     // Campaign recoveries = reserved and NOT control (control is measured separately in the KPI).
-    const reactivated = clients.filter((c) => c.reserved === true && !c.is_control).length;
-    const pending = clients.filter((c) => !c.is_control && c.status === 'pendiente').length;
-    return { total: clients.length, control, reactivated, pending };
-  }, [clients]);
+    const reactivated = scope.filter((c) => c.reserved === true && !c.is_control).length;
+    // Pending = not yet contacted (untouched), not control — robust vs the stored status.
+    const pending = scope.filter((c) => !c.is_control && !c.touch1_date).length;
+    return { total: scope.length, control, reactivated, pending };
+  }, [clients, meOwner]);
 
   return (
     <div>

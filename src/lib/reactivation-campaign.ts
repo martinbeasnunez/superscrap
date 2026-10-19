@@ -87,9 +87,18 @@ export type OverdueWhich = 'toque1' | 'toque2' | null;
 // (el vendedor ve "vencido" en clientes que sí tocó). Se maneja aparte.
 export function overdue(c: ReactClient, today: string): OverdueWhich {
   if (c.is_control || c.list_type === 'excluir') return null;
+  // La campaña de olas/deadlines fue de setiembre; cerrada, nada está "vencido"
+  // por ese calendario (si no, todo octubre saldría vencido por un deadline viejo).
+  if (today > CAMPAIGN.end) return null;
   const t1 = targetTouch1(c);
   if (!c.touch1_date && t1 && today > t1) return 'toque1';
   return null;
+}
+
+// ¿La campaña de olas (setiembre) sigue viva? Fuera de su ventana no mostramos
+// badges de semana/deadline — serían de un mes que ya cerró.
+export function campaignActive(today: string): boolean {
+  return today >= CAMPAIGN.start && today <= CAMPAIGN.end;
 }
 
 // "Hecho" del 1er toque = fecha de toque registrada (data real, nunca hardcode).

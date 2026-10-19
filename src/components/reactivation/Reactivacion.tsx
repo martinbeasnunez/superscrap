@@ -25,6 +25,7 @@ import {
   fmtShort,
   daysBetween,
   CAMPAIGN,
+  campaignActive,
 } from '@/lib/reactivation-campaign';
 
 type ViewMode = 'tabla' | 'tablero';
@@ -584,7 +585,8 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 }
 
 function Badges({ c }: { c: ReactClient }) {
-  const wave = waveFor(c);
+  const showCampaign = campaignActive(todayISO());
+  const wave = showCampaign ? waveFor(c) : null;
   const isOverdue = overdue(c, todayISO()) !== null;
   const t1 = targetTouch1(c);
   return (

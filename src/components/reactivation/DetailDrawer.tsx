@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { REACT_STATUS_LABEL, type ReactClient, type ReactChannel } from '@/lib/reactivation';
 import { BRAND_DEFAULT } from '@/lib/reactivation-messages';
-import { waveFor, targetTouch1, targetTouch2, overdue, fmtShort, todayISO } from '@/lib/reactivation-campaign';
+import { waveFor, targetTouch1, targetTouch2, overdue, fmtShort, todayISO, campaignActive } from '@/lib/reactivation-campaign';
 import MessagesPanel from './MessagesPanel';
 
 // Detail drawer: records campaign progress with the hard rules.
@@ -215,8 +215,9 @@ export default function DetailDrawer({
             <span>·</span>
             <span>{client.owner || 'no owner'}</span>
           </div>
-          {/* Wave + target date (deadline right on the card) */}
+          {/* Wave + target date (deadline right on the card) — only while the campaign is live */}
           {(() => {
+            if (!campaignActive(todayISO())) return null;
             const wave = waveFor(client);
             if (!wave) return null;
             const t1 = targetTouch1(client);

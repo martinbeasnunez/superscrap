@@ -40,7 +40,7 @@ export default function MessagesPanel({
   const recency = recencyBucket(client.days_inactive);
   const recencyPitch = fill(RECENCY_PITCH[recency]);
   // 2nd touch (call) applies to the WhatsApp flow: Tier B/C and first repurchase
-  const waFlow = tier === 'B' || tier === 'C' || isPrimeraRecompra;
+  const waFlow = (client.list_type === 'reactivacion' && tier !== 'A') || isPrimeraRecompra;
   const showSecondTouch = client.status === 'toque1'; // 1st touch sent / no reply
 
   // Direct WhatsApp link with the text preloaded (opens the client's chat).
@@ -61,17 +61,6 @@ export default function MessagesPanel({
         <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
           Confirm the verification (above) to enable the script.
         </p>
-      ) : tier === 'B' ? (
-        <div className="space-y-2">
-          <RecencyNote recency={recency} />
-          <CopyBlock label="1st message · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
-        </div>
-      ) : tier === 'C' ? (
-        <div className="space-y-2">
-          <RecencyNote recency={recency} />
-          <CopyBlock label="1st message · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
-          <CopyBlock label="Soft alternative (without burning the %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
-        </div>
       ) : tier === 'A' ? (
         <TierAGuide fill={fill} />
       ) : isPrimeraRecompra ? (
@@ -82,7 +71,13 @@ export default function MessagesPanel({
       ) : client.list_type === 'excluir' ? (
         <p className="text-sm text-gray-500">Excluded segment — review before contacting (complaint / ordered recently).</p>
       ) : (
-        <p className="text-sm text-gray-400">No template for this segment.</p>
+        /* Any reactivation client that isn't a big account (tier B, C, or no tier yet):
+           the first message is driven by recency, not by tier. */
+        <div className="space-y-2">
+          <RecencyNote recency={recency} />
+          <CopyBlock label="1st message · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
+          <CopyBlock label="Soft alternative (without burning the %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
+        </div>
       )}
 
       {/* 2nd touch (WhatsApp: Tier B/C and first repurchase) — 7-day call script */}

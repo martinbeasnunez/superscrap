@@ -6,7 +6,6 @@ import {
   REACT_STATUS_ORDER,
   TIER_LABEL,
   OUTCOME_META,
-  type ReactOutcome,
   type ReactClient,
   type ReactStatus,
   type ReactListType,
@@ -21,7 +20,6 @@ import {
   waveFor,
   targetTouch1,
   overdue,
-  currentWave,
   todayISO,
   fmtShort,
   daysBetween,
@@ -254,7 +252,8 @@ export default function Reactivacion() {
     setSelected(updated);
   };
 
-  // Real KPI: reactivation rate Contacted vs Control (the number that justifies everything)
+  // KPI Contactado vs Control: se calcula pero por ahora NO se muestra (está en "Resumen por mes").
+  const SHOW_KPI = false;
   const [kpi, setKpi] = useState<{
     contacted: { count: number; reactivated: number; rate: number };
     control: { count: number; reactivated: number; rate: number };
@@ -371,8 +370,8 @@ export default function Reactivacion() {
       {/* Campaign timeline — only while the month's campaign is still live */}
       {todayISO() <= CAMPAIGN.end && <CampaignTimeline />}
 
-      {/* KPI Contacted vs Control — manager's number, GM only (not salespeople) */}
-      {meOwner === null && listType === 'reactivacion' && kpi && (
+      {/* KPI Contactado vs Control — oculto por ahora (vive en "Resumen por mes"). Flip a true para mostrarlo. */}
+      {SHOW_KPI && meOwner === null && listType === 'reactivacion' && kpi && (
         <div className={`rounded-xl border p-4 mb-4 ${kpi.uplift >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
@@ -719,9 +718,9 @@ function EmptyState({ onImport }: { onImport: () => void }) {
   return (
     <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center">
       <p className="text-4xl mb-3">♻️</p>
-      <p className="font-semibold text-gray-900">No clients in this list yet</p>
-      <p className="text-sm text-gray-500 mt-1 mb-4">Import the month's Excel to start the campaign.</p>
-      <button onClick={onImport} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium">⬆ Import Excel</button>
+      <p className="font-semibold text-gray-900">Aún no hay clientes en esta lista</p>
+      <p className="text-sm text-gray-500 mt-1 mb-4">Importa el Excel del mes para arrancar.</p>
+      <button onClick={onImport} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium">⬆ Importar Excel</button>
     </div>
   );
 }

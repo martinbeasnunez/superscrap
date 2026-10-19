@@ -15,7 +15,7 @@ import DetailDrawer from './DetailDrawer';
 import ImportModal from './ImportModal';
 import CampaignTimeline from './CampaignTimeline';
 import MonthlySummary from './MonthlySummary';
-import MonthHeader from './MonthHeader';
+// import MonthHeader from './MonthHeader'; // omitido por ahora (ver render)
 import FocusBanner from './FocusBanner';
 import {
   waveFor,
@@ -353,7 +353,8 @@ export default function Reactivacion() {
         )
       )}
 
-      {/* Month header: closed (results) vs active (what's coming) */}
+      {/* Tarjetas de mes (Setiembre cerrado / Octubre) — omitidas por ahora: repiten
+          la franja de estrategia + "Tu plan de hoy" arriba y "Resumen por mes" abajo.
       {listType === 'reactivacion' && (
         <MonthHeader
           reconnectToday={recontactList.length}
@@ -362,7 +363,7 @@ export default function Reactivacion() {
           onShowFirstBuy={() => setListType('primera_recompra')}
           onShowReconnect={() => { clearLenses(); setCardFilter('none'); setRecontactLens(true); }}
         />
-      )}
+      )} */}
 
       {/* Monthly summary (fixed scoreboard) — GM only */}
       {meOwner === null && <MonthlySummary />}

@@ -37,7 +37,7 @@ type SortKey = 'priority' | 'days';
 const PRIORITY_RANK: Record<string, number> = { alta: 0, media: 1, fria: 2 };
 const prioRank = (p: string | null) => (p && p in PRIORITY_RANK ? PRIORITY_RANK[p] : 9);
 
-const PRIORITY_LABEL: Record<string, string> = { alta: 'High', media: 'Medium', fria: 'Cold' };
+const PRIORITY_LABEL: Record<string, string> = { alta: 'Alta', media: 'Media', fria: 'Fría' };
 const PRIORITY_STYLE: Record<string, string> = {
   alta: 'bg-red-50 text-red-700 border border-red-200',
   media: 'bg-amber-50 text-amber-700 border border-amber-200',
@@ -57,9 +57,9 @@ const STATUS_STYLE: Record<ReactStatus, string> = {
 };
 
 const LIST_TABS: { key: ReactListType; label: string }[] = [
-  { key: 'reactivacion', label: '♻️ Frequent clients' },
-  { key: 'primera_recompra', label: '🌱 Bought once' },
-  { key: 'excluir', label: '🚫 Do not contact' },
+  { key: 'reactivacion', label: '♻️ Clientes frecuentes' },
+  { key: 'primera_recompra', label: '🌱 Compraron 1 vez' },
+  { key: 'excluir', label: '🚫 No contactar' },
 ];
 
 // Is a 2nd touch due? (1st touch done, no reply, +7 days, no 2nd touch)
@@ -186,18 +186,18 @@ export default function Reactivacion() {
     // 1) Reconnects already due (they asked you to call back)
     const reconnectDue = recontactList.filter((c) => c.owner === meOwner);
     if (reconnectDue.length)
-      steps.push({ icon: '🔄', title: `Reconnect now: ${reconnectDue.length}`, sub: 'they asked you to call back — overdue', action: () => { go(); setRecontactLens(true); } });
+      steps.push({ icon: '🔄', title: `Reconectar ahora: ${reconnectDue.length}`, sub: 'te pidieron que los llames — vencido', action: () => { go(); setRecontactLens(true); } });
     // 2) New / not yet contacted (yours)
     const newUntouched = clients.filter((c) => !c.is_control && c.list_type === 'reactivacion' && c.owner === meOwner && !c.touch1_date);
     if (newUntouched.length)
-      steps.push({ icon: meOwner === 'Fernanda' ? '📞' : '💬', title: `${meOwner === 'Fernanda' ? 'Call' : 'Message'} new ones: ${newUntouched.length}`, sub: 'not contacted yet — start from the top', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('asc'); } });
+      steps.push({ icon: meOwner === 'Fernanda' ? '📞' : '💬', title: `${meOwner === 'Fernanda' ? 'Llama' : 'Mensaje'} a los nuevos: ${newUntouched.length}`, sub: 'sin tocar — empieza de arriba', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('asc'); } });
     // 3) Joaquín: the "bought once" list, its turn this month
     if (meOwner === 'Joaquín' && firstBuyPending > 0)
-      steps.push({ icon: '🌱', title: `"Bought once": ${firstBuyPending}`, sub: 'their turn this month — copy & send', action: () => setListType('primera_recompra') });
+      steps.push({ icon: '🌱', title: `"Compraron 1 vez": ${firstBuyPending}`, sub: 'su turno este mes — copia y manda', action: () => setListType('primera_recompra') });
     // 4) Fresh (left recently) — highest chance
     const fresh = freshList.filter((c) => c.owner === meOwner);
     if (fresh.length)
-      steps.push({ icon: '🌱', title: `Fresh (left recently): ${fresh.length}`, sub: 'the most likely to come back', action: () => { go(); setFreshLens(true); } });
+      steps.push({ icon: '🌱', title: `Frescos (se fueron hace poco): ${fresh.length}`, sub: 'los de más chance de volver', action: () => { go(); setFreshLens(true); } });
     return steps;
   }, [meOwner, clients, recontactList, freshList, firstBuyPending]);
 
@@ -303,16 +303,16 @@ export default function Reactivacion() {
             <button
               onClick={() => setView('tabla')}
               className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${view === 'tabla' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-            >☰ Table</button>
+            >☰ Tabla</button>
             <button
               onClick={() => setView('tablero')}
               className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${view === 'tablero' ? 'bg-[#0890F1] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-            >▦ Board</button>
+            >▦ Tablero</button>
           </div>
           <button
             onClick={() => setImportOpen(true)}
             className="text-sm font-medium px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-          >⬆ Import month</button>
+          >⬆ Importar mes</button>
         </div>
       </div>
 
@@ -331,7 +331,7 @@ export default function Reactivacion() {
       {meOwner && listType === 'reactivacion' && (
         myPlan.length > 0 ? (
           <div className="mb-3 rounded-xl border border-[#0890F1]/30 bg-[#0890F1]/5 p-3">
-            <p className="text-[11px] font-bold text-[#0890F1] uppercase tracking-wide mb-2">👉 Your plan for today</p>
+            <p className="text-[11px] font-bold text-[#0890F1] uppercase tracking-wide mb-2">👉 Tu plan de hoy</p>
             <ol className="space-y-1.5">
               {myPlan.map((step, i) => (
                 <li key={i}>
@@ -340,7 +340,7 @@ export default function Reactivacion() {
                     <span className="text-base leading-none">{step.icon}</span>
                     <span className="text-sm font-semibold text-gray-800">{step.title}</span>
                     <span className="text-xs text-gray-500">· {step.sub}</span>
-                    <span className="text-xs font-semibold text-[#0890F1] ml-auto">view →</span>
+                    <span className="text-xs font-semibold text-[#0890F1] ml-auto">ver →</span>
                   </button>
                 </li>
               ))}
@@ -348,7 +348,7 @@ export default function Reactivacion() {
           </div>
         ) : (
           <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5">
-            <span className="text-sm text-emerald-800 font-medium">✅ All caught up — nothing pending for you today. Great 🙌</span>
+            <span className="text-sm text-emerald-800 font-medium">✅ Al día — no tienes nada pendiente hoy. Grande 🙌</span>
           </div>
         )
       )}
@@ -375,21 +375,21 @@ export default function Reactivacion() {
         <div className={`rounded-xl border p-4 mb-4 ${kpi.uplift >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <p className="text-xs font-medium text-gray-500">🎯 How many came back · those we contacted vs those we left alone</p>
+              <p className="text-xs font-medium text-gray-500">🎯 Cuántos volvieron · los que contactamos vs los que dejamos quietos</p>
               <p className="text-sm text-gray-600 mt-0.5">
-                Contacted: <b>{(kpi.contacted.rate * 100).toFixed(0)}%</b> came back ({kpi.contacted.reactivated} of {kpi.contacted.count})
-                {'  '}·  Control (untouched): <b>{(kpi.control.rate * 100).toFixed(0)}%</b> came back ({kpi.control.reactivated} of {kpi.control.count})
+                Contactados: volvió el <b>{(kpi.contacted.rate * 100).toFixed(0)}%</b> ({kpi.contacted.reactivated} de {kpi.contacted.count})
+                {'  '}·  Control (sin tocar): volvió el <b>{(kpi.control.rate * 100).toFixed(0)}%</b> ({kpi.control.reactivated} de {kpi.control.count})
               </p>
             </div>
             <div className="text-right">
               <p className={`text-3xl font-bold ${kpi.uplift >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                 {kpi.uplift >= 0 ? '+' : ''}{(kpi.uplift * 100).toFixed(0)}%
               </p>
-              <p className="text-xs text-gray-500">difference (what the campaign added)</p>
+              <p className="text-xs text-gray-500">de diferencia (lo que sumó la campaña)</p>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2 pt-2 border-t border-black/5">
-            <b>What is the Control group?</b> A group of clients we leave <b>deliberately uncontacted</b>. If the ones we do contact come back more than these, we know the campaign — and not luck — did the work. That's why the Control group <b>is left untouched</b>.
+            <b>¿Qué es el Control?</b> Un grupo de clientes que dejamos <b>sin contactar a propósito</b>. Si los que sí contactamos vuelven más que estos, sabemos que la campaña —y no la suerte— hizo el trabajo. Por eso el Control <b>no se toca</b>.
           </p>
         </div>
       )}
@@ -399,8 +399,7 @@ export default function Reactivacion() {
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 mb-3 flex items-start gap-2">
           <span className="text-lg leading-none">🗓️</span>
           <p className="text-sm text-amber-900">
-            <b>Their turn is October.</b> These are clients who bought only once — the coldest. They don't count as pending this week.
-            If you have a gap you can get ahead and message them (a bonus), but <b>first close the ones who already replied</b>.
+            <b>Su turno es octubre.</b> Son clientes que compraron una sola vez — los más fríos. No cuentan como pendiente de esta semana. Si tienes un hueco puedes adelantarte a escribirles (suma), pero <b>primero cierra a los que ya respondieron</b>.
           </p>
         </div>
       )}
@@ -410,10 +409,10 @@ export default function Reactivacion() {
 
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <SummaryCard label="In list" value={summary.total} active={cardFilter === 'none'} onClick={() => { clearLenses(); setCardFilter('none'); setFreshLens(false); }} />
-        <SummaryCard label="Pending" value={summary.pending} tone="blue" active={cardFilter === 'pendientes'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'pendientes' ? 'none' : 'pendientes'); }} />
-        <SummaryCard label="Reactivated" value={summary.reactivated} tone="emerald" active={cardFilter === 'reactivados'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'reactivados' ? 'none' : 'reactivados'); }} />
-        <SummaryCard label="Control (do not touch)" value={summary.control} tone="rose" hint="Clients we leave deliberately uncontacted, to compare and know whether the campaign is working." active={cardFilter === 'control'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'control' ? 'none' : 'control'); }} />
+        <SummaryCard label="En lista" value={summary.total} active={cardFilter === 'none'} onClick={() => { clearLenses(); setCardFilter('none'); setFreshLens(false); }} />
+        <SummaryCard label="Pendientes" value={summary.pending} tone="blue" active={cardFilter === 'pendientes'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'pendientes' ? 'none' : 'pendientes'); }} />
+        <SummaryCard label="Recuperados" value={summary.reactivated} tone="emerald" active={cardFilter === 'reactivados'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'reactivados' ? 'none' : 'reactivados'); }} />
+        <SummaryCard label="Control (no tocar)" value={summary.control} tone="rose" hint="Clientes que dejamos sin contactar a propósito, para comparar y saber si la campaña funciona." active={cardFilter === 'control'} onClick={() => { clearLenses(); setCardFilter((v) => v === 'control' ? 'none' : 'control'); }} />
       </div>
 
       {/* 🔄 Reconnect today: those scheduled for today (the "next month" that's now due) */}
@@ -424,8 +423,8 @@ export default function Reactivacion() {
             recontactLens ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200 border border-teal-300'
           }`}
         >
-          {recontactLens ? '✓ Viewing reconnect today' : `🔄 Reconnect today: ${recontactList.length}`}
-          <span className={`ml-2 font-normal ${recontactLens ? 'text-white/80' : 'text-teal-600'}`}>· they asked you to call them today</span>
+          {recontactLens ? '✓ Viendo reconectar hoy' : `🔄 Reconectar hoy: ${recontactList.length}`}
+          <span className={`ml-2 font-normal ${recontactLens ? 'text-white/80' : 'text-teal-600'}`}>· te pidieron que los llames hoy</span>
         </button>
       )}
 
@@ -437,8 +436,8 @@ export default function Reactivacion() {
             freshLens ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300'
           }`}
         >
-          {freshLens ? '✓ Viewing fresh' : `🌱 Fresh: ${freshList.length}`}
-          <span className={`ml-2 font-normal ${freshLens ? 'text-white/80' : 'text-emerald-600'}`}>· left recently — the most likely</span>
+          {freshLens ? '✓ Viendo frescos' : `🌱 Frescos: ${freshList.length}`}
+          <span className={`ml-2 font-normal ${freshLens ? 'text-white/80' : 'text-emerald-600'}`}>· se fueron hace poco — los de más chance</span>
         </button>
       )}
 
@@ -450,8 +449,8 @@ export default function Reactivacion() {
             secondTouchLens ? 'bg-orange-600 text-white' : 'bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-300'
           }`}
         >
-          {secondTouchLens ? '✓ Viewing 2nd round' : `📞 2nd round: ${secondTouchList.length}`}
-          <span className={`ml-2 font-normal ${secondTouchLens ? 'text-white/80' : 'text-orange-600'}`}>· they didn't reply to the message — call them</span>
+          {secondTouchLens ? '✓ Viendo 2da vuelta' : `📞 2da vuelta: ${secondTouchList.length}`}
+          <span className={`ml-2 font-normal ${secondTouchLens ? 'text-white/80' : 'text-orange-600'}`}>· no respondieron el mensaje — llámalos</span>
         </button>
       )}
 
@@ -463,8 +462,8 @@ export default function Reactivacion() {
             overdueLens ? 'bg-rose-600 text-white' : 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-300'
           }`}
         >
-          {overdueLens ? '✓ Viewing overdue' : `🔴 Overdue: ${overdueList.length}`}
-          <span className={`ml-2 font-normal ${overdueLens ? 'text-white/80' : 'text-rose-600'}`}>· you should have touched them earlier — catch up</span>
+          {overdueLens ? '✓ Viendo atrasados' : `🔴 Atrasados: ${overdueList.length}`}
+          <span className={`ml-2 font-normal ${overdueLens ? 'text-white/80' : 'text-rose-600'}`}>· debías tocarlos antes — a avanzar</span>
         </button>
       )}
 
@@ -476,27 +475,27 @@ export default function Reactivacion() {
             verifyQueue ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-300'
           }`}
         >
-          {verifyQueue ? '✓ Viewing big accounts to review' : `🔴 Big accounts to review (${tierAPending.length})`}
-          <span className={`ml-2 font-normal ${verifyQueue ? 'text-white/80' : 'text-yellow-700'}`}>· Joaquín reviews them before Fer calls</span>
+          {verifyQueue ? '✓ Viendo cuentas grandes por revisar' : `🔴 Cuentas grandes por revisar (${tierAPending.length})`}
+          <span className={`ml-2 font-normal ${verifyQueue ? 'text-white/80' : 'text-yellow-700'}`}>· Joaquín las revisa antes de que Fer llame</span>
         </button>
       )}
 
       {/* Filters */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <Select label="Size" value={fTier} onChange={setFTier} options={[['all', 'All'], ['A', 'Large'], ['B', 'Medium'], ['C', 'Small']]} />
-        <Select label="Priority" value={fPriority} onChange={setFPriority} options={[['all', 'All'], ['alta', 'High'], ['media', 'Medium'], ['fria', 'Cold']]} />
-        <Select label="Owner" value={fOwner} onChange={setFOwner} options={[['all', 'All'], ...owners.map((o) => [o, o] as [string, string])]} />
-        <Select label="Status" value={fStatus} onChange={setFStatus} options={[['all', 'All'], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
-        <Select label="Result" value={fOutcome} onChange={setFOutcome} options={[['all', 'All'], ['vivo', '🟢 Alive'], ['octubre', '🟡 October'], ['muerto', '⚫ Dead'], ['sin', 'Unmarked']]} />
+        <Select label="Tamaño" value={fTier} onChange={setFTier} options={[["all", "Todos"], ["A", "Grande"], ["B", "Mediano"], ["C", "Chico"]]} />
+        <Select label="Prioridad" value={fPriority} onChange={setFPriority} options={[["all", "Todas"], ["alta", "Alta"], ["media", "Media"], ["fria", "Fría"]]} />
+        <Select label="Dueño" value={fOwner} onChange={setFOwner} options={[["all", "Todos"], ...owners.map((o) => [o, o] as [string, string])]} />
+        <Select label="Estado" value={fStatus} onChange={setFStatus} options={[["all", "Todos"], ...REACT_STATUS_ORDER.map((s) => [s, REACT_STATUS_LABEL[s]] as [string, string])]} />
+        <Select label="Resultado" value={fOutcome} onChange={setFOutcome} options={[["all", "Todos"], ["vivo", "🟢 Vivo"], ["octubre", "🟡 Octubre"], ["muerto", "⚫ Muerto"], ["sin", "Sin marcar"]]} />
         {(fTier !== 'all' || fPriority !== 'all' || fOwner !== 'all' || fStatus !== 'all' || fOutcome !== 'all') && (
-          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setFOutcome('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); setFreshLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ clear</button>
+          <button onClick={() => { setFTier('all'); setFPriority('all'); setFOwner('all'); setFStatus('all'); setFOutcome('all'); setOverdueLens(false); setVerifyQueue(false); setSecondTouchLens(false); setRecontactLens(false); setCardFilter('none'); setFreshLens(false); }} className="text-xs text-gray-400 hover:text-gray-600">✕ limpiar</button>
         )}
-        <span className="text-xs text-gray-400 ml-auto">{filtered.length} of {clients.length}</span>
+        <span className="text-xs text-gray-400 ml-auto">{filtered.length} de {clients.length}</span>
       </div>
 
       {sortKey === 'priority' && (
         <p className="text-xs text-gray-500 mb-3 -mt-1">
-          👇 <b>Start from the top:</b> High priority first and, within that, the <b>freshest</b> (fewer days since last order) — they have the best chance.
+          👇 <b>Empieza de arriba:</b> primero prioridad Alta y, dentro, los <b>más frescos</b> (menos días sin pedir) — son los de más chance.
         </p>
       )}
 
@@ -554,13 +553,13 @@ function MonthStrip({ reactivated }: { reactivated: number }) {
       <div className="flex items-center gap-2 text-sm">
         <span className="text-lg">🏁</span>
         <span className="font-semibold text-gray-800">
-          {closed ? 'September closed' : daysLeft === 0 ? 'September closes today' : `September closes in ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}`}
+          {closed ? 'Setiembre cerrado' : daysLeft === 0 ? 'Setiembre cierra hoy' : `Setiembre cierra en ${daysLeft} ${daysLeft === 1 ? 'día' : 'días'}`}
         </span>
-        {urgent && <span className="text-xs bg-amber-500 text-white rounded px-1.5 py-0.5 font-medium">final stretch</span>}
+        {urgent && <span className="text-xs bg-amber-500 text-white rounded px-1.5 py-0.5 font-medium">recta final</span>}
       </div>
       <div className="text-right">
         <span className="text-xl font-bold text-emerald-600">{reactivated}</span>
-        <span className="text-xs text-gray-500 ml-1.5">clients recovered this month</span>
+        <span className="text-xs text-gray-500 ml-1.5">clientes recuperados este mes</span>
       </div>
     </div>
   );
@@ -568,14 +567,14 @@ function MonthStrip({ reactivated }: { reactivated: number }) {
 
 function SummaryCard({ label, value, tone = 'gray', hint, active, onClick }: { label: string; value: number; tone?: string; hint?: string; active?: boolean; onClick?: () => void }) {
   const color = tone === 'blue' ? 'text-[#0890F1]' : tone === 'emerald' ? 'text-emerald-600' : tone === 'rose' ? 'text-rose-600' : 'text-gray-900';
-  const ring = active && label !== 'In list' ? 'ring-2 ring-[#0890F1] border-[#0890F1]' : 'border-gray-100';
+  const ring = active && label !== 'En lista' ? 'ring-2 ring-[#0890F1] border-[#0890F1]' : 'border-gray-100';
   return (
     <button onClick={onClick} title={hint} className={`text-left bg-white rounded-xl border shadow-sm px-4 py-3 transition-shadow hover:shadow-md ${ring}`}>
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
       <p className="text-xs text-gray-500">
         {label}
         {hint && <span className="ml-1 text-gray-300">ⓘ</span>}
-        {active && label !== 'In list' && <span className="ml-1 text-[#0890F1] font-medium">· viewing</span>}
+        {active && label !== 'En lista' && <span className="ml-1 text-[#0890F1] font-medium">· viendo</span>}
       </p>
     </button>
   );
@@ -606,18 +605,18 @@ function Badges({ c }: { c: ReactClient }) {
       {c.outcome && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold ${OUTCOME_META[c.outcome].chip}`}>{OUTCOME_META[c.outcome].label}</span>}
       {c.tier && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${TIER_STYLE[c.tier]}`}>{TIER_LABEL[c.tier]}</span>}
       {c.priority && <span className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ${PRIORITY_STYLE[c.priority]}`}>{PRIORITY_LABEL[c.priority]}</span>}
-      {wave && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200" title={`Contact before ${fmtShort(t1)}`}>Week {wave} · before {fmtShort(t1)}</span>}
+      {wave && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200" title={`Contactar antes del ${fmtShort(t1)}`}>Semana {wave} · antes del {fmtShort(t1)}</span>}
       {c.is_control && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-600 text-white">CONTROL</span>}
       {!c.is_control && c.needs_verify && c.tier === 'A' && (
         c.verified_at
-          ? <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-700">✅ Ready · call</span>
-          : <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-yellow-100 text-yellow-800">⚠️ Verify</span>
+          ? <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-700">✅ Listo · llamar</span>
+          : <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-yellow-100 text-yellow-800">⚠️ Verificar</span>
       )}
-      {isOverdue && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-100 text-rose-700 border border-rose-300">⚠ Overdue</span>}
-      {needsSecondTouch(c) && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-orange-100 text-orange-700">📞 2nd due</span>}
+      {isOverdue && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-100 text-rose-700 border border-rose-300">⚠ Vencido</span>}
+      {needsSecondTouch(c) && <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-orange-100 text-orange-700">📞 Toca 2do</span>}
       {c.recontact_date && (
         c.recontact_date <= todayISO()
-          ? <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-teal-600 text-white">🔄 Reconnect today</span>
+          ? <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-teal-600 text-white">🔄 Reconectar hoy</span>
           : <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">🔄 {fmtShort(c.recontact_date)}</span>
       )}
     </div>
@@ -634,22 +633,22 @@ function TableView({ rows, sortKey, sortDir, onCycleDays, onSortPriority, onSele
         <thead>
           <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
             <th className="px-4 py-3 font-medium">
-              Company
+              Empresa
               <button
                 onClick={onSortPriority}
                 className={`ml-2 font-normal ${sortKey === 'priority' ? 'text-[#0890F1]' : 'text-gray-400 hover:text-gray-600'}`}
-                title="Sort by priority (High first)"
+                title="Ordenar por prioridad (Alta primero)"
               >
-                · priority{sortKey === 'priority' ? ' ↓' : ''}
+                · prioridad{sortKey === 'priority' ? ' ↓' : ''}
               </button>
             </th>
-            <th className="px-3 py-3 font-medium">Owner</th>
+            <th className="px-3 py-3 font-medium">Dueño</th>
             <th className="px-3 py-3 font-medium cursor-pointer select-none hover:text-gray-700" onClick={onCycleDays}>
-              Days since last order {sortKey === 'days' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+              Días sin pedir {sortKey === 'days' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
             </th>
-            <th className="px-3 py-3 font-medium">Orders</th>
-            <th className="px-3 py-3 font-medium">Size</th>
-            <th className="px-3 py-3 font-medium">Status</th>
+            <th className="px-3 py-3 font-medium">Pedidos</th>
+            <th className="px-3 py-3 font-medium">Tamaño</th>
+            <th className="px-3 py-3 font-medium">Estado</th>
           </tr>
         </thead>
         <tbody>

@@ -50,33 +50,33 @@ export default function MessagesPanel({
   return (
     <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-        <span className="text-sm font-semibold text-gray-900">1. Send the message 💬</span>
+        <span className="text-sm font-semibold text-gray-900">1. Manda el mensaje 💬</span>
         <div className="flex items-center gap-1.5 text-[11px]">
-          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Discount {descuento}%</span>
-          <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">Delivery {SEND_WINDOW}</span>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Descuento {descuento}%</span>
+          <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">Envío {SEND_WINDOW}</span>
         </div>
       </div>
 
       {locked ? (
         <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
-          Confirm the verification (above) to enable the script.
+          Confirma la verificación (arriba) para habilitar el guion.
         </p>
       ) : tier === 'A' ? (
         <TierAGuide fill={fill} />
       ) : isPrimeraRecompra ? (
         <div className="space-y-2">
-          <CopyBlock label="1st message · bought once" text={fill(PRIMERA_RECOMPRA.firstTouch)} waHref={wa(fill(PRIMERA_RECOMPRA.firstTouch))} />
-          <CopyBlock label="Soft alternative (without burning the %)" text={fill(PRIMERA_RECOMPRA.soft)} waHref={wa(fill(PRIMERA_RECOMPRA.soft))} />
+          <CopyBlock label="1er mensaje · compró 1 vez" text={fill(PRIMERA_RECOMPRA.firstTouch)} waHref={wa(fill(PRIMERA_RECOMPRA.firstTouch))} />
+          <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(PRIMERA_RECOMPRA.soft)} waHref={wa(fill(PRIMERA_RECOMPRA.soft))} />
         </div>
       ) : client.list_type === 'excluir' ? (
-        <p className="text-sm text-gray-500">Excluded segment — review before contacting (complaint / ordered recently).</p>
+        <p className="text-sm text-gray-500">Segmento excluido — revisar antes de contactar (reclamo / pidió hace poco).</p>
       ) : (
         /* Any reactivation client that isn't a big account (tier B, C, or no tier yet):
            the first message is driven by recency, not by tier. */
         <div className="space-y-2">
           <RecencyNote recency={recency} />
-          <CopyBlock label="1st message · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
-          <CopyBlock label="Soft alternative (without burning the %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
+          <CopyBlock label="1er mensaje · WhatsApp" text={recencyPitch} waHref={wa(recencyPitch)} />
+          <CopyBlock label="Alternativa suave (sin quemar el %)" text={fill(TIER_C.soft)} waHref={wa(fill(TIER_C.soft))} />
         </div>
       )}
 
@@ -86,7 +86,7 @@ export default function MessagesPanel({
           <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5 mb-2">
             📞 {SECOND_TOUCH.hint}
           </p>
-          <CopyBlock label="2nd round · call (7 days)" text={fill(SECOND_TOUCH.script)} />
+          <CopyBlock label="2da vuelta · llamada (7 días)" text={fill(SECOND_TOUCH.script)} />
           <p className="text-xs text-gray-400 mt-1">{SECOND_TOUCH.close}</p>
         </div>
       )}
@@ -155,7 +155,7 @@ function CopyBlock({ label, text, waHref }: { label: string; text: string; waHre
               rel="noopener noreferrer"
               className="text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
             >
-              💬 Open WhatsApp
+              💬 Abrir WhatsApp
             </a>
           )}
           <button
@@ -164,7 +164,7 @@ function CopyBlock({ label, text, waHref }: { label: string; text: string; waHre
               copied ? 'bg-emerald-100 text-emerald-700' : 'bg-[#0890F1] text-white hover:bg-[#0770C5]'
             }`}
           >
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? '✓ Copiado' : 'Copiar'}
           </button>
         </div>
       </div>
@@ -186,7 +186,7 @@ function TierAGuide({ fill }: { fill: (t: string) => string }) {
 
           {s.quote && (
             s.copy ? (
-              <div className="mt-1.5"><CopyBlock label="Opening" text={fill(s.quote)} /></div>
+              <div className="mt-1.5"><CopyBlock label="Apertura" text={fill(s.quote)} /></div>
             ) : (
               <p className="mt-1 text-sm text-gray-700 italic">“{fill(s.quote)}”</p>
             )
@@ -205,7 +205,7 @@ function TierAGuide({ fill }: { fill: (t: string) => string }) {
       ))}
 
       <div className="rounded-lg border border-gray-200 bg-white p-3">
-        <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1.5">Objections · quick responses</p>
+        <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1.5">Objeciones · respuestas rápidas</p>
         <div className="space-y-1">
           {TIER_A.objeciones.map((o) => (
             <p key={o.k} className="text-sm text-gray-600">

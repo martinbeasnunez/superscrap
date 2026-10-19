@@ -70,16 +70,16 @@ export default function CampaignTimeline() {
 
   // Countdown based on the current wave's status.
   const countdown = (() => {
-    if (cur.n === 4 && today > cur.end) return 'Campaign closed';
+    if (cur.n === 4 && today > cur.end) return 'Campaña cerrada';
     if (status === 'proxima') {
       const d = daysBetween(today, cur.start);
-      return d <= 0 ? 'Starts today' : `Starts in ${d} day${d === 1 ? '' : 's'}`;
+      return d <= 0 ? 'Arranca hoy' : `Arranca en ${d} día${d === 1 ? '' : 's'}`;
     }
     if (status === 'en_curso') {
       const d = daysBetween(today, cur.deadline ?? cur.end);
-      return d <= 0 ? 'Closes today' : `Closes in ${d} day${d === 1 ? '' : 's'}`;
+      return d <= 0 ? 'Cierra hoy' : `Cierra en ${d} día${d === 1 ? '' : 's'}`;
     }
-    return 'Closed';
+    return 'Cerrada';
   })();
 
   const totalSemanas = CAMPAIGN.waves.length;
@@ -88,22 +88,22 @@ export default function CampaignTimeline() {
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4 mb-4">
       {/* Where we are, in one line */}
       <div className="flex items-baseline justify-between gap-2 flex-wrap mb-3">
-        <p className="font-bold text-gray-900">📅 Week {cur.n} of {totalSemanas}</p>
-        <p className="text-sm font-semibold text-gray-600">{countdown}{cur.n <= 3 ? ` · closes ${fmtShort(cur.deadline ?? cur.end)}` : ''}</p>
+        <p className="font-bold text-gray-900">📅 Semana {cur.n} de {totalSemanas}</p>
+        <p className="text-sm font-semibold text-gray-600">{countdown}{cur.n <= 3 ? ` · cierra ${fmtShort(cur.deadline ?? cur.end)}` : ''}</p>
       </div>
 
       {/* Each person, one simple bar */}
       {stats && (
         <div className="space-y-2.5">
-          <PersonRow icon="💬" label="Joaquín · messages" done={stats.curSplit.bc.done} total={stats.curSplit.bc.total} />
-          <PersonRow icon="📞" label="Fernanda · calls to big accounts" done={stats.curSplit.tierA.done} total={stats.curSplit.tierA.total} />
+          <PersonRow icon="💬" label="Joaquín · mensajes" done={stats.curSplit.bc.done} total={stats.curSplit.bc.total} />
+          <PersonRow icon="📞" label="Fernanda · llamadas a grandes" done={stats.curSplit.tierA.done} total={stats.curSplit.tierA.total} />
         </div>
       )}
 
       {/* What's overdue, in one line */}
       {stats && stats.overdue > 0 && (
         <p className="mt-3 text-sm font-semibold text-rose-600">
-          🔴 {stats.overdue} left over from before — start with those.
+          🔴 {stats.overdue} quedaron de antes — empieza por esos.
         </p>
       )}
     </div>
@@ -119,8 +119,8 @@ function PersonRow({ icon, label, done, total }: { icon: string; label: string; 
       <div className="flex items-center justify-between gap-2 mb-1 text-sm">
         <span className="font-semibold text-gray-800">{icon} {label}</span>
         <span className="text-gray-500">
-          <b className="text-gray-900">{done}</b> of {total}
-          {falta > 0 ? <span className="text-[#0890F1] font-medium"> · {falta} left</span> : total > 0 ? <span className="text-emerald-600 font-medium"> · ✅ done</span> : null}
+          <b className="text-gray-900">{done}</b> de {total}
+          {falta > 0 ? <span className="text-[#0890F1] font-medium"> · faltan {falta}</span> : total > 0 ? <span className="text-emerald-600 font-medium"> · ✅ listo</span> : null}
         </span>
       </div>
       <div className="h-2.5 rounded-full bg-gray-200 overflow-hidden">

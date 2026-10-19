@@ -16,8 +16,8 @@ export default function ReactivacionPage() {
   return (
     <div className="p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
       <div className="hidden lg:block mb-5">
-        <h1 className="text-2xl font-bold text-gray-900">♻️ Win back customers</h1>
-        <p className="text-gray-500 mt-0.5">Business customers who stopped ordering — bring them back</p>
+        <h1 className="text-2xl font-bold text-gray-900">♻️ Recuperar clientes</h1>
+        <p className="text-gray-500 mt-0.5">Clientes empresa que dejaron de pedir — hacerlos volver</p>
       </div>
       <Reactivacion />
     </div>

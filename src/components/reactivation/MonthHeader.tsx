@@ -16,7 +16,7 @@ interface MonthRow {
   contacted: number | null;
 }
 
-const MESES = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
 
 export default function MonthHeader({
   reconnectToday,
@@ -63,27 +63,27 @@ export default function MonthHeader({
       {/* Mes CERRADO — resultados */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-bold text-gray-700">{closed ? closed.label : 'Previous month'}</span>
-          <span className="text-[11px] font-semibold text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">✓ Closed</span>
+          <span className="text-sm font-bold text-gray-700">{closed ? closed.label : 'Mes anterior'}</span>
+          <span className="text-[11px] font-semibold text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">✓ Cerrado</span>
         </div>
         {closed ? (
           <>
             <div className="mt-2 flex items-end gap-3">
               <div>
                 <p className="text-2xl font-bold text-emerald-600">{closed.recovered_real ?? '—'}</p>
-                <p className="text-[11px] text-gray-500">clients recovered</p>
+                <p className="text-[11px] text-gray-500">clientes recuperados</p>
               </div>
               <div className="pb-0.5">
                 <p className="text-lg font-bold text-gray-800">{soles(closed.revenue_recovered)}</p>
-                <p className="text-[11px] text-gray-500">recovered (verified)</p>
+                <p className="text-[11px] text-gray-500">recuperado (verificado)</p>
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Control (untouched) returned {closed.control_returned ?? 0} of {closed.control ?? 0}. The details are below in <b>Monthly summary</b>.
+              Control (sin tocar) volvió {closed.control_returned ?? 0} de {closed.control ?? 0}. El detalle está abajo en <b>Resumen por mes</b>.
             </p>
           </>
         ) : (
-          <p className="text-sm text-gray-400 mt-2">No closed month yet.</p>
+          <p className="text-sm text-gray-400 mt-2">Aún no hay mes cerrado.</p>
         )}
       </div>
 
@@ -91,33 +91,33 @@ export default function MonthHeader({
       <div className="rounded-xl border border-[#0890F1]/30 bg-[#0890F1]/5 p-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-gray-800">{activeLabel}</span>
-          <span className="text-[11px] font-semibold text-white bg-[#0890F1] rounded-full px-2 py-0.5">● In progress</span>
+          <span className="text-[11px] font-semibold text-white bg-[#0890F1] rounded-full px-2 py-0.5">● En curso</span>
         </div>
-        <p className="text-xs font-semibold text-gray-700 mt-2">Here's what to do:</p>
+        <p className="text-xs font-semibold text-gray-700 mt-2">Esto es lo que toca:</p>
         <ol className="mt-1.5 space-y-1.5">
           {firstBuy != null && firstBuy > 0 && (
             <li>
               <button onClick={onShowFirstBuy} className="text-left text-xs text-gray-700 hover:text-[#0890F1] w-full">
-                <b>1.</b> 🌱 The <b>{firstBuy}</b> who bought once — their turn is now. <span className="text-[#0890F1]">start here →</span>
+                <b>1.</b> 🌱 Los <b>{firstBuy}</b> que compraron 1 vez — su turno es ahora. <span className="text-[#0890F1]">empezar aquí →</span>
               </button>
             </li>
           )}
           {reconnectToday > 0 && (
             <li>
               <button onClick={onShowReconnect} className="text-left text-xs text-gray-700 hover:text-[#0890F1] w-full">
-                <b>2.</b> 🔄 Those who said &quot;next month&quot; and are now due today: <b>{reconnectToday}</b>. <span className="text-[#0890F1]">view them →</span>
+                <b>2.</b> 🔄 Los que dijeron &quot;próximo mes&quot; y ya toca hoy: <b>{reconnectToday}</b>. <span className="text-[#0890F1]">verlos →</span>
               </button>
             </li>
           )}
           <li className="text-xs text-gray-700">
-            <b>{firstBuy ? '3' : reconnectToday ? '2' : '1'}.</b> ⬆ Upload the new month's list and hit the <b>fresh</b> ones first.
+            <b>{firstBuy ? '3' : reconnectToday ? '2' : '1'}.</b> ⬆ Sube la lista nueva del mes y ataca los <b>frescos</b> primero.
           </li>
         </ol>
         <button
           onClick={onImport}
           className="mt-3 w-full text-sm font-semibold px-3 py-2 rounded-lg bg-[#0890F1] text-white hover:bg-[#0770C5]"
         >
-          ⬆ Load list for {MESES[now.getMonth()]}
+          ⬆ Cargar lista de {MESES[now.getMonth()]}
         </button>
       </div>
     </div>

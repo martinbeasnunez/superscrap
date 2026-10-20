@@ -5,7 +5,7 @@ import { classifyReplyIntent, getAutoReplyText, shouldCloseAsLost } from '@/lib/
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { notifyReplyOnSlack } from '@/lib/slack';
 import { fetchAll } from '@/lib/hunt';
-import { brainMode, draftReplyForBusiness } from '@/lib/b2b-draft';
+import { AUTO_INTENTS, brainMode, canAutoReply, draftReplyForBusiness } from '@/lib/b2b-draft';
 
 // Kapso webhook for incoming WhatsApp messages
 export async function POST(request: NextRequest) {
@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
 
     // Paginado: Supabase corta en 1000 filas y ya hay más negocios que eso; sin paginar,
     // las respuestas de los leads más nuevos no encontraban su negocio y se perdían.
-    const businesses = await fetchAll<{ id: string; phone: string | null; source: string | null; name: string; contacted_by: string | null }>(
+    const businesses = await fetchAll<{ id: string; phone: string | null; source: string | null; name: string; contacted_by: string | null; auto_followup_enabled: boolean | null }>(
       (from, to) =>
         supabase
           .from('businesses')
-          .select('id, phone, source, name, contacted_by')
+          .select('id, phone, source, name, contacted_by, auto_followup_enabled')
           .not('phone', 'is', null)
           .range(from, to));
 
@@ -84,7 +84,10 @@ export async function POST(request: NextRequest) {
     if (!isManualLead && !isLikelyBotReply(fullNote)) {
       const classification = classifyReplyIntent(fullNote);
 
-      if (classification.confidence === 'high' && classification.intent !== 'unclear') {
+      // Con el cerebro en 'auto', las dudas y los "cuánto cuesta" los contesta el cerebro (con contexto);
+      // el Nivel 1 queda solo para cerrar rechazos claros.
+      const level1Intents = brainMode() === 'auto' ? ['no_interest', 'wrong_number'] : null;
+      if (classification.confidence === 'high' && classification.intent !== 'unclear' && (!level1Intents || level1Intents.includes(classification.intent))) {
         // Dedupe: if we already auto-replied within last 24h, don't fire again
         const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const { data: recentAuto } = await supabase
@@ -150,12 +153,33 @@ export async function POST(request: NextRequest) {
       let draft: string | null = null;
       let draftAction: string | null = null;
       let qualified = false;
-      if (brainMode() === 'draft') {
+      let draftSent = false;
+      if (brainMode() !== 'off') {
         try {
           const out = await draftReplyForBusiness(businessId);
           if (out && out.action !== 'skip' && out.reply) {
             draft = out.reply;
             draftAction = out.action;
+          }
+          // Respuesta automática (solo modo 'auto', casos simples y con guardas). Si algo falla o no
+          // aplica, queda como borrador + aviso a un humano.
+          if (
+            out && brainMode() === 'auto' && !autoReplied && draft &&
+            out.action === 'reply' && AUTO_INTENTS.includes(out.intent) && !out.needsTemplate &&
+            match.phone && await canAutoReply(businessId, { isManualLead, autoFollowupEnabled: match.auto_followup_enabled })
+          ) {
+            const sent = await sendWhatsAppMessage(match.phone, out.reply);
+            if (sent.success) {
+              draftSent = true;
+              await supabase.from('contact_history').insert({
+                business_id: businessId,
+                action_type: 'auto_whatsapp_reply',
+                notes: `[cerebro B2B · ${out.intent}] ${out.reply}`,
+              });
+              await supabase.from('businesses').update({ contacted_at: new Date().toISOString() }).eq('id', businessId);
+            } else {
+              console.error('B2B brain auto-reply send failed:', sent.error);
+            }
           }
           // Lead calificado: señal de compra clara → la card pasa a "interesado" (solo desde etapas
           // tempranas, nunca hacia atrás) y se apaga el bot. El cerebro NO envía nada.
@@ -205,6 +229,7 @@ export async function POST(request: NextRequest) {
         draft,
         draftAction,
         qualified,
+        draftSent,
       });
     }
 

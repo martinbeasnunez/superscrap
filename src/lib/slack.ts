@@ -25,6 +25,8 @@ export interface ReplyAlert {
   draftAction?: string | null;
   // Señal de compra: la card pasó sola a "interesado" y el bot quedó apagado.
   qualified?: boolean;
+  // El cerebro ya envió el borrador solo (no hay que copiarlo).
+  draftSent?: boolean;
 }
 
 // A quién etiquetar en cada aviso: IDs de miembro de Slack. Slack solo notifica con el ID
@@ -74,7 +76,9 @@ export async function notifyReplyOnSlack(alert: ReplyAlert): Promise<boolean> {
     facts,
     alert.autoReplyIntent ? `🤖 El bot ya contestó solo (${esc(alert.autoReplyIntent)})` : null,
     alert.draft
-      ? `✍️ *Borrador sugerido* (no enviado${alert.draftAction === 'handoff' ? ' · ⚡ atender tú: hay señal de compra' : alert.draftAction === 'close' ? ' · cierre amable' : ''}):\n> ${esc(alert.draft.slice(0, 600)).replace(/\n/g, '\n> ')}`
+      ? alert.draftSent
+        ? `🤖 *El cerebro ya respondió solo:*\n> ${esc(alert.draft.slice(0, 600)).replace(/\n/g, '\n> ')}`
+        : `✍️ *Borrador sugerido* (no enviado${alert.draftAction === 'handoff' ? ' · ⚡ atender tú: hay señal de compra' : alert.draftAction === 'close' ? ' · cierre amable' : ''}):\n> ${esc(alert.draft.slice(0, 600)).replace(/\n/g, '\n> ')}`
       : null,
     [
       alert.conversationId

@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { sendWithFallback } from '@/lib/bot-touch';
+import { fetchAll } from '@/lib/hunt';
 
 // Días a esperar antes del siguiente toque. Sirve tanto para el stage humano
 // (leads SIN dueño) como para el peldaño del bot (leads CON dueño).
@@ -104,14 +105,21 @@ export async function GET() {
     // Bot greetings ("Gracias por comunicarte con...") don't count — the human never saw the
     // message, so we keep auto-following up. Only real human replies stop the cron.
     const businessIds = businesses.map(b => b.id);
-    const { data: contactHistory } = await supabase
-      .from('contact_history')
-      .select('business_id, action_type, notes')
-      .in('business_id', businessIds);
+    // Paginado: Supabase corta en 1000 filas y 300 leads suman más que eso. Sin paginar, las
+    // respuestas humanas caían fuera del corte y el bot seguía escribiéndole a quien ya respondió.
+    const contactHistory = await fetchAll<{ business_id: string; action_type: string; notes: string | null }>(
+      (from, to) =>
+        supabase
+          .from('contact_history')
+          .select('business_id, action_type, notes')
+          .in('business_id', businessIds)
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .range(from, to));
 
     const contactCountMap: Record<string, number> = {};
     const hasReplyMap: Record<string, boolean> = {};
-    contactHistory?.forEach(c => {
+    contactHistory.forEach(c => {
       contactCountMap[c.business_id] = (contactCountMap[c.business_id] || 0) + 1;
       if (c.action_type === 'whatsapp_reply' && !isLikelyBotReply(c.notes)) {
         hasReplyMap[c.business_id] = true;

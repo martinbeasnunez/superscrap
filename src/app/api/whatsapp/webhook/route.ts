@@ -5,6 +5,7 @@ import { classifyReplyIntent, getAutoReplyText, shouldCloseAsLost } from '@/lib/
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { notifyReplyOnSlack } from '@/lib/slack';
 import { fetchAll } from '@/lib/hunt';
+import { brainMode, draftReplyForBusiness } from '@/lib/b2b-draft';
 
 // Kapso webhook for incoming WhatsApp messages
 export async function POST(request: NextRequest) {
@@ -145,6 +146,20 @@ export async function POST(request: NextRequest) {
           ? supabase.from('users').select('name').eq('id', match.contacted_by).maybeSingle()
           : Promise.resolve({ data: null }),
       ]);
+      // Borrador del cerebro B2B (solo redacta; un humano lo aprueba y envía). Nunca rompe el aviso.
+      let draft: string | null = null;
+      let draftAction: string | null = null;
+      if (brainMode() === 'draft') {
+        try {
+          const out = await draftReplyForBusiness(businessId);
+          if (out && out.action !== 'skip' && out.reply) {
+            draft = out.reply;
+            draftAction = out.action;
+          }
+        } catch (e) {
+          console.error('B2B brain draft error:', e);
+        }
+      }
       await notifyReplyOnSlack({
         businessId,
         conversationId: conversation.id ?? null,
@@ -158,6 +173,8 @@ export async function POST(request: NextRequest) {
         ownerName: owner?.name ?? null,
         fromHunt: !!huntLead,
         autoReplyIntent,
+        draft,
+        draftAction,
       });
     }
 

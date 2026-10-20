@@ -20,6 +20,9 @@ export interface ReplyAlert {
   fromHunt?: boolean;
   // Si el bot ya contestó solo, qué entendió ("pide_info", "no_interesado", ...).
   autoReplyIntent?: string | null;
+  // Borrador del cerebro B2B (no enviado) y qué recomienda hacer.
+  draft?: string | null;
+  draftAction?: string | null;
 }
 
 // A quién etiquetar en cada aviso: IDs de miembro de Slack. Slack solo notifica con el ID
@@ -66,6 +69,9 @@ export async function notifyReplyOnSlack(alert: ReplyAlert): Promise<boolean> {
     `> ${esc(alert.message.slice(0, 500)).replace(/\n/g, '\n> ')}`,
     facts,
     alert.autoReplyIntent ? `🤖 El bot ya contestó solo (${esc(alert.autoReplyIntent)})` : null,
+    alert.draft
+      ? `✍️ *Borrador sugerido* (no enviado${alert.draftAction === 'handoff' ? ' · ⚡ atender tú: hay señal de compra' : alert.draftAction === 'close' ? ' · cierre amable' : ''}):\n> ${esc(alert.draft.slice(0, 600)).replace(/\n/g, '\n> ')}`
+      : null,
     [
       alert.conversationId
         ? `<https://app.kapso.ai/projects/${KAPSO_PROJECT_ID}/inbox?conversation_id=${encodeURIComponent(alert.conversationId)}|Ver conversación>`

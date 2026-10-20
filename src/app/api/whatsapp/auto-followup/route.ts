@@ -196,7 +196,22 @@ export async function GET() {
         // seguimiento_3/interesado/cotizado (o sin siguiente): re-enviar sin mover el stage.
         if (!nextStage || stage === 'seguimiento_3' || stage === 'interesado' || stage === 'cotizado') {
           const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount, sentTexts[biz.id] ?? new Set());
-          if (!pitch) { skipped++; continue; } // ya recibió todas las variantes: no repetir
+          if (!pitch) {
+            // Agotó las 5 variantes de seguimiento_3 sin que nadie respondiera (quien respondió ya quedó
+            // fuera arriba): la card pasa a perdido y el bot se apaga, en vez de quedar atascada.
+            if (stage === 'seguimiento_3') {
+              await supabase.from('businesses').update({ sales_stage: 'perdido', auto_followup_enabled: false }).eq('id', biz.id);
+              await supabase.from('contact_history').insert({
+                business_id: biz.id,
+                action_type: 'stage_change',
+                notes: '📋 Auto-cierre: seguimiento_3 → perdido (recibió las 5 variantes del bot sin responder)',
+              });
+              lost++;
+            } else {
+              skipped++;
+            }
+            continue;
+          }
           const result = await sendWithFallback(biz.phone, pitch, biz.name, stage, biz.address);
           if (result.success) {
             await supabase.from('contact_history').insert({

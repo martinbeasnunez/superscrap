@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
+import { getWhatsAppPitchServer, normalizePitch } from '@/lib/whatsapp-pitch';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { sendWithFallback } from '@/lib/bot-touch';
 import { fetchAll } from '@/lib/hunt';
@@ -119,7 +119,12 @@ export async function GET() {
 
     const contactCountMap: Record<string, number> = {};
     const hasReplyMap: Record<string, boolean> = {};
+    // Mensajes del bot que cada lead ya recibió (para no repetir texto en seguimiento_3).
+    const sentTexts: Record<string, Set<string>> = {};
     contactHistory.forEach(c => {
+      if (c.action_type === 'auto_whatsapp') {
+        (sentTexts[c.business_id] ??= new Set()).add(normalizePitch(c.notes));
+      }
       contactCountMap[c.business_id] = (contactCountMap[c.business_id] || 0) + 1;
       if (c.action_type === 'whatsapp_reply' && !isLikelyBotReply(c.notes)) {
         hasReplyMap[c.business_id] = true;
@@ -190,7 +195,8 @@ export async function GET() {
 
         // seguimiento_3/interesado/cotizado (o sin siguiente): re-enviar sin mover el stage.
         if (!nextStage || stage === 'seguimiento_3' || stage === 'interesado' || stage === 'cotizado') {
-          const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount);
+          const pitch = getWhatsAppPitchServer(biz.name, businessType, stage, contactCount, sentTexts[biz.id] ?? new Set());
+          if (!pitch) { skipped++; continue; } // ya recibió todas las variantes: no repetir
           const result = await sendWithFallback(biz.phone, pitch, biz.name, stage, biz.address);
           if (result.success) {
             await supabase.from('contact_history').insert({
@@ -212,7 +218,8 @@ export async function GET() {
         }
 
         // AUTO-AVANCE: solo para leads sin dueño — mueve el stage + template del nuevo stage.
-        const pitch = getWhatsAppPitchServer(biz.name, businessType, nextStage, contactCount);
+        const pitch = getWhatsAppPitchServer(biz.name, businessType, nextStage, contactCount, sentTexts[biz.id] ?? new Set());
+        if (!pitch) { skipped++; continue; }
         const result = await sendWithFallback(biz.phone, pitch, biz.name, nextStage, biz.address);
         if (result.success) {
           await supabase.from('contact_history').insert({
@@ -266,7 +273,8 @@ export async function GET() {
 
       // Enviar el peldaño correspondiente. Para leads CON dueño el cron NUNCA toca
       // sales_stage ni inserta 'stage_change': solo registra el envío como auto_whatsapp.
-      const pitch = getWhatsAppPitchServer(biz.name, businessType, cadenceStage, contactCount);
+      const pitch = getWhatsAppPitchServer(biz.name, businessType, cadenceStage, contactCount, sentTexts[biz.id] ?? new Set());
+      if (!pitch) { skipped++; continue; } // ya recibió todas las variantes: no repetir
       const result = await sendWithFallback(biz.phone, pitch, biz.name, cadenceStage, biz.address);
 
       if (result.success) {

@@ -8,7 +8,14 @@
 //   - Each stage uses a DIFFERENT structure (avoid repetitive feel across pitches)
 //   - First line never starts with stat/social-proof — sounds like spam
 
-export function getWhatsAppPitchServer(businessName: string, businessType: string | null, salesStage?: string, contactCount?: number): string {
+// Normaliza un mensaje para compararlo con lo que ya se envió (ignora espacios y el nombre en *negritas*).
+export function normalizePitch(text: string | null | undefined): string {
+  return (text || '').replace(/\*[^*]+\*/g, '*X*').replace(/\s+/g, ' ').trim();
+}
+
+// `alreadySent`: mensajes (normalizados) que este lead ya recibió del bot. En seguimiento_3 se elige
+// la primera variante que NO haya recibido; si ya recibió todas devuelve '' (no volver a escribirle).
+export function getWhatsAppPitchServer(businessName: string, businessType: string | null, salesStage?: string, contactCount?: number, alreadySent?: Set<string>): string {
   const typeLower = (businessType || '').toLowerCase();
   const stage = salesStage || 'nuevo';
   const contacts = contactCount || 0;
@@ -19,7 +26,7 @@ export function getWhatsAppPitchServer(businessName: string, businessType: strin
 
   // SEGUIMIENTO 3 — Quincenal rotation (nunca repite)
   if (stage === 'seguimiento_3') {
-    return getSeguimiento3Pitch(businessName, typeLower, contacts);
+    return getSeguimiento3Pitch(businessName, typeLower, contacts, alreadySent);
   }
 
   // 5+ contactos en otras etapas → Pattern interrupt
@@ -206,7 +213,7 @@ Con eso les armo cotización en 24h 📋`;
 // Usa contactCount como índice para no repetir
 // Cada ángulo usa un framework psicológico distinto
 // ═══════════════════════════════════════════════════════
-function getSeguimiento3Pitch(name: string, type: string, contacts: number): string {
+function getSeguimiento3Pitch(name: string, type: string, contacts: number, alreadySent?: Set<string>): string {
   // Detectar industria para personalizar
   let sector = 'negocio';
   if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) sector = 'hotel';
@@ -280,7 +287,12 @@ Tengo capacidad libre este mes y puedo hacerles tarifa especial para *${name}*.
 Cualquier respuesta me sirve, gracias por su tiempo!`,
   ];
 
-  // Rotate based on contact count (subtract base contacts before seg3)
+  // Nunca repetir: primera variante que este lead no haya recibido. Si ya las recibió todas, '' = no escribir más.
+  if (alreadySent) {
+    const next = pitches.find((p) => !alreadySent.has(normalizePitch(p)));
+    return next ?? '';
+  }
+  // Sin historial (vista previa en el modal): rotación por conteo.
   const index = Math.max(0, contacts - 4) % pitches.length;
   return pitches[index];
 }

@@ -213,7 +213,7 @@ Con eso les armo cotización en 24h 📋`;
 // Usa contactCount como índice para no repetir
 // Cada ángulo usa un framework psicológico distinto
 // ═══════════════════════════════════════════════════════
-function getSeguimiento3Pitch(name: string, type: string, contacts: number, alreadySent?: Set<string>): string {
+function legacySeguimiento3Pitches(name: string, type: string): string[] {
   // Detectar industria para personalizar
   let sector = 'negocio';
   if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) sector = 'hotel';
@@ -287,12 +287,79 @@ Tengo capacidad libre este mes y puedo hacerles tarifa especial para *${name}*.
 Cualquier respuesta me sirve, gracias por su tiempo!`,
   ];
 
-  // Nunca repetir: primera variante que este lead no haya recibido. Si ya las recibió todas, '' = no escribir más.
+  return pitches;
+}
+
+// Variantes ANTERIORES (se siguen contando como "ya recibidas" para no reenviar 5 rondas más a quien ya las tuvo).
+const LEGACY_SECTORS = ['negocio', 'hotel', 'gym', 'spa', 'clínica', 'restaurante'];
+function legacySeguimiento3Set(): Set<string> {
+  const set = new Set<string>();
+  for (const sector of LEGACY_SECTORS) {
+    legacySeguimiento3Pitches('X', sector === 'negocio' ? 'negocio' : sector === 'hotel' ? 'hotel'
+      : sector === 'gym' ? 'gym' : sector === 'spa' ? 'spa' : sector === 'clínica' ? 'clinic' : 'restaurante')
+      .forEach((p) => set.add(normalizePitch(p)));
+  }
+  return set;
+}
+
+// SEGUIMIENTO 3 — 5 mensajes que empujan a un paso concreto (recogida gratis, volumen, propuesta/llamada),
+// sin cifras que no podamos respaldar y sin precio en frío.
+function getSeguimiento3Pitch(name: string, type: string, contacts: number, alreadySent?: Set<string>): string {
+  let items = 'ropa de trabajo y textiles';
+  if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) items = 'sábanas y toallas';
+  else if (type.includes('gym') || type.includes('gimnasio') || type.includes('fitness') || type.includes('club') || type.includes('deport')) items = 'toallas';
+  else if (type.includes('spa') || type.includes('masaje') || type.includes('wellness') || type.includes('sauna')) items = 'toallas y batas';
+  else if (type.includes('clinic') || type.includes('hospital') || type.includes('medic') || type.includes('odonto') || type.includes('dental')) items = 'uniformes y sábanas';
+  else if (type.includes('restaurante') || type.includes('comida') || type.includes('cevich') || type.includes('cocina')) items = 'manteles y uniformes';
+
+  const pitches = [
+    // 1. Prueba gratis — baja el riesgo a cero
+    `Hola! Alejandro de Laundryheap 👋
+
+Les recogemos ${items} de *${name}* sin costo para que prueben el servicio, sin compromiso: lavamos, entregamos y ustedes comparan.
+
+¿Les coordino la recogida esta semana?`,
+
+    // 2. Volumen — pregunta fácil que habilita la propuesta
+    `Hola! Alejandro de Laundryheap
+
+Para armarles un número a la medida de *${name}*: ¿cuánto lavan por semana, más o menos? (kilos o cantidad de prendas)
+
+Con eso les paso propuesta, y si quieren hacemos primero una recogida de prueba gratis.`,
+
+    // 3. Credibilidad + comodidad
+    `Hola! Alejandro de Laundryheap 🤝
+
+Laundryheap lava para empresas en 16 países y en Lima tenemos +5 plantas industriales. Para *${name}* recogemos y entregamos sin que tengan que mover nada.
+
+¿Les muestro en 5 minutos cómo funcionaría?`,
+
+    // 4. Elegir canal — quita fricción
+    `Hola! Alejandro de Laundryheap
+
+¿Cómo les queda más cómodo ver la propuesta para *${name}*?
+
+1) Por aquí mismo
+2) Llamada de 5 min
+3) Mejor en otro momento
+
+Con responder el número me alcanza 👍`,
+
+    // 5. Cierre respetuoso con puerta abierta
+    `Hola! Alejandro de Laundryheap 🤝
+
+Último mensaje por ahora sobre la lavandería de *${name}*. Si en algún momento quieren probar con una recogida gratis, me escriben aquí y lo coordino.
+
+¡Éxitos!`,
+  ];
+
   if (alreadySent) {
-    const next = pitches.find((p) => !alreadySent.has(normalizePitch(p)));
-    return next ?? '';
+    // Tope de 5 mensajes en total por lead (viejos + nuevos): al llegar, '' = no escribir más.
+    const legacy = legacySeguimiento3Set();
+    const received = [...alreadySent].filter((t) => legacy.has(t) || pitches.some((p) => normalizePitch(p) === t)).length;
+    if (received >= 5) return '';
+    return pitches.find((p) => !alreadySent.has(normalizePitch(p))) ?? '';
   }
   // Sin historial (vista previa en el modal): rotación por conteo.
-  const index = Math.max(0, contacts - 4) % pitches.length;
-  return pitches[index];
+  return pitches[Math.max(0, contacts - 4) % pitches.length];
 }

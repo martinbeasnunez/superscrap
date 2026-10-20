@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { fetchAll } from '@/lib/hunt';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { postSlackText } from '@/lib/slack';
-import { getNumberQuality, isQualityDegraded } from '@/lib/kapso';
+import { getNumberQuality, getTemplateStatuses, isQualityDegraded } from '@/lib/kapso';
 
 // Reporte diario de salud del pipeline B2B → Slack. Lo dispara el cron de Vercel (vercel.json)
 // al cierre del día hábil, así no depende de ninguna computadora. Solo lee y avisa.
@@ -57,19 +57,25 @@ export async function GET(request: NextRequest) {
   }
 
   const quality = await getNumberQuality();
+  const tpl = await getTemplateStatuses('orbit_s3_');
+  const tplList = Object.entries(tpl);
+  const tplApproved = tplList.filter(([, st]) => st === 'APPROVED').length;
+  const tplBad = tplList.filter(([, st]) => st === 'REJECTED' || st === 'PAUSED' || st === 'DISABLED');
   const problems: string[] = [];
   if (quality && isQualityDegraded(quality.rating)) problems.push(`🛑 *Calidad del número en ${quality.rating}*: el bot está pausado hasta que vuelva a verde.`);
   if (!quality) problems.push('⚠️ No pude leer la calidad del número (Kapso no respondió).');
   if (weekday && botSends.length === 0) problems.push('⚠️ *El bot no envió ningún mensaje hoy.* Revisa cron-job.org (job pausado o sin saldo).');
   if (leaks.length) problems.push(`⚠️ ${leaks.length} lead(s) que ya respondieron recibieron mensaje del bot hoy.`);
 
+  if (tplBad.length) problems.push(`⚠️ Plantillas con problema en Meta: ${tplBad.map(([n, st]) => `${n} (${st})`).join(', ')}. Hay que reenviarlas con otro texto.`);
   const lines = [
     `📊 *ORBIT — cierre del día* ${problems.length ? '🔴' : '🟢'}`,
     `• Mensajes del bot: *${botSends.length}* · Cards movidas: *${moved}*`,
     `• Respuestas reales de clientes: *${humanReplies.length}* · Respondió el cerebro solo: *${brainReplies}* · Leads calificados: *${qualified}*`,
     `• Calidad del número (Meta): *${quality?.rating ?? 'sin dato'}*${quality?.limit ? ` · límite ${quality.limit}` : ''}`,
+    tplList.length ? `• Plantillas seguimiento_3: *${tplApproved}/${tplList.length} aprobadas*${tplApproved === tplList.length ? ' ✅ (ya se envían los 5 textos nuevos)' : ' · mientras tanto el bot no envía en seguimiento_3 fuera de ventana'}` : null,
     ...problems,
-  ];
+  ].filter(Boolean);
 
   const sent = weekday || problems.length ? await postSlackText(lines.join('\n')) : false;
   return NextResponse.json({ ok: true, weekday, botSends: botSends.length, moved, brainReplies, qualified, humanReplies: humanReplies.length, leaks: leaks.length, slack: sent, quality: quality?.rating ?? null });

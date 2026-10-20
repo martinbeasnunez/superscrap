@@ -214,3 +214,16 @@ export async function getNumberQuality(): Promise<{ rating: string; limit: strin
 export function isQualityDegraded(rating: string | undefined | null): boolean {
   return rating === 'YELLOW' || rating === 'RED';
 }
+
+// Estado en Meta de las plantillas pedidas (APPROVED / PENDING / REJECTED...). Vacío si no se pudo leer.
+export async function getTemplateStatuses(prefix: string): Promise<Record<string, string>> {
+  try {
+    const res = await fetch(`https://api.kapso.ai/meta/whatsapp/v21.0/${WABA_ID}/message_templates?limit=100&fields=name,status`, {
+      headers: { 'X-API-Key': process.env.KAPSO_API_KEY! },
+    });
+    const json = await res.json();
+    return Object.fromEntries((json?.data || []).filter((t: { name: string }) => t.name.startsWith(prefix)).map((t: { name: string; status: string }) => [t.name, t.status]));
+  } catch {
+    return {};
+  }
+}

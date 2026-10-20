@@ -22,7 +22,7 @@ function isTrivialMessage(text: string): boolean {
     .replace(/\s+/g, ' ')
     .trim();
   if (!t) return true; // solo emojis/símbolos
-  return /^(hola|buen(o|a)?s? (dias?|tardes?|noches?)|gracias( a (usted|ustedes))?|muchas gracias|ok|oki|okey|listo|perfecto|de nada|igualmente|saludos)( [a-záéíóúñ]+)?$/.test(t);
+  return /^(hola|buen(o|a)?s? (d[ií]as?|tardes?|noches?)|gracias( a (usted|ustedes))?|muchas gracias|ok|oki|okey|listo|perfecto|de nada|igualmente|saludos)( [a-záéíóúñ]+)?$/.test(t);
 }
 
 // Kapso webhook for incoming WhatsApp messages

@@ -75,18 +75,13 @@ export async function notifyReplyOnSlack(alert: ReplyAlert): Promise<boolean> {
     `> ${esc(alert.message.slice(0, 500)).replace(/\n/g, '\n> ')}`,
     facts,
     alert.autoReplyIntent ? `🤖 El bot ya contestó solo (${esc(alert.autoReplyIntent)})` : null,
-    alert.draft
-      ? alert.draftSent
-        ? `🤖 *El cerebro ya respondió solo:*\n> ${esc(alert.draft.slice(0, 600)).replace(/\n/g, '\n> ')}`
-        : `✍️ *Borrador sugerido* (no enviado${alert.draftAction === 'handoff' ? ' · ⚡ atender tú: hay señal de compra' : alert.draftAction === 'close' ? ' · cierre amable' : ''}):\n> ${esc(alert.draft.slice(0, 600)).replace(/\n/g, '\n> ')}`
+    // Solo se muestra lo que el cerebro YA envió; el borrador sin enviar no va a Slack (vive en ORBIT).
+    alert.draft && alert.draftSent
+      ? `🤖 *El cerebro ya respondió solo:*\n> ${esc(alert.draft.slice(0, 600)).replace(/\n/g, '\n> ')}`
       : null,
-    [
-      alert.conversationId
-        ? `<https://app.kapso.ai/projects/${KAPSO_PROJECT_ID}/inbox?conversation_id=${encodeURIComponent(alert.conversationId)}|Ver conversación>`
-        : null,
-      alert.phone ? `<${waLink(alert.phone)}|Responder por WhatsApp>` : null,
-      `<${ORBIT_URL}/seguimiento?lead=${encodeURIComponent(alert.businessId)}|Abrir en ORBIT>`,
-    ].filter(Boolean).join('  ·  '),
+    alert.conversationId
+      ? `<https://app.kapso.ai/projects/${KAPSO_PROJECT_ID}/inbox?conversation_id=${encodeURIComponent(alert.conversationId)}|Ver conversación>`
+      : null,
   ].filter(Boolean);
 
   try {

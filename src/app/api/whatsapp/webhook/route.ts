@@ -22,6 +22,7 @@ function isTrivialMessage(text: string): boolean {
     .replace(/\s+/g, ' ')
     .trim();
   if (!t) return true; // solo emojis/símbolos
+  if (/^reacted with/i.test(text.trim())) return true; // reacción (👍) a un mensaje
   return /^(hola|buen(o|a)?s? (d[ií]as?|tardes?|noches?)|gracias( a (usted|ustedes))?|muchas gracias|ok|oki|okey|listo|perfecto|de nada|igualmente|saludos)( [a-záéíóúñ]+)?$/.test(t);
 }
 

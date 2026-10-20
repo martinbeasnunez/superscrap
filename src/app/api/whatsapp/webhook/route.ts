@@ -149,12 +149,41 @@ export async function POST(request: NextRequest) {
       // Borrador del cerebro B2B (solo redacta; un humano lo aprueba y envía). Nunca rompe el aviso.
       let draft: string | null = null;
       let draftAction: string | null = null;
+      let qualified = false;
       if (brainMode() === 'draft') {
         try {
           const out = await draftReplyForBusiness(businessId);
           if (out && out.action !== 'skip' && out.reply) {
             draft = out.reply;
             draftAction = out.action;
+          }
+          // Lead calificado: señal de compra clara → la card pasa a "interesado" (solo desde etapas
+          // tempranas, nunca hacia atrás) y se apaga el bot. El cerebro NO envía nada.
+          const BUY_INTENTS = ['pide_propuesta', 'interesado', 'pide_precio'];
+          if (out && out.action === 'handoff' && BUY_INTENTS.includes(out.intent)) {
+            const { data: cur } = await supabase
+              .from('businesses')
+              .select('sales_stage')
+              .eq('id', businessId)
+              .maybeSingle();
+            const early = ['nuevo', 'contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3'];
+            const stage = cur?.sales_stage || 'nuevo';
+            const datos = Object.entries(out.extracted).map(([k, v]) => `${k}: ${v}`).join(' · ');
+            if (early.includes(stage)) {
+              await supabase.from('businesses').update({ sales_stage: 'interesado', auto_followup_enabled: false }).eq('id', businessId);
+              await supabase.from('contact_history').insert({
+                business_id: businessId,
+                action_type: 'stage_change',
+                notes: `📋 ${stage} → interesado (cerebro B2B): señal de compra (${out.intent}). Bot apagado, atiende un humano.${datos ? ` Datos: ${datos}` : ''}`,
+              });
+              qualified = true;
+            } else if (datos) {
+              await supabase.from('contact_history').insert({
+                business_id: businessId,
+                action_type: 'note',
+                notes: `[cerebro B2B] datos del cliente: ${datos}`,
+              });
+            }
           }
         } catch (e) {
           console.error('B2B brain draft error:', e);
@@ -175,6 +204,7 @@ export async function POST(request: NextRequest) {
         autoReplyIntent,
         draft,
         draftAction,
+        qualified,
       });
     }
 

@@ -23,6 +23,8 @@ export interface ReplyAlert {
   // Borrador del cerebro B2B (no enviado) y qué recomienda hacer.
   draft?: string | null;
   draftAction?: string | null;
+  // Señal de compra: la card pasó sola a "interesado" y el bot quedó apagado.
+  qualified?: boolean;
 }
 
 // A quién etiquetar en cada aviso: IDs de miembro de Slack. Slack solo notifica con el ID
@@ -65,7 +67,9 @@ export async function notifyReplyOnSlack(alert: ReplyAlert): Promise<boolean> {
   const who = alert.contactName ? ` (${esc(alert.contactName)})` : '';
   const tags = mentions();
   const lines = [
-    `💬 *${esc(alert.businessName)}*${who} respondió${tags ? ` · ${tags}` : ''}`,
+    alert.qualified
+      ? `🔥 *LEAD CALIFICADO — ${esc(alert.businessName)}*${who}${tags ? ` · ${tags}` : ''}\n_Pasó a *interesado* y el bot se apagó. Atiéndelo tú._`
+      : `💬 *${esc(alert.businessName)}*${who} respondió${tags ? ` · ${tags}` : ''}`,
     `> ${esc(alert.message.slice(0, 500)).replace(/\n/g, '\n> ')}`,
     facts,
     alert.autoReplyIntent ? `🤖 El bot ya contestó solo (${esc(alert.autoReplyIntent)})` : null,

@@ -1,16 +1,27 @@
 import { supabase } from '@/lib/supabase';
-import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/lib/kapso';
-import { getWhatsAppPitchServer } from '@/lib/whatsapp-pitch';
+import { sendWhatsAppMessage, sendWhatsAppTemplate, sendWhatsAppNamedTemplate, getApprovedTemplateNames } from '@/lib/kapso';
+import { getWhatsAppPitchServer, seg3TemplateFor } from '@/lib/whatsapp-pitch';
 
 // Envío del bot por el número ORBIT (Kapso). Lo comparten el cron de auto-followup y la
 // aprobación de la caza del día (que manda el primer WhatsApp al instante, sin esperar
 // la próxima pasada del cron).
 
 // Primero texto libre; fuera de la ventana de 24h WhatsApp lo rechaza y va la plantilla.
-export async function sendWithFallback(phone: string, pitch: string, bizName: string, stage: string, address?: string | null) {
+export async function sendWithFallback(phone: string, pitch: string, bizName: string, stage: string, address?: string | null, businessType?: string | null) {
   const textResult = await sendWhatsAppMessage(phone, pitch);
   if (textResult.success) return { ...textResult, method: 'text' as const };
   if (textResult.error?.includes('24-hour') || textResult.error?.includes('Re-engagement')) {
+    // seguimiento_3: la plantilla equivalente a ESA variante (si Meta ya la aprobó). Si aún no, no se
+    // envía nada: antes caía siempre en la misma plantilla fija y el lead recibía el mismo texto.
+    const variant = stage === 'seguimiento_3' ? seg3TemplateFor(pitch, bizName, businessType ?? null) : null;
+    if (variant) {
+      const approved = await getApprovedTemplateNames();
+      if (!approved.has(variant.template)) {
+        return { success: false, error: `template_pending:${variant.template}`, method: 'template' as const };
+      }
+      const r = await sendWhatsAppNamedTemplate(phone, variant.template, variant.params);
+      return { ...r, method: 'template' as const };
+    }
     const templateResult = await sendWhatsAppTemplate(phone, bizName, stage, address);
     return { ...templateResult, method: 'template' as const };
   }

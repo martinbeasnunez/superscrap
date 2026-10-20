@@ -212,7 +212,7 @@ export async function GET() {
             }
             continue;
           }
-          const result = await sendWithFallback(biz.phone, pitch, biz.name, stage, biz.address);
+          const result = await sendWithFallback(biz.phone, pitch, biz.name, stage, biz.address, businessType);
           if (result.success) {
             await supabase.from('contact_history').insert({
               business_id: biz.id,
@@ -235,7 +235,7 @@ export async function GET() {
         // AUTO-AVANCE: solo para leads sin dueño — mueve el stage + template del nuevo stage.
         const pitch = getWhatsAppPitchServer(biz.name, businessType, nextStage, contactCount, sentTexts[biz.id] ?? new Set());
         if (!pitch) { skipped++; continue; }
-        const result = await sendWithFallback(biz.phone, pitch, biz.name, nextStage, biz.address);
+        const result = await sendWithFallback(biz.phone, pitch, biz.name, nextStage, biz.address, businessType);
         if (result.success) {
           await supabase.from('contact_history').insert({
             business_id: biz.id,
@@ -290,7 +290,7 @@ export async function GET() {
       // sales_stage ni inserta 'stage_change': solo registra el envío como auto_whatsapp.
       const pitch = getWhatsAppPitchServer(biz.name, businessType, cadenceStage, contactCount, sentTexts[biz.id] ?? new Set());
       if (!pitch) { skipped++; continue; } // ya recibió todas las variantes: no repetir
-      const result = await sendWithFallback(biz.phone, pitch, biz.name, cadenceStage, biz.address);
+      const result = await sendWithFallback(biz.phone, pitch, biz.name, cadenceStage, biz.address, businessType);
 
       if (result.success) {
         await supabase.from('contact_history').insert({

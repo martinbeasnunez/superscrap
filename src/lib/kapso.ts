@@ -147,3 +147,49 @@ export async function sendWhatsAppTemplate(
     };
   }
 }
+
+// Plantillas aprobadas por Meta (cache 5 min). Sin lista fiable devuelve vacío: mejor no enviar que repetir.
+const WABA_ID = process.env.KAPSO_WABA_ID || '866732406416377';
+let approvedCache: { at: number; names: Set<string> } | null = null;
+export async function getApprovedTemplateNames(): Promise<Set<string>> {
+  if (approvedCache && Date.now() - approvedCache.at < 5 * 60_000) return approvedCache.names;
+  try {
+    const res = await fetch(`https://api.kapso.ai/meta/whatsapp/v21.0/${WABA_ID}/message_templates?limit=100&fields=name,status`, {
+      headers: { 'X-API-Key': process.env.KAPSO_API_KEY! },
+    });
+    const json = await res.json();
+    const names = new Set<string>((json?.data || []).filter((t: { status: string }) => t.status === 'APPROVED').map((t: { name: string }) => t.name));
+    approvedCache = { at: Date.now(), names };
+    return names;
+  } catch {
+    return new Set();
+  }
+}
+
+// Envío de una plantilla por nombre con parámetros de texto (funciona fuera de la ventana de 24h).
+export async function sendWhatsAppNamedTemplate(to: string, templateName: string, params: string[]): Promise<KapsoSendResult> {
+  try {
+    const phoneNumberId = process.env.KAPSO_PHONE_NUMBER_ID;
+    if (!phoneNumberId) return { success: false, error: 'KAPSO_PHONE_NUMBER_ID is not set' };
+    const sanitize = (p: string) => p.replace(/[""''🧪📋🏨💪✨🏥🍽️👋📞📊🤝]/g, '').trim().substring(0, 100);
+    const res = await fetch(`https://api.kapso.ai/meta/whatsapp/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: { 'X-API-Key': process.env.KAPSO_API_KEY!, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: normalizePhoneForKapso(to),
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: 'es' },
+          components: [{ type: 'body', parameters: params.map((text) => ({ type: 'text', text: sanitize(text) })) }],
+        },
+      }),
+    });
+    const result = await res.json();
+    if (result?.error) return { success: false, error: result.error.message || JSON.stringify(result.error) };
+    return { success: true, messageId: result?.messages?.[0]?.id || 'sent' };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}

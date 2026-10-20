@@ -304,7 +304,8 @@ function legacySeguimiento3Set(): Set<string> {
 
 // SEGUIMIENTO 3 — 5 mensajes que empujan a un paso concreto (recogida gratis, volumen, propuesta/llamada),
 // sin cifras que no podamos respaldar y sin precio en frío.
-function getSeguimiento3Pitch(name: string, type: string, contacts: number, alreadySent?: Set<string>): string {
+// Textos y artículo del rubro de las 5 variantes de seguimiento_3.
+export function seguimiento3Variants(name: string, type: string): { pitches: string[]; items: string } {
   let items = 'ropa de trabajo y textiles';
   if (type.includes('hotel') || type.includes('hostal') || type.includes('reserv')) items = 'sábanas y toallas';
   else if (type.includes('gym') || type.includes('gimnasio') || type.includes('fitness') || type.includes('club') || type.includes('deport')) items = 'toallas';
@@ -353,6 +354,22 @@ Con responder el número me alcanza 👍`,
 ¡Éxitos!`,
   ];
 
+  return { pitches, items };
+}
+
+// Plantilla de Meta (aprobada) equivalente a cada variante: texto libre no puede salir fuera de las 24h.
+export const SEG3_TEMPLATES = ['orbit_s3_v1', 'orbit_s3_v2', 'orbit_s3_v3', 'orbit_s3_v4', 'orbit_s3_v5'] as const;
+
+// Si `pitch` es una variante de seguimiento_3, devuelve su plantilla y parámetros; si no, null.
+export function seg3TemplateFor(pitch: string, name: string, type: string | null): { template: string; params: string[] } | null {
+  const { pitches, items } = seguimiento3Variants(name, (type || '').toLowerCase());
+  const i = pitches.findIndex((p) => normalizePitch(p) === normalizePitch(pitch));
+  if (i < 0) return null;
+  return { template: SEG3_TEMPLATES[i], params: i === 0 ? [name, items] : [name] };
+}
+
+function getSeguimiento3Pitch(name: string, type: string, contacts: number, alreadySent?: Set<string>): string {
+  const { pitches } = seguimiento3Variants(name, type);
   if (alreadySent) {
     // Tope de 5 mensajes en total por lead (viejos + nuevos): al llegar, '' = no escribir más.
     const legacy = legacySeguimiento3Set();

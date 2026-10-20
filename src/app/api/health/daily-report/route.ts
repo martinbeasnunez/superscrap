@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { fetchAll } from '@/lib/hunt';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { postSlackText } from '@/lib/slack';
+import { getNumberQuality, isQualityDegraded } from '@/lib/kapso';
 
 // Reporte diario de salud del pipeline B2B → Slack. Lo dispara el cron de Vercel (vercel.json)
 // al cierre del día hábil, así no depende de ninguna computadora. Solo lee y avisa.
@@ -55,7 +56,10 @@ export async function GET(request: NextRequest) {
     leaks = sentIds.filter((id) => humanSet.has(id));
   }
 
+  const quality = await getNumberQuality();
   const problems: string[] = [];
+  if (quality && isQualityDegraded(quality.rating)) problems.push(`🛑 *Calidad del número en ${quality.rating}*: el bot está pausado hasta que vuelva a verde.`);
+  if (!quality) problems.push('⚠️ No pude leer la calidad del número (Kapso no respondió).');
   if (weekday && botSends.length === 0) problems.push('⚠️ *El bot no envió ningún mensaje hoy.* Revisa cron-job.org (job pausado o sin saldo).');
   if (leaks.length) problems.push(`⚠️ ${leaks.length} lead(s) que ya respondieron recibieron mensaje del bot hoy.`);
 
@@ -63,9 +67,10 @@ export async function GET(request: NextRequest) {
     `📊 *ORBIT — cierre del día* ${problems.length ? '🔴' : '🟢'}`,
     `• Mensajes del bot: *${botSends.length}* · Cards movidas: *${moved}*`,
     `• Respuestas reales de clientes: *${humanReplies.length}* · Respondió el cerebro solo: *${brainReplies}* · Leads calificados: *${qualified}*`,
+    `• Calidad del número (Meta): *${quality?.rating ?? 'sin dato'}*${quality?.limit ? ` · límite ${quality.limit}` : ''}`,
     ...problems,
   ];
 
   const sent = weekday || problems.length ? await postSlackText(lines.join('\n')) : false;
-  return NextResponse.json({ ok: true, weekday, botSends: botSends.length, moved, brainReplies, qualified, humanReplies: humanReplies.length, leaks: leaks.length, slack: sent });
+  return NextResponse.json({ ok: true, weekday, botSends: botSends.length, moved, brainReplies, qualified, humanReplies: humanReplies.length, leaks: leaks.length, slack: sent, quality: quality?.rating ?? null });
 }

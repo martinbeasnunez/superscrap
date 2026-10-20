@@ -4,6 +4,8 @@ import { getWhatsAppPitchServer, normalizePitch } from '@/lib/whatsapp-pitch';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { sendWithFallback } from '@/lib/bot-touch';
 import { fetchAll } from '@/lib/hunt';
+import { getNumberQuality, isQualityDegraded } from '@/lib/kapso';
+import { postSlackText } from '@/lib/slack';
 
 // Días a esperar antes del siguiente toque. Sirve tanto para el stage humano
 // (leads SIN dueño) como para el peldaño del bot (leads CON dueño).
@@ -51,6 +53,14 @@ export async function GET() {
 
   try {
     const now = new Date();
+
+    // Freno de seguridad: si Meta baja la calidad del número (amarillo/rojo = bloqueos o reportes), el bot
+    // se detiene solo y avisa. Seguir escribiendo empeoraría el castigo. BOT_IGNORE_QUALITY=1 lo desactiva.
+    const quality = await getNumberQuality();
+    if (quality && isQualityDegraded(quality.rating) && process.env.BOT_IGNORE_QUALITY !== '1') {
+      await postSlackText(`🛑 *ORBIT: bot pausado.* Meta marcó la calidad del número en *${quality.rating}* (posibles bloqueos/reportes). No se envió ningún mensaje de seguimiento. Revisa el número en WhatsApp Manager; el bot sigue pausado hasta que vuelva a verde.`);
+      return NextResponse.json({ sent: 0, skipped: 0, advanced: 0, lost: 0, total: 0, paused: true, quality: quality.rating });
+    }
 
     // Skip weekends in Lima time — B2B leads ignore WhatsApp on Sat/Sun, sending
     // there hurts open rate without lifting replies.

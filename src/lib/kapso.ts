@@ -193,3 +193,24 @@ export async function sendWhatsAppNamedTemplate(to: string, templateName: string
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
+
+// Calidad del número de ORBIT según Meta: GREEN / YELLOW / RED / UNKNOWN (o null si no se pudo leer).
+export async function getNumberQuality(): Promise<{ rating: string; limit: string | null } | null> {
+  try {
+    const id = process.env.KAPSO_PHONE_NUMBER_ID;
+    const res = await fetch('https://api.kapso.ai/platform/v1/whatsapp/phone_numbers', {
+      headers: { 'X-API-Key': process.env.KAPSO_API_KEY! },
+    });
+    const json = await res.json();
+    const n = (json?.data || []).find((x: { phone_number_id?: string; id?: string }) => x.phone_number_id === id || x.id === id);
+    if (!n) return null;
+    return { rating: String(n.quality_rating || 'UNKNOWN').toUpperCase(), limit: n.whatsapp_business_manager_messaging_limit || null };
+  } catch {
+    return null;
+  }
+}
+
+// El bot se pausa si Meta marca la calidad en amarillo o rojo (señal de bloqueos/reportes).
+export function isQualityDegraded(rating: string | undefined | null): boolean {
+  return rating === 'YELLOW' || rating === 'RED';
+}

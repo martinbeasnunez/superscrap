@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
           // Lead calificado: señal de compra clara → la card pasa a "interesado" (solo desde etapas
           // tempranas, nunca hacia atrás) y se apaga el bot. El cerebro NO envía nada.
           const BUY_INTENTS = ['pide_propuesta', 'interesado', 'pide_precio'];
-          if (out && out.action === 'handoff' && BUY_INTENTS.includes(out.intent)) {
+          if (out && (out.action === 'handoff' || out.action === 'reply') && BUY_INTENTS.includes(out.intent)) {
             const { data: cur } = await supabase
               .from('businesses')
               .select('sales_stage')

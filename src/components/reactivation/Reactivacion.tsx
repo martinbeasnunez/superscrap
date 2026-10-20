@@ -188,7 +188,7 @@ export default function Reactivacion() {
     // 2) New / not yet contacted (yours)
     const newUntouched = clients.filter((c) => !c.is_control && c.list_type === 'reactivacion' && c.owner === meOwner && !c.touch1_date);
     if (newUntouched.length)
-      steps.push({ icon: meOwner === 'Fernanda' ? '📞' : '💬', title: `${meOwner === 'Fernanda' ? 'Llama' : 'Mensaje'} a los nuevos: ${newUntouched.length}`, sub: 'sin tocar — empieza de arriba', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('asc'); } });
+      steps.push({ icon: meOwner === 'Fernanda' ? '📞' : '💬', title: meOwner === 'Fernanda' ? `Llama a tus cuentas grandes: ${newUntouched.length}` : `Mensaje a los nuevos: ${newUntouched.length}`, sub: 'sin tocar — empieza de arriba', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('asc'); } });
     // 3) Joaquín: the "bought once" list, its turn this month
     if (meOwner === 'Joaquín' && firstBuyPending > 0)
       steps.push({ icon: '🌱', title: `"Compraron 1 vez": ${firstBuyPending}`, sub: 'su turno este mes — copia y manda', action: () => setListType('primera_recompra') });

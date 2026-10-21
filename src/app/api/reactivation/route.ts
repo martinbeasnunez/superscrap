@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { deriveStatus, normPhone, type ReactChannel } from '@/lib/reactivation';
+import { deriveStatus, normPhone, REACT_OWNERS, type ReactChannel } from '@/lib/reactivation';
 
 // GET /api/reactivation?list_type=reactivacion
 // Devuelve la lista completa (o filtrada por tipo de lista).
@@ -83,6 +83,11 @@ export async function PATCH(request: Request) {
       patch.phone_norm = normPhone(p);
     }
     if ('email' in body) patch.email = body.email?.trim() || null;
+    // Reasignar dueño entre vendedores (p.ej. Fer pasa una cuenta a Joaquín).
+    if ('owner' in body) {
+      const o = body.owner?.trim() || null;
+      patch.owner = o && (REACT_OWNERS as readonly string[]).includes(o) ? o : null;
+    }
     // "Reconectar el [fecha]": guarda cuándo volver a contactar ("próximo mes")
     if ('recontact_date' in body) patch.recontact_date = body.recontact_date || null;
     // Desenlace de la cuenta: vivo / octubre / muerto (o null para desmarcar).

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { REACT_STATUS_LABEL, type ReactClient, type ReactChannel } from '@/lib/reactivation';
+import { REACT_STATUS_LABEL, REACT_OWNERS, type ReactClient, type ReactChannel } from '@/lib/reactivation';
 import { BRAND_DEFAULT } from '@/lib/reactivation-messages';
 import { waveFor, targetTouch1, targetTouch2, overdue, fmtShort, todayISO, campaignActive } from '@/lib/reactivation-campaign';
 import MessagesPanel from './MessagesPanel';
@@ -68,6 +68,29 @@ export default function DetailDrawer({
     const d = new Date(); d.setDate(d.getDate() + n);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
+  // Reasignar dueño: Fer pasa una cuenta a Joaquín (o viceversa) cuando el otro
+  // tiene mejor relación con el contacto. Cambia solo el campo `owner`.
+  const [reassigning, setReassigning] = useState(false);
+  const setOwner = async (owner: string) => {
+    if (owner === (client.owner ?? '')) return;
+    setReassigning(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/reactivation', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id, owner }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'No se pudo reasignar.'); return; }
+      onUpdated(data.client);
+    } catch {
+      setError('Error de red.');
+    } finally {
+      setReassigning(false);
+    }
+  };
+
   // Mark outcome: alive / october / dead (or null to clear).
   const [outcoming, setOutcoming] = useState(false);
   const setOutcome = async (outcome: 'vivo' | 'octubre' | 'muerto' | null) => {
@@ -212,8 +235,25 @@ export default function DetailDrawer({
             <span>{client.days_inactive ?? '—'} días sin pedir</span>
             <span>·</span>
             <span>{client.total_orders ?? '—'} pedidos</span>
-            <span>·</span>
-            <span>{client.owner || 'no owner'}</span>
+          </div>
+          {/* Dueño reasignable: un clic lo pasa al otro vendedor. */}
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <span className="text-xs text-gray-500">Lo trabaja:</span>
+            {REACT_OWNERS.map((o) => {
+              const on = (client.owner ?? '') === o;
+              return (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => setOwner(o)}
+                  disabled={reassigning}
+                  className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50 ${on ? 'bg-[#0890F1] text-white border-transparent' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100'}`}
+                >
+                  {o === 'Fernanda' ? '📞 Fernanda' : '💬 Joaquín'}
+                </button>
+              );
+            })}
+            {reassigning && <span className="text-xs text-gray-400">guardando…</span>}
           </div>
           {/* Wave + target date (deadline right on the card) — only while the campaign is live */}
           {(() => {

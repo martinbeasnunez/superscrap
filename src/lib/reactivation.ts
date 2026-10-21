@@ -252,6 +252,9 @@ export const OUTCOME_META: Record<ReactOutcome, { label: string; short: string; 
   muerto: { label: '⚫ Muerto · no vuelve', short: 'Muerto', dot: '⚫', chip: 'bg-gray-100 text-gray-500 border border-gray-200' },
 };
 
+// Vendedores a los que se puede reasignar una cuenta (null = sin dueño).
+export const REACT_OWNERS = ['Fernanda', 'Joaquín'] as const;
+
 export const REACT_STATUS_ORDER: ReactStatus[] = [
   'pendiente',
   'toque1',

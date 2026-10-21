@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
   const botSends = rows.filter((r) => r.action_type === 'auto_whatsapp');
   const moved = rows.filter((r) => r.action_type === 'stage_change' && /Auto-avance/.test(r.notes || '')).length;
   const brainReplies = rows.filter((r) => r.action_type === 'auto_whatsapp_reply' && (r.notes || '').startsWith('[cerebro B2B')).length;
+  const brainNames = [...new Set(rows.filter((r) => r.action_type === 'auto_whatsapp_reply' && (r.notes || '').startsWith('[cerebro B2B')).map((r) => r.business_id))];
   const qualified = rows.filter((r) => r.action_type === 'stage_change' && /\(cerebro B2B\)/.test(r.notes || '')).length;
   const humanReplies = rows.filter((r) => r.action_type === 'whatsapp_reply' && !isLikelyBotReply(r.notes) && /[a-záéíóúñ]/i.test(r.notes || ''));
 

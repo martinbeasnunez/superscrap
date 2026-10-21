@@ -203,9 +203,11 @@ export async function POST(request: NextRequest) {
         let draftAction: string | null = null;
         let qualified = false;
         let draftSent = false;
+      let brainSaidBot = false;
         if (brainMode() !== 'off') {
           try {
             const out = await draftReplyForBusiness(businessId);
+            if (out && out.action === 'skip' && out.intent === 'bot') brainSaidBot = true;
             if (out && out.action !== 'skip' && out.reply) {
               draft = out.reply;
               draftAction = out.action;
@@ -232,7 +234,7 @@ export async function POST(request: NextRequest) {
             }
             // Lead calificado: señal de compra clara → la card pasa a "interesado" (solo desde etapas
             // tempranas, nunca hacia atrás) y se apaga el bot. El cerebro NO envía nada.
-            const BUY_INTENTS = ['pide_propuesta', 'interesado', 'pide_precio'];
+            const BUY_INTENTS = ['pide_propuesta', 'pide_precio']; // 'interesado' suelto era demasiado laxo (autorespuestas)
             if (out && (out.action === 'handoff' || out.action === 'reply') && BUY_INTENTS.includes(out.intent)) {
               const { data: cur } = await supabase
                 .from('businesses')
@@ -262,7 +264,11 @@ export async function POST(request: NextRequest) {
             console.error('B2B brain draft error:', e);
           }
         }
-        await notifyReplyOnSlack({
+        // Menos ruido en Slack: si el cerebro ya contestó solo una duda simple (sin señal de compra), no se avisa
+      // por mensaje; queda en ORBIT y en el resumen de las 5:30pm. Las autorespuestas del negocio no avisan.
+      if (brainMode() !== 'off' && brainSaidBot) return;
+      if (draftSent && !qualified) return;
+      await notifyReplyOnSlack({
           businessId,
           conversationId: conversation.id ?? null,
           businessName: match.name,

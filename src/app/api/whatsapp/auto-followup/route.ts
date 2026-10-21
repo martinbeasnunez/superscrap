@@ -87,29 +87,48 @@ export async function GET() {
     // We fetch all eligible (typically <500), then sort by potential_score desc in JS and
     // take top 100. PostgREST can't order across the businesses↔service_analyses
     // relation (many-to-many from PG's view), so we sort client-side.
-    const { data: rawBusinesses, error } = await supabase
-      .from('businesses')
-      .select(`
-        id, name, phone, address, business_type, sales_stage, contacted_at,
-        contacted_by, contact_actions, auto_followup_last_sent,
-        searches (business_type),
-        service_analyses (potential_score)
-      `)
-      .eq('auto_followup_enabled', true)
-      .not('phone', 'is', null)
-      // Include NULL sales_stage (treated as 'nuevo' first-contact). Naive
-      // .not('sales_stage','in',...) excludes NULL rows because in SQL
-      // 'NULL NOT IN (...)' evaluates to NULL (not TRUE), so the row drops.
-      .or('sales_stage.is.null,sales_stage.not.in.(cliente,perdido)')
-      .limit(500);
-
-    if (error) {
+    // Se traen TODOS los elegibles (paginado: antes había un tope de 500 que dejaba fuera a los más nuevos) y
+    // se filtra primero a quién LE TOCA hoy; recién después se ordena por potencial y se corta. Antes se cortaba a
+    // los 300 de mayor puntaje y luego se revisaba la cadencia: esos 300 eran casi todos "aún no toca" y los
+    // ~200 leads que sí tocaban (nuevos y contactados, de menor puntaje) jamás se procesaban.
+    let allBusinesses: any[] = [];
+    try {
+      allBusinesses = await fetchAll<any>((from, to) =>
+        supabase
+          .from('businesses')
+          .select(`
+            id, name, phone, address, business_type, sales_stage, contacted_at,
+            contacted_by, contact_actions, auto_followup_last_sent,
+            searches (business_type),
+            service_analyses (potential_score)
+          `)
+          .eq('auto_followup_enabled', true)
+          .not('phone', 'is', null)
+          // Incluye sales_stage NULL (= 'nuevo'): .not('in') excluiría los NULL por lógica SQL.
+          .or('sales_stage.is.null,sales_stage.not.in.(cliente,perdido)')
+          .order('id', { ascending: true })
+          .range(from, to));
+    } catch (error) {
       console.error('Error fetching auto-followup businesses:', error);
       return NextResponse.json({ error: 'DB query error' }, { status: 500 });
     }
 
-    if (!rawBusinesses || rawBusinesses.length === 0) {
-      return NextResponse.json({ sent: 0, skipped: 0, advanced: 0, lost: 0, message: 'No leads need follow-up' });
+    const nowMs = now.getTime();
+    const rawBusinesses = allBusinesses.filter((b) => {
+      const clean = (b.phone || '').replace(/\D/g, '');
+      const mobile = (clean.length === 9 && clean.startsWith('9')) || (clean.startsWith('519') && clean.length >= 11);
+      if (!mobile) return false; // solo celulares sirven en WhatsApp
+      if (b.contacted_at && nowMs - new Date(b.contacted_at).getTime() < 60 * 60 * 1000) return false; // <1h
+      if (!b.contacted_by && b.contacted_at) {
+        // Lead sin dueño: respeta la espera de su etapa (con dueño se evalúa más abajo por escalera de contactos).
+        const wait = getDaysToWait(b.sales_stage || 'nuevo') * 24 * 60 * 60 * 1000;
+        if (nowMs - new Date(b.contacted_at).getTime() < wait) return false;
+      }
+      return true;
+    });
+
+    if (rawBusinesses.length === 0) {
+      return NextResponse.json({ sent: 0, skipped: 0, advanced: 0, lost: 0, total: 0, message: 'No leads due today', eligible: allBusinesses.length });
     }
 
     // Sort by potential_score desc (Orcas/Delfines first, Unknown last)

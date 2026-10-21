@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getWhatsAppPitchServer, normalizePitch } from '@/lib/whatsapp-pitch';
+import { getWhatsAppPitchServer, normalizePitch, SEG3_TEMPLATES } from '@/lib/whatsapp-pitch';
 import { isLikelyBotReply } from '@/lib/reply-classifier';
 import { sendWithFallback } from '@/lib/bot-touch';
 import { fetchAll } from '@/lib/hunt';
-import { getNumberQuality, isQualityDegraded } from '@/lib/kapso';
+import { getNumberQuality, isQualityDegraded, getApprovedTemplateNames } from '@/lib/kapso';
 import { postSlackText } from '@/lib/slack';
 
 // Días a esperar antes del siguiente toque. Sirve tanto para el stage humano
@@ -38,6 +38,9 @@ function getNextStage(stage: string): string | null {
 // el nº de contactos previos (contactCount), NO el sales_stage: así el bot elige
 // template + espera SIN tocar el pipeline (sales_stage sigue siendo 100% humano).
 const LADDER = ['contactado', 'seguimiento_1', 'seguimiento_2', 'seguimiento_3'] as const;
+
+// La pasada recorre hasta 300 leads con 500ms entre envíos: darle margen para no cortarse a mitad.
+export const maxDuration = 300;
 
 // GET /api/whatsapp/auto-followup
 export async function GET() {
@@ -74,6 +77,11 @@ export async function GET() {
         message: `Auto-followup skipped — weekend (${limaDayShort} Lima time)`,
       });
     }
+
+    // Las 5 plantillas de seguimiento_3 deben estar aprobadas por Meta para escribir fuera de las 24h. Si no lo
+    // están, esos leads se saltan DE UNA (sin intentar ni esperar) para no atorar la cola de los demás pasos.
+    const approvedTpl = await getApprovedTemplateNames();
+    const seg3Ready = SEG3_TEMPLATES.every((t) => approvedTpl.has(t));
 
     // Get all businesses with auto_followup_enabled. Includes 'nuevo' (first-contact).
     // We fetch all eligible (typically <500), then sort by potential_score desc in JS and
@@ -222,6 +230,7 @@ export async function GET() {
             }
             continue;
           }
+          if (stage === 'seguimiento_3' && !seg3Ready) { skipped++; continue; } // plantillas aún no aprobadas
           const result = await sendWithFallback(biz.phone, pitch, biz.name, stage, biz.address, businessType);
           if (result.success) {
             await supabase.from('contact_history').insert({
@@ -300,6 +309,7 @@ export async function GET() {
       // sales_stage ni inserta 'stage_change': solo registra el envío como auto_whatsapp.
       const pitch = getWhatsAppPitchServer(biz.name, businessType, cadenceStage, contactCount, sentTexts[biz.id] ?? new Set());
       if (!pitch) { skipped++; continue; } // ya recibió todas las variantes: no repetir
+      if (cadenceStage === 'seguimiento_3' && !seg3Ready) { skipped++; continue; } // plantillas aún no aprobadas
       const result = await sendWithFallback(biz.phone, pitch, biz.name, cadenceStage, biz.address, businessType);
 
       if (result.success) {

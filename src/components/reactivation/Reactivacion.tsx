@@ -165,18 +165,9 @@ export default function Reactivacion() {
     [clients]
   );
 
-  // "Bought once" (primera recompra) pending a first touch — lives in another list,
-  // so we fetch its count to show it in the seller's plan.
-  const [firstBuyPending, setFirstBuyPending] = useState(0);
-  useEffect(() => {
-    fetch('/api/reactivation?list_type=primera_recompra')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d?.clients && setFirstBuyPending(d.clients.filter((c: ReactClient) => !c.touch1_date).length))
-      .catch(() => {});
-  }, []);
-
   // "Your plan for today": the logged-in salesperson's queues, in priority order,
-  // each one clickable. Replaces the old single "Now" line so October is unmistakable.
+  // each one clickable. The order IS the strategy — frescos primero (lo que sí
+  // convierte), los viejos al final, y los de "1era vez" NO entran (peor segmento).
   const myPlan = useMemo((): { icon: string; title: string; sub: string; action: () => void }[] => {
     if (!meOwner) return [];
     const go = () => { clearLenses(); setCardFilter('none'); };
@@ -185,19 +176,25 @@ export default function Reactivacion() {
     const reconnectDue = recontactList.filter((c) => c.owner === meOwner);
     if (reconnectDue.length)
       steps.push({ icon: '🔄', title: `Reconectar ahora: ${reconnectDue.length}`, sub: 'te pidieron que los llames — vencido', action: () => { go(); setRecontactLens(true); } });
-    // 2) New / not yet contacted (yours)
-    const newUntouched = clients.filter((c) => !c.is_control && c.list_type === 'reactivacion' && c.owner === meOwner && !c.touch1_date);
-    if (newUntouched.length)
-      steps.push({ icon: meOwner === 'Fernanda' ? '📞' : '💬', title: meOwner === 'Fernanda' ? `Llama a tus cuentas grandes: ${newUntouched.length}` : `Mensaje a los nuevos: ${newUntouched.length}`, sub: 'sin tocar — empieza de arriba', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('asc'); } });
-    // 3) Joaquín: the "bought once" list, its turn this month
-    if (meOwner === 'Joaquín' && firstBuyPending > 0)
-      steps.push({ icon: '🌱', title: `"Compraron 1 vez": ${firstBuyPending}`, sub: 'su turno este mes — copia y manda', action: () => setListType('primera_recompra') });
-    // 4) Fresh (left recently) — highest chance
-    const fresh = freshList.filter((c) => c.owner === meOwner);
-    if (fresh.length)
-      steps.push({ icon: '🌱', title: `Frescos (se fueron hace poco): ${fresh.length}`, sub: 'los de más chance de volver', action: () => { go(); setFreshLens(true); } });
+
+    if (meOwner === 'Fernanda') {
+      // Fernanda: sus cuentas grandes — llamar, más frescas arriba.
+      const newUntouched = clients.filter((c) => !c.is_control && c.list_type === 'reactivacion' && c.owner === meOwner && !c.touch1_date);
+      if (newUntouched.length)
+        steps.push({ icon: '📞', title: `Llama a tus cuentas grandes: ${newUntouched.length}`, sub: 'sin tocar — empieza de arriba', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('asc'); } });
+    } else {
+      // Joaquín (y resto): el FOCO es lo que convierte.
+      // 2) Frescos (se fueron hace poco) — aquí es donde sí vuelven.
+      const fresh = freshList.filter((c) => c.owner === meOwner);
+      if (fresh.length)
+        steps.push({ icon: '🌱', title: `Frescos (se fueron hace poco): ${fresh.length}`, sub: 'tu mejor chance — empieza por aquí', action: () => { go(); setFreshLens(true); } });
+      // 3) Viejos sin tocar (+90 días) — pozo frío, al final y solo si sobra tiempo.
+      const oldUntouched = clients.filter((c) => !c.is_control && c.list_type === 'reactivacion' && c.owner === meOwner && !c.touch1_date && (c.days_inactive ?? 0) > 90);
+      if (oldUntouched.length)
+        steps.push({ icon: '🪦', title: `Viejos (+90 días): ${oldUntouched.length}`, sub: 'pozo frío — solo si te sobra el día', action: () => { go(); setFOwner(meOwner); setSortKey('days'); setSortDir('desc'); } });
+    }
     return steps;
-  }, [meOwner, clients, recontactList, freshList, firstBuyPending]);
+  }, [meOwner, clients, recontactList, freshList]);
 
   const filtered = useMemo(() => {
     // Verification queue: ignores the other filters, sorted by freshest
@@ -393,12 +390,12 @@ export default function Reactivacion() {
         </div>
       )}
 
-      {/* Note for "Bought once": their turn is October, not mandatory right now */}
+      {/* Note for "Bought once": the worst-converting segment — do NOT prioritize */}
       {listType === 'primera_recompra' && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 mb-3 flex items-start gap-2">
-          <span className="text-lg leading-none">🗓️</span>
-          <p className="text-sm text-amber-900">
-            <b>Su turno es octubre.</b> Son clientes que compraron una sola vez — los más fríos. No cuentan como pendiente de esta semana. Si tienes un hueco puedes adelantarte a escribirles (suma), pero <b>primero cierra a los que ya respondieron</b>.
+        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 mb-3 flex items-start gap-2">
+          <span className="text-lg leading-none">🪣</span>
+          <p className="text-sm text-gray-700">
+            <b>El segmento más frío — no es tu foco.</b> Compraron una sola vez y casi no vuelven (volvió 1 de cada 9 el mes pasado). <b>No les metas tiempo</b> mientras tengas frescos o gente que ya respondió. Trabájalos solo si te sobra el día.
           </p>
         </div>
       )}

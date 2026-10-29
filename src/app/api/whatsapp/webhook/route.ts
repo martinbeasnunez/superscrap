@@ -185,6 +185,9 @@ export async function POST(request: NextRequest) {
         const meaningful = human.filter((n) => !isTrivialMessage(n));
         if (meaningful.length === 0) return; // solo bots, saludos o "gracias": no vale un aviso
         const burstText = human.join('\n');
+        // Pidió cotización/precio/propuesta = oportunidad real: SIEMPRE avisa a Slack y califica, aunque el cerebro haya contestado.
+        const asksQuote = /cotiza|propuesta|lista de precios|precios?\b|tarifa|presupuesto|costos?\b/i.test(burstText)
+          && !/\bno\b.{0,25}(cotiza|propuesta|precio|necesit|requer|interes)/i.test(burstText);
 
         const [{ data: analysis }, { data: huntLead }, { data: owner }] = await Promise.all([
           supabase
@@ -235,7 +238,7 @@ export async function POST(request: NextRequest) {
             // Lead calificado: señal de compra clara → la card pasa a "interesado" (solo desde etapas
             // tempranas, nunca hacia atrás) y se apaga el bot. El cerebro NO envía nada.
             const BUY_INTENTS = ['pide_propuesta', 'pide_precio']; // 'interesado' suelto era demasiado laxo (autorespuestas)
-            if (out && (out.action === 'handoff' || out.action === 'reply') && BUY_INTENTS.includes(out.intent)) {
+            if (out && out.action !== 'skip' && out.action !== 'close' && (BUY_INTENTS.includes(out.intent) || asksQuote)) {
               const { data: cur } = await supabase
                 .from('businesses')
                 .select('sales_stage')
@@ -267,7 +270,7 @@ export async function POST(request: NextRequest) {
         // Menos ruido en Slack: si el cerebro ya contestó solo una duda simple (sin señal de compra), no se avisa
       // por mensaje; queda en ORBIT y en el resumen de las 5:30pm. Las autorespuestas del negocio no avisan.
       if (brainMode() !== 'off' && brainSaidBot) return;
-      if (draftSent && !qualified) return;
+      if (draftSent && !qualified && !asksQuote) return;
       await notifyReplyOnSlack({
           businessId,
           conversationId: conversation.id ?? null,

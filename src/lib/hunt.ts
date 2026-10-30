@@ -10,6 +10,15 @@ import { normalizePhone } from '@/lib/dedup';
 // Tope diario. La cuota real baja según lo que quedó sin decidir / sin tocar.
 export const HUNT_MAX_PER_DAY = 10;
 
+// Modo vacaciones de Martín: hasta esta fecha (inclusive, hora Lima) las cazas NUEVAS con celular
+// que el calificador marcó "bot" se aprueban solas y el primer WhatsApp sale sin esperar el clic.
+// Se apaga solo al pasar la fecha; para extenderlo basta cambiarla.
+export const HUNT_AUTO_APPROVE_UNTIL = '2026-11-08';
+
+export function isHuntAutoApprove(today: string = limaToday()): boolean {
+  return today <= HUNT_AUTO_APPROVE_UNTIL;
+}
+
 export type HuntRoute = 'humano' | 'bot';
 export type HuntDecision = 'humano' | 'bot' | 'descartado';
 

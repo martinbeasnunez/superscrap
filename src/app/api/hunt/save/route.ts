@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { calculatePotentialScore } from '@/lib/scoring';
 import {
-  GRANDE_REV, addToIndex, findInIndex, getHuntCapacity, isMissingHuntTables, isMobilePhone, limaToday, loadDedupIndex,
-  type HuntRoute,
+  GRANDE_REV, addToIndex, findInIndex, getHuntCapacity, isHuntAutoApprove, isMissingHuntTables, isMobilePhone,
+  limaToday, loadDedupIndex, type HuntRoute,
 } from '@/lib/hunt';
+import { sendFirstBotTouch } from '@/lib/bot-touch';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -15,7 +16,8 @@ export const maxDuration = 60;
 // calificador aprobó. El servidor vuelve a aplicar las reglas duras (no confía en el
 // agente): cuota del día, anti-duplicado y corte de orca (S/2,500/mes).
 // Los leads nuevos entran con auto_followup_enabled = false: el bot NO les escribe
-// hasta que alguien elige "bot" en la lista "Today's hunt".
+// hasta que alguien elige "bot" en la lista "Today's hunt" (salvo en modo vacaciones,
+// ver HUNT_AUTO_APPROVE_UNTIL: los nuevos con celular y ruta "bot" se aprueban solos).
 
 interface ThesisInput {
   rubro: string; zona: string; why?: string;
@@ -62,6 +64,8 @@ export async function POST(request: NextRequest) {
     const today = limaToday();
 
     const capacity = await getHuntCapacity();
+    const autoApprove = isHuntAutoApprove();
+    const autoApproved: { name: string; enviado: boolean; motivo?: string }[] = [];
 
     const { data: run, error: runError } = await supabase
       .from('hunt_runs')
@@ -256,6 +260,25 @@ export async function POST(request: NextRequest) {
       }
 
       saved.push({ id: huntLead.id, business_id: businessId, name: label, origin });
+
+      // Modo vacaciones: misma decisión "bot" que el clic de Martín, sin el clic. Los rescates
+      // (cuentas que ya estaban en ORBIT, a veces de Martín) y las rutas "humano" quedan pendientes.
+      if (autoApprove && origin === 'nuevo' && route === 'bot' && isMobilePhone(phone)) {
+        const { error: apErr } = await supabase
+          .from('businesses').update({ contacted_by: null, auto_followup_enabled: true }).eq('id', businessId);
+        if (!apErr) {
+          await supabase.from('hunt_leads')
+            .update({ decision: 'bot', decided_by: null, decided_at: new Date().toISOString() })
+            .eq('id', huntLead.id);
+          let touch: { sent: boolean; reason?: string } = { sent: false, reason: 'send_failed' };
+          try {
+            touch = await sendFirstBotTouch(businessId);
+          } catch (e) {
+            console.error('Hunt save: auto first touch failed:', e); // el cron lo reintenta
+          }
+          autoApproved.push({ name: label, enviado: touch.sent, motivo: touch.reason });
+        }
+      }
       if (thesisIdx >= 0) savedByThesis.set(thesisIdx, (savedByThesis.get(thesisIdx) || 0) + 1);
     }
 
@@ -274,6 +297,7 @@ export async function POST(request: NextRequest) {
       cuota: capacity.quota,
       guardados: saved,
       omitidos: skipped,
+      autoAprobados: autoApproved,
     });
   } catch (error) {
     console.error('Hunt save error:', error);

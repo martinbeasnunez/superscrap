@@ -22,7 +22,10 @@ trabaja el bot.
   a los hoteles de cadena y a casi todo el inventario de rescate: no los propongas salvo que
   encuentres un celular directo de un decisor.
 - **No proponer cuentas con negociación o licitación abierta** (p. ej. Casa Andina).
-- **Nunca enviar mensajes.** Esta rutina solo propone; el primer contacto lo decide un humano.
+- **Nunca enviar mensajes.** Esta rutina solo propone. Excepción: en modo vacaciones de Martín
+  (hasta el 2026-11-08, `HUNT_AUTO_APPROVE_UNTIL` en `src/lib/hunt.ts`) el servidor aprueba solo los
+  leads NUEVOS con celular y ruta `bot`, y el primer WhatsApp sale solo (la respuesta de `save` trae
+  `autoAprobados`). Por eso, esos días, sé más estricto: nadie los revisa antes de que salgan.
 - El servidor vuelve a aplicar cuota, anti-duplicado y corte de orca: lo que no pase vuelve en
   `omitidos`.
 
@@ -135,4 +138,5 @@ Mensaje corto para Martín:
 - Las apuestas del día, una línea cada una.
 - Los leads guardados: nombre · potencial · ruta sugerida · por qué, en una línea.
 - Los `omitidos` y su motivo, si hubo.
+- Los `autoAprobados` (modo vacaciones): cuáles salieron solos y cuáles quedaron para el cron.
 - Link: `{ORBIT}/seguimiento`
